@@ -5,7 +5,7 @@ import type { KanjiData } from '@zenbu/dictionary-core/artifact/kanji-data'
 import { type RetiredEntriesFile, retiredEntries } from '@zenbu/dictionary-core/artifact/retired'
 import { describe, expect, test, vi } from 'vitest'
 import { createApp } from './app'
-import { info } from './conformance/fake-service'
+import { info, radicals } from './conformance/fake-service'
 import { inProcessService } from './service'
 
 const token = 'test-token-0123456789'
@@ -34,7 +34,7 @@ function retiredRoute(file: RetiredEntriesFile) {
     retired: retiredEntries(file, languageData),
     capabilities: { tokenize: () => [] }
   })
-  const service = inProcessService(dictionary, new DictionaryBrowse(unread, kanji), info)
+  const service = inProcessService(dictionary, new DictionaryBrowse(unread, kanji), info, radicals)
   return createApp({ service, token, ready: () => true }).request(
     new Request('http://localhost/v1/retired', { headers: { authorization: `Bearer ${token}` } })
   )

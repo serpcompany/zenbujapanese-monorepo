@@ -14,6 +14,8 @@ export interface RadicalPanel {
   }[]
 }
 
+export const radicalReferenceFile = 'RadicalReferenceData.json'
+
 const radicalSource = 'edrdg.kradfile'
 const isText = (value: unknown): value is string => typeof value === 'string'
 

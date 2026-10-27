@@ -4,7 +4,7 @@ import type { FrequencyRow } from '@zenbu/dictionary-core/detail/rows'
 import type { EmbeddedSearchResults } from '@zenbu/dictionary-core/embedded/lookup'
 import type { LearnerResultsScreen, LearnerState } from '@zenbu/dictionary-core/results/learner'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { type Embedded, embedded } from './embedded-support'
+import { type Embedded, embedded, appResultsScreen as screen } from './embedded-support'
 import {
   caseAsShown,
   describeRows,
@@ -50,30 +50,6 @@ function shown(screen: Screen, results: EmbeddedSearchResults): ShownScreen {
       retrievalOrder: item.fallbackOrder
     })),
     resultCount: screen.rows.length + (screen.kanji ? 1 : 0)
-  }
-}
-
-async function screen(
-  app: Embedded,
-  query: string,
-  learner: Partial<LearnerState> = {}
-): Promise<{ results: EmbeddedSearchResults; screen: LearnerResultsScreen }> {
-  const results = await app.lookup<EmbeddedSearchResults>('search', query)
-  await app.text<number>('exampleCount', query)
-  const exampleCount = await app.text<number>('resultsExampleCount', {
-    query,
-    primaryEntry: results.primaryEntry,
-    usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
-  })
-  const state = { sort: 'default', filter: 'all', known: [], pickedKanji: false }
-  return {
-    results,
-    screen: await app.presentation<LearnerResultsScreen>('resultsScreen', {
-      query,
-      results,
-      exampleCount,
-      learner: { ...state, ...learner }
-    })
   }
 }
 

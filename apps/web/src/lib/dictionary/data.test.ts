@@ -8,7 +8,12 @@ import type {
 } from '@zenbu/dictionary-core/artifact/dictionary'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type { FormExampleRows } from '@zenbu/dictionary-core/detail/rows'
-import { fixtureKanjiRows, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import {
+  fixtureKanjiRows,
+  fixtureRadicals,
+  fixtureSearchOrder,
+  fixtureWordRows
+} from '@zenbu/dictionary-core/fixtures'
 import { searchResultsScreen } from '@zenbu/dictionary-core/results/results'
 import type {
   SearchEntry,
@@ -20,6 +25,7 @@ import { watchedRender } from '../render-health'
 import {
   getConjugationExamples,
   getKanjiDetails,
+  getRadicals,
   getSearchExamples,
   getWordExamples,
   getWordPage,
@@ -204,6 +210,26 @@ describe('searchDictionary', () => {
     ])
     const kaname = await searchDictionary('要')
     expect(kaname.state === 'results' && kaname.kanji?.details?.character).toBe('要')
+  })
+
+  test('asks the service, or the fixtures, for a kanji picked from the radicals as picked', async () => {
+    const requests = serve({ '/v1/search/要?picked=1': searchAnswer('要', [iru]) })
+    expect(rowsOf(await searchDictionary('要', true)).map(word => word.entSeq)).toEqual([1546640])
+    expect(requests).toEqual(['/v1/search/要?picked=1', '/v1/kanji/要'])
+    delete env.DICTIONARY_API_URL
+    expect(rowsOf(await searchDictionary('要', true)).map(word => word.entSeq)).toEqual([
+      kanameNoun
+    ])
+    expect(rowsOf(await searchDictionary('要'))).toHaveLength(fixtureSearchOrder.要.length)
+  })
+
+  test('reads the radical panel’s file from the service, or the fixtures without one', async () => {
+    serve({ '/v1/radicals': fixtureRadicals })
+    expect(await getRadicals()).toEqual(fixtureRadicals)
+    serve({})
+    expect(await getRadicals()).toBeNull()
+    delete env.DICTIONARY_API_URL
+    expect(await getRadicals()).toBe(fixtureRadicals)
   })
 
   test('fails when the service fails, rather than showing no results', async () => {

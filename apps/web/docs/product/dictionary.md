@@ -89,6 +89,9 @@ types; the website searches on Enter so that each search is its own page.
   the form submits it to the search page" (no request, navigation, or history entry however long it
   waits, and a plain `GET` form).
 
+**Radical input.** The box's Radicals button finds a kanji by its radicals, as the app's panel
+does, and a kanji picked there lists only its strongest matches ([Radical input](radical-input.md)).
+
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval, with
 its queries and full-text indexes, on the app's data in the dictionary service. It finds what the
 app finds for Japanese, kana, romaji (`raamen`, then the app's `rāmen` and the titles' `ramen`),
@@ -300,10 +303,9 @@ has no ✓ Known capsule and no swipe or long-press to mark a word known, which 
 - Source: #462 (Recent list and camera button left out; learner actions open a get-the-app prompt).
 - Check: not applicable.
 
-**Reading Aids on a row.** A row's headword has furigana while Show Furigana is on, and plain
-text while it's off; with Show Romaji on, the row's reading in romaji is under it, as the app's
-result rows draw it. The browse pages' rows are the same rows ([Site-wide](site-wide.md), Reading
-Aids).
+**Reading Aids on a row.** A row's headword has furigana while Show Furigana is on, and plain text
+while it's off; with Show Romaji on, the row's reading in romaji is under it, as the app's result
+rows draw it. The browse pages' rows are the same rows ([Site-wide](site-wide.md), Reading Aids).
 
 - Source: `ResultRow.swift` and `JapaneseRubyText.swift`; the core's `romaji` (`detail/romaji.ts`).
 - Check: `apps/web/e2e/reading-aids.spec.ts`, "Furigana off leaves the search results and a kanji’s

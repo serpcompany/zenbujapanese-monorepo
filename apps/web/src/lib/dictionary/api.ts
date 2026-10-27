@@ -89,8 +89,10 @@ export function dictionaryApi(
   const segment = encodeURIComponent
 
   return {
-    search: (query: string) =>
-      required<DictionaryContract['search']>(`/v1/search/${segment(query)}`),
+    search: (query: string, pickedKanji = false) =>
+      required<DictionaryContract['search']>(
+        `/v1/search/${segment(query)}${pickedKanji ? '?picked=1' : ''}`
+      ),
     searchExamples: (query: string, from = 0) =>
       get<DictionaryContract['searchExamples']>(
         `/v1/search/${segment(query)}/examples?from=${from}`
@@ -110,6 +112,7 @@ export function dictionaryApi(
         `/v1/sitemaps/words/${number}?after=${after}&limit=${limit}`
       ),
     retired: () => required<DictionaryContract['retired']>('/v1/retired'),
+    radicals: () => get<DictionaryContract['radicals']>('/v1/radicals'),
     segmentation: (text: string) =>
       required<DictionaryContract['segmentation']>(`/v1/segmentation/${segment(text)}`),
     browse: <Name extends BrowseAnswer>(path: BrowsePath<Name>) =>
