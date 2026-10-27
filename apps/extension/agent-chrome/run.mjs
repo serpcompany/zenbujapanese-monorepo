@@ -1,8 +1,8 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { startChrome, stopChrome } from './chrome.mjs'
 import { connect } from './connect.mjs'
-import { verifyRoot } from './paths.mjs'
+import { consoleLog, verifyRoot } from './paths.mjs'
 
 export function proofFolder(name, what) {
   const today = new Date().toISOString().slice(0, 10)
@@ -12,22 +12,34 @@ export function proofFolder(name, what) {
 }
 
 export async function withChrome(options, drive) {
-  const since = new Date().toISOString()
   const state = await startChrome(options)
   let browser
   try {
     browser = (await connect()).browser
-    return { since, state, result: await drive({ browser, state }) }
+    return await drive({ browser, state })
   } finally {
     await browser?.disconnect().catch(() => {})
-    await stopChrome()
+    await stopChrome(state)
   }
 }
 
-export function consoleLinesSince(state, since) {
-  return readFileSync(state.consoleLog, 'utf8')
+function consoleLinesSince(since) {
+  if (!existsSync(consoleLog)) return []
+  return readFileSync(consoleLog, 'utf8')
     .split('\n')
     .filter(line => line && line.slice(0, 24) >= since)
+}
+
+export async function runWithProof(options, drive) {
+  const since = new Date().toISOString()
+  const failures = []
+  const result = {}
+  try {
+    await withChrome(options, context => drive(context, result, failures))
+  } catch (error) {
+    failures.push(error.message)
+  }
+  return { failures, result, lines: consoleLinesSince(since) }
 }
 
 export function findLines(lines, expected) {

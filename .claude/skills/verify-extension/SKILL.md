@@ -26,8 +26,9 @@ pnpm --silent agent-chrome status
 ```
 
 `not running` means go on. Anything else is another agent's Chrome: wait for it, in the
-background, and never stop a Chrome you didn't start. `verify` and `selftest` refuse to start
-while one runs.
+background, and never stop a Chrome you didn't start. `start`, `verify`, and `selftest` take a
+Mac-wide lock first, so if two agents start at once, the second fails at once with "Chrome is in
+use by pid N" and the first keeps running.
 
 ## 3. Run
 
@@ -59,7 +60,7 @@ Each prints its `run.json` and exits 1 on a failure. `failures` names a step tha
 Open the screenshots: each page in light and dark, the side panel after the offscreen document
 closed, the test surface on `hostile.html`, and the stand-in watch page. Read `console.log` for
 errors and exceptions. A behavior none of this covers is driven by hand on a running Chrome
-(`pnpm --silent agent-chrome start --ext dist-test --headless --offline`, then `goto`, `click`,
+(`pnpm --silent agent-chrome start --ext dist-test --headless`, offline by default, then `goto`, `click`,
 `eval`, `shot`, `tail`), followed by `pnpm --silent agent-chrome stop`.
 
 ## 5. Report
@@ -71,5 +72,15 @@ that should keep working becomes a Playwright test in `apps/extension/e2e/`.
 
 - Use the owner's own Chrome profile, or ask the owner to load, click, or paste.
 - Leave Chrome running: `pnpm --silent agent-chrome status` should say `not running` at the end.
-- Load a real YouTube or Netflix page without counting it against the request budget in the
-  harness's Limits.
+- Go online without a reason. `start --online` is the only way to reach a real site; offline is
+  the default for `start`, `verify`, and `selftest`.
+
+## YouTube's request budget
+
+An online Chrome counts each request to `youtube.com`, `youtube-nocookie.com`, and `youtu.be` in
+a Mac-wide ledger and refuses one past the budget: 4 page loads an hour, 10 a day, one
+`timedtext` request every 30 minutes, and nothing for 6 hours after a 429. The numbers live in one
+place, `youtubeBudget` in `apps/extension/agent-chrome/youtube-budget.mjs`. A refused load fails
+with `ERR_BLOCKED_BY_CLIENT`, `goto` prints "YouTube's request budget refused <url>: <why>", and
+`console.log` has a `[budget] refused` line. Stop there and say so in the report; never work
+around it. Netflix has no counter: load it by hand, once, and never in a loop.

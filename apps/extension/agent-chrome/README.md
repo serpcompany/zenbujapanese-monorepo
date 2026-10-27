@@ -7,9 +7,18 @@ says where it fits beside the Playwright tests, which use Playwright's Chromium 
 
 - **Chrome:** `/Applications/Google Chrome.app`, branded, so it has Widevine and the Translator.
 - **One per Mac.** DevTools listens on `127.0.0.1:9339` and the harness's control on `9340`, and
-  the state file is Mac-wide (`~/Library/Caches/com.zenbujapanese.agent-chrome/state.json`), so a
-  checkout sees another's Chrome. `start`, `selftest`, and `verify` refuse while one runs, also
-  one on 9339 that this harness didn't start. Check `status`, and `stop` when done.
+  the state file and lock are Mac-wide (`~/Library/Caches/com.zenbujapanese.agent-chrome/`), so a
+  checkout sees another's Chrome. `start`, `selftest`, and `verify` take the `lock` file before
+  they spawn a daemon (`lock.mjs`), so two agents starting at once can't both get one: the second
+  fails at once with "Chrome is in use by pid N" and leaves the first running. The lock names the
+  daemon's pid, goes when it stops, and is taken over once its pid is dead. A start also refuses
+  a Chrome on 9339 that this harness didn't start, and a daemon that finds 9340 taken exits with
+  the holder's pid, touching nothing. A run accepts only the state its own daemon wrote, stops
+  only that daemon, and on any failed start stops its daemon and Chrome. Check `status`, and
+  `stop` when done.
+- **Offline by default.** `start`, `selftest`, and `verify` send every host but `127.0.0.1` and
+  `localhost` to nowhere. `start --online` is the only way to reach a real site, and it holds
+  YouTube's hosts to the request budget (Limits).
 - **Profiles.** Each run gets a fresh profile under the checkout's
   `tmp/agent/agent-chrome/profiles/`, deleted when it stops. `--persistent` uses
   `~/Library/Application Support/Zenbu Agent Chrome`, outside every checkout, whose cookies,
@@ -25,7 +34,7 @@ runs `node --experimental-strip-types agent-chrome/ctl.mjs`:
 pnpm --silent agent-chrome status
 pnpm --silent agent-chrome selftest [--headful] [--name <proof folder>]
 pnpm --silent agent-chrome verify [--name <proof folder>] [--skip-build]
-pnpm --silent agent-chrome start --ext <unpacked dir> [--headless] [--offline] [--map-host <host>] [--persistent] [--net <regex>] [--pages runtime|console|off] [--unmute]
+pnpm --silent agent-chrome start --ext <unpacked dir> [--headless] [--online] [--map-host <host>] [--persistent] [--net <regex>] [--pages runtime|console|off] [--unmute]
 pnpm --silent agent-chrome load <dir> | unload <id> | open <url> | goto <url> [--new] [--page <url part>]
 pnpm --silent agent-chrome click '<selector>' | eval [--raw] '<js>' | key <key> | type <text> | shot [file] [--full]
 pnpm --silent agent-chrome pages | targets | tail [n] [net] [--grep <regex>]
@@ -44,7 +53,9 @@ pnpm --silent agent-chrome stop
   again, sees the test content script's surface on `hostile.html`, downloads `releases.json`, the
   pinned manifest, and one file from the local server and checks their SHA-256, then stops Chrome.
 - **Proof** goes to `tmp/agent/verify/<name>/`: `console.log` (the run's log lines), `run.json`
-  (each expected line, each result, and the failures), and the screenshots. Exit 1 on a failure.
+  (each expected line, each result, and the failures), and the screenshots, also when a step
+  throws or Chrome never starts. Exit 1 on a failure. Each of the self-test's messages waits
+  10 s at most, so a worker that never answers fails as "no answer from the offscreen worker".
 
 A script drives a running Chrome with Puppeteer: `import { connect } from './connect.mjs'`, then
 `const { browser, page } = await connect()`, and `browser.disconnect()`, never `close()`.
@@ -71,19 +82,29 @@ attaches a CDP session to each target and resumes it with `Runtime.runIfWaitingF
 offscreen document's dedicated worker stays paused (#1057). On a page it enables `Page` and adds
 the video listener with `Page.addScriptToEvaluateOnNewDocument`.
 
-- **`--offline`** adds `--host-resolver-rules` that send every host but `127.0.0.1` and
-  `localhost` to nowhere.
+- **Offline,** the default, adds `--host-resolver-rules` that send every host but `127.0.0.1` and
+  `localhost` to nowhere. `--online` drops them and turns on the YouTube budget.
 - **`--map-host <host>`** serves `site/` over HTTPS from `127.0.0.1`, maps the host to it with
   `--host-resolver-rules`, and trusts only its self-signed certificate, made with `openssl` for the
   run, by its SPKI hash (`--ignore-certificate-errors-spki-list`). No request reaches the real
   host.
 
+**Tests.** `pnpm test` runs `agent-chrome/*.test.mjs` with no Chrome: the lock, the start's
+cleanup, the daemon's taken control port, and the budget. They run `test-daemon.mjs`, a stand-in
+daemon, and point the harness at a temporary state folder and free ports
+(`AGENT_CHROME_STATE_DIR`, `AGENT_CHROME_DEVTOOLS_PORT`, `AGENT_CHROME_CONTROL_PORT`).
+
 ## Limits
 
-- **YouTube's request budget,** from one IP: at most 4 watch-page loads an hour and 10 a day, one
-  `timedtext` probe every 30 minutes at most, nothing in a loop, and after a 429, no YouTube
-  request for 6 hours (#945: hours of loads blocked this Mac's IP for over 5 hours). The stand-in
-  site spends none of it.
+- **YouTube's request budget,** from one IP, set in one place, `youtubeBudget` in
+  `youtube-budget.mjs`: at most 4 page loads an hour and 10 a day on `youtube.com`,
+  `youtube-nocookie.com`, and `youtu.be` (each document, frames too), one `timedtext` request
+  every 30 minutes, and after a 429 from them, nothing for 6 hours (#945: hours of loads blocked
+  this Mac's IP for over 5 hours). An online Chrome pauses each request to those hosts
+  (CDP `Fetch`), counts it in the Mac-wide `youtube-requests.json` beside the state file, and
+  fails one past the budget with `ERR_BLOCKED_BY_CLIENT` and a `[budget] refused <url>: <why>`
+  line in `console.log`; `goto` says the same. Nothing in a loop. The stand-in site and an offline
+  Chrome spend none of it.
 - **Sound:** set `video.muted = true` in the page and check that it held, since `--mute-audio`
   alone let sound through on 2026-10-22 (#945). The selftest does both.
 - **Headless:** extensions, logs, playback, and Widevine work; the Translator reported

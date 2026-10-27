@@ -1,16 +1,10 @@
-import { existsSync, readFileSync } from 'node:fs'
 import puppeteer from 'puppeteer-core'
+import { isAlive, readJson } from './files.mjs'
 import { devtoolsPort, statePath } from './paths.mjs'
 
 export function readState() {
-  if (!existsSync(statePath)) return null
-  const state = JSON.parse(readFileSync(statePath, 'utf8'))
-  try {
-    process.kill(state.pid, 0)
-    return state
-  } catch {
-    return null
-  }
+  const state = readJson(statePath)
+  return isAlive(state?.pid) ? state : null
 }
 
 export async function chromeOnDevtoolsPort() {

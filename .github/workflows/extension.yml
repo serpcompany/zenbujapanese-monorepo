@@ -26,7 +26,9 @@ jobs:
           paths: >-
             apps/extension packages/ui packages/dictionary-core package.json pnpm-lock.yaml
             pnpm-workspace.yaml .node-version .github/workflows/extension.yml
-            .github/actions/changed-paths
+            .github/actions/changed-paths language-data/release.json language-data/releases
+            language-data/release-inputs.json
+            apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3
 
   check:
     needs: changes

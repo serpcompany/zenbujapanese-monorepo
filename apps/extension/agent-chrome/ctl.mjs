@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util'
 import { control, launchOptions, startChrome, stopChrome, whoHoldsChrome } from './chrome.mjs'
 import { connect, readState } from './connect.mjs'
 import { logDir } from './paths.mjs'
+import { readLedger } from './youtube-budget.mjs'
 
 const { values: opts, positionals } = parseArgs({
   allowPositionals: true,
@@ -62,7 +63,7 @@ const commands = {
         headless: opts.headless,
         unmute: opts.unmute,
         persistent: opts.persistent,
-        offline: opts.offline,
+        online: opts.online,
         net: opts.net,
         pages: opts.pages,
         mapHost: opts['map-host'],
@@ -76,6 +77,7 @@ const commands = {
   async status() {
     const holder = await whoHoldsChrome()
     if (!holder) return print('not running')
+    if (holder.starting) return print({ starting: `daemon pid ${holder.starting}` })
     if (holder.other)
       return print({
         otherChrome: holder.other,
@@ -106,10 +108,14 @@ const commands = {
   },
   async goto() {
     await withPage(async p => {
-      const response = await p.goto(rest[0], {
-        waitUntil: 'domcontentloaded',
-        timeout: Number(opts.timeout)
-      })
+      const response = await p
+        .goto(rest[0], { waitUntil: 'domcontentloaded', timeout: Number(opts.timeout) })
+        .catch(error => {
+          const refused = readLedger().lastRefusal
+          const justNow = refused && Date.now() - Date.parse(refused.at) < 30_000
+          if (!error.message.includes('ERR_BLOCKED_BY_CLIENT') || !justNow) throw error
+          throw new Error(`YouTube's request budget refused ${refused.url}: ${refused.reason}`)
+        })
       print({ url: p.url(), status: response?.status() ?? null, title: await p.title() })
     })
   },

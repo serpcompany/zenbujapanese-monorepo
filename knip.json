@@ -30,6 +30,7 @@
         "playwright.config.ts",
         "agent-chrome/ctl.mjs",
         "agent-chrome/daemon.mjs",
+        "agent-chrome/test-daemon.mjs",
         "agent-chrome/selftest-extension/*.js",
         "agent-chrome/site/*.js"
       ]

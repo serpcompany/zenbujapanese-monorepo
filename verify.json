@@ -562,7 +562,7 @@
           "^e2e/[\\w-]+\\.spec\\.ts$",
           "^e2e/serve\\.ts$",
           "^playwright\\.config\\.ts$",
-          "^agent-chrome/(ctl|daemon)\\.mjs$",
+          "^agent-chrome/(ctl|daemon|test-daemon)\\.mjs$",
           "^agent-chrome/(selftest-extension|site)/[\\w-]+\\.js$",
           "^(test-pages/)?vite\\.config\\.ts$",
           "^vitest\\.config\\.ts$"

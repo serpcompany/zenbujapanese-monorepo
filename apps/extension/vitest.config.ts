@@ -6,7 +6,8 @@ export default defineConfig({
     testTimeout: 30_000,
     projects: [
       ...nodeAndDomProjects,
-      { extends: true, test: { name: 'build', include: ['build/**/*.test.ts'] } }
+      { extends: true, test: { name: 'build', include: ['build/**/*.test.ts'] } },
+      { extends: true, test: { name: 'agent-chrome', include: ['agent-chrome/*.test.mjs'] } }
     ]
   }
 })

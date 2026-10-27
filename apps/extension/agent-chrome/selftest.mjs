@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { extensionId, sleep } from './chrome.mjs'
 import { selftestExtension } from './paths.mjs'
-import { consoleLinesSince, findLines, proofFolder, withChrome, writeProof } from './run.mjs'
+import { findLines, proofFolder, runWithProof, writeProof } from './run.mjs'
 
 const standInUrl = 'https://www.youtube.com/watch?v=agent-chrome-selftest'
 
@@ -37,43 +37,58 @@ async function playMutedAndSeek(page) {
   })
 }
 
+const answerTimeoutMs = 10_000
+
 async function pingOffscreenWorker(page) {
-  return page.evaluate(async () => {
-    const cold = await chrome.runtime.sendMessage({ ping: 1 })
-    const closed = await chrome.runtime.sendMessage({ closeOffscreen: true })
-    const again = await chrome.runtime.sendMessage({ ping: 2 })
-    return { cold, closed, again }
-  })
+  return page.evaluate(async timeoutMs => {
+    const ask = (message, context) =>
+      Promise.race([
+        chrome.runtime.sendMessage(message),
+        new Promise(done =>
+          setTimeout(
+            () => done(`no answer from the ${context} in ${timeoutMs / 1000} s`),
+            timeoutMs
+          )
+        )
+      ])
+    return {
+      cold: await ask({ ping: 1 }, 'offscreen worker'),
+      closed: await ask({ closeOffscreen: true }, 'service worker'),
+      again: await ask({ ping: 2 }, 'offscreen worker, after the close')
+    }
+  }, answerTimeoutMs)
 }
 
-async function drive({ browser, state }, folder) {
+const expectedAnswers = { cold: 'pong 1', closed: 'closed', again: 'pong 2' }
+
+function offscreenFailures(offscreen) {
+  return Object.entries(expectedAnswers)
+    .filter(([step, answer]) => offscreen[step] !== answer)
+    .map(([step, answer]) => `${step}: expected ${answer}, got ${JSON.stringify(offscreen[step])}`)
+}
+
+async function drive({ browser, state }, result, folder) {
   const id = extensionId(state, selftestExtension)
   const page = await browser.newPage()
   await page.goto(standInUrl, { waitUntil: 'domcontentloaded' })
   await (await page.waitForSelector('#selftest-button', { visible: true, timeout: 10_000 })).click()
-  const video = await playMutedAndSeek(page)
+  result.video = await playMutedAndSeek(page)
   await page.screenshot({ path: join(folder, 'stand-in-watch-page.png') })
   await page.goto(`chrome-extension://${id}/popup.html`)
   await (await page.waitForSelector('#popup-button', { visible: true })).click()
-  const offscreen = await pingOffscreenWorker(page)
+  result.offscreen = await pingOffscreenWorker(page)
   await page.screenshot({ path: join(folder, 'popup.png') })
   await sleep(500)
-  return { video, offscreen }
 }
 
 export async function selftest({ headful = false, name } = {}) {
   const folder = proofFolder(name, 'agent-chrome-selftest')
-  const failures = []
-  const run = await withChrome(
-    { headless: !headful, offline: true, mapHost: ['www.youtube.com'], ext: [selftestExtension] },
-    context => drive(context, folder)
+  const { failures, result, lines } = await runWithProof(
+    { headless: !headful, mapHost: ['www.youtube.com'], ext: [selftestExtension] },
+    (context, result) => drive(context, result, folder)
   )
-  const { video, offscreen } = run.result
-  if (!video.muted) failures.push('the stand-in video did not stay muted')
-  if (offscreen.cold !== 'pong 1' || offscreen.again !== 'pong 2') {
-    failures.push(`the offscreen worker answered ${JSON.stringify(offscreen)}`)
-  }
-  const lines = consoleLinesSince(run.state, run.since)
-  const report = { folder, video, offscreen, failures, lines: findLines(lines, expectedLines) }
+  if (result.video && !result.video.muted) failures.push('the stand-in video did not stay muted')
+  if (result.offscreen) failures.push(...offscreenFailures(result.offscreen))
+  const report = { folder, ...result, failures, lines: findLines(lines, expectedLines) }
   return { passed: writeProof(folder, { lines, report }), report }
 }

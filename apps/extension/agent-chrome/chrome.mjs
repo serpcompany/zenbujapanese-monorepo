@@ -1,15 +1,17 @@
 import { spawn } from 'node:child_process'
-import { mkdirSync, openSync } from 'node:fs'
+import { existsSync, mkdirSync, openSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { chromeOnDevtoolsPort, readState } from './connect.mjs'
-import { here, logDir } from './paths.mjs'
+import { isAlive } from './files.mjs'
+import { handLockTo, lockOwner, releaseLock, takeLock } from './lock.mjs'
+import { daemonLog, devtoolsPort, here, logDir } from './paths.mjs'
 
 export const launchOptions = {
   headless: { type: 'boolean', default: false },
   ext: { type: 'string', multiple: true, default: [] },
   net: { type: 'string', default: '' },
   persistent: { type: 'boolean', default: false },
-  offline: { type: 'boolean', default: false },
+  online: { type: 'boolean', default: false },
   'map-host': { type: 'string', multiple: true, default: [] },
   unmute: { type: 'boolean', default: false },
   pages: { type: 'string', default: 'runtime' }
@@ -27,57 +29,128 @@ export async function control(path) {
 export async function whoHoldsChrome() {
   const state = readState()
   if (state) return { harness: state }
+  const owner = lockOwner()
+  if (isAlive(owner)) return { starting: owner }
   const browser = await chromeOnDevtoolsPort()
   return browser ? { other: browser } : null
 }
 
-async function refuseWhenBusy() {
-  const holder = await whoHoldsChrome()
-  if (!holder) return
-  const who = holder.harness
-    ? `an agent Chrome started ${holder.harness.startedAt} from ${holder.harness.checkout}`
-    : `${holder.other} on port 9339, probably the old tmp/agent/agent-chrome harness`
-  throw new Error(`${who} is running. One Chrome per Mac: wait for it to stop.`)
+async function refuseOtherChrome() {
+  const browser = await chromeOnDevtoolsPort()
+  if (!browser) return
+  throw new Error(
+    `${browser} is on port ${devtoolsPort}, probably the old tmp/agent/agent-chrome harness. One Chrome per Mac: wait for it to stop.`
+  )
 }
 
-export async function startChrome(options) {
-  await refuseWhenBusy()
-  mkdirSync(logDir, { recursive: true })
-  const args = [join(here, 'daemon.mjs'), '--pages', options.pages ?? 'runtime']
+function daemonArgs(options) {
+  const args = ['--pages', options.pages ?? 'runtime']
   if (options.headless) args.push('--headless')
   if (options.unmute) args.push('--unmute')
   if (options.persistent) args.push('--persistent')
-  if (options.offline) args.push('--offline')
+  if (options.online) args.push('--online')
   if (options.net) args.push('--net', options.net)
   for (const host of options.mapHost ?? []) args.push('--map-host', host)
   for (const extension of options.ext ?? []) args.push('--ext', resolve(extension))
-  const out = openSync(join(logDir, 'daemon.log'), 'a')
-  spawn(process.execPath, args, { detached: true, stdio: ['ignore', out, out], cwd: here }).unref()
-  const until = Date.now() + 60_000
-  while (Date.now() < until) {
-    const state = readState()
-    if (state && Object.keys(state.extensions).length >= (options.ext ?? []).length) return state
-    await sleep(300)
-  }
-  throw new Error(`the daemon did not start; see ${join(logDir, 'daemon.log')}`)
+  return args
 }
 
-export async function stopChrome() {
+function lastDaemonLine() {
+  if (!existsSync(daemonLog)) return 'no daemon.log'
+  return readFileSync(daemonLog, 'utf8').trimEnd().split('\n').at(-1)
+}
+
+function startFailure(state, wanted, exit) {
+  if (exit) return `the daemon exited (${exit}): ${lastDaemonLine()}`
+  if (state?.ready) {
+    const missing = wanted.filter(path => !state.extensions[path])
+    return `could not load ${missing.join(', ')}: ${JSON.stringify(state.loadErrors ?? {})}`
+  }
+  return `the daemon did not start in time; see ${daemonLog}`
+}
+
+export async function startChrome(options) {
+  takeLock()
+  try {
+    await refuseOtherChrome()
+  } catch (error) {
+    releaseLock(process.pid)
+    throw error
+  }
+  mkdirSync(logDir, { recursive: true })
+  const out = openSync(daemonLog, 'a')
+  const daemon = options.daemon ?? join(here, 'daemon.mjs')
+  const child = spawn(process.execPath, [daemon, ...daemonArgs(options)], {
+    detached: true,
+    stdio: ['ignore', out, out],
+    cwd: here
+  })
+  child.unref()
+  handLockTo(child.pid)
+  let exit = null
+  child.on('exit', (code, signal) => {
+    exit = signal ?? `code ${code}`
+  })
+  const wanted = (options.ext ?? []).map(path => resolve(path))
+  const until = Date.now() + (options.startTimeoutMs ?? 60_000)
+  let state = null
+  while (Date.now() < until && !exit) {
+    state = readState()
+    const mine = state?.pid === child.pid ? state : null
+    if (mine?.ready) {
+      if (wanted.every(path => mine.extensions[path])) return mine
+      break
+    }
+    await sleep(300)
+  }
+  const reason = startFailure(state?.pid === child.pid ? state : null, wanted, exit)
+  await stopProcesses(state?.pid === child.pid ? state : { pid: child.pid })
+  releaseLock(child.pid)
+  throw new Error(reason)
+}
+
+async function waitForExit(pids, ms) {
+  const until = Date.now() + ms
+  while (pids.some(isAlive)) {
+    if (Date.now() >= until) return false
+    await sleep(200)
+  }
+  return true
+}
+
+function signal(pids, name) {
+  for (const pid of pids) {
+    try {
+      process.kill(pid, name)
+    } catch {}
+  }
+}
+
+async function stopProcesses({ pid, chromePid, controlURL }) {
+  const pids = [chromePid, pid].filter(Boolean)
+  const asked =
+    controlURL &&
+    (await fetch(`${controlURL}/quit`, { signal: AbortSignal.timeout(5000) }).then(
+      () => true,
+      () => false
+    ))
+  if (asked && (await waitForExit(pids, 20_000))) return 'stopped'
+  signal(pids, 'SIGTERM')
+  if (await waitForExit(pids, 5000)) return 'stopped (SIGTERM)'
+  signal(pids, 'SIGKILL')
+  await waitForExit(pids, 5000)
+  return 'stopped (SIGKILL)'
+}
+
+export async function stopChrome(own) {
   const state = readState()
   if (!state) return 'not running'
-  await control('/quit').catch(() => {})
-  const until = Date.now() + 20_000
-  while (Date.now() < until) {
-    try {
-      process.kill(state.pid, 0)
-      await sleep(300)
-    } catch {
-      return 'stopped'
-    }
+  if (own && state.pid !== own.pid) {
+    return `not stopped: the running Chrome is daemon pid ${state.pid}, not this run's ${own.pid}`
   }
-  process.kill(state.chromePid, 'SIGTERM')
-  process.kill(state.pid, 'SIGTERM')
-  return 'stopped (SIGTERM)'
+  const result = await stopProcesses(state)
+  releaseLock(state.pid)
+  return result
 }
 
 export function extensionId(state, path) {

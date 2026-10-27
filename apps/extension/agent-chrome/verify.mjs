@@ -10,14 +10,7 @@ import {
 import { startLocalServer } from '../e2e/local-server.ts'
 import { extensionId } from './chrome.mjs'
 import { extensionRoot } from './paths.mjs'
-import {
-  consoleLinesSince,
-  findLines,
-  proofFolder,
-  serviceWorkerOf,
-  withChrome,
-  writeProof
-} from './run.mjs'
+import { findLines, proofFolder, runWithProof, serviceWorkerOf, writeProof } from './run.mjs'
 
 const build = join(extensionRoot, 'dist-test')
 const text = value => `::-p-text(${value})`
@@ -71,9 +64,9 @@ async function checkLanguageData(page, id, server) {
   })
 }
 
-async function drive({ browser, state }, server, folder) {
+async function drive({ browser, state }, result, failures, server, folder) {
   const id = extensionId(state, build)
-  const failures = []
+  result.id = id
   const page = await openPages(browser, id, folder, failures)
   const steps = {
     offscreen: () => checkAfterOffscreenCloses(browser, id, page, folder),
@@ -81,6 +74,7 @@ async function drive({ browser, state }, server, folder) {
     languageData: () => checkLanguageData(page, id, server)
   }
   const results = {}
+  result.results = results
   for (const [name, step] of Object.entries(steps)) {
     try {
       results[name] = (await step()) ?? 'passed'
@@ -88,7 +82,6 @@ async function drive({ browser, state }, server, folder) {
       failures.push(`${name}: ${error.message}`)
     }
   }
-  return { id, failures, results }
 }
 
 function expectedLines(id, server) {
@@ -109,21 +102,19 @@ export async function verifyExtension({ name, skipBuild = false } = {}) {
   const folder = proofFolder(name, 'extension')
   const server = await startLocalServer()
   try {
-    const run = await withChrome({ headless: true, offline: true, ext: [build] }, context =>
-      drive(context, server, folder)
+    const { failures, result, lines } = await runWithProof(
+      { headless: true, ext: [build] },
+      (context, result, failures) => drive(context, result, failures, server, folder)
     )
-    const { id, failures, results } = run.result
-    const lines = consoleLinesSince(run.state, run.since)
-    const languageData = results.languageData
+    const languageData = result.results?.languageData
     if (languageData && languageData.fileSha256 !== languageData.pinnedSha256) {
       failures.push('the downloaded file does not match the manifest SHA-256')
     }
     const report = {
       folder,
-      id,
-      results,
+      ...result,
       failures,
-      lines: findLines(lines, expectedLines(id, server))
+      lines: findLines(lines, expectedLines(result.id, server))
     }
     return { passed: writeProof(folder, { lines, report }), report }
   } finally {
