@@ -2,7 +2,8 @@ type Respond = (answer: unknown) => void
 type MessageListener = (message: unknown, sender: unknown, respond: Respond) => boolean | undefined
 type Changes = Record<string, { oldValue?: unknown; newValue?: unknown }>
 type ChangeListener = (changes: Changes) => void
-type Tab = { id: number; url?: string; favIconUrl?: string }
+type TabUpdated = (tabId: number, change: { status?: string }) => void
+type Tab = { id: number; url?: string }
 
 function chromeEvent<Listener>() {
   const listeners = new Set<Listener>()
@@ -15,24 +16,32 @@ function chromeEvent<Listener>() {
   }
 }
 
-export function fakeChrome({ tab = { id: 1 } as Tab, allowed = true } = {}) {
+const deliver = (listeners: Set<MessageListener>, message: unknown, sender: unknown) =>
+  new Promise<unknown>((resolve, reject) => {
+    let answering = false
+    for (const listener of [...listeners]) {
+      if (listener(message, sender, resolve) === true) answering = true
+    }
+    if (!answering) reject(new Error('Receiving end does not exist.'))
+  })
+
+export function fakeChrome({ tabs = [{ id: 1 }] as Tab[], allowed = true } = {}) {
   const items: Record<string, unknown> = {}
   const changed = chromeEvent<ChangeListener>()
   const messages = chromeEvent<MessageListener>()
+  const activated = chromeEvent<() => void>()
+  const updated = chromeEvent<TabUpdated>()
+  const inTabs = new Map<number, ReturnType<typeof chromeEvent<MessageListener>>>()
   const sent: unknown[] = []
-  const toTabs: { tabId: number; message: unknown }[] = []
   const requested: string[][] = []
   const opened = { optionsPage: 0 }
-  const site = { tab, allowed }
+  const site = { tabs, active: tabs[0]?.id, allowed }
 
-  const deliver = (message: unknown) =>
-    new Promise<unknown>((resolve, reject) => {
-      let answering = false
-      for (const listener of [...messages.listeners]) {
-        if (listener(message, {}, resolve) === true) answering = true
-      }
-      if (!answering) reject(new Error('Receiving end does not exist.'))
-    })
+  const tabMessages = (tabId: number) => {
+    const known = inTabs.get(tabId) ?? chromeEvent<MessageListener>()
+    inTabs.set(tabId, known)
+    return known
+  }
 
   const chrome = {
     storage: {
@@ -61,7 +70,7 @@ export function fakeChrome({ tab = { id: 1 } as Tab, allowed = true } = {}) {
       onMessage: messages.event,
       sendMessage: (message: unknown) => {
         sent.push(message)
-        return deliver(message)
+        return deliver(messages.listeners, message, {})
       },
       openOptionsPage: () => {
         opened.optionsPage += 1
@@ -69,11 +78,14 @@ export function fakeChrome({ tab = { id: 1 } as Tab, allowed = true } = {}) {
       }
     },
     tabs: {
-      query: () => Promise.resolve([site.tab]),
-      sendMessage: (tabId: number, message: unknown) => {
-        toTabs.push({ tabId, message })
-        return deliver(message)
-      }
+      query: ({ active }: { active?: boolean }) =>
+        Promise.resolve(
+          site.tabs.filter(tab => !active || tab.id === site.active).map(tab => ({ ...tab }))
+        ),
+      sendMessage: (tabId: number, message: unknown) =>
+        deliver(tabMessages(tabId).listeners, message, {}),
+      onActivated: activated.event,
+      onUpdated: updated.event
     },
     permissions: {
       contains: () => Promise.resolve(site.allowed),
@@ -85,5 +97,26 @@ export function fakeChrome({ tab = { id: 1 } as Tab, allowed = true } = {}) {
     }
   }
 
-  return { chrome, items, sent, toTabs, requested, opened, site }
+  const inTab = (tabId: number) => ({
+    onMessage: tabMessages(tabId).event,
+    sendMessage: (message: unknown) => {
+      sent.push(message)
+      return deliver(messages.listeners, message, { tab: { id: tabId } })
+    }
+  })
+
+  const switchTo = (tabId: number) => {
+    site.active = tabId
+    for (const listener of [...activated.listeners]) listener()
+  }
+
+  const load = (tab: Tab) => {
+    site.tabs = [...site.tabs.filter(({ id }) => id !== tab.id), tab]
+    for (const listener of [...updated.listeners]) {
+      listener(tab.id, { status: 'loading' })
+      listener(tab.id, { status: 'complete' })
+    }
+  }
+
+  return { chrome, items, sent, requested, opened, site, inTab, switchTo, load }
 }

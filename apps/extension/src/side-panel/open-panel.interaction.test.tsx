@@ -11,6 +11,8 @@ declare global {
 }
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+vi.mock('./header-controls', () => ({ HeaderControls: () => null }))
+
 type Listener = (message: unknown, sender: object, respond: (answer: unknown) => void) => boolean
 
 const noGesture = '`sidePanel.open()` may only be called in response to a user gesture.'

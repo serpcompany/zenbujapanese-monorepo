@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pageAt } from './site'
+import { pageAt } from './active-site'
 
 describe('pageAt', () => {
   it('names a web page by its host and asks for its origin', () => {
@@ -21,7 +21,6 @@ describe('pageAt', () => {
       'file:///Users/learner/notes.html',
       'https://chromewebstore.google.com/detail/zenbu/abc',
       'https://chrome.google.com/webstore/detail/abc',
-      undefined,
       'not a url'
     ]) {
       expect(pageAt(address)).toBeNull()

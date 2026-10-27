@@ -6,6 +6,7 @@ import mark from '../../../../assets/brand/vector/zenbu-icon-flat-vector.svg'
 import type { DataState } from '../shared/data-state'
 import { DictionaryProgress } from '../shared/dictionary-progress'
 import { labels as sharedLabels } from '../shared/labels'
+import { HeaderControls } from './header-controls'
 import { labels } from './labels'
 import type { PanelState, StackedPage } from './navigation'
 import { pages } from './pages'
@@ -31,6 +32,7 @@ function PanelHeader({ openSettings }: { openSettings(): void }) {
       <h1 className="min-w-0 flex-1 truncate font-heading text-sm font-semibold">
         {sharedLabels.name}
       </h1>
+      <HeaderControls />
       <Button variant="ghost" size="icon" aria-label={labels.settings} onClick={openSettings}>
         <Settings />
       </Button>

@@ -39,6 +39,21 @@ export const settingsLabels = {
     never: 'Never',
     checkForUpdates: 'Check for Updates'
   },
+  site: {
+    on: 'Zenbu is on for this site',
+    off: 'Zenbu is off for this site',
+    switchName: (host: string) => `Zenbu on ${host}`,
+    thisPage: 'This page',
+    cantRun: "Zenbu can't run here",
+    cantRunDetail:
+      'Chrome keeps extensions off its own pages, the Chrome Web Store, and sites they may not open. A page opened before Zenbu was added runs it after a reload.',
+    noAccess: "Chrome's site access keeps Zenbu off this site",
+    allow: 'Allow on This Site'
+  },
+  menu: {
+    open: 'Reading aids and settings',
+    showWelcome: 'Show Welcome Tab'
+  },
   sites: {
     intro: 'Zenbu is off on these sites.',
     none: 'Zenbu is on for every site it can run on.',

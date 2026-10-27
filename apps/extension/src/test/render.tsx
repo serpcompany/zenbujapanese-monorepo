@@ -54,3 +54,8 @@ export const switchFor = (scope: ParentNode, setting: string) =>
   find(scope, `[role="switch"][data-setting="${setting}"]`)
 
 export const isOn = (element: HTMLElement) => element.getAttribute('aria-checked') === 'true'
+
+export async function openMenu(scope: ParentNode): Promise<HTMLElement> {
+  await click(find(scope, '[aria-haspopup="menu"]'))
+  return find(document, '[role="menu"]')
+}

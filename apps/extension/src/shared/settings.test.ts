@@ -121,9 +121,9 @@ describe('the settings channel', () => {
   })
 
   it('hears only the settings a change carries', () => {
-    const { chrome } = fakeChrome()
+    const { chrome, inTab } = fakeChrome()
     const heard: Settings[] = []
-    const stop = onSettingsChanged(settings => heard.push(settings), chrome.runtime.onMessage)
+    const stop = onSettingsChanged(settings => heard.push(settings), inTab(1).onMessage)
     chrome.tabs
       .sendMessage(1, { target: 'offscreen', request: { type: 'ping' } })
       .catch(() => undefined)

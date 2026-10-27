@@ -4,11 +4,14 @@ import { type ReactNode, useId } from 'react'
 import { readingAidKeys, type Settings, writeSettings } from '../shared/settings'
 import { settingsLabels } from './labels'
 
-type SwitchKey = keyof typeof settingsLabels.switches
+export type SwitchKey = keyof typeof settingsLabels.switches
 
 type SwitchProps = { settings: Settings; detailed?: boolean }
 
 const details: Partial<Record<SwitchKey, string>> = settingsLabels.details
+
+export const waitsForFurigana = (setting: SwitchKey, settings: Settings): boolean =>
+  setting === 'readingAids.furiganaHiddenOnKnownWords' && !settings['readingAids.furigana']
 
 export function SettingSwitch({
   setting,
@@ -65,9 +68,7 @@ export function ReadingAidSwitches({ settings, detailed }: SwitchProps) {
       setting={setting}
       settings={settings}
       detailed={detailed}
-      disabled={
-        setting === 'readingAids.furiganaHiddenOnKnownWords' && !settings['readingAids.furigana']
-      }
+      disabled={waitsForFurigana(setting, settings)}
     />
   ))
 }

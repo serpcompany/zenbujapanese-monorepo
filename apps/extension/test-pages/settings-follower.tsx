@@ -19,9 +19,14 @@ export function ReadingAidStates({ settings }: { settings: Settings }) {
   )
 }
 
+type Runtime = NonNullable<Parameters<typeof askSettings>[0]> & {
+  onMessage: NonNullable<Parameters<typeof onSettingsChanged>[1]>
+}
+
 export function followSettings(
   mount: (settings: Settings) => ShadowMount,
-  host: string = location.hostname
+  host: string = location.hostname,
+  runtime: Runtime = chrome.runtime
 ): () => void {
   let mounted: ShadowMount | null = null
   let heard = false
@@ -32,8 +37,8 @@ export function followSettings(
   const stopListening = onSettingsChanged(settings => {
     heard = true
     show(settings)
-  })
-  askSettings().then(settings => {
+  }, runtime.onMessage)
+  askSettings(runtime).then(settings => {
     if (!heard) show(settings)
   })
   return () => {
