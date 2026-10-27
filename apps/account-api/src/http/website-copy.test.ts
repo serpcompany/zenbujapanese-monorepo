@@ -5,7 +5,12 @@ import {
   type KindPage,
   type MutationResult
 } from '@zenbu/account-rules/account-copy'
-import { listsInOrder, nextListPosition, wordsOfList } from '@zenbu/account-rules/account-views'
+import {
+  listMoves,
+  listsInOrder,
+  nextListPosition,
+  wordsOfList
+} from '@zenbu/account-rules/account-views'
 import { describe, expect, test } from 'vitest'
 import { type Learner, useAccountService } from '../test/accounts'
 import { searchIdFor } from '../test/kept'
@@ -114,6 +119,18 @@ describe('the website, editing what an app syncs', () => {
         status: 'applied'
       })
     }
+    const moves = listMoves(listsInOrder(website.held('list')), 1, 0)
+    expect(
+      await website.changeAll(
+        moves.map(({ entityId, position }) => ({
+          entity: 'list',
+          operation: 'update',
+          entityId,
+          fields: { position }
+        }))
+      )
+    ).toEqual({ ok: true, value: moves.map(() => ({ status: 'applied' })) })
+    expect(listsInOrder(website.held('list')).map(list => list.entityId)).toEqual([verbs, food])
     await phone.sync()
     expect(phoneState(phone)).toEqual(websiteState(website))
     expect(phone.dataOf('wordNote', note)).toMatchObject({ text: 'Changed on the website.' })
