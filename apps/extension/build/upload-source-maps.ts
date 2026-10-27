@@ -67,33 +67,46 @@ function warning(message: string): string {
 }
 
 function hidden(text: string, token: string): string {
-  return text.replaceAll(token, '<token>').slice(-2000)
+  return (token ? text.replaceAll(token, '<token>') : text).slice(-2000)
 }
 
-function steps(folder: string, release: string, environ: Environ, token: string): Step[] {
-  const withoutToken = Object.fromEntries(
-    Object.entries(environ).filter(([key]) => key !== tokenVariable)
-  )
+function withoutToken(environ: Environ): Environ {
+  return Object.fromEntries(Object.entries(environ).filter(([key]) => key !== tokenVariable))
+}
+
+function preparing(folder: string, environ: Environ): Step[] {
   return [
     {
       what: `install ${sentryCli}`,
       command: installCommand(),
-      env: withoutToken,
+      env: withoutToken(environ),
       timeout: installTimeout
     },
     {
       what: 'add debug IDs to the build',
       command: injectCommand(folder),
-      env: withoutToken,
+      env: withoutToken(environ),
       timeout: installTimeout
-    },
-    {
-      what: 'upload the source maps',
-      command: uploadCommand(folder, release),
-      env: { ...withoutToken, [tokenVariable]: token },
-      timeout: uploadTimeout
     }
   ]
+}
+
+function uploading(folder: string, release: string, environ: Environ, token: string): Step {
+  return {
+    what: 'upload the source maps',
+    command: uploadCommand(folder, release),
+    env: { ...withoutToken(environ), [tokenVariable]: token },
+    timeout: uploadTimeout
+  }
+}
+
+function runStep(step: Step, run: Run, say: Say, token: string): Ran | undefined {
+  const ran = run(step.command, { env: step.env, timeout: step.timeout })
+  if (ran.error === undefined && ran.status === 0) return ran
+  const reason = ran.error?.message ?? `exit ${ran.status}`
+  say.warn(warning(`couldn't ${step.what} (${hidden(reason, token)})`))
+  say.warn(hidden(ran.stderr, token))
+  return undefined
 }
 
 function send(folder: string, maps: string[], environ: Environ, run: Run, say: Say): boolean {
@@ -103,6 +116,10 @@ function send(folder: string, maps: string[], environ: Environ, run: Run, say: S
   }
   const { version } = JSON.parse(readFileSync(join(folder, 'manifest.json'), 'utf8'))
   const release = releaseName(version)
+  const knownToken = environ[tokenVariable]?.trim() ?? ''
+  for (const step of preparing(folder, environ)) {
+    if (!runStep(step, run, say, knownToken)) return false
+  }
   const token = findToken(environ, run)
   if (!token) {
     say.warn(
@@ -112,18 +129,9 @@ function send(folder: string, maps: string[], environ: Environ, run: Run, say: S
     )
     return false
   }
-  let output = ''
-  for (const step of steps(folder, release, environ, token)) {
-    const ran = run(step.command, { env: step.env, timeout: step.timeout })
-    if (ran.error !== undefined || ran.status !== 0) {
-      const reason = ran.error?.message ?? `exit ${ran.status}`
-      say.warn(warning(`couldn't ${step.what} (${hidden(reason, token)})`))
-      say.warn(hidden(ran.stderr, token))
-      return false
-    }
-    output = ran.stdout
-  }
-  say.log(hidden(output, token))
+  const uploaded = runStep(uploading(folder, release, environ, token), run, say, token)
+  if (!uploaded) return false
+  say.log(hidden(uploaded.stdout, token))
   say.log(`Uploaded ${maps.length} source maps to Sentry's ${sentryProject} as ${release}.`)
   return true
 }

@@ -123,6 +123,9 @@ describe('scrubText', () => {
     ['blob:https://example.com/0f3c could not load', 'blob:<url> could not load'],
     ['The word 食べる was selected', 'The word <japanese> was selected'],
     ['ｶﾀｶﾅ and ひらがな and 々', '<japanese> and <japanese> and <japanese>'],
+    ['No entry for 𩸽', 'No entry for <japanese>'],
+    ['No entry for 𠮟る', 'No entry for <japanese>'],
+    ['Selected taberu, unquoted', 'Selected taberu, unquoted'],
     ['Quoted “a phrase” and 『a title』', 'Quoted <quoted> and <quoted>'],
     [
       "Cannot read properties of undefined (reading 'lookUp')",

@@ -106,7 +106,7 @@ describe('uploadSourceMaps', () => {
     build()
     const keychain = runner(call => (isKeychainLookup(call) ? { stdout: `${token}\n` } : {}))
     expect(uploadSourceMaps(folder, {}, keychain, say)).toBe(true)
-    expect(calls[0]?.command.slice(0, 4)).toEqual([
+    expect(calls.find(isKeychainLookup)?.command.slice(0, 4)).toEqual([
       'security',
       'find-generic-password',
       '-s',
@@ -115,11 +115,14 @@ describe('uploadSourceMaps', () => {
     expect(calls.at(-1)?.env[tokenVariable]).toBe(token)
   })
 
-  it('warns without a token, sends nothing, and still takes the maps out', () => {
+  it('adds debug IDs without a token, so the package can be matched later, but uploads nothing', () => {
     build()
     const noKeychain = runner(call => (isKeychainLookup(call) ? { status: 44 } : {}))
     expect(uploadSourceMaps(folder, {}, noKeychain, say)).toBe(false)
-    expect(calls.filter(call => !isKeychainLookup(call))).toEqual([])
+    const steps = calls.map(call =>
+      isKeychainLookup(call) ? 'keychain' : call.command.slice(4, 6).join(' ')
+    )
+    expect(steps).toEqual(['--version', 'sourcemaps inject', 'keychain'])
     expect(said.join('\n')).toMatch(/warning: no Sentry token/)
     expect(filesLeft().filter(file => file.endsWith('.map'))).toEqual([])
   })

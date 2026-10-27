@@ -45,6 +45,7 @@ afterEach(() => {
   mounted = undefined
   document.body.replaceChildren()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 function mount(query = darkQuery(false), report?: (error: unknown) => void) {
@@ -90,8 +91,8 @@ describe('mountInShadowRoot', () => {
     expect(document.querySelector('[data-test="dialog"]')).toBeNull()
   })
 
-  it("hands an error in its content to the content script's reporter, not to the page", async () => {
-    const report = vi.fn()
+  async function throwFromTheSurface(report?: (error: unknown) => void) {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const pageErrors = vi.fn()
     window.addEventListener('error', pageErrors)
     const { shadowRoot } = mount(darkQuery(false), report)
@@ -99,15 +100,25 @@ describe('mountInShadowRoot', () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = false
     try {
       trigger?.click()
-      await vi.waitFor(() => expect(report).toHaveBeenCalled())
+      await vi.waitFor(() => expect(logged).toHaveBeenCalled())
     } finally {
       globalThis.IS_REACT_ACT_ENVIRONMENT = true
       window.removeEventListener('error', pageErrors)
     }
-    expect(report).toHaveBeenCalledWith(
-      expect.objectContaining({ message: testErrorMessage }),
-      expect.anything()
-    )
+    return { logged, pageErrors }
+  }
+
+  it("hands an error in its content to the content script's reporter and the console, not to the page", async () => {
+    const report = vi.fn()
+    const { logged, pageErrors } = await throwFromTheSurface(report)
+    expect(report).toHaveBeenCalledWith(expect.objectContaining({ message: testErrorMessage }))
+    expect(logged).toHaveBeenCalledWith(expect.objectContaining({ message: testErrorMessage }))
+    expect(pageErrors).not.toHaveBeenCalled()
+  })
+
+  it('still logs an error in its content when no reporter is given', async () => {
+    const { logged, pageErrors } = await throwFromTheSurface()
+    expect(logged).toHaveBeenCalledWith(expect.objectContaining({ message: testErrorMessage }))
     expect(pageErrors).not.toHaveBeenCalled()
   })
 

@@ -12,7 +12,7 @@ const textRules: [RegExp, string][] = [
   [/「[^「」\n]*」/g, '<quoted>'],
   [/『[^『』\n]*』/g, '<quoted>'],
   [/\b[a-z][a-z\d+.-]{0,31}:\/\/[^\s"'<>()]+/gi, '<url>'],
-  [/[々぀-ヿ㐀-䶿一-鿿豈-﫿ｦ-ﾟ]+/g, '<japanese>']
+  [/[々぀-ヿ㐀-䶿一-鿿豈-﫿ｦ-ﾟ\u{20000}-\u{3FFFF}]+/gu, '<japanese>']
 ]
 
 const extensionUrl = /^chrome-extension:\/\//

@@ -32,7 +32,11 @@ export function mountInShadowRoot(content: ReactNode, options: Options = {}): Sh
   ;(doc.body ?? doc.documentElement).append(host)
   const stopFollowing = followSystemColorScheme(surface, options.darkQuery ?? systemDarkQuery())
   const { report } = options
-  const root = createRoot(container, report && { onUncaughtError: report, onCaughtError: report })
+  const handle = (error: unknown) => {
+    report?.(error)
+    console.error(error)
+  }
+  const root = createRoot(container, { onUncaughtError: handle, onCaughtError: handle })
   root.render(<PortalContainer value={surface}>{content}</PortalContainer>)
   return {
     host,
