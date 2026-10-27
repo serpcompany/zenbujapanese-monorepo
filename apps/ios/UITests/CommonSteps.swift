@@ -49,10 +49,17 @@ extension ZenbuUITestCase {
 
   @discardableResult
   func markJapanKnown(in app: XCUIApplication) -> XCUIElement {
-    let row = find("result.japan", in: app)
+    chooseLeadingAction("mark-known", onRow: "result.japan", in: app)
+  }
+
+  @discardableResult
+  func chooseLeadingAction(
+    _ action: String, onRow identifier: String, in app: XCUIApplication
+  ) -> XCUIElement {
+    let row = find(identifier, in: app)
     waitFor(row)
     gestureThatOpensActions(on: row) { if device == .mac { row.rightClick() } else { row.swipeRight() } }
-    tap(find("result.japan.mark-known", in: app))
+    tap(find("\(identifier).\(action)", in: app))
     return row
   }
 

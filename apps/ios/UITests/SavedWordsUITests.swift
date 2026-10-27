@@ -46,9 +46,33 @@ final class SavedWordsUITests: ZenbuUITestCase {
     markJapanKnownFromItsResult(in: app)
     open(.account, in: app)
     tap(find("account.known-words", in: app))
-    revealRowActions(on: firstElement(identifiedBy: "known-words.item.", in: app))
-    tap(menuChoice("Mark as Unknown", in: app))
+    chooseLeadingAction("mark-unknown", onRow: "result.japan", in: app)
     assertOnScreen(find("known-words.empty", in: app), in: app)
+  }
+
+  func testKnownWordsShowsAWordWithItsMeaningAndAKanjiAsLookUpDoes() {
+    let app = launch()
+    search("日", in: app)
+    let kanji = waitFor(find("result.kanji-primary.日", in: app)).label
+    returnToRecentSearches(in: app)
+    type("japan\n", into: searchField(in: app))
+    let word = markJapanKnown(in: app).label
+    XCTAssert(word.contains("Japan"), word)
+    tap(find("result.japan", in: app))
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.more-menu", in: app))
+    tap(find("kanji-detail.more-menu", in: app))
+    tap(menuChoice("Mark as Known", in: app))
+    open(.account, in: app)
+    tap(find("account.known-words", in: app))
+    waitUntil(find("result.kanji-primary.日", in: app), "label == %@", kanji)
+    waitUntil(find("result.japan", in: app), "label == %@", word)
+    let screen = XCTAttachment(screenshot: app.screenshot())
+    screen.name = "Known Words"
+    screen.lifetime = .keepAlways
+    add(screen)
+    chooseLeadingAction("mark-unknown", onRow: "result.kanji-primary.日", in: app)
+    waitUntilGone(find("result.kanji-primary.日", in: app))
+    waitFor(find("result.japan", in: app))
   }
 
   func testAKanjiIsMarkedKnownFromItsMenu() {

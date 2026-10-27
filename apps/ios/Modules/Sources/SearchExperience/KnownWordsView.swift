@@ -18,6 +18,29 @@ struct KnownWordMenuButton: View {
   }
 }
 
+private struct KnownWordActions: ViewModifier {
+  @Environment(WordKnowledge.self) private var wordKnowledge
+  let item: SavedItem
+  let identifierPrefix: String
+
+  func body(content: Content) -> some View {
+    content
+      .swipeActions(edge: .leading) {
+        KnownWordMenuButton(item: item, identifierPrefix: identifierPrefix)
+          .tint(wordKnowledge.isKnown(item) ? .orange : .green)
+      }
+      .contextMenu {
+        KnownWordMenuButton(item: item, identifierPrefix: identifierPrefix)
+      }
+  }
+}
+
+extension View {
+  func knownWordActions(_ item: SavedItem, identifierPrefix: String) -> some View {
+    modifier(KnownWordActions(item: item, identifierPrefix: identifierPrefix))
+  }
+}
+
 struct KnownWordBadge: View {
   var announces = false
 
@@ -40,12 +63,14 @@ struct KnownWordBadge: View {
 struct KnownWordsView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var searchText = ""
+  @State private var rows: KnowledgeRows?
+  let lookupClient: LookupClient
   let openWord: (WordKnowledgeRecord) -> Void
 
   var body: some View {
     let records = filteredRecords
     Group {
-      if !wordKnowledge.isLoaded {
+      if !wordKnowledge.isLoaded || (rows == nil && wordKnowledge.knownCount > 0) {
         ProgressView("Loading Known Words")
           .accessibilityIdentifier("known-words.loading")
       } else if wordKnowledge.knownCount == 0 {
@@ -61,21 +86,10 @@ struct KnownWordsView: View {
         List {
           Section {
             ForEach(records) { record in
-              Button {
+              KnowledgeRow(
+                record: record, rows: rows ?? .none, lookupClient: lookupClient
+              ) {
                 openWord(record)
-              } label: {
-                SavedWordRow(
-                  headword: record.headword, reading: record.reading, date: record.updatedAt)
-              }
-              .foregroundStyle(.primary)
-              .accessibilityIdentifier("known-words.item.\(record.entryID)")
-              .rowActions {
-                if !wordKnowledge.isReadOnly {
-                  Button("Mark as Unknown", systemImage: "xmark.circle") {
-                    wordKnowledge.setStatus(.unknown, for: record)
-                  }
-                  .tint(.orange)
-                }
               }
             }
           } footer: {
@@ -85,6 +99,7 @@ struct KnownWordsView: View {
             }
           }
         }
+        .listStyle(.plain)
         .overlay {
           if records.isEmpty {
             ContentUnavailableView.search(text: searchText)
@@ -93,6 +108,14 @@ struct KnownWordsView: View {
         .searchable(text: $searchText, prompt: "Search known words")
         .accessibilityIdentifier("known-words.list")
       }
+    }
+    .task(id: rowsRequest) {
+      guard wordKnowledge.isLoaded else { return }
+      let records = wordKnowledge.knownRecords
+      rows = await KnowledgeRows.resolving(
+        records,
+        known: Set(records.map(\.entryID).filter(wordKnowledge.isKnown(storedID:))),
+        using: lookupClient)
     }
     .navigationTitle("Known Words")
   }
@@ -118,12 +141,23 @@ struct KnownWordsView: View {
     }
   }
 
+  private var rowsRequest: RowsRequest {
+    RowsRequest(
+      isLoaded: wordKnowledge.isLoaded, records: wordKnowledge.knownRecords,
+      lists: FrequencyLists.live.version)
+  }
+
+  private struct RowsRequest: Equatable {
+    let isLoaded: Bool
+    let records: [WordKnowledgeRecord]
+    let lists: Int
+  }
 }
 
 struct SavedWordRow: View {
   let headword: String
   let reading: String
-  let date: Date
+  var date: Date?
   var isKnown = false
 
   var body: some View {
@@ -138,9 +172,11 @@ struct SavedWordRow: View {
       if isKnown {
         KnownWordBadge()
       }
-      Text(date, format: .dateTime.month().day())
-        .font(.caption)
-        .foregroundStyle(.secondary)
+      if let date {
+        Text(date, format: .dateTime.month().day())
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
     }
     .contentShape(Rectangle())
     .accessibilityElement(children: .combine)

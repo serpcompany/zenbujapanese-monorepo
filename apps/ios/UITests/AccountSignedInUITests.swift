@@ -41,7 +41,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
         .firstMatch)
     waitFor(find("account.sign-in", in: app))
     tap(find("account.known-words", in: app))
-    waitFor(firstElement(identifiedBy: "known-words.item.", in: app))
+    waitFor(find("result.japan", in: app))
   }
 
   func testDeletingTheAccountSignsInAgainThenLeavesTheAppSignedOut() {
