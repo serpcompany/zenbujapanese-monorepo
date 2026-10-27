@@ -23,14 +23,13 @@ final class WordDetailUITests: ZenbuUITestCase {
     let menu = find("word-detail.more-menu", in: app)
     let example = find("word-detail.example.0", in: app)
     let withTranslation = reveal(example, in: app).label
-    for aid in ["Word Meanings", "Word Meanings", "Furigana"] {
+    for aid in ["Word Meanings", "Word Meanings", "Furigana", "Translations"] {
       let before = picture(of: reveal(example, in: app), in: app)
       flipShowSwitch(aid, from: menu, in: app)
       waitUntil("the example to redraw after \(aid) flipped") {
         Self.pixelsThatDiffer(picture(of: example, in: app), before) > 50
       }
     }
-    flipShowSwitch("Translations", from: menu, in: app)
     waitUntil("the example to drop its translation") {
       withTranslation.hasPrefix(example.label + ", ")
     }

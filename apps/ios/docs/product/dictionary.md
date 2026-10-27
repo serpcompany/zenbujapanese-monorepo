@@ -165,9 +165,10 @@ Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; c
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
 dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
-dictionary that ranks it. While Look Up's results are sorted by a dictionary ([Sorting results](results.md#sorting-results)), that dictionary takes the
-first chip's place. JLPT shows only when it lists the word. At accessibility text sizes, only the
-first dictionary's chip shows, followed by a count of the rest.
+dictionary that ranks it. While Look Up's results are sorted by a dictionary ([Sorting
+results](results.md#sorting-results)), that dictionary takes the first chip's place. JLPT shows only
+when it lists the word. At accessibility text sizes, only the first chip shows, with a count of the
+rest.
 
 Check: core `detail/frequency.test.ts` (which chips show, and in what order) and
 `results/learner.test.ts` (the sorted dictionary's chip first); package `ResultsScreenTests` (the
@@ -184,10 +185,9 @@ Check: core `detail/frequency.test.ts` (the tiers); package `ResultsScreenTests`
 A word the learner knows shows a green **✓ Known** capsule at the right of its headword. Swiping a
 row to the right, or long-pressing it, marks the word known or unknown without opening it.
 
-Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` (by swipe on iPhone and
-iPad, where it reads the row as known; by right-click on the Mac, where it checks the row's menu
-then offers **Mark as Unknown**, since a Mac row doesn't give a test its value); package
-`WordKnowledgeTests`.
+Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` (by swipe on iPhone and iPad,
+reading the row as known; by right-click on the Mac, where the row's menu then offers **Mark as
+Unknown**, as a Mac row gives a test no value); package `WordKnowledgeTests`.
 
 An inflected Japanese query such as `まけたら` or `勉強した` finds its dictionary forms on the
 device. When the query is itself a word (`いって` is 一手), that word stays first.
@@ -209,13 +209,15 @@ Example Sentences, and Kanji rows), `SentenceResultsConformanceTests` (discovere
 `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
-The Example Sentences row opens the query's sentences on a screen titled with the query. Under the
-title, a line says how many it lists: "60 examples", or "The first 100 of more than 100 examples"
-when more match than the 100 it lists. The website's section shows the same line.
+The Example Sentences row opens the query's sentences on a screen titled with the query, whose
+**•••** menu holds the [**Show** switches](reading-aids.md#the-show-menus). Under the title, a line
+says how many it lists: "60 examples", or "The first 100 of more than 100 examples" when more match
+than the 100 it lists, as the website's section does.
 
 Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the website is held to as
 well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
-`SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
+`SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100) and
+`testExampleSentencesMenuHidesAndShowsTheirTranslations`.
 
 Recent lookups, the latest 50, sync to a signed-in learner's devices and are listed while the query
 is empty. A learner can repeat one, remove one by swiping or long-pressing it, or clear them all
@@ -279,9 +281,8 @@ rule for how that class conjugates. A Plain/Polite control switches register whe
 row names the form and shows it with the changed ending highlighted. Selecting a row opens that
 form's screen. It leads with what the form means, then shows the form the way Word Detail shows a
 word (furigana and a pronounce button) with its ending highlighted, and then every Example Sentence
-that uses the complete form, in the same list Word Detail uses. Forms that share a spelling, such as
-potential and passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back
-returns to the form.
+that uses the complete form, in Word Detail's list. Forms that share a spelling, such as potential
+and passive 見られる, say so. A word in the example opens its Word Detail, and Back returns to the form.
 
 Check: the recorded `WordDetailConformanceTests` (each table's forms and their examples); UI
 `SearchUITests.testAVerbOpensItsConjugationsAndAForm`.
@@ -291,8 +292,8 @@ as Image Search does and underlines each, so word boundaries are visible. An inf
 adjective is one word with its endings, such as 見なかった, 見ている, or 静かな, and opens its dictionary entry.
 The words that make up the current entry or the looked-up form are accented. Words the learner
 marked known have no underline, and no furigana when **Hide Furigana on Known Words** is on, but can
-still be selected. Switches in [Reading Aids](reading-aids.md) and in Example Sentences' **•••**
-menu add a short accent-colored meaning under each unknown word and each sentence's English.
+still be selected. [Reading Aids](reading-aids.md) and a word's and Example Sentences' **•••** menus
+add a short accent-colored meaning under each unknown word and each sentence's English.
 
 Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` and
 `linking.test.ts` (which pieces join into one word), `artifact/word-examples.test.ts` (which words
@@ -319,20 +320,20 @@ Check: the recorded `WordDetailConformanceTests` (each pack's row and its detail
 `WordDetailUITests.testAFrequencyRowOpensItsDetails` and `AccountUITests` (one turned off).
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
-meanings as text, with the link to the word's page on zenbujapanese.com, the canonical URL the
-website gives it (`https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/` for 見る). The
-link goes as a web link beside the text, on every device. With Zenbu it opens the word in Zenbu
-([Links from zenbujapanese.com](#links-from-zenbujapanesecom)), else the website. Beside Share is a
-**•••** menu. The menu starts with **Mark as Known** (or **Mark as Unknown**) and **Add to List…**,
-followed by Add Note, Take Photo, Choose Photo, and the **Show** switches. A known word shows the
-same **✓ Known** capsule under its headword. A word counts as unknown until the learner marks it,
-and known words persist on the device, keyed by the dictionary entry's stable identifier.
+meanings as text, with the canonical link to the word's page on zenbujapanese.com
+(`https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/` for 見る). The link goes as a web
+link beside the text, on every device. With Zenbu it opens the word in Zenbu ([Links from
+zenbujapanese.com](#links-from-zenbujapanesecom)), else the website. Beside Share is a **•••** menu,
+starting with **Mark as Known** (or **Mark as Unknown**) and **Add to List…**, followed by Add Note,
+Take Photo, Choose Photo, and the [**Show** switches](reading-aids.md#the-show-menus). A known word
+shows the same **✓ Known** capsule under its headword. A word is unknown until the learner marks it;
+known words persist on the device, keyed by the entry's stable identifier.
 
 Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
-without **Take Photo** on the Mac); package `WordKnowledgeTests`; `WordDetailShareTests` (what
-**Share** sends: the text, and the link, which opens the same word again); UI
-`WordDetailUITests.testShareOffersTheWordsWebLink` (iPhone and iPad: a web link, titled with the
-word).
+without **Take Photo** on the Mac), `testTheMenuTurnsReadingAidsOffForTheExamplesAndAccount`,
+`testAShowSwitchLeavesTheMenuOpenAndAnotherChoiceClosesIt`, `testAKanjisMenuHasTheShowSwitches`
+(**Show**), and `testShareOffersTheWordsWebLink` (iPhone and iPad); package `WordKnowledgeTests` and
+`WordDetailShareTests` (what **Share** sends: the text, and a link that opens the word again).
 
 **Add to List…** opens a sheet listing every word list, with a checkmark on the lists that
 contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,
