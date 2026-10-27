@@ -36,7 +36,14 @@ reports at once, with no reload, and drops any not yet sent; turning it on start
 (`src/error-reports/report-setting.test.ts`). Sentry keeps a report for the project's retention,
 set in Sentry.
 
+## On pages
+
+- [YouTube captions and playback](youtube-captions.md): on a YouTube watch page, the video's
+  Japanese captions, what happens when YouTube refuses them, and following the video. Nothing
+  shows them yet.
+
 ## Not built yet
 
-Looking words up, the word popup on a page, and saving aren't built. The release
-build adds nothing to the pages a learner reads.
+Looking words up, the word popup on a page, and saving aren't built, nor the Video tab and the
+caption on the player that show a YouTube video's lines. The release build draws nothing on the
+pages a learner reads.

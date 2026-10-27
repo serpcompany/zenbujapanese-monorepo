@@ -1,3 +1,4 @@
+import { serveCaptions } from '../captions/serve-captions'
 import {
   receiveErrorReport,
   reportFailure,
@@ -25,6 +26,8 @@ chrome.runtime.onMessage.addListener(
     reportFailure
   })
 )
+
+serveCaptions()
 
 chrome.runtime.onMessage.addListener(
   routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
