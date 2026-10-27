@@ -7,9 +7,9 @@ Signing in is passwordless: a code we email, and Apple and Google where the site
 The pages are open only where the environment names an account service: locally, on staging, and
 in production (#798; Configuration, below). The pages call the service from
 the learner's browser, never from the Worker ([`web.md`](../../../../docs/agents/web.md), Account
-pages). A subscriber also sees, and changes, what the account syncs, on the pages
-[What an account syncs](synced-data.md) describes, linked from Your account's Your synced data,
-and from a word's page ([Dictionary](dictionary.md#word-page), Toolbar, and Lists and Notes).
+pages). A subscriber also sees and changes what the account syncs ([What an account
+syncs](synced-data.md)), and marks words Known, lists them, and writes notes from a word's page,
+where anyone else gets the get-the-app prompt ([Dictionary](dictionary.md#word-page), Toolbar).
 
 Abbreviations: paths are under `apps/web/`. **Ways tests** are
 `src/components/account/sign-in-ways.interaction.test.tsx`. **Account spec** is

@@ -231,6 +231,12 @@ describe('word pages and kanji details', () => {
     expect(await getKanjiDetails('項')).toBeNull()
   })
 
+  test('a word page names its Language Reference ID, which learner data keys it by', async () => {
+    const page = await getWordPage(1546640)
+    expect(page?.languageReferenceId).toBe(iruRows?.entry.id)
+    expect(page?.languageReferenceId).toMatch(/^[0-9a-f]{32}$/)
+  })
+
   test('a word’s kanji carry their details, when the dictionary has them', async () => {
     const page = await getWordPage(1546750)
     expect(

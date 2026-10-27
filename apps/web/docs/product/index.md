@@ -8,9 +8,10 @@ which lists features the website must have but doesn't yet, with the check each 
 The website is a public mirror of the app's dictionary. Its pages show what the app's Look Up tab
 shows for the same word or kanji, laid out as the #462 designs chose: stock shadcn components in
 one column, with sections in the app's order. The site has account pages ([Account
-pages](account.md)), open where an environment names an account service (staging and production),
-but it doesn't sync, so actions that keep learner data (lists, notes, known words,
-photos) still open a prompt to get the app (#468).
+pages](account.md)), open where an environment names an account service (staging and production).
+Signed in there, a subscriber marks words and kanji Known, adds them to lists, and writes notes on
+their Zenbu account from a word page or a kanji's details (#934); for anyone else those actions,
+and photos for everyone, open a prompt to get the app.
 
 ## Pages
 

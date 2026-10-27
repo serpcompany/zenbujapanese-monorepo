@@ -2,6 +2,8 @@ import type { KanjiSectionKind } from '@zenbu/dictionary-core/detail/kanji'
 import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { syncedTextIn } from '@/lib/account/learner-text'
+import { kanjiItem } from '@/lib/account/saved-item'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 import { strokeLabelsIn } from '@/lib/dictionary/screen-text'
 import { kanjiSearchPath } from '@/lib/dictionary/urls'
@@ -104,7 +106,15 @@ function KanjiDetailsPart({
       )
     case 'lists':
     case 'notes':
-      return <LearnerPrompt kind={kind} locale={locale} text={getDictionary(locale).learner} />
+      return (
+        <LearnerPrompt
+          kind={kind}
+          item={kanjiItem(kanji)}
+          locale={locale}
+          text={getDictionary(locale).learner}
+          account={syncedTextIn(locale)}
+        />
+      )
     case 'words':
       return (
         <ul className="flex flex-col divide-y">
@@ -165,8 +175,10 @@ export function KanjiDetails({ kanji, locale }: { kanji: KanjiDetailsData; local
             shareText={kanji.shareText}
             path={localizedPath(kanjiSearchPath(kanji.character), locale)}
             name={kanji.character}
+            item={kanjiItem(kanji)}
             locale={locale}
             text={t.learner}
+            account={syncedTextIn(locale)}
           />
         </div>
       </div>

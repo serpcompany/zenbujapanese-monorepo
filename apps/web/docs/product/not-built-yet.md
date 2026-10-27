@@ -41,7 +41,8 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 
 **Hide Furigana on Known Words.** The Reading Aids setting the website doesn't offer yet: known
 words in examples lose their furigana, as in the app. It needs the learner's known words, which the
-website doesn't have yet (#934); the other Reading Aids are built ([Site-wide](site-wide.md)).
+website's pages don't read for their examples yet (#934); the other Reading Aids are built
+([Site-wide](site-wide.md)).
 
 - App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details;
   `ReadingAidPreferences.swift` (`hidesFuriganaOnKnownWords`, off by default) and

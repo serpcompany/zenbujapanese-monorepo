@@ -19,7 +19,7 @@ describe("a kanji's details offer what the app's Kanji Detail has beside them", 
     expect(parts).toEqual(['Readings', 'Elements', 'Lists', 'Notes', 'Words'])
   })
 
-  test('Lists and Notes offer the app, as on a word page', () => {
+  test("Lists and Notes offer the app's actions, as on a word page", () => {
     const part = (title: string) =>
       visibleText(html.match(new RegExp(`<h3[^>]*>${title}</h3>([\\s\\S]*?)</section>`))?.[1] ?? '')
     expect(part('Lists')).toBe('Add to List Save it to your lists in the Zenbu app. Add to List')
