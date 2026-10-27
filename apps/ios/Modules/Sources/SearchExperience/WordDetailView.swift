@@ -304,10 +304,9 @@ private struct WordHeroView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       headline
-      if wordKnowledge.isKnown(entry.id) {
-        KnownWordBadge(announces: true)
-          .padding(.bottom, 4)
-      }
+      WordStatusTag(wordKnowledge.status(entry.id), announces: true)?
+        .padding(.bottom, 4)
+        .accessibilityIdentifier("word-detail.status")
     }
     .encounterMediaViewer(
       $presentedMedia, encounterMedia: encounterMedia, removeEncounterMedia: removeEncounterMedia)

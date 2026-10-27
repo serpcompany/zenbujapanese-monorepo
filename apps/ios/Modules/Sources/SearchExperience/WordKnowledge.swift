@@ -2,26 +2,34 @@ import Foundation
 import Observation
 
 enum WordKnowledgeStatus: Codable, Hashable, Sendable {
-  case known
   case unknown
+  case learning
+  case known
   case unrecognized(String)
 
-  init(from decoder: Decoder) throws {
-    let value = try decoder.singleValueContainer().decode(String.self)
-    switch value {
-    case "known": self = .known
-    case "unknown": self = .unknown
-    default: self = .unrecognized(value)
+  static let chosen: [WordKnowledgeStatus] = [.unknown, .learning, .known]
+  static let listed: [WordKnowledgeStatus] = [.known, .learning]
+
+  init(stored value: String) {
+    self = Self.chosen.first { $0.stored == value } ?? .unrecognized(value)
+  }
+
+  var stored: String {
+    switch self {
+    case .unknown: "unknown"
+    case .learning: "learning"
+    case .known: "known"
+    case .unrecognized(let value): value
     }
+  }
+
+  init(from decoder: Decoder) throws {
+    self.init(stored: try decoder.singleValueContainer().decode(String.self))
   }
 
   func encode(to encoder: Encoder) throws {
     var container = encoder.singleValueContainer()
-    switch self {
-    case .known: try container.encode("known")
-    case .unknown: try container.encode("unknown")
-    case .unrecognized(let value): try container.encode(value)
-    }
+    try container.encode(stored)
   }
 }
 
@@ -52,7 +60,7 @@ final class WordKnowledge: LocalFileStore {
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
   var isReadOnly: Bool { readOnlyReason != nil }
   private(set) var records: [String: WordKnowledgeRecord] = [:]
-  private(set) var knownRecords: [WordKnowledgeRecord] = []
+  private var listed: [WordKnowledgeStatus: [WordKnowledgeRecord]] = [:]
   @ObservationIgnored private let writer: WordKnowledgeWriter
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
@@ -65,16 +73,25 @@ final class WordKnowledge: LocalFileStore {
       let (loaded, needsRewrite, readOnlyReason) = await writer.load()
       records = loaded
       self.readOnlyReason = readOnlyReason
-      knownRecords = records.values
-        .filter { $0.status == .known }
-        .sorted { $0.updatedAt > $1.updatedAt }
+      listed = Dictionary(
+        grouping: records.values.filter { WordKnowledgeStatus.listed.contains($0.status) },
+        by: \.status
+      ).mapValues { $0.sorted { $0.updatedAt > $1.updatedAt } }
       isLoaded = true
       if needsRewrite { persist() }
     }
   }
 
   func status(_ id: LanguageReferenceID) -> WordKnowledgeStatus {
-    records[id.rawValue]?.status ?? .unknown
+    status(storedID: id.rawValue)
+  }
+
+  func status(_ item: SavedItem) -> WordKnowledgeStatus {
+    status(storedID: item.storedID)
+  }
+
+  func status(storedID: String) -> WordKnowledgeStatus {
+    records[storedID]?.status ?? .unknown
   }
 
   func isKnown(_ id: LanguageReferenceID) -> Bool {
@@ -89,7 +106,15 @@ final class WordKnowledge: LocalFileStore {
     records[storedID]?.status == .known
   }
 
-  var knownCount: Int { knownRecords.count }
+  func marked(_ status: WordKnowledgeStatus) -> [WordKnowledgeRecord] {
+    listed[status] ?? []
+  }
+
+  func ids(_ status: WordKnowledgeStatus, among entries: [DictionaryEntry]) -> [String] {
+    entries.map(\.id).filter { self.status($0) == status }.map(\.rawValue)
+  }
+
+  var knownRecords: [WordKnowledgeRecord] { marked(.known) }
 
   func setStatus(_ status: WordKnowledgeStatus, for entry: DictionaryEntry) {
     setStatus(status, id: entry.id, headword: entry.headword, reading: entry.reading)
@@ -106,26 +131,23 @@ final class WordKnowledge: LocalFileStore {
     setStatus(status, storedID: id.rawValue, headword: headword, reading: reading)
   }
 
-  func toggleKnown(_ item: SavedItem) {
-    setStatus(
-      isKnown(item) ? .unknown : .known, storedID: item.storedID, headword: item.headword,
-      reading: item.reading)
+  func setStatus(_ status: WordKnowledgeStatus, for item: SavedItem) {
+    setStatus(status, storedID: item.storedID, headword: item.headword, reading: item.reading)
   }
 
   private func setStatus(
     _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String
   ) {
+    let previous = records[storedID]?.status ?? .unknown
     guard store(status, storedID: storedID, headword: headword, reading: reading) else { return }
     changeObserver?(
       .known(
-        KnownWordChange(
-          storedID: storedID, headword: headword, reading: reading, known: status == .known)))
+        KnownWordChange(storedID: storedID, headword: headword, reading: reading, status: status),
+        previous: previous))
   }
 
   func applySynced(_ word: KnownWordChange) {
-    store(
-      word.known ? .known : .unknown, storedID: word.storedID, headword: word.headword,
-      reading: word.reading)
+    store(word.status, storedID: word.storedID, headword: word.headword, reading: word.reading)
   }
 
   @discardableResult
@@ -141,8 +163,10 @@ final class WordKnowledge: LocalFileStore {
       updatedAt: Date()
     )
     records[storedID] = record
-    knownRecords.removeAll { $0.entryID == storedID }
-    if status == .known { knownRecords.insert(record, at: 0) }
+    for shown in listed.keys { listed[shown]?.removeAll { $0.entryID == storedID } }
+    if WordKnowledgeStatus.listed.contains(status) {
+      listed[status, default: []].insert(record, at: 0)
+    }
     persist()
     return true
   }

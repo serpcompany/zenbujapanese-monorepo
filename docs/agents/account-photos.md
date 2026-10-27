@@ -30,16 +30,16 @@ they take, and a stream cut partway is logged (`a photo download was cut`). The 
 both routes from its own origins (CORS).
 
 **Who may.** Uploading needs `photos:write` or `profile`; downloading `photos:read`, or `profile`
-for the profile photo's file alone. An app with only `profile`, such as the website, holds at
+for the profile photo's file alone. An app without `photos:write`, such as the website, holds at
 most two files it uploaded itself (`photo_files.profile_upload_at`), the profile photo and the one
 replacing it, whatever other apps upload; a Media Library photo's file counts once it uploads the
-same image. It's answered as though the library held nothing, `201` below two and `409` at two,
-and its upload always puts the bytes in R2 (an image the account holds moves to the new key), so
-it learns nothing of the library, even from how long an upload takes. It sets the profile photo
-only to a file it uploaded, a library photo's included: it has the image. A file stops counting
-when the profile photo moves off it, or a day after its upload if it never became the profile
-photo. With `ACCOUNT_API_CLOUD_ACCESS=subscription`, both routes need what sync needs: an account
-without it gets `402 subscription_required` before the service reads or keeps a byte
+same image. It's answered as though the library held nothing, `201` below two and `409` at two, and
+its upload always puts the bytes in R2 (an image the account holds moves to the new key), so it
+learns nothing of the library, even from how long an upload takes. Without `photos:read`, it sets
+the profile photo only to a file it uploaded, a library photo's included: it has the image. A file
+stops counting when the profile photo moves off it, or a day after its upload if it never became the
+profile photo. With `ACCOUNT_API_CLOUD_ACCESS=subscription`, both routes need what sync needs: an
+account without it gets `402 subscription_required` before the service reads or keeps a byte
 ([`account-billing.md`](account-billing.md), The gate).
 
 The service refuses bytes whose SHA-256 isn't the ID (`400 photo_digest_mismatch`), bytes that
@@ -58,7 +58,7 @@ would change the hash the photo is named by.
   of a few MB puts a full library near 3 GB. An emptied photo holds its place for its 30 days:
   the service can't tell whether a device has a word queued that brings it back, so it never
   deletes one early. Its `delete` comes marked `emptied: true`, and the one 30 days on comes plain,
-  so a device knows when a place is freed. An app with only `profile` isn't held to the 1,000, only
+  so a device knows when a place is freed. An app without `photos:write` isn't held to the 1,000, only
   to its own two, so the library's count tells it nothing.
 - **500 words a photo** (`photo_full`), as a list holds 5,000: a photo is on a few words.
 - **300 requests a minute** from each account and app to `/v1/photos`, so a first upload of a full
@@ -93,7 +93,7 @@ so it outlives the account it came from:
   An emptied photo keeps its file until it's deleted, 30 days on.
   A file no photo names 24 hours after its upload goes the same way, in the hourly housekeeping
   (`src/db/housekeeping.ts`), which works through at most 10,000 files, and 10,000 photos of each
-  kind, an hour, and stops counting a file an app with only `profile` uploaded a day ago and never
+  kind, an hour, and stops counting a file an app without `photos:write` uploaded a day ago and never
   made the profile photo.
 - **Deleting an account** queues its whole folder, `<account ID>/`, in the transaction that
   deletes it, so every key under it goes: one an upload is saving at the same moment, or a file a
@@ -160,7 +160,7 @@ adapter: downloads whose clients leave before the answer starts give their slots
 rules, and show a file swept from storage after the sync that deleted its photo, an emptied photo
 keeping its file, the hour's housekeeping emptying and deleting a photo and sweeping its file, a
 file shared by the profile photo and a Media Library photo kept while either names it, an unnamed
-file released after 24 hours, housekeeping past one batch, and an app with only `profile` given the
+file released after 24 hours, housekeeping past one batch, and an app without `photos:write` given the
 same answers and R2 puts whether or not the library holds an image, kept to two files of its own
 whatever other apps upload, setting a library photo once it uploads the image, and freed of a file
 the profile photo moved off or it never set. `src/http/photo-bounds.test.ts` shows a device away

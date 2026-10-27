@@ -200,7 +200,7 @@ private let textThatScales = [
       "Apple Translation", "Translate Player Captions With", "Translation Language", "English", "YouTube",
       "Show Furigana", "Show Word Meanings", "Hide Furigana on Known Words",
     ]), on: ["Reading Aids"], because: Why.scales),
-  allow(.dynamicType, .labels(["Lists", "1", "Translations", "0"]), on: ["Account"], because: Why.scales),
+  allow(.dynamicType, .labels(["Learning", "Lists", "1", "Translations", "0"]), on: ["Account"], because: Why.scales),
   allow(.dynamicType, .label("Send Crash Reports"), on: ["Account, its about rows"], because: Why.scales),
   allow(
     .textClipped, .label("Send Crash Reports"), on: ["Account, its about rows"], touch, [.standard],
@@ -218,10 +218,16 @@ private let textThatScales = [
       "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history, and bookmarked translations, on all your devices",
     ]),
     on: ["Account"], because: Why.scales),
-  allow(.textClipped, .label("Lists"), on: ["Account"], touch, [.standard], because: Why.scales),
+  allow(.textClipped, .labels(["Learning", "Lists"]), on: ["Account"], touch, [.standard], because: Why.scales),
   allow(
-    .textClipped, .labels(["Lists", "Translations"]), on: ["Account's rows, alone"], [.phone], [.largest],
+    .textClipped, .labels(["Media Library", "Known Words", "Learning"]), on: ["Account's library rows, alone"], [.phone],
+    [.largest], because: Why.scales),
+  allow(
+    .textClipped, .labels(["Lists", "Translations"]), on: ["Account's collection rows, alone"], [.phone], [.largest],
     because: Why.scales),
+  allow(
+    .textClipped, .labels(["Reading Aids", "Frequency Dictionaries"]), on: ["Account's settings rows, alone"], [.phone],
+    [.largest], because: Why.scales),
   allow(
     .dynamicType,
     .label(

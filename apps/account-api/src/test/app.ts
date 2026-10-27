@@ -30,7 +30,8 @@ export const standIns: AppOptions = {
   accounts: {
     profile: async () => null,
     updateProfile: async () => null,
-    sync: async () => ({ status: 'no_account' })
+    sync: async () => ({ status: 'no_account' }),
+    readKind: async () => ({ status: 'no_account' })
   },
   deleteAccount: async () => ({ status: 'no_account', appStoreSubscriptionContinues: false }),
   billing: createBilling(

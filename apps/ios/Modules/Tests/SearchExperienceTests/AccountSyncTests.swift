@@ -25,11 +25,15 @@ struct AccountSyncTests {
     #expect(sent.cursor == nil)
     #expect(
       sent.mutations.map { "\($0.entity) \($0.operation) \($0.entityId)" } == [
-        "knownWord mark \(Fixture.taberu)", "list create \(favorites)", "list create \(animeID)",
+        "knownWord set \(Fixture.taberu)", "list create \(favorites)", "list create \(animeID)",
         "listWord add \(animeID)/\(Fixture.miru)",
       ])
     #expect(sent.mutations.allSatisfy { $0.baseVersion == 0 })
     try #require(sent.mutations.count == 4)
+    #expect(
+      sent.mutations[0].fields == [
+        "state": .string("known"), "headword": .string("食べる"), "reading": .string("たべる"),
+      ])
     #expect(sent.mutations[2].fields == ["name": .string("Anime"), "position": .number(1)])
     #expect(sent.mutations[3].fields == ["headword": .string("見る"), "reading": .string("みる")])
     #expect(fixture.sync.state.queue.isEmpty)
@@ -51,7 +55,8 @@ struct AccountSyncTests {
     fixture.markKnown(Fixture.miru, headword: "見る")
     await #expect(throws: AccountServiceError.unreachable) { try await fixture.syncNow() }
     let queued = fixture.sync.state.queue
-    #expect(queued.map(\.operation) == ["clear", "mark"])
+    #expect(queued.map(\.operation) == ["set", "set"])
+    #expect(queued.map { $0.fields?["state"] } == [.string("unknown"), .string("known")])
     #expect(queued.map(\.baseVersion) == [1, 0])
 
     await fixture.launch()
@@ -127,7 +132,7 @@ struct AccountSyncTests {
     try await fixture.syncNow()
 
     let sent = fixture.server.requests(to: "POST /v1/sync").dropFirst().map(\.sync.mutations)
-    #expect(sent.map { $0.map(\.operation) } == [["mark"], ["clear"]])
+    #expect(sent.map { $0.map(\.operation) } == [["set"], ["set"]])
     #expect(sent.map { $0.map(\.baseVersion) } == [[0], [1]])
     #expect(!fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
     #expect(fixture.sync.state.versions["knownWord:\(Fixture.taberu)"] == 2)
@@ -285,7 +290,7 @@ struct AccountSyncTests {
     #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
     #expect(fixture.wordLists.lists.count == 1)
     fixture.markKnown(Fixture.miru)
-    #expect(fixture.queuedOperations.last == "knownWord mark \(Fixture.miru)")
+    #expect(fixture.queuedOperations.last == "knownWord set \(Fixture.miru)")
 
     await fixture.launch()
     #expect(fixture.sync.account == nil)

@@ -169,5 +169,6 @@ and the email typed while signed out.
   one query is one entity on every device, the service checks the ID, and a removed search keeps
   only an ID that no one with the database, or a backup, can turn back into the query.
 
-Only the iOS app has the scopes for notes, photos, settings, and searches
-([`account-clients.md`](account-clients.md), Your app). The profile photo goes with `profile`.
+The iOS app and the website have the scopes for notes, settings, and searches, and read photos,
+which only the app changes ([`account-clients.md`](account-clients.md), Your app). The profile
+photo goes with `profile`.
