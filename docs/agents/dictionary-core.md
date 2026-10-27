@@ -434,6 +434,9 @@ The core answers as the Swift it replaced did, which the suites pin.
 `Dictionary` (`artifact/dictionary.ts`) answers the service's requests
 ([`dictionary-api.md`](dictionary-api.md), Routes). Its responses are plain JSON, with maps as
 records keyed by JMdict entry number. `retired()` answers the release's `RetiredEntries.json`.
+`pages()` (`artifact/pages.ts`) answers which of the Language Reference IDs and kanji asked for have
+a page, with each word's JMdict entry number and slug, so a client that keeps a word by its ID can
+link to its page; an ID a release dropped has none.
 
 - `attachments` names each bundled database opened with the artifact, its file in the app's
   Resources, and the `artifact_schema` (and `pack_id`) its `metadata` table must record. The packs

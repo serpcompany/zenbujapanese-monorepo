@@ -20,8 +20,9 @@ import type {
   WordResponse,
   WordSitemap
 } from './dictionary'
+import type { PagesResponse } from './pages'
 
-export const dictionaryContract = 8
+export const dictionaryContract = 9
 
 export const firstDictionaryContract = 1
 
@@ -42,6 +43,7 @@ export interface DictionaryContract {
   wordSitemaps: WordSitemap[]
   sitemapWords: SitemapWord[]
   retired: Record<string, number | null>
+  pages: PagesResponse
   browseSummary: BrowseSummaryResponse
   kanaIndex: KanaIndexResponse
   kanaInitial: KanaInitialResponse

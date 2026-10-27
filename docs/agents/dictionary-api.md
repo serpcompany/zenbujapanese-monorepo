@@ -109,6 +109,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
+| `GET /v1/pages?words=&kanji=` | Which of the Language Reference IDs in `words` and the kanji in `kanji`, comma-separated, at most 100 of each, have pages: each word's `ent_seq` and slug, and each kanji the dictionary has (`pagesAsked`, `readPages`). The website's pages of what an account syncs link to them. |
 | `GET /v1/radicals` | The radical file the website's radical panel reads (`checkedRadicalFile`). |
 | `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers and refuses (`isSegmentableText`), for Kanji to Furigana. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
