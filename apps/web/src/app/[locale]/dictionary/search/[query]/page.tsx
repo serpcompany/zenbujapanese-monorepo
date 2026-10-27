@@ -1,14 +1,15 @@
 import { isASCII } from '@zenbu/dictionary-core/search/query'
+import { SourceCredits } from '@zenbu/ui/dictionary/source-credits'
 import type { Metadata } from 'next'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { RecordSearch } from '@/components/dictionary/record-search'
 import { SearchForm } from '@/components/dictionary/search-form'
 import { SearchResults } from '@/components/dictionary/search-results'
-import { SourceCredits } from '@/components/dictionary/source-credits'
 import { getSearchExamples, type SearchData, searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { startedFromRadicals } from '@/lib/dictionary/radical-input'
 import { isIndexable } from '@/lib/dictionary/results/links'
+import { sourceCreditsIn } from '@/lib/dictionary/screen-text'
 import { searchSnippet, showsExampleSentences } from '@/lib/dictionary/search-snippet'
 import { pageSources, withShownData } from '@/lib/dictionary/sources'
 import { searchPath } from '@/lib/dictionary/urls'
@@ -73,11 +74,13 @@ export default async function SearchResultsPage({ params, searchParams }: Props)
       />
       {data.state === 'results' ? (
         <SourceCredits
-          locale={locale}
-          sources={withShownData(pageSources.search, {
-            kanji: data.kanji?.details ? [data.kanji.details] : [],
-            examples: examples !== null
-          })}
+          {...sourceCreditsIn(
+            withShownData(pageSources.search, {
+              kanji: data.kanji?.details ? [data.kanji.details] : [],
+              examples: examples !== null
+            }),
+            locale
+          )}
         />
       ) : null}
     </main>

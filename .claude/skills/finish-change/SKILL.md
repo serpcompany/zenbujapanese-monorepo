@@ -61,7 +61,7 @@ seen the work. Give it the changed pages' paths, `docs/agents/web.md` (UI compon
 `verify-web` skill, and ask it to run the site and screenshot each changed page at desktop and
 phone widths, in light and dark, next to `/products/` and a browse page, and to find:
 
-- a hand-rolled element where a stock shadcn component exists (`apps/web/src/components/ui/`, or
+- a hand-rolled element where a stock shadcn component exists (`packages/ui/src/components/`, or
   one the shadcn CLI adds);
 - a `className` on a stock component that changes its size, padding, radius, border, colour, type
   size, or density, and any colour literal or arbitrary Tailwind value;
@@ -77,8 +77,8 @@ the screenshot. Fix what holds up, then repeat from step 1 until a review finds 
 - The product docs (`apps/*/docs/product/`) for any behavior change, with its check.
 - The area's doc that `AGENTS.md` routes to, for how it works.
 - The area's quality row when its tests, CI, or docs changed: `docs/quality.md`, or
-  `docs/quality-ios.md`, `docs/quality-ios-account.md`, and `docs/quality-web.md` for the app, its
-  Account tab, and the website.
+  `docs/quality-ios.md`, `docs/quality-ios-account.md`, `docs/quality-web.md`, and
+  `docs/quality-extension.md` for the app, its Account tab, the website, and the extension.
 - `docs/tech-debt.md`, `docs/tech-debt-web.md` for the website, or `docs/harness-debt.md` for
   checks, delivery, and the harness: add debt the change knowingly leaves, and remove what it paid off.
 - An ADR when `docs/agents/domain.md` says one is warranted.

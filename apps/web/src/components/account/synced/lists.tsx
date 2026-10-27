@@ -8,12 +8,18 @@ import {
   wordsOfList
 } from '@zenbu/account-rules/account-views'
 import { listName } from '@zenbu/account-rules/lists'
+import { Button } from '@zenbu/ui/components/button'
+import { Input } from '@zenbu/ui/components/input'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle
+} from '@zenbu/ui/components/item'
+import { Label } from '@zenbu/ui/components/label'
 import Link from 'next/link'
 import { type FormEvent, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
-import { Label } from '@/components/ui/label'
 import { listPath, textIn } from '@/lib/account/synced-views'
 import { countOf, fill } from '@/lib/i18n/format'
 import { FormMessage } from '../form-message'

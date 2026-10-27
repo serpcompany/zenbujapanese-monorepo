@@ -2,10 +2,16 @@
 
 import { recentFirst } from '@zenbu/account-rules/account-views'
 import { hasSearchPath, searchPath } from '@zenbu/dictionary-core/detail/links'
+import { Button } from '@zenbu/ui/components/button'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle
+} from '@zenbu/ui/components/item'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { askForSearch } from '@/lib/account/asked-search'
 import { shownMoment, textIn } from '@/lib/account/synced-views'
 import { countOf, fill } from '@/lib/i18n/format'

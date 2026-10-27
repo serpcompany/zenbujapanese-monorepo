@@ -287,7 +287,7 @@ struct WordListView: View {
   private func row(_ word: WordListMembership) -> some View {
     let label = SavedWordRow(
       headword: word.headword, reading: word.reading, date: word.addedAt,
-      isKnown: wordKnowledge.isKnown(storedID: word.entryID))
+      status: wordKnowledge.status(storedID: word.entryID))
     Group {
       if isSelecting {
         label

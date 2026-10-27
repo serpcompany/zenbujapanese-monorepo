@@ -46,9 +46,9 @@ with the account service and Apple's sheet stood in, and the session kept in the
 relaunch, which only the app can do: a package test process has no keychain access group). A real Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
 
 **The first sync.** When this phone signs in to an account other than the one it last signed out
-of, the app sends the account everything on the phone: every known word, every list, every list's
-words, Recent's videos, bookmarked sentences, notes, photos with their words (each photo's file
-first), the profile photo, each setting changed from its standard, and the frequency dictionaries
+of, the app sends the account everything on the phone: every word Known or Learning, every list,
+every list's words, Recent's videos, bookmarked sentences, notes, photos with their words (each
+photo's file first), the profile photo, each setting changed from its standard, and the frequency dictionaries
 chosen if they aren't the standard ones, then brings down everything the account already has.
 Recent searches go up once the account's first answer brings the key their IDs are made with, and
 a search removed before then is removed from the account too. The first sync gathers all of it,
@@ -96,7 +96,7 @@ and `AccountSyncPhotoTests` (a `402` download); UI
 **When the same thing changed elsewhere.** Each kind of change follows the account's rule
 ([`docs/agents/account-client-rules.md`](../../../../docs/agents/account-client-rules.md)):
 
-- A known word marked or un-marked on another device first shows as it is there, for the learner
+- A word's state changed on another device first shows as it is there, for the learner
   to change again: an un-mark made before this phone saw a newer mark shows the word Known again.
 - A list renamed or moved elsewhere first keeps the other name or place.
 - A list deleted anywhere is deleted here with its words, whatever was done to it since. The one

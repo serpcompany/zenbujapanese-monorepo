@@ -9,9 +9,9 @@ one. This doc holds what is this repository's own: its rules' scope, its layers,
 
 Before opening a pull request, run `pnpm check` from the repository root: `pnpm verify`, then each
 package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `apps/account-api`,
-`packages/account-rules`, `packages/dictionary-core`, `packages/node-service`, `tools/checks`),
-one after another. A change to
-`language-data` also runs the pipeline's tests, and one to its sources, reports, or tools the data
+`apps/extension`, `packages/account-rules`, `packages/dictionary-core`, `packages/node-service`,
+`packages/ui`, `tools/checks`), one after another. A change to `language-data` also runs the pipeline's tests,
+and one to its sources, reports, or tools the data
 tools' contract tests ([`language-data/README.md`](../../language-data/README.md)). A change is done when these pass and
 the docs say what changed: the product docs for a behavior (in the same pull request), the area's
 doc for how it works. A website change also passes `pnpm test:e2e` in `apps/web`, with a browser test for any
@@ -103,9 +103,10 @@ to, with each part's rules in `dependencies.parts` in [`verify.json`](../../veri
 - Production code never imports a test or test support (`apps/web/src/test/`,
   `apps/dictionary-api/src/conformance/`, `packages/node-service/src/test/`), or a devDependency for
   more than its types.
-- Every module in `apps/web`, `apps/dictionary-api`, `apps/account-api`, and `tools/checks` is
-  reachable from an entry point: a route or `worker.ts`, each service's server (and the dictionary
-  service's workers), the maintenance report. Code only tests use lives beside them.
+- Every module in `apps/web`, `apps/dictionary-api`, `apps/account-api`, `apps/extension`, and
+  `tools/checks` is reachable from an entry point: a route or `worker.ts`, each service's server
+  (and the dictionary service's workers), the extension's pages, workers, and test content
+  script, the maintenance report. Code only tests use lives beside them.
 - The core imports no Node built-in, package, app, or tool; apps reach a shared package by its
   name; no app imports another; and what the Node services share imports none of them.
 - The website's layers by resolved path, and nothing `worker.ts` reaches loads Next.js or React.

@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,7 +5,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator
-} from '@/components/ui/breadcrumb'
+} from '@zenbu/ui/components/breadcrumb'
+import Link from 'next/link'
 import type { LinkTo } from '@/lib/site'
 
 export function SectionBreadcrumbs({

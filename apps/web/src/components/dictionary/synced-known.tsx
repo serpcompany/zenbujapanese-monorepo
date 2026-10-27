@@ -1,7 +1,7 @@
 'use client'
 
-import { Fill } from '@/components/fill'
-import { Button } from '@/components/ui/button'
+import { Button } from '@zenbu/ui/components/button'
+import { Fill } from '@zenbu/ui/lib/fill'
 import { isKnown, markKnown } from '@/lib/account/learner-items'
 import type { SyncedPartProps } from './synced-props'
 

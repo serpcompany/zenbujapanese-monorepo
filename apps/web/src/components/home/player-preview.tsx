@@ -1,3 +1,4 @@
+import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import {
   BatteryFullIcon,
   EllipsisIcon,
@@ -8,7 +9,6 @@ import {
   SkipForwardIcon,
   WifiIcon
 } from 'lucide-react'
-import { RubyText } from '@/components/dictionary/ruby-text'
 import { appScreenText, playerPreview } from '@/lib/home-previews'
 import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { fill } from '@/lib/i18n/format'

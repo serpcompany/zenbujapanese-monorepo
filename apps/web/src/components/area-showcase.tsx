@@ -1,9 +1,9 @@
 'use client'
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@zenbu/ui/components/tabs'
 import { CheckIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { type ShowcaseMedia, ShowcaseStage, type StageText } from '@/components/showcase-stage'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 
 export interface ShowcaseArea {

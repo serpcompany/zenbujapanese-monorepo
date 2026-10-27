@@ -1,6 +1,3 @@
-import Link from 'next/link'
-import { Fragment } from 'react'
-import { JsonLd } from '@/components/json-ld'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +5,10 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator
-} from '@/components/ui/breadcrumb'
+} from '@zenbu/ui/components/breadcrumb'
+import Link from 'next/link'
+import { Fragment } from 'react'
+import { JsonLd } from '@/components/json-ld'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { localizedPath } from '@/lib/i18n/paths'

@@ -73,7 +73,7 @@ describe('signed in with a subscription, Known', () => {
     })
   })
 
-  test('a word another app set Learning is not Known, as in the app, and Mark as Known makes it Known', async () => {
+  test('a word another app set Learning is not Known, as the website shows only Known, and Mark as Known makes it Known', async () => {
     const standIn = standingIn()
     standIn.holds('knownWord', word.id, {
       itemId: word.id,

@@ -1,9 +1,9 @@
 'use client'
 
 import { isMarkedKnown, wordsOfList } from '@zenbu/account-rules/account-views'
+import { Badge } from '@zenbu/ui/components/badge'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { accountPages } from '@/lib/account/pages'
 import { matchesTyped, textIn } from '@/lib/account/synced-views'
 import { countOf } from '@/lib/i18n/format'

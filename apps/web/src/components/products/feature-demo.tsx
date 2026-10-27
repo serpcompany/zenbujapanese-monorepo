@@ -1,8 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { AppScreenshot } from '@/components/app-screenshot'
-import { productSymbols } from '@/components/products/product-symbols'
 import {
   Carousel,
   type CarouselApi,
@@ -10,7 +7,10 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious
-} from '@/components/ui/carousel'
+} from '@zenbu/ui/components/carousel'
+import { useEffect, useState } from 'react'
+import { AppScreenshot } from '@/components/app-screenshot'
+import { productSymbols } from '@/components/products/product-symbols'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'
 import type { ProductDemo } from '@/lib/products/product-page'

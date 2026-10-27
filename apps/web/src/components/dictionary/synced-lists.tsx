@@ -1,12 +1,12 @@
 'use client'
 
+import { Button } from '@zenbu/ui/components/button'
+import { Checkbox } from '@zenbu/ui/components/checkbox'
+import { Input } from '@zenbu/ui/components/input'
+import { Label } from '@zenbu/ui/components/label'
 import { PlusIcon } from 'lucide-react'
 import Link from 'next/link'
 import { type FormEvent, useEffect, useId, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   listHolds,
   listPage,

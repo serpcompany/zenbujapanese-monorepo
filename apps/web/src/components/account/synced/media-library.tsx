@@ -1,9 +1,9 @@
 'use client'
 
 import { recentFirst, type Shown, wordsOfPhoto } from '@zenbu/account-rules/account-views'
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@zenbu/ui/components/item'
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import type { Result } from '@/lib/account/client'
 import { photoQueue } from '@/lib/account/photo-queue'
 import { shownMoment, textIn } from '@/lib/account/synced-views'

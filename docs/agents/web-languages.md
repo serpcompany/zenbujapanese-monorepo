@@ -45,7 +45,7 @@ command from `apps/web`.
   browser's JavaScript even when the browser runs none of it, and the `Web` workflow fails when a
   page's JavaScript holds either dictionary ([`ci.md`](ci.md), Web).
 - **Templates, not fragments:** `fill` and `countOf` in `src/lib/i18n/format.ts` (plurals keyed
-  by CLDR category, numbers and dates through `Intl`), and `<Fill>` (`src/components/fill.tsx`)
+  by CLDR category, numbers and dates through `Intl`), and `<Fill>` (`packages/ui/src/lib/fill.tsx`)
   for a sentence with a link in it.
 - **Links** go through `localizedPath(path, locale)` (`src/lib/i18n/paths.ts`), which adds `/ja`
   to a page and leaves files, `#`, external URLs, `/api`, and `/_next` alone. Data modules keep
@@ -66,7 +66,8 @@ command from `apps/web`.
 - **Checks:** `src/lib/i18n/dictionaries.test.ts` (parity: the same keys, no empty value, no
   English value but the names it lists), `src/lib/i18n/hardcoded-strings.test.ts` (no literal
   English in JSX text, `alt`, `aria-label`, `title`, `placeholder`, `label`, or route metadata,
-  outside the stock components in `src/components/ui/`), and each area's rendered tests.
+  in the routes, the components, and `@zenbu/ui`, outside the stock shadcn components), and each
+  area's rendered tests.
 
 ## Review
 

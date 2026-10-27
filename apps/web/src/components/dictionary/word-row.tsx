@@ -1,14 +1,15 @@
 import type { FrequencyResult } from '@zenbu/dictionary-core/detail/frequency'
 import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
+import { Card } from '@zenbu/ui/components/card'
+import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@zenbu/ui/components/item'
+import { FrequencyBadges } from '@zenbu/ui/dictionary/frequency'
+import { RomajiLine } from '@zenbu/ui/dictionary/reading-aid-lines'
+import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import { ChevronRightIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Fragment, type ReactNode } from 'react'
-import { FrequencyBadges } from '@/components/dictionary/frequency'
-import { RomajiLine } from '@/components/dictionary/reading-aid-lines'
-import { RubyText } from '@/components/dictionary/ruby-text'
-import { Card } from '@/components/ui/card'
-import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
+import { frequencyBadgesIn } from '@/lib/dictionary/screen-text'
 import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber } from '@/lib/i18n/format'
@@ -64,7 +65,7 @@ export function WordRow({ word, locale }: { word: RowWord; locale: Locale }) {
         <p className="meaning-clamp text-sm" lang={sourceLang(locale)}>
           {word.summary}
         </p>
-        <FrequencyBadges frequency={word.chips} locale={locale} />
+        <FrequencyBadges frequency={frequencyBadgesIn(word.chips, locale)} />
       </ItemContent>
     </Row>
   )

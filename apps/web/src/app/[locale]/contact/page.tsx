@@ -1,4 +1,4 @@
-import { Fill } from '@/components/fill'
+import { Fill } from '@zenbu/ui/lib/fill'
 import { PageShell } from '@/components/page-shell'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { localeOf } from '@/lib/i18n/params'

@@ -2,12 +2,18 @@
 
 import { newestChangedFirst, type Shown } from '@zenbu/account-rules/account-views'
 import { noteText } from '@zenbu/account-rules/notes'
+import { Button } from '@zenbu/ui/components/button'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle
+} from '@zenbu/ui/components/item'
+import { Label } from '@zenbu/ui/components/label'
+import { Textarea } from '@zenbu/ui/components/textarea'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { hasNoWord, itemName, textIn } from '@/lib/account/synced-views'
 import { fill } from '@/lib/i18n/format'
 import { FormMessage } from '../form-message'

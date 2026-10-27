@@ -1,5 +1,6 @@
 'use client'
 
+import { Sheet } from '@zenbu/ui/dictionary/sheet'
 import { useCallback, useRef, useState } from 'react'
 import {
   isSyncedAction,
@@ -11,7 +12,6 @@ import type { SavedItem } from '@/lib/account/saved-item'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { type AppAction, GetAppDialog } from './get-app-dialog'
-import { Sheet } from './sheet'
 import { SyncedBody } from './synced-body'
 import type { LearnerText } from './synced-props'
 

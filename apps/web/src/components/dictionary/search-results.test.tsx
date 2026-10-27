@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
@@ -24,7 +25,10 @@ const render = (
 ) => renderToStaticMarkup(<SearchResults data={data} examples={examples} locale={locale} />)
 
 function meaningClamp(): { fallback: number; lines: (rootPx: number) => number } {
-  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8')
+  const css = readFileSync(
+    createRequire(import.meta.url).resolve('@zenbu/ui/styles/theme.css'),
+    'utf8'
+  )
   const rule = css.match(/@utility meaning-clamp \{([\s\S]*?)\n\}/)?.[1] ?? ''
   const [fallback, computed] = [...rule.matchAll(/-webkit-line-clamp: ([^;{]+);/g)].map(
     ([, value]) => value

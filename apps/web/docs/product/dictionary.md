@@ -387,9 +387,9 @@ once. When the dictionary has been updated since the page loaded, it says so and
 - Check: `search-examples.test.tsx`, the ES cases (the first 25 rendered, then every later page the
   service answers, against ES `ids`); `data.test.ts`, "a search’s examples from another build load
   no more"; `src/app/[locale]/dictionary/search/[query]/examples.json/route.test.ts`;
-  `src/components/dictionary/load-more.interaction.test.tsx` and `load-more.test.ts` (one request
-  per page when a click and scrolling coincide); smoke "eat lists its example sentences on its page
-  as the app does, 25 at a time", which reads the first sentence from ES.
+  `packages/ui/src/dictionary/load-more.interaction.test.tsx` and `load-more.test.ts` (one
+  request per page when a click and scrolling coincide); smoke "eat lists its example sentences
+  on its page as the app does, 25 at a time", which reads the first sentence from ES.
 
 **Title and count.** The section is titled Example Sentences. Under the title, a line says how
 many sentences it lists ("60 examples"; "The first 100 of more than 100 examples" when more match
@@ -423,22 +423,21 @@ romaji with it (contract 7), so a page that loads more examples shows theirs too
 
 ## Word page
 
-**Toolbar.** Share and a ••• menu end the breadcrumb row, at every width; no title row sits above
-the header card. Share sends the headword, its reading, and the numbered meanings, as the app's
-does, through the browser's share sheet, or copies the link. The menu lists Mark as Known, Add to
-List…, Add Note, Add Photo, Open in App, and Copy Link. Signed in to the site, the first three open
-Known, Lists, and Notes (Lists and Notes, below); else they, Add Photo, and Open in App open the
-get-the-app prompt, a dialog on wide screens and a drawer on phones: lists, Known, and notes are in
-the Zenbu app and, with a subscription, on this website once signed in (Sign in, where the
-[account pages](account.md) are open); photos stay in the app. Open in App doesn't open the app yet
-(#829). Copy Link copies the page URL and shows "Link copied". Breadcrumbs replace a back button.
+**Toolbar.** Share and a ••• menu end the breadcrumb row at every width, with no title row above the
+header card. Share sends the headword, its reading, and the numbered meanings, as the app's does,
+through the browser's share sheet, or copies the link. The menu lists Mark as Known, Add to List…,
+Add Note, Add Photo, Open in App, and Copy Link. Signed in, the first three open Known, Lists, and
+Notes; else they, Add Photo, and Open in App open the get-the-app prompt, a dialog, or a drawer on
+phones: lists, Known, and notes are in the Zenbu app and, with a subscription, on this website
+([account pages](account.md)); photos stay in the app. Open in App doesn't open the app yet (#829).
+Copy Link copies the URL and shows "Link copied". Breadcrumbs replace a back button.
 
 - Source: App docs, Dictionary and kanji details; `SavedItemActions.swift`; #462 (menu, prompt,
   `Sonner`); #484 (breadcrumbs); #576 (no title row); #934, the owner's decision on 2026-10-26.
 - Check: share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)"; at both
   widths, `apps/web/e2e/word.spec.ts`, "puts Share and More actions at the end of the breadcrumb
   row", "opens the More actions menu with the app's actions", and "copies the link from the More
-  actions menu"; Share: `src/components/dictionary/saved-item-actions.interaction.test.tsx`, "sends
+  actions menu"; Share: `src/components/dictionary/site-item-actions.interaction.test.tsx`, "sends
   the page it is on"; the prompt: `src/components/dictionary/learner-dialog.interaction.test.tsx`
   ("the get-the-app prompt") and `apps/web/e2e/learner-data.spec.ts`.
 
@@ -634,10 +633,10 @@ account's copy, and a note keeps the learner's text as a new note. Without a sub
 
 - Source: #462; #934 and the owner's decision on 2026-10-26; App docs, Dictionary.
 - Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "Lists and Notes each offer the action
-  the app has"; `src/components/dictionary/learner-dialog.interaction.test.tsx` (Known, each state,
-  Try again) and beside it the `synced-lists` and `synced-notes` interaction tests; at both widths,
-  `apps/web/e2e/learner-data.spec.ts` and, signed out, `apps/web/e2e/word.spec.ts`, "Lists and
-  Notes each open the get-the-app prompt".
+  the app has"; `src/components/dictionary/learner-dialog.interaction.test.tsx` (Known, its states,
+  Try again) and the `synced-lists` and `synced-notes` tests; at both widths,
+  `apps/web/e2e/learner-data.spec.ts` and, signed out, `apps/web/e2e/word.spec.ts`, "Lists and Notes
+  each open the get-the-app prompt".
 
 **Examples.** A word lists the same examples, in the same order, as the app's Word Detail: its
 meanings' checked examples, then up to the app's 100 others. The page renders the first 25 and loads
@@ -691,8 +690,8 @@ updated since the page loaded." and offers a reload.
 - Check: `src/lib/dictionary/data.test.ts`, "a page from another build doesn't load this build's
   examples"; `src/app/[locale]/dictionary/examples/[file]/route.test.ts`, "is not found for an
   unknown word or another build". The message and its reload:
-  `src/components/dictionary/load-more.interaction.test.tsx`, "a page from another dictionary build
-  says its examples were updated, and reloads".
+  `packages/ui/src/dictionary/load-more.interaction.test.tsx`, "a stale page says the examples were
+  updated, and its button reloads"; the stale answer: `src/lib/dictionary/page-fetch.test.ts`.
 
 **Credits.** A word page ends with a Sources list: JMdict, UniDic, KANJIDIC2, JLPT vocabulary lists,
 TUBELEX, and Tatoeba. When it can show a kanji's details, it adds RADKFILE, KanjiVG when any of them
@@ -849,20 +848,21 @@ Each button is named for its kanji ("Share 要", "More actions for 要").
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `KanjiDetailView.swift`
   (`SharedPage(kanji:page:)`); `SavedItemActions.swift` (`SharedPage`, `ShareButton`); #462; #934.
 - Check: the share text: `packages/dictionary-core/src/detail/kanji.test.ts`, "要"; Share:
-  `src/components/dictionary/saved-item-actions.interaction.test.tsx` ("a kanji's Share"); the
-  buttons' names: `src/components/dictionary/kanji-details.test.tsx`, "Share and More actions, named
-  for the kanji"; saved as itself: `src/components/dictionary/learner-dialog.interaction.test.tsx`,
-  "a kanji is marked Known as itself, with the reading the app saves it with"; the menu, the prompt,
-  and Copy Link at both widths: `apps/web/e2e/kanji.spec.ts`, "…: 要's More actions offer the app's
-  actions" (on the search and word pages) and "Copy Link copies 要's search page, from the word page
-  too".
+  `src/components/dictionary/site-item-actions.interaction.test.tsx` ("a kanji's Share"), "sends the
+  kanji, its share text, and its search page, not the page it is on" and "copies the kanji's search
+  page where the browser has no share sheet"; the buttons' names:
+  `src/components/dictionary/kanji-details.test.tsx`, "Share and More actions, named for the kanji";
+  the dialog's "a kanji is marked Known as itself, with the reading the app saves it with"; the
+  menu, prompt, and Copy Link at both widths: `apps/web/e2e/kanji.spec.ts`, "…: 要's More actions
+  offer the app's actions" (on the search and word pages) and "Copy Link copies 要's search page,
+  from the word page too".
 
 **Stroke order.** A kanji with a KanjiVG diagram has a stroke-order button under the glyph. It
 opens a dialog, or a drawer on phones, that draws the strokes on a dashed grid and plays, pauses,
 or steps through them, starting from the first stroke each time it opens, as the app's sheet does.
 A kanji without a diagram has no button.
 
-- Source: `KanjiStrokeOrderView.swift`; `components/dictionary/stroke-order.tsx`.
+- Source: `KanjiStrokeOrderView.swift`; `packages/ui/src/dictionary/stroke-order.tsx`.
 - Check: KD `hasStrokeOrder`, `strokeOrderStrokes`;
   `packages/dictionary-core/src/detail/strokes.test.ts`; `apps/web/e2e/kanji.spec.ts`, "shows the
   kanji's stroke order" (the dialog opens). Playing, pausing, and stepping, and starting again
@@ -879,7 +879,7 @@ as in the app.
   row layout).
 - Check: KD `readings`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists up to three
   words whose reading starts with the reading’s stem"; the rows:
-  `src/components/dictionary/kanji-readings.test.tsx` ("the rendered kanji Readings rows match the
+  `packages/ui/src/dictionary/kanji-readings.test.tsx` ("the rendered kanji Readings rows match the
   app"), which draws every KD case's readings through the component and reads back each row's link,
   spoken label, and text. It reads the suite from the repository, so `pnpm test` runs it;
   `apps/web/e2e/kanji.spec.ts`, "a reading row opens its first word, named as the app's row is".

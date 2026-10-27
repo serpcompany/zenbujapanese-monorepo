@@ -1,10 +1,10 @@
 'use client'
 
+import { Button } from '@zenbu/ui/components/button'
 import Link from 'next/link'
 import { type ReactNode, useMemo } from 'react'
 import { FormMessage, Notice } from '@/components/account/form-message'
 import { LogInButton } from '@/components/site-actions'
-import { Button } from '@/components/ui/button'
 import { useSyncedItem } from '@/hooks/use-synced-item'
 import { readsFor, type SyncedAction, subscriptionPage } from '@/lib/account/learner-items'
 import type { SavedItem } from '@/lib/account/saved-item'

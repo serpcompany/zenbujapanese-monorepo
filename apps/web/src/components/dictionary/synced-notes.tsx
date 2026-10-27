@@ -1,10 +1,10 @@
 'use client'
 
 import type { Held } from '@zenbu/account-rules/account-copy'
+import { Button } from '@zenbu/ui/components/button'
+import { Label } from '@zenbu/ui/components/label'
+import { Textarea } from '@zenbu/ui/components/textarea'
 import { type FormEvent, useId, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   type Attempt,
   deleteNote,

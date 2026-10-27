@@ -1,7 +1,7 @@
 import { act } from 'react'
 import { vi } from 'vitest'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
-import { SavedItemActions } from '@/components/dictionary/saved-item-actions'
+import { SiteItemActions } from '@/components/dictionary/site-item-actions'
 import { syncedTextIn } from '@/lib/account/learner-text'
 import { kanjiItem, type SavedItem } from '@/lib/account/saved-item'
 import type { Locale } from '@/lib/i18n/config'
@@ -61,7 +61,7 @@ export function renderPrompt(kind: 'lists' | 'notes', item = word, locale: Local
 
 export function renderActions(item = word, locale: Locale = 'en') {
   return render(
-    <SavedItemActions
+    <SiteItemActions
       title={item.headword}
       shareText={item.headword}
       name={item.headword}

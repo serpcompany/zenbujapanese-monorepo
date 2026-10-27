@@ -1,7 +1,7 @@
 'use client'
 
 import { recentFirst } from '@zenbu/account-rules/account-views'
-import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@zenbu/ui/components/item'
 import { shownDuration, shownMoment, textIn, youTubeVideo } from '@/lib/account/synced-views'
 import { fill } from '@/lib/i18n/format'
 import { type AreaProps, Rows } from './parts'

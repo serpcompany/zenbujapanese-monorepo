@@ -15,12 +15,26 @@
     "apps/account-api": {
       "entry": ["scripts/*.mjs"]
     },
+    "apps/extension": {
+      "entry": [
+        "src/pages/*.tsx",
+        "src/service-worker/service-worker.ts",
+        "src/offscreen/offscreen.ts",
+        "src/worker/dictionary-worker.ts",
+        "test-pages/test-content-script.tsx",
+        "test-pages/*.css",
+        "test-pages/vite.config.ts"
+      ]
+    },
     "packages/dictionary-core": {
       "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
       "includeEntryExports": true
     },
     "packages/account-rules": {
       "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
+      "includeEntryExports": true
+    },
+    "packages/ui": {
       "includeEntryExports": true
     },
     "packages/node-service": {

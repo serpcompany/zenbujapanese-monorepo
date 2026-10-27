@@ -91,7 +91,7 @@ final class SharedChangesTests {
     await changes.apply(to: lists, knowledge)
     #expect(lists.contains(eki, in: WordLists.favoritesID))
     #expect(changes.pending().map(\.change) == [.known(
-      KnownWordChange(storedID: eki.rawValue, headword: "駅", reading: "えき", known: true))])
+      KnownWordChange(storedID: eki.rawValue, headword: "駅", reading: "えき", status: .known))])
   }
 
   @Test("a change file that can't be read is dropped")
@@ -109,8 +109,8 @@ final class SharedChangesTests {
       id: UUID(), name: "Trains", position: 1, createdAt: Date(), updatedAt: Date())
     #expect(SharedChange(.listChanged(list, previous: list)) == nil)
     #expect(SharedChange(.listDeleted(WordLists.favoritesID)) == nil)
-    let change = KnownWordChange(storedID: eki.rawValue, headword: "駅", reading: "えき", known: true)
-    #expect(SharedChange(.known(change)) == .known(change))
+    let change = KnownWordChange(storedID: eki.rawValue, headword: "駅", reading: "えき", status: .known)
+    #expect(SharedChange(.known(change, previous: .unknown)) == .known(change))
   }
 }
 

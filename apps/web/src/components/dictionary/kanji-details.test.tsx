@@ -1,12 +1,16 @@
+import { KanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
+import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import type { SavedItem } from '@/lib/account/saved-item'
+import { kanjiDetailsIn } from '@/lib/dictionary/screen-text'
 import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
 import { visibleText } from '@/test/rendered'
-import { KanjiDetails } from './kanji-details'
+import { kanjiActionsIn, kanjiDetailsProps, kanjiLearnerPromptIn } from './kanji-props'
 
 const kaname = unlinkedKanjiDetails(fixtureKanji('要'))
 
-const html = renderToStaticMarkup(<KanjiDetails kanji={kaname} locale="en" />)
+const html = renderToStaticMarkup(<KanjiDetails {...kanjiDetailsProps(kaname, 'en')} />)
 
 describe("a kanji's details offer what the app's Kanji Detail has beside them", () => {
   test('Share and More actions, named for the kanji', () => {
@@ -27,8 +31,17 @@ describe("a kanji's details offer what the app's Kanji Detail has beside them", 
   })
 })
 
+test("a kanji's More actions, Lists, and Notes save to the kanji itself, on a word page too", () => {
+  const shown = kanjiDetailsIn(kaname, 'en')
+  const savedTo = (element: unknown) => (element as ReactElement<{ item: SavedItem }>).props.item
+  const kanji = { id: 'kanji:要', headword: '要', reading: 'ヨウ' }
+  expect(savedTo(kanjiActionsIn('en')(shown))).toEqual(kanji)
+  expect(savedTo(kanjiLearnerPromptIn('en')(shown)('lists'))).toEqual(kanji)
+  expect(savedTo(kanjiDetailsProps(kaname, 'en').learnerPrompt('notes'))).toEqual(kanji)
+})
+
 describe("a kanji's details on a Japanese page", () => {
-  const japanese = renderToStaticMarkup(<KanjiDetails kanji={kaname} locale="ja" />)
+  const japanese = renderToStaticMarkup(<KanjiDetails {...kanjiDetailsProps(kaname, 'ja')} />)
 
   test('name their parts, stats, and actions in Japanese', () => {
     const parts = [...japanese.matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map(([, title]) => title)

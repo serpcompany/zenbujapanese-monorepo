@@ -1,7 +1,6 @@
 'use client'
 
-import { ListPlusIcon, PencilIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@zenbu/ui/components/button'
 import {
   Item,
   ItemActions,
@@ -9,7 +8,8 @@ import {
   ItemDescription,
   ItemMedia,
   ItemTitle
-} from '@/components/ui/item'
+} from '@zenbu/ui/components/item'
+import { ListPlusIcon, PencilIcon } from 'lucide-react'
 import type { SavedItem } from '@/lib/account/saved-item'
 import type { Locale } from '@/lib/i18n/config'
 import type { AppAction } from './get-app-dialog'

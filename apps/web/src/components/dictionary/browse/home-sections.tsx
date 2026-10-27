@@ -6,13 +6,13 @@ import {
   type KanjiList,
   secondarySchool
 } from '@zenbu/dictionary-core/browse/lists'
+import { Fill } from '@zenbu/ui/lib/fill'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Panel } from '@/components/dictionary/browse/browse-ui'
 import { CategoryLinkLists } from '@/components/dictionary/browse/category-links'
 import { KanaCharts } from '@/components/dictionary/browse/hub-pages'
 import { KanjiTiles } from '@/components/dictionary/browse/kanji-tiles'
-import { Fill } from '@/components/fill'
 import { browseText, counted, kanjiListHeading, kanjiListName } from '@/lib/dictionary/browse/copy'
 import {
   categoryPath,

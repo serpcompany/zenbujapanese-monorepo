@@ -224,7 +224,8 @@ does this for it, with the order each kind is shown in from `account-views.ts`, 
   that a `POST /v1/sync` with no mutations answers (Recent searches). It conflicts only with a
   removal the website never read, which came before it, so it's sent again at the removal's
   version; the account then keeps it as the app's search, with the later time and the 50 latest.
-- **Known words** are shown as the iOS app shows them, which doesn't show Learning: a word is Known
-  only when the read says `known` (`isMarkedKnown`), so a Learning word is not, and the website
-  sends `mark` and `clear`. Only the learner's Mark as Known ends Learning; a clear of a word that
-  became Learning since the read applies and changes nothing (Known words, above).
+- **Known words** are shown as an app that shows only Known shows them, since the website doesn't
+  show Learning yet: a word is Known only when the read says `known` (`isMarkedKnown`), so a
+  Learning word is not, and the website sends `mark` and `clear`. Only the learner's Mark as Known
+  ends Learning; a clear of a word that became Learning since the read applies and changes nothing
+  (Known words, above).

@@ -17,6 +17,7 @@ final class FakeAccountService: @unchecked Sendable {
   var fileRefusals: [String: StubReply] = [:]
   var droppedUploads: Set<String> = []
   var pageSize = 100
+  var refusesSet = false
   private(set) var invalidCursors = 0
   private var forgottenThrough: [String: Int] = [:]
   private var sessions: [String: String] = [:]
@@ -161,6 +162,7 @@ final class FakeAccountService: @unchecked Sendable {
   private func apply(_ mutation: StubSyncRequest.Mutation, for user: String) -> [String: Any] {
     if mutation.entity == "profile" { _ = profile(of: user) }
     if SyncEntity.kept.contains(mutation.entity) { return applyKept(mutation, for: user) }
+    if mutation.entity == SyncEntity.knownWord { return applyKnownWord(mutation, for: user) }
     let key = "\(mutation.entity):\(mutation.entityId)"
     let current = accounts[user]?[key]
     let version = current?.version ?? 0
@@ -171,16 +173,6 @@ final class FakeAccountService: @unchecked Sendable {
       return current?.data?[name] as? String ?? ""
     }
     switch (mutation.entity, mutation.operation) {
-    case ("knownWord", let operation):
-      let known = operation == "mark"
-      if (current?.data?["known"] as? Bool ?? false) == known { return applied(version) }
-      guard base == version else { return conflict() }
-      return save(
-        user, key,
-        [
-          "itemId": mutation.entityId, "headword": text("headword"),
-          "reading": text("reading"), "known": known,
-        ], version + 1, applied)
     case ("list", "create"):
       guard current == nil else { return StubSync.rejected(mutation.id, "already_exists") }
       var position = 0

@@ -118,7 +118,7 @@ struct AccountSubscriptionStateTests {
     try await fixture.syncNow()
 
     #expect(fixture.server.requests(to: "POST /v1/sync").count == syncs)
-    #expect(fixture.queuedOperations.contains("knownWord mark \(AccountFixture.taberu)"))
+    #expect(fixture.queuedOperations.contains("knownWord set \(AccountFixture.taberu)"))
     let patched = try #require(fixture.server.requests(to: "PATCH /v1/me").last)
     #expect(patched.json["name"] as? String == "Kana Fan")
     #expect(patched.json["baseVersion"] as? Int == 1)
@@ -173,7 +173,7 @@ struct AccountSubscriptionStateTests {
     await fixture.account.scheduler.settled()
 
     #expect(fixture.server.requests(to: "POST /v1/sync").count > syncs)
-    #expect(!fixture.queuedOperations.contains("knownWord mark \(AccountFixture.taberu)"))
+    #expect(!fixture.queuedOperations.contains("knownWord set \(AccountFixture.taberu)"))
   }
 
   @Test func keepsAUsernameEditedAfterANameEditWhoseAnswerWasLost() async throws {
@@ -209,7 +209,7 @@ struct AccountSubscriptionStateTests {
     await #expect(throws: AccountServiceError.self) { try await fixture.syncNow() }
     await fixture.account.subscriptionWork?.value
 
-    #expect(fixture.queuedOperations.contains("knownWord mark \(AccountFixture.taberu)"))
+    #expect(fixture.queuedOperations.contains("knownWord set \(AccountFixture.taberu)"))
     #expect(fixture.account.syncNeedsSubscription)
     #expect(fixture.server.requests(to: "GET /v1/me/subscription").count == reads + 1)
   }

@@ -182,12 +182,12 @@ orange. With Differentiate Without Color on, a star count such as 5★ replaces 
 
 Check: core `detail/frequency.test.ts` (the tiers); package `ResultsScreenTests` (their stars).
 
-A word the learner knows shows a green **✓ Known** capsule at the right of its headword. Swiping a
-row to the right, or long-pressing it, marks the word known or unknown without opening it.
+A known word shows a green **✓ Known** capsule at the right of its headword, one being learned a
+yellow **◐ Learning** one. A right swipe offers the other two states; a long-press opens **Status**.
 
-Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` (by swipe on iPhone and iPad,
-reading the row as known; by right-click on the Mac, where the row's menu then offers **Mark as
-Unknown**, as a Mac row gives a test no value); package `WordKnowledgeTests`.
+Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` and `LearningUITests` (by
+swipe on iPhone and iPad, reading the row as known or Learning; by right-click on the Mac, which
+opens **Status**, as a Mac row gives a test no value); package `WordKnowledgeTests`.
 
 An inflected Japanese query such as `まけたら` or `勉強した` finds its dictionary forms on the
 device. When the query is itself a word (`いって` is 一手), that word stays first.
@@ -324,10 +324,10 @@ meanings as text, with the canonical link to the word's page on zenbujapanese.co
 (`https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/` for 見る). The link goes as a web
 link beside the text, on every device. With Zenbu it opens the word in Zenbu ([Links from
 zenbujapanese.com](#links-from-zenbujapanesecom)), else the website. Beside Share is a **•••** menu,
-starting with **Mark as Known** (or **Mark as Unknown**) and **Add to List…**, followed by Add Note,
-Take Photo, Choose Photo, and the [**Show** switches](reading-aids.md#the-show-menus). A known word
-shows the same **✓ Known** capsule under its headword. A word is unknown until the learner marks it;
-known words persist on the device, keyed by the entry's stable identifier.
+starting with **Status** (Unknown, Learning, or Known, one checked) and **Add to List…**, then Add
+Note, Take Photo, Choose Photo, and the [**Show** switches](reading-aids.md#the-show-menus). The
+word's **✓ Known** or **◐ Learning** capsule shows under its headword. A word is Unknown until the
+learner marks it; its state persists on the device, keyed by the entry's stable identifier.
 
 Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
 without **Take Photo** on the Mac), `testTheMenuTurnsReadingAidsOffForTheExamplesAndAccount`,
@@ -377,10 +377,10 @@ kanji, its readings, and its meanings as text, with the link to the kanji's sear
 zenbujapanese.com, such as `https://zenbujapanese.com/dictionary/search/%E6%97%A5/` for 日, which the
 website opens with the kanji's details and Zenbu in Look Up. The website has no kanji pages, and
 shares a kanji at the same search; a compatibility kanji's is its normalized form's. Before the page
-has loaded, Share sends the kanji alone. The menu marks the kanji known, adds it to lists, and adds
-notes and photos, which work as they do for a word. Lists and Notes sections appear above the words
-containing the kanji, and a known kanji shows the **✓ Known** capsule. A kanji is saved as itself,
-not as a dictionary word, so marking 最 known doesn't mark the word 最.
+has loaded, Share sends the kanji alone. The menu sets the kanji's **Status**, adds it to lists, and
+adds notes and photos, which work as they do for a word. Lists and Notes sections appear above the
+words containing the kanji, and the kanji shows its Known or Learning capsule. A kanji is saved as
+itself, not as a dictionary word, so marking 最 known doesn't mark the word 最.
 
 Check: package `SavedKanjiTests`; `WordDetailShareTests` (the kanji's text and link, which
 searches the kanji again); UI `SavedWordsUITests.testAKanjiIsMarkedKnownFromItsMenu` and

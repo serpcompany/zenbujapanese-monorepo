@@ -1,9 +1,9 @@
 'use client'
 
 import type { Change } from '@zenbu/account-rules/account-copy'
+import { Button } from '@zenbu/ui/components/button'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { accessTokens } from '@/lib/account/access-tokens'
 import { accountApi, type Failure } from '@/lib/account/client'
 import { type ItemPages, readItemPages } from '@/lib/account/item-pages'

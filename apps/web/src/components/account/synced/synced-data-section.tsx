@@ -1,5 +1,5 @@
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@zenbu/ui/components/item'
 import Link from 'next/link'
-import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import type { Subscription } from '@/lib/account/answers'
 import type { AccountText } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'

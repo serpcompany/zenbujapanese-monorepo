@@ -2,8 +2,14 @@
 
 import { chosenPacks, chosenValue } from '@zenbu/account-rules/account-views'
 import { defaultFrequencyPacks } from '@zenbu/dictionary-core/detail/frequency'
-import { Button } from '@/components/ui/button'
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
+import { Button } from '@zenbu/ui/components/button'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle
+} from '@zenbu/ui/components/item'
 import {
   frequencyPacks,
   packName,

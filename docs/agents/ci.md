@@ -27,10 +27,11 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft | [`ci-agents.md`](ci-agents.md), [`ci-review.md`](ci-review.md) |
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment | [`ci-agents.md`](ci-agents.md) |
 | `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand, every job or one | [`ci-agents.md`](ci-agents.md) |
-| `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site or the core changed | This doc |
+| `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site, its word components, or the core changed | This doc |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
-| `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed; pushes to `main` that change its cached files; by hand | This doc |
+| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, or the core changed | This doc |
+| `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed, the word components in `packages/ui` among them; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand | This doc |
 | `Account API deploy` | `.github/workflows/account-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
@@ -58,13 +59,13 @@ a red check stops no merge. The workflows are built so the owners can require th
   every time: a workflow that its `paths` filter skipped would leave its check pending and block
   the merge, and one that never ran in the merge queue would block the queue.
 - **Each decides inside whether the change concerns it.** `Web`, `Dictionary core`,
-  `Dictionary API`, `Account API`, `iOS`, and `Language data build` begin with a `changes` job.
+  `Extension`, `Dictionary API`, `Account API`, `iOS`, and `Language data build` begin with a `changes` job.
   It asks the `changed-paths` action (`.github/actions/changed-paths/`) whether the pull request,
   or the merge group, changed any of the workflow's paths, comparing the checked-out commit with
   its base, which it fetches. The other jobs need it and run only on `true`. On a push or a run
   by hand there is no base, and it answers `true`.
-- **Each ends in one job named for the workflow** (`web`, `dictionary-core`, `dictionary-api`,
-  `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
+- **Each ends in one job named for the workflow** (`web`, `dictionary-core`, `extension`,
+  `dictionary-api`, `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
 - **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
@@ -77,7 +78,7 @@ a red check stops no merge. The workflows are built so the owners can require th
 - **A queue run is never cancelled.** A new push cancels a pull request's last run only.
 
 The jobs to require are `verify` (`Repository`), `title`, `branch`, `issue-link`, and `fix-test`
-(`Pull request`), and the six above. `ios` passes without testing the app until the owners turn
+(`Pull request`), and the seven above. `ios` passes without testing the app until the owners turn
 `IOS_SWIFT_TESTS` on ([`ci-ios.md`](ci-ios.md)). An owner adds them under the ruleset's required status
 checks; nothing in the repository can. The merge queue waits 90 minutes for a required check
 (`check_response_timeout_minutes`), and the `swift` job may run for four hours: raise that wait
@@ -133,8 +134,10 @@ that never reports in the merge queue would block every merge, and the pull requ
 
 ## Web
 
-`.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the core, the account
-rules, or `tools/checks/ports.mjs`, which hands the browser tests their port. In `apps/web`, it runs
+`.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the word components
+(`packages/ui`), the core, the account rules, or `tools/checks/ports.mjs`, which hands the browser
+tests their port. It runs `pnpm check` in `packages/ui` ([`ui.md`](ui.md), Check it). In
+`apps/web`, it runs
 ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in Docker, since the
 runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what `pnpm cf-typegen` writes
 from `wrangler.jsonc`, and that it writes no other file, so a binding changed without regenerating
@@ -167,13 +170,20 @@ the core, or `docs/data-sources.md`, which its source credits are held to. Those
 the app-recorded suites run through the core in
 `Dictionary API`, and `Web` builds the site with it. See [`dictionary-core.md`](dictionary-core.md).
 
+## Extension
+
+`.github/workflows/extension.yml` runs `pnpm check` in `apps/extension` (Biome with its layer
+rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
+extension, `packages/ui`, which draws it, or the core. Nothing loads the built extension in a
+browser yet. See [`extension.md`](extension.md).
+
 ## Dictionary API
 
 `.github/workflows/dictionary-api.yml` checks the dictionary service on pull requests that change
 the service, the core, what the services share (`packages/node-service/`), its API reference
 (`docs/api/dictionary-api.md`, which its tests write), the website's dictionary code
 (`apps/web/src/lib/dictionary/`, `apps/web/src/components/dictionary/`, `apps/web/src/test/`,
-`apps/web/vitest.config.ts`, and what gives the gate its address, `apps/web/e2e/server.ts` and
+`apps/web/vitest.config.ts`, the word components it draws pages with, `packages/ui/`, and what gives the gate its address, `apps/web/e2e/server.ts` and
 `tools/checks/ports.mjs`), the conformance suites (`language-data/conformance/`), the app's
 resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
 (the release the service names), its pins (`language-data/releases/`), and its retired entries
@@ -209,7 +219,7 @@ it. See [`dictionary-api.md`](dictionary-api.md), Check it.
 
 `.github/workflows/account-api.yml` checks the account service on pull requests that change it,
 `node-service`, `account-rules`, its API reference (`docs/api/account-api.md`, which its tests
-write), or what the website's account pages are built from (`apps/web/src/`, the browser test
+write), or what the website's account pages are built from (`apps/web/src/` and `packages/ui/`, the browser test
 against the service with `apps/web/e2e/test.ts`, `apps/web/playwright.config.ts`, and what gives it
 its port, `apps/web/e2e/server.ts` and `tools/checks/ports.mjs`, and the site's `next.config.ts`,
 `package.json`, and `wrangler.jsonc`), and by hand. A new push cancels the pull request's last run.

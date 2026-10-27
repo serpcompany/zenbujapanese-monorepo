@@ -423,7 +423,7 @@ describe("the account's data, shown as the apps show it", () => {
     ])
   })
 
-  test('shows a word Known only when the account says known, so a Learning word is not known, as in the app', () => {
+  test('shows a word Known only when the account says known, so a Learning word is not known to a client that shows only Known', () => {
     const word = { itemId: 'a'.repeat(32), headword: '見る', reading: 'みる' }
     expect(isMarkedKnown({ ...word, state: 'known', known: true })).toBe(true)
     expect(isMarkedKnown({ ...word, state: 'learning', known: false })).toBe(false)

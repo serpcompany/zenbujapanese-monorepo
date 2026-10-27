@@ -8,11 +8,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 - Your notes, photos, settings, recent lookups, and profile photo sync too.
 - Syncing can need a Zenbu subscription, sold in the app; everything on your device stays free.
-- Sort search results from the **Sorted by** row at the top of the results: a frequency dictionary,
-  most common first (JLPT by level), or your known words, known first. Your choice stays across
-  launches and applies to Japanese, English, and romaji searches.
-- Filter search results to known or unknown words from the same **Sorted by** row. The row shows
-  when a filter is on, and your filter stays across launches.
+- Sort and filter search results from the **Sorted by** row: by a frequency dictionary, most common
+  first (JLPT by level), or known words first, and to unknown, Learning, or known words. Your
+  choices stay across launches and apply to Japanese, English, and romaji searches.
+- Mark a word or kanji **Learning** from **Status** in its **•••** menu or a result's swipe: it gets
+  a yellow tag and its own list in Account, and syncs.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
   translated cards keep coming.
 - Example Sentences says how many sentences it lists, under its title: "3 examples", or "The

@@ -1,7 +1,7 @@
+import { Fill } from '@zenbu/ui/lib/fill'
 import { cn } from 'cn'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { Fill } from '@/components/fill'
 import { browseText } from '@/lib/dictionary/browse/copy'
 import { type PageNumber, pageNumbers } from '@/lib/dictionary/browse/pagination'
 import type { Locale } from '@/lib/i18n/config'

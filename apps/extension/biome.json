@@ -1,0 +1,103 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!node_modules", "!dist", "!dist-test"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "error"
+      }
+    },
+    "domains": {
+      "react": "recommended"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/**", "test-pages/**", "!src/worker/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@zenbu/dictionary-core/artifact/**",
+                      "@zenbu/dictionary-core/search/**",
+                      "@zenbu/dictionary-core/embedded/**",
+                      "@zenbu/dictionary-core/examples/**",
+                      "**/worker/**"
+                    ],
+                    "message": "Only the dictionary worker opens the dictionary. Pages, content scripts, the offscreen document, and the service worker ask it with a message (docs/agents/extension.md, Layers)."
+                  },
+                  {
+                    "group": ["@base-ui/**", "@base-ui-components/**", "@radix-ui/**"],
+                    "message": "The extension draws with @zenbu/ui, so its look stays the website's (docs/agents/extension.md, Layers)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/service-worker/**", "src/offscreen/**", "src/worker/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["react", "react-dom", "react-dom/**", "@zenbu/ui", "@zenbu/ui/**"],
+                    "message": "The service worker, offscreen document, and dictionary worker draw nothing (docs/agents/extension.md, Layers)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "none",
+      "arrowParentheses": "asNeeded"
+    }
+  }
+}

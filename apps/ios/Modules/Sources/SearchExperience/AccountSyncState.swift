@@ -2,7 +2,7 @@ import Foundation
 import TranslatorCore
 
 enum SavedItemChange: Sendable {
-  case known(KnownWordChange)
+  case known(KnownWordChange, previous: WordKnowledgeStatus)
   case listCreated(WordList)
   case listChanged(WordList, previous: WordList)
   case listDeleted(UUID)
@@ -14,13 +14,6 @@ enum SavedItemChange: Sendable {
   case bookmarkRemoved(SharedBookmark)
   case profileEdited(ProfileFields, previous: ProfileFields)
   case kept(KeptLocalChange)
-}
-
-struct KnownWordChange: Codable, Hashable, Sendable {
-  let storedID: String
-  let headword: String
-  let reading: String
-  let known: Bool
 }
 
 enum SyncUndo: Codable, Hashable, Sendable {
@@ -89,7 +82,8 @@ struct AccountCopy: Codable, Hashable, Sendable {
     case .knownWord(let word):
       value = .knownWord(
         KnownWordChange(
-          storedID: word.itemId, headword: word.headword, reading: word.reading, known: word.known))
+          storedID: word.itemId, headword: word.headword, reading: word.reading,
+          status: word.status))
     case .list(let list):
       guard let id = UUID(uuidString: list.id) else { return nil }
       value = .list(
@@ -359,14 +353,12 @@ extension SavedItemChange {
 
   func queued(in state: AccountSyncState) -> QueuedSyncChange {
     switch self {
-    case .known(let change):
+    case .known(let change, let previous):
       let key = SyncEntityKey(entity: SyncEntity.knownWord, entityID: change.storedID)
-      let fields = change.known ? Self.text(change.headword, change.reading) : nil
-      let previous = KnownWordChange(
-        storedID: change.storedID, headword: change.headword, reading: change.reading,
-        known: !change.known)
+      let text = change.status == .unknown ? [:] : Self.text(change.headword, change.reading)
       return Self.queued(
-        key, change.known ? "mark" : "clear", state, fields: fields, undo: .setKnown(previous))
+        key, "set", state, fields: text.merging(["state": .string(change.status.stored)]) { $1 },
+        undo: .setKnown(change.with(previous)))
     case .listCreated(let list):
       return Self.queued(
         Self.key(list.id), "create", state,

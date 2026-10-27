@@ -1,4 +1,4 @@
-import { Kbd } from '@/components/ui/kbd'
+import { Kbd } from '@zenbu/ui/components/kbd'
 import { type Phrase, type RichText, withKeys } from '@/lib/tools/content'
 
 export function Typed({ children }: { children: string }) {

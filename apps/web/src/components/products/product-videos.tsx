@@ -1,18 +1,18 @@
 'use client'
 
-import { ArrowRightIcon, PlayIcon } from 'lucide-react'
-import Link from 'next/link'
-import { useState } from 'react'
-import { AppScreenshot } from '@/components/app-screenshot'
-import { sectionTitleClassName } from '@/components/products/section-title'
-import { buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@zenbu/ui/components/button'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious
-} from '@/components/ui/carousel'
+} from '@zenbu/ui/components/carousel'
+import { ArrowRightIcon, PlayIcon } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+import { AppScreenshot } from '@/components/app-screenshot'
+import { sectionTitleClassName } from '@/components/products/section-title'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'

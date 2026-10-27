@@ -8,6 +8,8 @@ import {
 } from '@zenbu/dictionary-core/browse/kana'
 import { pageCount } from '@zenbu/dictionary-core/browse/lists'
 import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
+import { SourceCredits } from '@zenbu/ui/dictionary/source-credits'
+import { Fill } from '@zenbu/ui/lib/fill'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -20,12 +22,11 @@ import {
 } from '@/components/dictionary/browse/browse-ui'
 import { KanaChart } from '@/components/dictionary/browse/kana-chart'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
-import { Fill } from '@/components/fill'
 import { browseText, counted, inKanaOrder } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage, KanaInitialPage } from '@/lib/dictionary/browse/data'
 import { browsePath, kanaChartsPath, kanaPath, scriptPath } from '@/lib/dictionary/browse/paths'
+import { sourceCreditsIn } from '@/lib/dictionary/screen-text'
 import { pageSources } from '@/lib/dictionary/sources'
 import type { Locale } from '@/lib/i18n/config'
 import { fill, formatNumber } from '@/lib/i18n/format'
@@ -181,7 +182,7 @@ export function ScriptIndex({
           </Chips>
         </section>
       ) : null}
-      <SourceCredits sources={[sourceCredits.jmdict]} locale={locale} />
+      <SourceCredits {...sourceCreditsIn([sourceCredits.jmdict], locale)} />
     </BrowsePage>
   )
 }
@@ -318,7 +319,7 @@ export function KanaInitial({
         <Neighbor script={script} kana={initial.previous} direction="previous" locale={locale} />
         <Neighbor script={script} kana={initial.next} direction="next" locale={locale} />
       </nav>
-      <SourceCredits sources={pageSources.browse} locale={locale} />
+      <SourceCredits {...sourceCreditsIn(pageSources.browse, locale)} />
     </BrowsePage>
   )
 }
@@ -454,7 +455,7 @@ export function KanaWords({
         pathFor={number => kanaPath(script, prefix, number)}
         locale={locale}
       />
-      <SourceCredits sources={pageSources.browse} locale={locale} />
+      <SourceCredits {...sourceCreditsIn(pageSources.browse, locale)} />
     </BrowsePage>
   )
 }

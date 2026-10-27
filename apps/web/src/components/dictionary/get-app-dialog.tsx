@@ -1,6 +1,5 @@
 'use client'
 
-import { GetAppButton, LogInButton } from '@/components/site-actions'
 import {
   Dialog,
   DialogContent,
@@ -8,7 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog'
+} from '@zenbu/ui/components/dialog'
 import {
   Drawer,
   DrawerContent,
@@ -16,11 +15,12 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle
-} from '@/components/ui/drawer'
-import { useMediaQuery } from '@/hooks/use-media-query'
+} from '@zenbu/ui/components/drawer'
+import { DialogCloseButton } from '@zenbu/ui/dictionary/dialog-close-button'
+import { useMediaQuery } from '@zenbu/ui/hooks/use-media-query'
+import { GetAppButton, LogInButton } from '@/components/site-actions'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
-import { DialogCloseButton } from './dialog-close-button'
 
 export type AppAction = keyof Dictionary['learner']['inApp']
 

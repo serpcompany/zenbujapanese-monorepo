@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - apps/web/**
+      - packages/ui/**
       - packages/dictionary-core/**
       - apps/dictionary-api/**
       - packages/account-rules/**
@@ -29,6 +30,8 @@ on:
       - '!packages/account-rules/cases/**'
       - '!packages/node-service/**/*.test.ts'
       - '!packages/node-service/src/test/**'
+      - '!packages/ui/**/*.test.ts'
+      - '!packages/ui/**/*.test.tsx'
   workflow_dispatch:
 
 concurrency:
