@@ -39,7 +39,9 @@ export function useDataState({
     send(read)
   }, [send, read])
 
-  const settled = !waiting && (data?.state === 'ready' || data?.state === 'failed')
+  const settled =
+    data?.state === 'failed' ||
+    (data?.state === 'ready' && (!waiting || data.updateFailed !== undefined))
   useEffect(() => {
     if (settled) return
     const timer = setInterval(() => {
