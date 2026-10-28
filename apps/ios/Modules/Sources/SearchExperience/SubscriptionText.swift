@@ -92,7 +92,7 @@ enum SubscriptionText {
     case .storeUnavailable:
       String(localized: "The App Store didn't answer. Try again later.")
     case .notAvailableHere:
-      String(localized: "The subscription isn't available in this App Store yet.")
+      String(localized: "The App Store didn't list the plans. Try again.")
     case .pendingApproval:
       String(localized: "The purchase is waiting for approval. Syncing starts once it's approved.")
     case .nothingToRestore:

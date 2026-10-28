@@ -236,9 +236,9 @@ it on at the service, every account syncs as before, and the app shows no subscr
   that one until the learner signs out or the Apple Account has none. The app buys only after
   reading the account's subscription again, and says so when it can't, with **Try Again**. A
   purchase the account doesn't take yet stays with the App Store, which hands it over again, and
-  the app says it hasn't reached the account yet. When nothing is offered
-  the paywall says why, and an App Store that doesn't sell the plans, or an Apple Account with
-  nothing to restore, says so; VoiceOver reads each of these notes once, as it appears.
+  the app says it hasn't reached the account yet. When nothing is offered the paywall says why.
+  An App Store that lists no plans says so, with **Try Again**, which asks it again, and an Apple
+  Account with nothing to restore says so; VoiceOver reads each of these notes once, as it appears.
 - **When sync needs a subscription**, the Account row says so, Zenbu Account says the changes stay
   on the device and sync once the learner subscribes, and nothing queued is lost; a payment being
   retried, a paused subscription, and a first payment still to come each say that instead. The app
@@ -250,19 +250,20 @@ it on at the service, every account syncs as before, and the app shows no subscr
   in sends them too, so an earlier subscription unlocks the account.
 
 Check: package `AccountSubscriptionTests` (the purchase and its token, no offer while sync is free
-or another subscription runs, reading again before buying, a service that's down, another
-account's purchase, Ask to Buy, a purchase refused for now, a read that fails, a store that sells
-none, restoring with and without a purchase,
-signing in, a purchase handed over twice, buying only on a fresh read, and a purchase's answer over
-an older read), `AccountSubscriptionStateTests` (the answer kept per account, switching accounts,
-late answers, a relaunch, signed out, no refused sync but the profile, Sync Now, a refused sync,
-unknown values, and deletion's answer), `AccountSubscriptionNotesTests` (each note's life, why
-nothing is offered, and VoiceOver), and `SubscriptionTextTests` (each state's words); `StoreKitPurchasesTests` (iPhone, iPad, and the Mac, against StoreKit with the StoreKit
-configuration file: the plans and an introductory offer, a purchase carrying the account's token,
-current purchases, one made outside the app, Ask to Buy and its approval, a refund, a renewal, an
-expiry, and syncing with the App Store); UI `SubscriptionUITests` (iPhone and iPad: buying unlocks
-sync and offers no second, a website subscription and a failed website payment, sync waiting for an
-App Store payment, paying in both, an ending one and Manage, and deleting with an App Store one);
+or another subscription runs, reading again before buying, a service that's down, another account's
+purchase, Ask to Buy, a purchase refused for now, a read that fails, a store that lists no plans and
+then does on Try Again, restoring with and without a purchase, signing in, a purchase handed over
+twice, buying only on a fresh read, and a purchase's answer over an older read),
+`AccountSubscriptionStateTests` (the answer kept per account, switching accounts, late answers, a
+relaunch, signed out, no refused sync but the profile, Sync Now, a refused sync, unknown values, and
+deletion's answer), `AccountSubscriptionNotesTests` (each note's life, why nothing is offered, and
+VoiceOver), and `SubscriptionTextTests` (each state's words); `StoreKitPurchasesTests` (iPhone,
+iPad, and the Mac, against StoreKit with the StoreKit configuration file: the plans and an
+introductory offer, a purchase carrying the account's token, current purchases, one made outside the
+app, Ask to Buy and its approval, a refund, a renewal, an expiry, and syncing with the App Store);
+UI `SubscriptionUITests` (iPhone and iPad: buying unlocks sync and offers no second, Try Again when
+the App Store lists no plans, a website subscription and a failed website payment, sync waiting for
+an App Store payment, paying in both, an ending one and Manage, and deleting with an App Store one);
 `AccountAuditUITests` audits the paywall, the section with none, an App Store one, a website one,
 both, a payment retried, and a first payment pending, and deleting with an App Store one.
 

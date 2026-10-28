@@ -72,11 +72,12 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   is offered a second subscription or one sync doesn't need. Opening the paywall and buying read the
   subscription again first: buying needs that fresh answer, says so when the service can't be
   reached or fails (`unreachable`, or `serviceFailed` for a `5xx` or `429`, each with **Try
-  Again** on the paywall, as is the App Store not answering), and refuses when it's no longer
+  Again** on the paywall, as are the App Store not answering and it listing no plans), and refuses when it's no longer
   offered (a website purchase that just landed). When
   nothing is offered the paywall says why (the Apple Account already subscribes, a first payment
-  is on its way, sync needs none now, the account has one), and an App Store that sells none of
-  the plans says so.
+  is on its way, sync needs none now, the account has one), and an App Store that lists none of
+  the plans says so, with **Try Again**, since StoreKit can answer with none for a moment (App
+  Review saw that on 2.1.0, #1145).
   The products are the service's `offers.appStore`, in its order, read from StoreKit; the app names
   none itself. A plan's introductory offer, a free trial or a lower first price, shows with its
   terms when StoreKit says the Apple Account may have it (`isEligibleForIntroOffer`).
@@ -127,7 +128,7 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 - **Package tests**, on iPhone, iPad, and the Mac (`ios.md`, Tests on every platform), against
   `StubAccountServer` and `FakeAppStore`: `AccountSubscriptionTests` (buying, refusals, Ask to Buy,
   restoring, listening, offering nothing while sync is free, the website or the Apple Account
-  already has one, or the store sells none, buying only on a fresh read, a purchase's answer over
+  already has one, or the store lists none and then does on Try Again, buying only on a fresh read, a purchase's answer over
   an older read, and an update signed again), `AccountSubscriptionStateTests` (switching accounts,
   late and out-of-order answers, a relaunch, sync and the profile while sync waits, Sync Now and
   the waiting read, a profile edit after a lost answer, decoding, and deleting),

@@ -6,11 +6,21 @@ import SwiftUI
   actor StandInAppStore: AppStorePurchases {
     static let monthly = "com.zenbujapanese.sync.monthly"
     static let yearly = "com.zenbujapanese.sync.yearly"
+    static let listsNothingFirstKey = "ZENBU_APP_STORE_STAND_IN_LISTS_NOTHING_FIRST"
 
     private var purchased: [StoreTransaction] = []
+    private var listsNothingNext: Bool
+
+    init(_ environment: [String: String] = ProcessInfo.processInfo.environment) {
+      listsNothingNext = environment[Self.listsNothingFirstKey] == "1"
+    }
 
     func offers(for productIDs: [String]) async throws -> [SubscriptionOffer] {
-      productIDs.compactMap(Self.offer)
+      guard !listsNothingNext else {
+        listsNothingNext = false
+        return []
+      }
+      return productIDs.compactMap(Self.offer)
     }
 
     @MainActor
