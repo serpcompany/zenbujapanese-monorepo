@@ -1,8 +1,11 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
-import { memo, useCallback, useEffect, useRef } from 'react'
+import { Button } from '@zenbu/ui/components/button'
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
+import { captionLabels } from '../captions/labels'
+import type { GlossCache } from '../page-lookup/glosses'
 import type { Settings } from '../shared/settings'
 import type { PanelPage } from '../side-panel/route'
-import { SourceLine } from '../translate/source-words'
+import { lineGlosses, SourceLine } from '../translate/source-words'
 import { type Playback, playingLine } from '../video/follower'
 import { videoTabLabels } from './labels'
 import type { VideoTabServices } from './services'
@@ -13,6 +16,9 @@ type RowProps = {
   line: Caption
   current: boolean
   english: string | undefined
+  englishFailed: boolean
+  retryEnglish(text: string): void
+  glosses: GlossCache
   settings: Settings | null
   services: VideoTabServices
   open(page: PanelPage): void
@@ -33,6 +39,9 @@ const Row = memo(function Row({
   line,
   current,
   english,
+  englishFailed,
+  retryEnglish,
+  glosses,
   settings,
   services,
   open,
@@ -66,11 +75,20 @@ const Row = memo(function Row({
           services={services}
           open={open}
           onPopup={onPopup}
+          glosses={glosses}
         />
         {english ? (
           <p lang="en" data-english className="text-sm">
             {english}
           </p>
+        ) : null}
+        {!english && englishFailed ? (
+          <div data-english-failed className="flex items-center gap-2">
+            <p className="text-sm text-muted-foreground">{videoTabLabels.englishFailed}</p>
+            <Button variant="outline" size="sm" onClick={() => retryEnglish(line.text)}>
+              {captionLabels.tryAgain}
+            </Button>
+          </div>
         ) : null}
       </div>
     </li>
@@ -116,6 +134,8 @@ function useFollowCurrent(current: number | null, shown: boolean, popupOpen: () 
 export function Transcript({
   lines,
   english,
+  failed,
+  retry,
   playback,
   tabId,
   shown,
@@ -123,6 +143,8 @@ export function Transcript({
 }: {
   lines: readonly Caption[]
   english: ReadonlyMap<string, string>
+  failed: ReadonlySet<string>
+  retry(text: string): void
   playback: Playback | null
   tabId: number
   shown: boolean
@@ -134,6 +156,7 @@ export function Transcript({
   latest.current = playback
   const playing = useCallback(() => latest.current?.playing === true, [])
   const { services } = shared
+  const glosses = useMemo(() => lineGlosses(services), [services])
   const { popupChanged, popupOpen } = usePopupPause(services, tabId, playing)
   const at = playingLine(lines, playback)
   const current = at === null ? null : lines[at].id
@@ -153,6 +176,9 @@ export function Transcript({
           line={line}
           current={line.id === current}
           english={english.get(line.text)}
+          englishFailed={failed.has(line.text)}
+          retryEnglish={retry}
+          glosses={glosses}
           seek={seek}
           popupChanged={popupChanged}
           {...shared}

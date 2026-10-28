@@ -166,7 +166,7 @@ describe('the YouTube watch page', () => {
     expect(tab.opened.length).toBe(opened)
   })
 
-  it('with Zenbu Captions off, asks nothing until the Video tab asks, then once per video', async () => {
+  it('with Zenbu Captions off, asks nothing until the Video tab asks, then once for each video it asks for', async () => {
     tab = await withCaptionsOff()
     await tab.videoTab({ type: 'captions', tabId })
     await tab.shown('lines')
@@ -195,7 +195,7 @@ describe('the YouTube watch page', () => {
 describe('the playback it sends a Video tab', () => {
   const sent = () => tab?.ports.posted.length ?? 0
 
-  it('sends nothing until a Video tab opens for it, and nothing once that tab closes', async () => {
+  it('sends nothing until a Video tab opens for it, and stops following the video once that tab closes', async () => {
     tab = youTubeTab()
     video().dispatchEvent(new Event('seeked'))
     expect(tab.followers).toHaveLength(0)
@@ -214,6 +214,7 @@ describe('the playback it sends a Video tab', () => {
     panel.disconnect()
     await Promise.resolve()
     expect(tab.subscriptions.open).toBe(0)
+    expect(tab.followers[0]?.playback).toBeNull()
     const before = sent()
     video().dispatchEvent(new Event('seeked'))
     video().dispatchEvent(new Event('timeupdate'))

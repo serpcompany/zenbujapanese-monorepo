@@ -1,5 +1,5 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
-import { type Failure, failure } from '../shared/messages'
+import { type Failure, failure, fields } from '../shared/messages'
 
 export type CaptionsState =
   | { state: 'loading'; videoId: string }
@@ -22,11 +22,6 @@ export type CaptionsEnvelope = { target: 'service-worker'; captions: CaptionsReq
 export type CaptionsChange = { target: 'captions'; tabId: number; captions: CaptionsState }
 
 type Sender = { sendMessage(message: CaptionsEnvelope): Promise<CaptionsAnswer> }
-
-type Fields = Partial<Record<string, unknown>>
-
-const fields = (value: unknown): Fields | undefined =>
-  typeof value === 'object' && value !== null ? (value as Fields) : undefined
 
 function isCaptionsRequest(value: unknown): value is CaptionsRequest {
   const request = fields(value)

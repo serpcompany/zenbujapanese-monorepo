@@ -16,9 +16,19 @@ import { videoTabPortsStandIn } from './video-tab-ports'
 
 type ContentListener = (message: unknown) => false
 
-type Options = { tabId?: number; captionsOn?: boolean; follow?: typeof youTubeFollower }
+type Options = {
+  tabId?: number
+  captionsOn?: boolean
+  follow?: typeof youTubeFollower
+  contentScript?: boolean
+}
 
-export function watchedTab({ tabId = 5, captionsOn = true, follow }: Options = {}) {
+export function watchedTab({
+  tabId = 5,
+  captionsOn = true,
+  follow,
+  contentScript: injected = true
+}: Options = {}) {
   const youTube = youTubeStandIn()
   const contentScript = new Set<ContentListener>()
   const sidePanel = new Set<(change: CaptionsChange) => void>()
@@ -46,20 +56,22 @@ export function watchedTab({ tabId = 5, captionsOn = true, follow }: Options = {
     (sender: { tab?: { id?: number } }) =>
     (message: CaptionsEnvelope): Promise<CaptionsAnswer> =>
       new Promise(resolve => serviceWorker(message, sender, resolve))
-  const stop = followYouTubePage(document, {
-    runtime: {
-      sendMessage: message => {
-        if (message.captions.type === 'video-opened') opened.push(message.captions.videoId)
-        return sendFrom({ tab: { id: tabId } })(message)
+  const load = () =>
+    followYouTubePage(document, {
+      runtime: {
+        sendMessage: message => {
+          if (message.captions.type === 'video-opened') opened.push(message.captions.videoId)
+          return sendFrom({ tab: { id: tabId } })(message)
+        },
+        onMessage: {
+          addListener: listener => contentScript.add(listener),
+          removeListener: listener => contentScript.delete(listener)
+        },
+        onConnect: ports.onConnect(tabId)
       },
-      onMessage: {
-        addListener: listener => contentScript.add(listener),
-        removeListener: listener => contentScript.delete(listener)
-      },
-      onConnect: ports.onConnect(tabId)
-    },
-    follow
-  })
+      follow
+    })
+  let stop = injected ? load() : () => undefined
   const fromPanel = { sendMessage: sendFrom({}) }
   return {
     tabId,
@@ -68,7 +80,11 @@ export function watchedTab({ tabId = 5, captionsOn = true, follow }: Options = {
     opened,
     announced,
     ports,
-    stop,
+    stop: () => stop(),
+    reload() {
+      stop()
+      stop = load()
+    },
     askCaptions: (request: CaptionsRequest) => askCaptions(request, fromPanel),
     toContentScript(message: unknown) {
       for (const listener of [...contentScript]) listener(message)

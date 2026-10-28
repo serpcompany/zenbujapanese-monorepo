@@ -69,12 +69,16 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
     if (following) unsubscribe = following.subscribe(videoTabs.send)
   }
 
+  const stopFollowing = () => {
+    follower?.stop()
+    follower = null
+  }
+
   const navigated = () => {
     const next = watchedVideoId(page.location.href)
     if (next === videoId) return
     clearRetry()
-    follower?.stop()
-    follower = null
+    stopFollowing()
     videoId = next
     open()
     followForVideoTabs()
@@ -97,7 +101,9 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
     if (first) followForVideoTabs()
     port.onDisconnect.addListener(() => {
       videoTabs.remove(port)
-      if (!videoTabs.open) followForVideoTabs()
+      if (videoTabs.open) return
+      followForVideoTabs()
+      stopFollowing()
     })
   }
 
@@ -115,8 +121,7 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
     clearRetry()
     unsubscribe()
     videoTabs.close()
-    follower?.stop()
-    follower = null
+    stopFollowing()
     videoId = null
   }
 }

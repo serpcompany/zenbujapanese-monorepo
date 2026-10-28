@@ -1,6 +1,11 @@
 import { act, type ComponentType } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { englishVideo, japaneseLines } from '../captions/fixtures/youtube-stand-in'
+import {
+  englishVideo,
+  japaneseLines,
+  japaneseVideo,
+  secondJapaneseVideo
+} from '../captions/fixtures/youtube-stand-in'
 import { captionLabels } from '../captions/labels'
 import { labels as panelLabels } from '../side-panel/labels'
 import type { PanelTabProps } from '../side-panel/route'
@@ -148,6 +153,40 @@ describe('the Video tab', () => {
     const shown = await showing({ captionsOn: false })
     await shown.lines()
     expect(shown.page.youTube.timedTextRequests()).toBe(1)
+  })
+
+  it('with Zenbu Captions off, gets the next video’s lines while shown, and asks nothing for it hidden or closed', async () => {
+    const shown = await showing({ captionsOn: false })
+    await shown.lines()
+    await shown.navigate(secondJapaneseVideo)
+    await shown.lines()
+    expect(shown.page.youTube.timedTextRequests()).toBe(2)
+    await shown.show(false)
+    await shown.navigate(japaneseVideo)
+    await shown.navigate(secondJapaneseVideo)
+    await new Promise(resolve => setTimeout(resolve, 5))
+    expect(shown.page.youTube.timedTextRequests()).toBe(2)
+    expect(shown.services.askCaptions).toHaveBeenCalledTimes(2)
+    shown.close()
+    await shown.navigate(japaneseVideo)
+    await new Promise(resolve => setTimeout(resolve, 5))
+    expect(shown.page.youTube.timedTextRequests()).toBe(2)
+  })
+
+  it('in a tab with no content script, says to reload it, and follows the video once reloaded', async () => {
+    const shown = await showing({ contentScript: false })
+    await shown.lines()
+    await vi.waitFor(() =>
+      expect(shown.text('[data-reload-notice] p')).toBe(videoTabLabels.reloadToFollow)
+    )
+    await shown.retry()
+    expect(shown.text('[data-reload-notice] p')).toBe(videoTabLabels.reloadToFollow)
+    await click(shown.button(videoTabLabels.reload))
+    expect(shown.services.reload).toHaveBeenCalledExactlyOnceWith(tabId)
+    await shown.retry()
+    await vi.waitFor(() => expect(shown.panel.querySelector('[data-reload-notice]')).toBeNull())
+    await shown.playsAt(1)
+    expect(shown.current()).toBe('おはようございます')
   })
 
   it('reads the tab, asks for captions and follows the video only once it is shown', async () => {

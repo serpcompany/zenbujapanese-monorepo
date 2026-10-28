@@ -5,7 +5,7 @@ import { expect, vi } from 'vitest'
 import { japaneseVideo } from '../captions/fixtures/youtube-stand-in'
 import type { PanelPage } from '../side-panel/route'
 import type { TranslatorState } from '../translation/messages'
-import { openVideoTab } from '../video/video-tab-port'
+import { type Following, openVideoTab } from '../video/video-tab-port'
 import type { ActiveTab, VideoTabServices } from '../video-tab/services'
 import { VideoTab } from '../video-tab/video-tab'
 import { startExtension } from './extension'
@@ -75,18 +75,26 @@ function translatorStandIn(state: TranslatorState) {
   return { services, finishDownload: () => act(async () => finishDownload()) }
 }
 
-type Options = { captionsOn?: boolean; translator?: TranslatorState; url?: string; title?: string }
+type Options = {
+  captionsOn?: boolean
+  translator?: TranslatorState
+  url?: string
+  title?: string
+  contentScript?: boolean
+}
 
 export function watching({
   captionsOn = true,
   translator = 'available',
   url = watchURL(),
-  title = '(2) 散歩の日 - YouTube'
+  title = '(2) 散歩の日 - YouTube',
+  contentScript = true
 }: Options = {}) {
   startExtension()
   happyDOM.setURL(url)
   const video = followerStandIn()
-  const page = watchedTab({ tabId, captionsOn, follow: video.follow })
+  const page = watchedTab({ tabId, captionsOn, follow: video.follow, contentScript })
+  const retries: (() => void)[] = []
   const english = translatorStandIn(translator)
   const tabWatchers = new Set<() => void>()
   const site: { tab: ActiveTab | null } = { tab: { id: tabId, url, title } }
@@ -106,13 +114,17 @@ export function watching({
     },
     askCaptions: vi.fn<VideoTabServices['askCaptions']>(page.askCaptions),
     watchCaptions: page.watchCaptions,
-    followPlayback: (watched: number, heard: Parameters<VideoTabServices['followPlayback']>[1]) =>
-      openVideoTab(watched, heard, {
+    followPlayback: (watched: number, following: Following) =>
+      openVideoTab(watched, following, {
         connect: page.ports.connect,
-        lastError: page.ports.lastError
+        lastError: page.ports.lastError,
+        wait: () => new Promise(resolve => retries.push(resolve))
       }),
     control: vi.fn<VideoTabServices['control']>((to, control) => {
       if (to === tabId) page.toContentScript({ target: 'video', control })
+    }),
+    reload: vi.fn<VideoTabServices['reload']>(to => {
+      if (to === tabId) page.reload()
     })
   } satisfies VideoTabServices
   const panel = document.body.appendChild(document.createElement('main'))
@@ -121,6 +133,14 @@ export function watching({
   const show = (shown: boolean) =>
     act(async () => root.render(<VideoTab services={services} open={open} shown={shown} />))
   const rows = () => [...panel.querySelectorAll<HTMLElement>('[data-line]')]
+  let mounted = true
+  const move = async (tab: ActiveTab | null) => {
+    site.tab = tab
+    await act(async () => {
+      for (const watcher of [...tabWatchers]) watcher()
+    })
+    await settle()
+  }
   return {
     page,
     video,
@@ -140,10 +160,20 @@ export function watching({
       await vi.waitFor(() => expect(rows()).toHaveLength(3))
       await settle()
     },
-    async move(tab: ActiveTab | null) {
-      site.tab = tab
+    move,
+    async navigate(videoId: string) {
+      const to = watchURL(videoId)
+      happyDOM.setURL(to)
+      document.dispatchEvent(new Event('yt-navigate-finish'))
+      await move({ id: tabId, url: to, title })
+    },
+    close() {
+      if (mounted) act(() => root.unmount())
+      mounted = false
+    },
+    async retry() {
       await act(async () => {
-        for (const watcher of [...tabWatchers]) watcher()
+        for (const retried of retries.splice(0)) retried()
       })
       await settle()
     },
@@ -152,7 +182,8 @@ export function watching({
       await settle()
     },
     unmount() {
-      act(() => root.unmount())
+      if (mounted) act(() => root.unmount())
+      mounted = false
       page.stop()
     }
   }

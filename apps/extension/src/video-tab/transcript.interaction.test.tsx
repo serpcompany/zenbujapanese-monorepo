@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { japaneseLines } from '../captions/fixtures/youtube-stand-in'
+import { captionLabels } from '../captions/labels'
 import { writeSettings } from '../shared/settings'
 import { click, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
@@ -93,6 +94,33 @@ describe('the transcript’s English', () => {
     expect(shown.services.translate).not.toHaveBeenCalled()
   })
 
+  it('shows Try again on a line Translate didn’t answer, which asks for that line again', async () => {
+    tab = watching()
+    tab.services.translate.mockResolvedValueOnce({
+      type: 'failed',
+      reason: 'The Translator timed out.'
+    })
+    const shown = tab
+    await shown.show(true)
+    await shown.lines()
+    const first = () => shown.row('おはようございます')
+    await vi.waitFor(() =>
+      expect(first()?.querySelector('[data-english-failed] p')?.textContent).toBe(
+        videoTabLabels.englishFailed
+      )
+    )
+    expect(englishOf(shown).slice(1)).toEqual(japaneseLines.slice(1).map(line => lineEnglish[line]))
+    const tryAgain = [...(first()?.querySelectorAll('button') ?? [])].find(
+      button => button.textContent === captionLabels.tryAgain
+    )
+    await click(tryAgain)
+    await vi.waitFor(() =>
+      expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))
+    )
+    expect(first()?.querySelector('[data-english-failed]')).toBeNull()
+    expect(shown.services.translate).toHaveBeenCalledTimes(4)
+  })
+
   it('hides the English with Translations off, and asks for none', async () => {
     tab = watching()
     await act(() => writeSettings({ 'readingAids.translations': false }))
@@ -129,6 +157,24 @@ describe('the transcript’s words', () => {
     await vi.waitFor(() => expect(meanings()).toEqual(['demand', 'demand']))
   })
 
+  it('looks up a word’s meaning once for the whole transcript', async () => {
+    tab = watching()
+    await act(() => writeSettings({ 'readingAids.wordMeanings': true }))
+    tab.services.segment.mockImplementation(async text => ({
+      type: 'segment',
+      tokens: [{ text, reading: 'ヨウキュウ', languageReferenceID: 'youkyuu' }],
+      romaji: null
+    }))
+    tab.services.popupCard.mockImplementation(async () => popupAnswer('youkyuu'))
+    const shown = tab
+    await shown.show(true)
+    await shown.lines()
+    await vi.waitFor(() =>
+      expect(shown.panel.querySelectorAll('[data-line] [data-aid="meaning"]')).toHaveLength(3)
+    )
+    expect(shown.services.popupCard).toHaveBeenCalledExactlyOnceWith('youkyuu', [])
+  })
+
   it('keeps the playing row in view, and leaves the list still while a popup is open', async () => {
     const scrolled: (string | undefined)[] = []
     vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function (this: Element) {
@@ -152,6 +198,17 @@ describe('the transcript’s words', () => {
     await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
     await click(shown.button(wordPopupLabels.close))
     expect(popup()).toBeNull()
+    await vi.waitFor(() =>
+      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
+    )
+  })
+
+  it('plays the video again when the transcript closes with a popup open', async () => {
+    const shown = await transcript()
+    await shown.playsAt(12)
+    await click(document.querySelector(walkWord('散歩')))
+    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    shown.close()
     await vi.waitFor(() =>
       expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
     )

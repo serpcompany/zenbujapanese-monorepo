@@ -15,5 +15,8 @@ export const videoTabLabels = {
   goTo: (seconds: number) => `Go to ${clock(seconds)}`,
   englishNeedsDownload: 'Download Japanese for Translate to see each line in English.',
   download: 'Download',
-  noAnswer: "Zenbu didn't answer. Try again."
+  noAnswer: "Zenbu didn't answer. Try again.",
+  reloadToFollow: 'Reload this tab to follow the video.',
+  reload: 'Reload',
+  englishFailed: "Translate didn't answer."
 }

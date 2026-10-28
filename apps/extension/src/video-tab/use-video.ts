@@ -34,21 +34,27 @@ export function useCaptions(services: VideoTabServices, { tabId, videoId }: Watc
   return { answer, tryAgain }
 }
 
+export type Followed = { playback: Playback | null; unreachable: boolean }
+
+const notFollowed: Followed = { playback: null, unreachable: false }
+
 export function usePlayback(
   services: VideoTabServices,
   { tabId, videoId }: WatchedVideo,
   shown: boolean
-): Playback | null {
-  const [playback, setPlayback] = useState<Playback | null>(null)
+): Followed {
+  const [followed, setFollowed] = useState<Followed>(notFollowed)
   useEffect(() => {
     if (!shown) return
-    const stop = services.followPlayback(tabId, heard =>
-      setPlayback(heard?.videoId === videoId ? heard : null)
-    )
+    const stop = services.followPlayback(tabId, {
+      playback: heard =>
+        setFollowed({ playback: heard?.videoId === videoId ? heard : null, unreachable: false }),
+      unreachable: () => setFollowed({ playback: null, unreachable: true })
+    })
     return () => {
       stop()
-      setPlayback(null)
+      setFollowed(notFollowed)
     }
   }, [services, tabId, videoId, shown])
-  return playback
+  return followed
 }

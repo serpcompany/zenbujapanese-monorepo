@@ -65,12 +65,16 @@ describe('the playback a page sends its Video tabs', () => {
 })
 
 describe('a Video tab following a page', () => {
-  it('waits longer each time no page answers, and connects once one does', async () => {
+  it('waits longer each time no page answers, saying so each time, and connects once one does', async () => {
     const tabs = videoTabPortsStandIn()
     const waits: number[] = []
     const waited: (() => void)[] = []
-    const heard: (Playback | null)[] = []
-    const stop = openVideoTab(5, playback => heard.push(playback), {
+    const heard: (Playback | null | 'unreachable')[] = []
+    const following = {
+      playback: (playback: Playback | null) => void heard.push(playback),
+      unreachable: () => void heard.push('unreachable')
+    }
+    const stop = openVideoTab(5, following, {
       connect: tabs.connect,
       lastError: tabs.lastError,
       wait: milliseconds => {
@@ -85,20 +89,44 @@ describe('a Video tab following a page', () => {
     tabs.onConnect(5).addListener(port => page.add(port, playing(3)))
     waited.shift()?.()
     await vi.waitFor(() => expect(heard.at(-1)).toEqual(playing(3)))
+    expect(heard).toEqual(['unreachable', 'unreachable', playing(3)])
     stop()
     await Promise.resolve()
     page.send(playing(4))
-    expect(heard.filter(playback => playback !== null)).toEqual([playing(3)])
+    expect(heard).toEqual(['unreachable', 'unreachable', playing(3)])
+  })
+
+  it('hears no playback, without calling the page unreachable, when a page it followed goes', async () => {
+    const tabs = videoTabPortsStandIn()
+    const heard: (Playback | null | 'unreachable')[] = []
+    const page = videoTabPorts()
+    tabs.onConnect(5).addListener(port => page.add(port, playing(3)))
+    openVideoTab(
+      5,
+      {
+        playback: playback => void heard.push(playback),
+        unreachable: () => void heard.push('unreachable')
+      },
+      { connect: tabs.connect, lastError: tabs.lastError, wait: () => new Promise(() => {}) }
+    )
+    await vi.waitFor(() => expect(heard).toEqual([playing(3)]))
+    page.close()
+    await vi.waitFor(() => expect(heard).toEqual([playing(3), null]))
   })
 
   it('hears nothing more, and stops asking, once it closes', async () => {
     const tabs = videoTabPortsStandIn()
     const wait = vi.fn(() => Promise.resolve())
-    const stop = openVideoTab(5, () => undefined, {
-      connect: tabs.connect,
-      lastError: tabs.lastError,
-      wait
-    })
+    const ignore = () => undefined
+    const stop = openVideoTab(
+      5,
+      { playback: ignore, unreachable: ignore },
+      {
+        connect: tabs.connect,
+        lastError: tabs.lastError,
+        wait
+      }
+    )
     stop()
     await new Promise(resolve => setTimeout(resolve, 0))
     expect(wait).not.toHaveBeenCalled()

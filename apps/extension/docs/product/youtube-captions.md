@@ -19,7 +19,7 @@ a page. No other YouTube page, and no other site, is followed.
 | A track is only ever asked for on `www.youtube.com`, and never translated. | `src/captions/youtube-requests.test.ts` |
 | A failure has its reason: the video didn't open, YouTube couldn't be reached, it refused the captions, they couldn't be read, Zenbu couldn't get ready to ask, in which case nothing is asked, or Zenbu couldn't keep the captions it got. A failed video is asked for again only by Try again. | `src/captions/youtube-requests.test.ts`, `src/captions/captions-service.test.ts` |
 | A request YouTube leaves unanswered for 15 seconds fails as YouTube not reached, and the other tabs' requests go on. | `src/captions/youtube-requests.test.ts`, `src/captions/captions-service.test.ts` |
-| With Zenbu Captions off in Settings, opening a video asks nothing until the Video tab asks for the captions, then once per video in that tab. Turning them on asks for each video still open. | `src/captions/captions-service.test.ts`, `src/video/youtube-page.interaction.test.tsx` |
+| With Zenbu Captions off in Settings, opening a video asks nothing until the Video tab asks for its captions, and each next video in that tab waits, too, until the Video tab asks for it. Turning them on asks for each video still open. | `src/captions/captions-service.test.ts`, `src/video/youtube-page.interaction.test.tsx` |
 
 ## When YouTube says no
 

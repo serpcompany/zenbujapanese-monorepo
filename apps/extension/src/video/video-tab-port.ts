@@ -1,4 +1,5 @@
 import { afterTimeout, backoff, type Wait } from '../page-lookup/scan'
+import { fields } from '../shared/messages'
 import type { Playback } from './follower'
 
 export const videoTabPort = 'video-tab'
@@ -30,11 +31,6 @@ type PanelOptions = { connect?: Connect; lastError?: () => unknown; wait?: Wait 
 const steadyInterval = 100
 
 const jump = 1
-
-type Fields = Partial<Record<string, unknown>>
-
-const fields = (value: unknown): Fields | undefined =>
-  typeof value === 'object' && value !== null ? (value as Fields) : undefined
 
 function isPlayback(value: unknown): value is Playback | null {
   if (value === null) return true
@@ -100,9 +96,14 @@ export function videoTabPorts(now: () => number = () => performance.now()) {
 const connectToTab: Connect = tabId =>
   chrome.tabs.connect(tabId, { name: videoTabPort, frameId: 0 })
 
+export type Following = {
+  playback(playback: Playback | null): void
+  unreachable(): void
+}
+
 export function openVideoTab(
   tabId: number,
-  onPlayback: (playback: Playback | null) => void,
+  following: Following,
   options: PanelOptions = {}
 ): () => void {
   const connect = options.connect ?? connectToTab
@@ -111,22 +112,23 @@ export function openVideoTab(
   let port: PanelPort | null = null
   let closed = false
 
-  const received = (message: unknown) => {
-    if (!isPlaybackMessage(message)) return
-    delay.reset()
-    onPlayback(message.playback)
-  }
-
   function opened() {
     if (closed) return
     const connected = connect(tabId)
+    let heard = false
     port = connected
-    connected.onMessage.addListener(received)
+    connected.onMessage.addListener(message => {
+      if (!isPlaybackMessage(message)) return
+      heard = true
+      delay.reset()
+      following.playback(message.playback)
+    })
     connected.onDisconnect.addListener(() => {
-      lastError()
+      const refused = lastError() !== undefined && !heard
       if (port !== connected) return
       port = null
-      onPlayback(null)
+      if (refused) following.unreachable()
+      else following.playback(null)
       delay.wait().then(opened)
     })
   }

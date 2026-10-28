@@ -7,8 +7,7 @@ import {
 } from '../captions/messages'
 import { onDeviceServices, type TranslateServices } from '../translate/services'
 import type { VideoControl, VideoControlMessage } from '../video/controls'
-import type { Playback } from '../video/follower'
-import { openVideoTab } from '../video/video-tab-port'
+import { type Following, openVideoTab } from '../video/video-tab-port'
 
 export type ActiveTab = { id: number; url?: string; title?: string }
 
@@ -20,8 +19,9 @@ export type VideoTabServices = Pick<
   watchActiveTab(changed: () => void): () => void
   askCaptions(request: CaptionsRequest): Promise<CaptionsAnswer>
   watchCaptions(heard: (change: CaptionsChange) => void): () => void
-  followPlayback(tabId: number, heard: (playback: Playback | null) => void): () => void
+  followPlayback(tabId: number, following: Following): () => void
   control(tabId: number, control: VideoControl): void
+  reload(tabId: number): void
 }
 
 type TabChange = { status?: string; url?: string; title?: string }
@@ -62,6 +62,12 @@ function control(tabId: number, sent: VideoControl): void {
     .catch(ignore)
 }
 
+function reload(tabId: number): void {
+  Promise.resolve()
+    .then(() => chrome.tabs.reload(tabId))
+    .catch(ignore)
+}
+
 const { segment, wait, popupCard, translate, availability, download } = onDeviceServices
 
 export const onDeviceVideoServices: VideoTabServices = {
@@ -75,6 +81,7 @@ export const onDeviceVideoServices: VideoTabServices = {
   watchActiveTab,
   askCaptions: request => askCaptions(request),
   watchCaptions,
-  followPlayback: (tabId, heard) => openVideoTab(tabId, heard),
-  control
+  followPlayback: (tabId, following) => openVideoTab(tabId, following),
+  control,
+  reload
 }

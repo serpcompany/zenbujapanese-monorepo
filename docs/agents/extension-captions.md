@@ -65,12 +65,17 @@ the tab's content script, with no service worker between:
 - **The content script sends** `{ target: 'video-tab', playback }` on each open port, a
   `Playback` (`{ videoId, time, playing, rate, ad }`) or `null` when the page has no video: once
   on connecting, then on each change while at least one port is open. It subscribes to the
-  follower only then, so nothing is sent, and no frame is read, while no Video tab is open.
+  follower only then, so nothing is sent, and no frame is read, while no Video tab is open, and
+  stops the follower when the last port closes.
 - **The throttle:** steady play, the same video at the same speed with no ad, is sent at most
   every 100 ms; a jump of a second or more, a pause, a speed change, an ad, or `null` goes at once.
 - **Reconnecting:** a port the page drops, or one no page answers, such as a tab whose content
   script hasn't started, is tried again after 2 seconds, doubling up to 10, and the wait starts
-  over on the next message. The panel reads `chrome.runtime.lastError` on each disconnect.
+  over on the next message. The panel reads `chrome.runtime.lastError` on each disconnect. A port
+  that disconnects with a `lastError` before any message, which is what a tab without the content
+  script gives, is reported to the Video tab as `unreachable()` (`Following` in
+  `video-tab-port.ts`), and the tab offers Reload (`chrome.tabs.reload`); any message after that
+  clears it.
 
 A port, rather than two messages through the service worker, makes the close certain: Chrome
 disconnects it when the panel closes or the page goes, which a sent "closed" can't promise. The

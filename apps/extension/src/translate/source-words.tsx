@@ -10,7 +10,7 @@ import {
   useState
 } from 'react'
 import { type Glosses, glossOf } from '../page-lookup/annotate'
-import { type GlossLookUp, glossCache } from '../page-lookup/glosses'
+import { type GlossCache, type GlossLookUp, glossCache } from '../page-lookup/glosses'
 import { type Found, wordIds } from '../page-lookup/rendering'
 import { backoff, readText, type Segment, type Wait } from '../page-lookup/scan'
 import { type PageToken, wordGroups } from '../page-lookup/words'
@@ -58,8 +58,16 @@ function useFound(source: string, { segment, wait }: SourceServices): Found | nu
   return found
 }
 
-function useGlosses(found: Found | null, on: boolean, services: SourceServices): Glosses {
-  const cache = useMemo(() => glossCache(id => services.popupCard(id, [])), [services])
+export const lineGlosses = (services: SourceServices): GlossCache =>
+  glossCache(id => services.popupCard(id, []))
+
+function useGlosses(
+  found: Found | null,
+  on: boolean,
+  services: SourceServices,
+  shared: GlossCache | undefined
+): Glosses {
+  const cache = useMemo(() => shared ?? lineGlosses(services), [shared, services])
   const [, redraw] = useReducer((count: number) => count + 1, 0)
   useEffect(() => {
     if (!found || !on) return
@@ -139,6 +147,7 @@ type LineProps = {
   services: SourceServices
   open?(page: PanelPage): void
   onPopup?(open: boolean, dismiss: () => void): void
+  glosses?: GlossCache
 }
 
 function useReportPopup(
@@ -146,16 +155,22 @@ function useReportPopup(
   onPopup: LineProps['onPopup'],
   setPicked: (picked: null) => void
 ) {
-  const reported = useRef(false)
   useEffect(() => {
-    if (reported.current === popupOpen) return
-    reported.current = popupOpen
-    onPopup?.(popupOpen, () => setPicked(null))
+    if (!popupOpen || !onPopup) return
+    onPopup(true, () => setPicked(null))
+    return () => onPopup(false, () => setPicked(null))
   }, [popupOpen, onPopup, setPicked])
 }
 
-function Linked({ found, settings, services, open, onPopup }: LineProps & { found: Found }) {
-  const glosses = useGlosses(found, settings['readingAids.wordMeanings'], services)
+function Linked({
+  found,
+  settings,
+  services,
+  open,
+  onPopup,
+  glosses: shared
+}: LineProps & { found: Found }) {
+  const glosses = useGlosses(found, settings['readingAids.wordMeanings'], services, shared)
   const source = useRef<HTMLParagraphElement>(null)
   const [picked, setPicked, close] = usePicked(source)
   useReportPopup(picked !== null, onPopup, setPicked)

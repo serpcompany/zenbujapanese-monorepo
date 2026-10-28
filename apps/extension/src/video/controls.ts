@@ -1,3 +1,4 @@
+import { fields } from '../shared/messages'
 import type { VideoFollower } from './follower'
 
 export type VideoControl =
@@ -7,11 +8,6 @@ export type VideoControl =
   | { type: 'rate'; rate: number }
 
 export type VideoControlMessage = { target: 'video'; control: VideoControl }
-
-type Fields = Partial<Record<string, unknown>>
-
-const fields = (value: unknown): Fields | undefined =>
-  typeof value === 'object' && value !== null ? (value as Fields) : undefined
 
 const isTime = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0
 const isRate = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value > 0

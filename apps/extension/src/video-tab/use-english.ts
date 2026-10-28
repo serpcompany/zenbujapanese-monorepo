@@ -60,15 +60,52 @@ function useTranslator(on: boolean, services: EnglishServices) {
   return { translator, setTranslator, download }
 }
 
+export type English = {
+  english: ReadonlyMap<string, string>
+  failed: ReadonlySet<string>
+  translator: Translator
+  download(): void
+  retry(text: string): void
+}
+
 export function useEnglish(
   lines: readonly Caption[],
   on: boolean,
   services: EnglishServices
-): { english: ReadonlyMap<string, string>; translator: Translator; download(): void } {
+): English {
   const { translator, setTranslator, download } = useTranslator(on, services)
   const known = useRef(new Map<string, string>())
+  const failed = useRef(new Set<string>())
+  const mounted = useRef(false)
   const [, redraw] = useReducer((count: number) => count + 1, 0)
   const ready = on && translator.state === 'available'
+
+  const translateLine = useCallback(
+    async (text: string): Promise<boolean> => {
+      failed.current.delete(text)
+      const answer = await services
+        .translate({ type: 'translate', direction: japaneseToEnglish, texts: [text] })
+        .catch((error: unknown) => failure(error))
+      if (!mounted.current) return false
+      if (answer.type === 'not-available') {
+        setTranslator(translatorIn(answer.state))
+        return false
+      }
+      if (answer.type === 'translated' && answer.texts[0]) known.current.set(text, answer.texts[0])
+      if (answer.type === 'failed') failed.current.add(text)
+      redraw()
+      return true
+    },
+    [services, setTranslator]
+  )
+
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
+
   useEffect(() => {
     if (!ready) return
     let live = true
@@ -78,17 +115,9 @@ export function useEnglish(
     const translateNext = async (): Promise<void> => {
       const text = waiting.shift()
       if (!live || text === undefined) return
-      const answer = await services
-        .translate({ type: 'translate', direction: japaneseToEnglish, texts: [text] })
-        .catch((error: unknown) => failure(error))
-      if (!live) return
-      if (answer.type === 'not-available') {
+      if (!(await translateLine(text))) {
         live = false
-        return setTranslator(translatorIn(answer.state))
-      }
-      if (answer.type === 'translated' && answer.texts[0]) {
-        known.current.set(text, answer.texts[0])
-        redraw()
+        return
       }
       return translateNext()
     }
@@ -96,6 +125,14 @@ export function useEnglish(
     return () => {
       live = false
     }
-  }, [ready, lines, services, setTranslator])
-  return { english: known.current, translator, download }
+  }, [ready, lines, translateLine])
+
+  const retry = useCallback(
+    (text: string) => {
+      translateLine(text)
+      redraw()
+    },
+    [translateLine]
+  )
+  return { english: known.current, failed: failed.current, translator, download, retry }
 }

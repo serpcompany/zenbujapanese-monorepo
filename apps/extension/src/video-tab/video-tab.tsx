@@ -28,6 +28,10 @@ const minute = 60_000
 
 const noteClass = 'text-sm text-muted-foreground'
 
+const noEnglish: ReadonlyMap<string, string> = new Map()
+
+const noFailures: ReadonlySet<string> = new Set()
+
 function useNow(ticking: boolean): number {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -76,6 +80,17 @@ function EnglishNotice({ translator, download }: { translator: Translator; downl
   )
 }
 
+function ReloadNotice({ reload }: { reload(): void }) {
+  return (
+    <div data-reload-notice className="flex items-center gap-3">
+      <p className={`${noteClass} flex-1`}>{videoTabLabels.reloadToFollow}</p>
+      <Button variant="outline" size="sm" onClick={reload}>
+        {videoTabLabels.reload}
+      </Button>
+    </div>
+  )
+}
+
 function Lines({
   lines,
   video,
@@ -84,14 +99,21 @@ function Lines({
   ...shared
 }: Shared & { lines: Caption[]; video: WatchedVideo; shown: boolean; settings: Settings | null }) {
   const translations = settings?.['readingAids.translations'] === true
-  const { english, translator, download } = useEnglish(lines, translations, shared.services)
-  const playback = usePlayback(shared.services, video, shown)
+  const { english, failed, translator, download, retry } = useEnglish(
+    lines,
+    translations,
+    shared.services
+  )
+  const { playback, unreachable } = usePlayback(shared.services, video, shown)
   return (
     <>
+      {unreachable && <ReloadNotice reload={() => shared.services.reload(video.tabId)} />}
       {translations && <EnglishNotice translator={translator} download={download} />}
       <Transcript
         lines={lines}
-        english={translations ? english : new Map()}
+        english={translations ? english : noEnglish}
+        failed={translations ? failed : noFailures}
+        retry={retry}
         playback={playback}
         tabId={video.tabId}
         shown={shown}
@@ -174,6 +196,7 @@ export function VideoTab({
   useEffect(() => {
     if (shown) setLooked(true)
     if (shown && key) setOpened(key)
+    else setOpened(current => (current === key ? current : null))
   }, [shown, key])
   if (video === undefined) return null
   if (video === null) return <NoVideo open={open} />
