@@ -49,15 +49,14 @@ on the toolbar icon.
   prototype, and refuses an update that isn't above it. Before each upload, raise it; after
   one, set `publishedVersion` in `build/packages.ts` to the uploaded version, in the change that
   records the release, so `pnpm check-package` keeps refusing a version the store would.
-- **The hosts.** One build setting, `ZENBU_ENVIRONMENT`, names the website and API hosts
-  (`build/hosts.ts`): `production` by default, or `staging` (`staging.zenbujapanese.com` and
-  `api-staging.zenbujapanese.com`). The code reads them from `src/shared/hosts.ts`, which the build
-  fills in, and the manifest's `homepage_url` is the website. Nothing in `apps/extension` writes
-  the website or API host. The core can: `detail/links.ts` writes the website's, and #956's
+- **The hosts.** One build setting, `ZENBU_ENVIRONMENT`, names the website's host
+  (`build/hosts.ts`): `production` by default, or `staging` (`staging.zenbujapanese.com`). The
+  code reads it from `src/shared/hosts.ts`, which the build fills in, and the manifest's
+  `homepage_url` is the website. Nothing in `apps/extension` writes the website's host. The core can: `detail/links.ts` writes the website's, and #956's
   language data host is `https://data.zenbujapanese.com`, or the test build's
   `http://language-data.localhost`, which fails a package's check, as does a bundle that takes
-  the website's host from the core in staging (#958). No API host is in `host_permissions`
-  until the extension calls one (#961).
+  the website's host from the core in staging (#958). The extension names no API host, in
+  its build or its `host_permissions`, until it calls one (#961).
 - **The packages.** `Extension packages` ([`ci-deploys.md`](ci-deploys.md)) builds both from
   `main`: the staging package, unpacked with the `key`, for loading by hand, and the store
   package, from the production build, for the owner to upload (#972). Agents never upload to the

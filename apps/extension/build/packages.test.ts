@@ -20,7 +20,7 @@ function built(environment: Environment, variant: Variant = 'release', changes =
     ...Object.fromEntries(
       builtContentScripts('release').map(script => [contentScriptFile(script), ''])
     ),
-    'assets/popup.js': `fetch(${JSON.stringify(`${hosts[environment].api}/v1/health`)})`,
+    'assets/popup.js': `open(${JSON.stringify(`${hosts[environment].website}/dictionary`)})`,
     ...Object.fromEntries(builtPages.map(page => [page, '<!doctype html>']))
   }
 }
@@ -120,8 +120,7 @@ describe('the check of a package', () => {
     ])
     expect(problemsOf(built('staging'), 'unpacked', 'production')).toEqual([
       "The manifest's homepage_url is https://staging.zenbujapanese.com, not https://zenbujapanese.com.",
-      "staging's https://staging.zenbujapanese.com is in manifest.json.",
-      "staging's https://api-staging.zenbujapanese.com is in assets/popup.js."
+      "staging's https://staging.zenbujapanese.com is in manifest.json, assets/popup.js."
     ])
   })
 

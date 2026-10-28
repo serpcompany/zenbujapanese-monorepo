@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { build, type Rolldown } from 'vite'
 import { describe, expect, it } from 'vitest'
-import { apiOrigin, languageDataOrigin, websiteOrigin } from '../src/shared/hosts.ts'
+import { languageDataOrigin, websiteOrigin } from '../src/shared/hosts.ts'
 import { extensionConfig } from './extension-config.ts'
 import {
   type Environment,
@@ -32,10 +32,9 @@ describe('the build setting', () => {
     expect(() => environmentFrom('qa')).toThrow('ZENBU_ENVIRONMENT is qa')
   })
 
-  it("names staging's website and API hosts", () => {
+  it("names staging's website host", () => {
     expect(hosts.staging).toEqual({
       website: 'https://staging.zenbujapanese.com',
-      api: 'https://api-staging.zenbujapanese.com',
       languageData: 'https://data.zenbujapanese.com'
     })
   })
@@ -52,7 +51,6 @@ describe('the build setting', () => {
 
   it("gives the tests production's hosts", () => {
     expect(websiteOrigin).toBe('https://zenbujapanese.com')
-    expect(apiOrigin).toBe('https://api.zenbujapanese.com')
     expect(languageDataOrigin).toBe('https://data.zenbujapanese.com')
   })
 

@@ -6,21 +6,13 @@ export type Environment = (typeof environments)[number]
 
 export const defaultEnvironment: Environment = 'production'
 
-type Hosts = { website: string; api: string; languageData: string }
+type Hosts = { website: string; languageData: string }
 
 const languageData = 'https://data.zenbujapanese.com'
 
 export const hosts: Record<Environment, Hosts> = {
-  production: {
-    website: 'https://zenbujapanese.com',
-    api: 'https://api.zenbujapanese.com',
-    languageData
-  },
-  staging: {
-    website: 'https://staging.zenbujapanese.com',
-    api: 'https://api-staging.zenbujapanese.com',
-    languageData
-  }
+  production: { website: 'https://zenbujapanese.com', languageData },
+  staging: { website: 'https://staging.zenbujapanese.com', languageData }
 }
 
 export const testLanguageDataHost = 'http://language-data.localhost'
@@ -40,10 +32,9 @@ export function environmentFrom(value: string | undefined): Environment {
 }
 
 export function hostDefines(environment: Environment, variant: Variant = 'release') {
-  const { website, api, languageData } = hostsOf(variant, environment)
+  const { website, languageData } = hostsOf(variant, environment)
   return {
     __ZENBU_WEBSITE_ORIGIN__: JSON.stringify(website),
-    __ZENBU_API_ORIGIN__: JSON.stringify(api),
     __ZENBU_LANGUAGE_DATA_ORIGIN__: JSON.stringify(languageData)
   }
 }
