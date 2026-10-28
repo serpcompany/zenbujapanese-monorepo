@@ -84,7 +84,8 @@ A Japanese phrase or sentence the dictionary doesn't hold lists its Discovered W
 Sudachi finds in it that a learner looks up, in order, including adverbs, pre-noun words such as
 この, and conjunctions, but not its particles, endings, or punctuation. すこしおくれるかも lists
 少し and 遅れる, and a phrase of one such word and its particles, such as 遅れるかも, lists that
-word. A word in kana takes the entry Sudachi names: ちょっとまって lists 待つ, not 松.
+word. A word takes the entry Sudachi names when one reads as the word: ちょっとまって lists 待つ,
+not 松, and 休みをとった lists 取る, not the helper とる.
 
 Check: core `search/search.test.ts` ("phrases") and `search/morphology.test.ts` (which words a
 phrase lists); the recorded `SentenceSearchConformanceTests` and `SentenceResultsConformanceTests`;

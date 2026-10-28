@@ -1100,7 +1100,7 @@
     "連体詞",
     "接続詞"
   ]);
-  var grammarPartsOfSpeech = /* @__PURE__ */ new Set(["助詞", "助動詞", "補助記号", "空白"]);
+  var grammarPartsOfSpeech = /* @__PURE__ */ new Set(["助詞", "助動詞", "補助記号"]);
   var affixPartsOfSpeech = /* @__PURE__ */ new Set(["接頭辞", "接尾辞"]);
   var leadingPartOfSpeech = (word) => word.partOfSpeech[0] ?? "";
   function isLookedUp(word) {
@@ -3304,7 +3304,8 @@
   // src/search/search.ts
   function namedItem(items, word) {
     const form = lookupForm(word);
-    return items.find((item) => item.entry.headword === form) ?? items.find((item) => item.entry.headword === word.normalizedForm);
+    const named = (item) => item.entry.headword === word.normalizedForm;
+    return items.find((item) => named(item) && item.entry.reading === form) ?? items.find((item) => item.entry.headword === form) ?? items.find(named);
   }
   function searchFeatures(capabilities) {
     return { sentenceSearch: capabilities.morphology !== void 0 };

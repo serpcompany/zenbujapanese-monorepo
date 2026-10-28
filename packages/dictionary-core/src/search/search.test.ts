@@ -51,7 +51,11 @@ const dictionary = [
   entry('c3', 32, 'ちょっと', 'ちょっと', ['adverb']),
   entry('c4', 33, '松', 'まつ', ['noun'], { senseCount: 3 }),
   entry('c5', 34, '待つ', 'まつ', ['godanVerb']),
-  entry('c6', 35, 'さん', 'さん', ['suffix'])
+  entry('c6', 35, 'さん', 'さん', ['suffix']),
+  entry('c7', 36, 'とる', 'とる', ['godanVerb'], { senseCount: 3 }),
+  entry('c8', 37, '取る', 'とる', ['godanVerb']),
+  entry('c9', 38, '言える', 'いえる', ['ichidanVerb']),
+  entry('c10', 39, '言う', 'いう', ['godanVerb'])
 ]
 
 function japaneseFormsDatabase() {
@@ -186,6 +190,23 @@ describe('phrases', () => {
       ['て', 'て', '助詞']
     ])
     expect(await headwords(words, 'ちょっとまって')).toEqual(['ちょっと', '待つ'])
+  })
+
+  test('a kana verb takes the entry the analyzer names, over a kana entry spelled the same', async () => {
+    const words = morphemes([
+      ['ちょっと', 'ちょっと', '副詞'],
+      ['とっ', 'とる', '動詞', '取る'],
+      ['た', 'た', '助動詞']
+    ])
+    expect(await headwords(words, 'ちょっととった')).toEqual(['ちょっと', '取る'])
+  })
+
+  test('a word keeps its own entry when the analyzer names one read another way', async () => {
+    const words = morphemes([
+      ['ちょっと', 'ちょっと', '副詞'],
+      ['言える', '言える', '動詞', '言う']
+    ])
+    expect(await headwords(words, 'ちょっと言える')).toEqual(['ちょっと', '言える'])
   })
 })
 

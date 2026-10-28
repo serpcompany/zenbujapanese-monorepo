@@ -103,13 +103,19 @@ describe('isOneWordPhrase', () => {
     ).toBe(true)
   })
 
-  test('is not two words, a lone prefix or suffix, or a word beside one the analyzer didn’t know', () => {
+  test('is not two words, a lone prefix or suffix, a word beside one the analyzer didn’t know, or a word split by a space', () => {
     expect(isOneWordPhrase([word('この', 'この', '連体詞'), word('本', '本', '名詞')])).toBe(false)
     expect(
       isOneWordPhrase([word('髙橋', '髙橋', '名詞', true), word('さん', 'さん', '接尾辞')])
     ).toBe(false)
     expect(isOneWordPhrase([word('お', 'お', '接頭辞'), word('か', 'か', '助詞')])).toBe(false)
-    expect(isOneWordPhrase([word('あ', 'あ', '感動詞'), word('゙', '゙', '名詞', true)])).toBe(false)
+    expect(
+      isOneWordPhrase([
+        word('あ', 'あ', '感動詞'),
+        word(' ', ' ', '空白'),
+        word('い', 'い', '助詞')
+      ])
+    ).toBe(false)
     expect(isOneWordPhrase([word('か', 'か', '助詞')])).toBe(false)
   })
 })

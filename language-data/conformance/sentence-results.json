@@ -1458,17 +1458,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=2 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 2,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -2754,17 +2759,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "57",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "5747047"
+            "1315840"
           ],
-          "headword" : "とき",
-          "languageReferenceID" : "648c696a3d92afe8b29cf7ee1023bc08",
+          "headword" : "時",
+          "languageReferenceID" : "54631efa14b97ca18161409867b9dc73",
           "match" : "source=1 japanese readingExact",
           "reading" : "とき",
           "retrievalOrder" : 1,
-          "summary" : "Toki (regular Jōetsu-line Shinkansen)"
+          "summary" : "time, hour, moment"
         },
         {
           "chips" : [
@@ -3158,21 +3174,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "58,244",
-              "tier" : "rare"
+              "text" : "112",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2615440"
+            "1157080"
           ],
-          "headword" : "ため",
-          "languageReferenceID" : "d3ea2d544c8851f6f26a0dc278cba262",
+          "headword" : "為",
+          "languageReferenceID" : "cae38a5a387b0d688d65e138888f23df",
           "match" : "source=3 japanese readingExact",
           "reading" : "ため",
           "retrievalOrder" : 3,
-          "summary" : "the same (age, social status), peer"
+          "summary" : "good, advantage, benefit, welfare"
         },
         {
           "chips" : [
@@ -4447,17 +4469,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=1 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 1,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         },
         {
           "chips" : [
@@ -5090,21 +5123,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "58,244",
-              "tier" : "rare"
+              "text" : "112",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2615440"
+            "1157080"
           ],
-          "headword" : "ため",
-          "languageReferenceID" : "d3ea2d544c8851f6f26a0dc278cba262",
+          "headword" : "為",
+          "languageReferenceID" : "cae38a5a387b0d688d65e138888f23df",
           "match" : "source=2 japanese readingExact",
           "reading" : "ため",
           "retrievalOrder" : 2,
-          "summary" : "the same (age, social status), peer"
+          "summary" : "good, advantage, benefit, welfare"
         },
         {
           "chips" : [
@@ -6243,21 +6282,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=5 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 5,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         },
         {
           "chips" : [
@@ -7205,17 +7250,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=2 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 2,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -8915,17 +8965,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            }
           ],
           "entSeq" : [
-            "2089690"
+            "2826528"
           ],
-          "headword" : "お",
-          "languageReferenceID" : "0ca032bd5b17d885f606f010505ff7e9",
+          "headword" : "御",
+          "languageReferenceID" : "0c0e780d265e3a560d3270332554e48c",
           "match" : "source=1 japanese readingExact",
           "reading" : "お",
           "retrievalOrder" : 1,
-          "summary" : "oh! (expression of slight surprise)"
+          "summary" : "honorific/polite/humble prefix"
         },
         {
           "chips" : [
@@ -9093,21 +9148,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "1,202",
+              "text" : "114",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2394890"
+            "1326980"
           ],
-          "headword" : "とる",
-          "languageReferenceID" : "fd2ba9cf5f38b9248b309bdbc018e1b5",
+          "headword" : "取る",
+          "languageReferenceID" : "9e3fb19c2d7e3f8c7c16b112a98b9901",
           "match" : "source=3 japanese readingExact",
           "reading" : "とる",
           "retrievalOrder" : 3,
-          "summary" : "to be ...-ing"
+          "summary" : "to take, to pick up, to grab, to catch, to hold"
         }
       ],
       "sections" : [
@@ -10846,17 +10907,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=4 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 4,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -11476,17 +11542,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=4 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 4,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -11541,21 +11612,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=7 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 7,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         }
       ],
       "sections" : [
@@ -11729,21 +11806,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "58,244",
-              "tier" : "rare"
+              "text" : "112",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2615440"
+            "1157080"
           ],
-          "headword" : "ため",
-          "languageReferenceID" : "d3ea2d544c8851f6f26a0dc278cba262",
+          "headword" : "為",
+          "languageReferenceID" : "cae38a5a387b0d688d65e138888f23df",
           "match" : "source=6 japanese readingExact",
           "reading" : "ため",
           "retrievalOrder" : 6,
-          "summary" : "the same (age, social status), peer"
+          "summary" : "good, advantage, benefit, welfare"
         },
         {
           "chips" : [
@@ -12820,17 +12903,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=1 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 1,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -13508,17 +13596,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=2 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 2,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -14729,21 +14822,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "58,244",
-              "tier" : "rare"
+              "text" : "112",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2615440"
+            "1157080"
           ],
-          "headword" : "ため",
-          "languageReferenceID" : "d3ea2d544c8851f6f26a0dc278cba262",
+          "headword" : "為",
+          "languageReferenceID" : "cae38a5a387b0d688d65e138888f23df",
           "match" : "source=1 japanese readingExact",
           "reading" : "ため",
           "retrievalOrder" : 1,
-          "summary" : "the same (age, social status), peer"
+          "summary" : "good, advantage, benefit, welfare"
         },
         {
           "chips" : [
@@ -14805,17 +14904,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=5 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 5,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -15221,21 +15325,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "1,202",
+              "text" : "114",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2394890"
+            "1326980"
           ],
-          "headword" : "とる",
-          "languageReferenceID" : "fd2ba9cf5f38b9248b309bdbc018e1b5",
+          "headword" : "取る",
+          "languageReferenceID" : "9e3fb19c2d7e3f8c7c16b112a98b9901",
           "match" : "source=5 japanese readingExact",
           "reading" : "とる",
           "retrievalOrder" : 5,
-          "summary" : "to be ...-ing"
+          "summary" : "to take, to pick up, to grab, to catch, to hold"
         },
         {
           "chips" : [
@@ -15519,21 +15629,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "58,244",
-              "tier" : "rare"
+              "text" : "112",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2615440"
+            "1157080"
           ],
-          "headword" : "ため",
-          "languageReferenceID" : "d3ea2d544c8851f6f26a0dc278cba262",
+          "headword" : "為",
+          "languageReferenceID" : "cae38a5a387b0d688d65e138888f23df",
           "match" : "source=2 japanese readingExact",
           "reading" : "ため",
           "retrievalOrder" : 2,
-          "summary" : "the same (age, social status), peer"
+          "summary" : "good, advantage, benefit, welfare"
         },
         {
           "chips" : [
@@ -16046,21 +16162,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=9 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 8,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         }
       ],
       "sections" : [
@@ -16422,17 +16544,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=5 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 5,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -16663,21 +16790,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=1 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 1,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         },
         {
           "chips" : [
@@ -16731,17 +16864,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=4 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 4,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -16890,21 +17028,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=3 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 3,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         },
         {
           "chips" : [
@@ -17373,17 +17517,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=5 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 5,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -17552,21 +17701,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=7 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 7,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         },
         {
           "chips" : [
@@ -17902,25 +18057,25 @@
             {
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N3",
-              "tier" : "common"
+              "text" : "N4",
+              "tier" : "very common"
             },
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "8,036",
-              "tier" : "moderately common"
+              "text" : "1,030",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "1535810"
+            "1293700"
           ],
-          "headword" : "もっとも",
-          "languageReferenceID" : "3767c9fe44d311e832c98b9615e36704",
+          "headword" : "最も",
+          "languageReferenceID" : "ae5eb7816c274ebffb33267afd2aef0f",
           "match" : "source=12 japanese readingExact",
           "reading" : "もっとも",
           "retrievalOrder" : 10,
-          "summary" : "but then, although, though"
+          "summary" : "most, extremely"
         },
         {
           "chips" : [
@@ -18822,17 +18977,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=17 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 9,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         },
         {
           "chips" : [
@@ -19894,17 +20060,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=11 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 9,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -21590,17 +21761,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=8 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 8,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -23954,17 +24130,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=2 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 2,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -24715,17 +24902,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=3 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 3,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -25294,17 +25492,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=1 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 1,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -25639,17 +25842,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=4 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 4,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -26974,17 +27188,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "57",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "5747047"
+            "1315840"
           ],
-          "headword" : "とき",
-          "languageReferenceID" : "648c696a3d92afe8b29cf7ee1023bc08",
+          "headword" : "時",
+          "languageReferenceID" : "54631efa14b97ca18161409867b9dc73",
           "match" : "source=1 japanese readingExact",
           "reading" : "とき",
           "retrievalOrder" : 1,
-          "summary" : "Toki (regular Jōetsu-line Shinkansen)"
+          "summary" : "time, hour, moment"
         },
         {
           "chips" : [
@@ -27452,21 +27677,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=3 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 3,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         }
       ],
       "sections" : [
@@ -29345,21 +29576,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "1,202",
+              "text" : "114",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2394890"
+            "1326980"
           ],
-          "headword" : "とる",
-          "languageReferenceID" : "fd2ba9cf5f38b9248b309bdbc018e1b5",
+          "headword" : "取る",
+          "languageReferenceID" : "9e3fb19c2d7e3f8c7c16b112a98b9901",
           "match" : "source=1 japanese readingExact",
           "reading" : "とる",
           "retrievalOrder" : 1,
-          "summary" : "to be ...-ing"
+          "summary" : "to take, to pick up, to grab, to catch, to hold"
         },
         {
           "chips" : [
@@ -30026,21 +30263,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "58,244",
-              "tier" : "rare"
+              "text" : "112",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2615440"
+            "1157080"
           ],
-          "headword" : "ため",
-          "languageReferenceID" : "d3ea2d544c8851f6f26a0dc278cba262",
+          "headword" : "為",
+          "languageReferenceID" : "cae38a5a387b0d688d65e138888f23df",
           "match" : "source=0 japanese readingExact",
           "reading" : "ため",
           "retrievalOrder" : 0,
-          "summary" : "the same (age, social status), peer"
+          "summary" : "good, advantage, benefit, welfare"
         },
         {
           "chips" : [
@@ -31153,25 +31396,25 @@
             {
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N3",
-              "tier" : "common"
+              "text" : "N4",
+              "tier" : "very common"
             },
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "8,036",
-              "tier" : "moderately common"
+              "text" : "1,030",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "1535810"
+            "1293700"
           ],
-          "headword" : "もっとも",
-          "languageReferenceID" : "3767c9fe44d311e832c98b9615e36704",
+          "headword" : "最も",
+          "languageReferenceID" : "ae5eb7816c274ebffb33267afd2aef0f",
           "match" : "source=5 japanese readingExact",
           "reading" : "もっとも",
           "retrievalOrder" : 5,
-          "summary" : "but then, although, though"
+          "summary" : "most, extremely"
         },
         {
           "chips" : [
@@ -31201,21 +31444,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=7 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 7,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         },
         {
           "chips" : [
@@ -31327,17 +31576,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=3 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 3,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -33648,17 +33902,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=11 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 10,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -34265,17 +34530,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=9 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 7,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -34318,17 +34588,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=1 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 1,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         },
         {
           "chips" : [
@@ -34476,17 +34751,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=9 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 8,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         },
         {
           "chips" : [
@@ -35096,17 +35382,22 @@
       "results" : [
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            }
           ],
           "entSeq" : [
-            "2089690"
+            "2826528"
           ],
-          "headword" : "お",
-          "languageReferenceID" : "0ca032bd5b17d885f606f010505ff7e9",
+          "headword" : "御",
+          "languageReferenceID" : "0c0e780d265e3a560d3270332554e48c",
           "match" : "source=0 japanese readingExact",
           "reading" : "お",
           "retrievalOrder" : 0,
-          "summary" : "oh! (expression of slight surprise)"
+          "summary" : "honorific/polite/humble prefix"
         },
         {
           "chips" : [
@@ -35489,17 +35780,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=3 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 2,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -35668,17 +35964,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "57",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "5747047"
+            "1315840"
           ],
-          "headword" : "とき",
-          "languageReferenceID" : "648c696a3d92afe8b29cf7ee1023bc08",
+          "headword" : "時",
+          "languageReferenceID" : "54631efa14b97ca18161409867b9dc73",
           "match" : "source=1 japanese readingExact",
           "reading" : "とき",
           "retrievalOrder" : 1,
-          "summary" : "Toki (regular Jōetsu-line Shinkansen)"
+          "summary" : "time, hour, moment"
         },
         {
           "chips" : [
@@ -36044,35 +36351,46 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "596",
+              "text" : "59",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2780660"
+            "1502390"
           ],
-          "headword" : "もの",
-          "languageReferenceID" : "656a79636a09fd5974c5d85127431b9f",
+          "headword" : "物",
+          "languageReferenceID" : "ae5fbafaf610a8e20daf630665defa41",
           "match" : "source=4 japanese readingExact",
           "reading" : "もの",
           "retrievalOrder" : 4,
-          "summary" : "indicates reason or excuse"
+          "summary" : "thing, object, article, stuff, substance"
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "27",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2257550"
+            "1529520"
           ],
-          "headword" : "ない",
-          "languageReferenceID" : "3339a283acf7daea039bc87b898cc58f",
+          "headword" : "無い",
+          "languageReferenceID" : "3d4908f75d7b71234e20d190717d957a",
           "match" : "source=5 japanese readingExact",
           "reading" : "ない",
           "retrievalOrder" : 5,
-          "summary" : "not"
+          "summary" : "nonexistent, not being (there)"
         }
       ],
       "sections" : [
@@ -36696,17 +37014,22 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            }
           ],
           "entSeq" : [
-            "2089690"
+            "2826528"
           ],
-          "headword" : "お",
-          "languageReferenceID" : "0ca032bd5b17d885f606f010505ff7e9",
+          "headword" : "御",
+          "languageReferenceID" : "0c0e780d265e3a560d3270332554e48c",
           "match" : "source=3 japanese readingExact",
           "reading" : "お",
           "retrievalOrder" : 3,
-          "summary" : "oh! (expression of slight surprise)"
+          "summary" : "honorific/polite/humble prefix"
         },
         {
           "chips" : [
@@ -37322,21 +37645,27 @@
         {
           "chips" : [
             {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "58,244",
-              "tier" : "rare"
+              "text" : "112",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2615440"
+            "1157080"
           ],
-          "headword" : "ため",
-          "languageReferenceID" : "d3ea2d544c8851f6f26a0dc278cba262",
+          "headword" : "為",
+          "languageReferenceID" : "cae38a5a387b0d688d65e138888f23df",
           "match" : "source=3 japanese readingExact",
           "reading" : "ため",
           "retrievalOrder" : 3,
-          "summary" : "the same (age, social status), peer"
+          "summary" : "good, advantage, benefit, welfare"
         },
         {
           "chips" : [
@@ -37409,17 +37738,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=7 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 7,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -37865,17 +38205,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=3 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 3,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -40357,17 +40708,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=1 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 1,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -40632,17 +40994,22 @@
       "results" : [
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            }
           ],
           "entSeq" : [
-            "2089690"
+            "2826528"
           ],
-          "headword" : "お",
-          "languageReferenceID" : "0ca032bd5b17d885f606f010505ff7e9",
+          "headword" : "御",
+          "languageReferenceID" : "0c0e780d265e3a560d3270332554e48c",
           "match" : "source=0 japanese readingExact",
           "reading" : "お",
           "retrievalOrder" : 0,
-          "summary" : "oh! (expression of slight surprise)"
+          "summary" : "honorific/polite/humble prefix"
         },
         {
           "chips" : [
@@ -40847,17 +41214,28 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2138260"
+            "1375610"
           ],
-          "headword" : "なる",
-          "languageReferenceID" : "54d598cee7bf263a0bef4809849e464b",
+          "headword" : "成る",
+          "languageReferenceID" : "f317ad8065cd0fb688ba815009cc7a01",
           "match" : "source=1 japanese readingExact",
           "reading" : "なる",
           "retrievalOrder" : 1,
-          "summary" : "that is in"
+          "summary" : "to become, to get, to grow, to turn, to reach, to attain"
         }
       ],
       "sections" : [
@@ -41101,39 +41479,6 @@
       ],
       "state" : "results",
       "voiceOverCount" : 2
-    },
-    {
-      "covers" : "a word or sentence in kana only",
-      "heading" : "Discovered Words",
-      "presentation" : "discoveredWords",
-      "query" : "あ゛い",
-      "resolution" : "analyzed",
-      "results" : [
-        {
-          "chips" : [
-            {
-              "name" : "YouTube",
-              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "9,989",
-              "tier" : "moderately common"
-            }
-          ],
-          "entSeq" : [
-            "2220160"
-          ],
-          "headword" : "亜",
-          "languageReferenceID" : "3645a845755a107611f09a4e23f4f750",
-          "match" : "source=0 japanese readingExact",
-          "reading" : "あ",
-          "retrievalOrder" : 0,
-          "summary" : "sub-, second-rate, inferior"
-        }
-      ],
-      "sections" : [
-        "discoveredWords"
-      ],
-      "state" : "results",
-      "voiceOverCount" : 1
     },
     {
       "covers" : "#483: a leading U+FEFF before a sentence",

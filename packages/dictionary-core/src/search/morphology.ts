@@ -53,7 +53,7 @@ const linkablePartsOfSpeech = new Set([
   '接続詞'
 ])
 
-const grammarPartsOfSpeech = new Set(['助詞', '助動詞', '補助記号', '空白'])
+const grammarPartsOfSpeech = new Set(['助詞', '助動詞', '補助記号'])
 
 const affixPartsOfSpeech = new Set(['接頭辞', '接尾辞'])
 

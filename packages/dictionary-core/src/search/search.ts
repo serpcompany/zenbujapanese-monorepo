@@ -52,9 +52,11 @@ interface AnalyzedItems {
 
 function namedItem(items: SearchResultItem[], word: Morpheme): SearchResultItem | undefined {
   const form = lookupForm(word)
+  const named = (item: SearchResultItem) => item.entry.headword === word.normalizedForm
   return (
+    items.find(item => named(item) && item.entry.reading === form) ??
     items.find(item => item.entry.headword === form) ??
-    items.find(item => item.entry.headword === word.normalizedForm)
+    items.find(named)
   )
 }
 
