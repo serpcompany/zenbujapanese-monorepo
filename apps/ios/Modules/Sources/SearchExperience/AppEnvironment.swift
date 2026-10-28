@@ -35,6 +35,7 @@ enum AppLifecycle {
   static func finishSaving() async {
     await TypedDrafts.shared.keep()
     await WordKnowledge.shared.flush()
+    await ProgressLog.shared.flush()
     await WordLists.shared.flush()
     await ZenbuAccount.shared?.sync.flush()
   }
@@ -45,6 +46,7 @@ enum AppLifecycle {
     switch phase {
     case .active:
       WordKnowledge.shared.saveIfNeeded()
+      ProgressLog.shared.saveIfNeeded()
       WordLists.shared.saveIfNeeded()
       applySharedChanges()
       ZenbuAccount.shared?.appBecameActive()

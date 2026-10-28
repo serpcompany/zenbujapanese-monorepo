@@ -3,9 +3,9 @@
 What a learner keeps on a word or kanji besides marking it known and adding it to lists: notes,
 photos, and the Media Library that holds the photos, which a word's or kanji's **•••** menu adds
 ([Dictionary](dictionary.md#dictionary-and-kanji-details)); how Look Up finds a word by its notes;
-what happens to the notes and photos an earlier version saved; and what the app does with saved
-data it can't read. Known Words and Learning are in [Known Words and Learning](known-words.md),
-and Lists under [Account](index.md#account).
+what happens to the notes and photos an earlier version saved; the progress log; and what the app
+does with saved data it can't read. Known Words and Learning are in
+[Known Words and Learning](known-words.md), and Lists under [Account](index.md#account).
 
 ## Notes and photos
 
@@ -148,14 +148,41 @@ Library shows it with.
 
 Check: package `DeferredImageDeletionsTests` and `EncounterMediaStorageTests`.
 
+## Progress log
+
+Zenbu keeps a log of the learner's progress on the device, `progress-log.json` (version 1),
+beside the known words, for the daily goal, streaks, and stats. It has no screen yet. For each
+day, keyed by the device's calendar day (`yyyy-MM-dd`) when the change was made, it keeps:
+
+- each change the learner made on this device to a word's or kanji's status, in order: its
+  Language Reference ID (or `kanji:` and the character), the status before and after, and the time;
+- the daily goal in force when the day ended;
+- the Known and Learning totals after the day's last change.
+
+A change from the share sheet counts on the day it was made, even when Zenbu applies it the next
+day, and moves that day's totals and those of each day logged since. Changes that arrive by sync
+update the day's totals but aren't logged as changes. The first launch with the log writes that
+day's totals, so Known over time starts there. Nothing is pruned.
+
+The daily goal is kept on the device under `progress.dailyGoal`: 20 until it's set, and read
+rounded and kept from 1 to 200. What counts toward the goal, the streaks, the averages, and Known
+over time are the shared core's (`progress/stats.ts`), which the app asks with the log's days.
+
+Check: core `progress/stats.test.ts` and `embedded/progress.test.ts`; package `ProgressLogTests`
+(changes at 23:59 and 00:01 on two days, a share sheet change kept on its own day and moving its
+day's and later days' totals, a synced change in the totals only, sync still told of each change,
+a newer log read-only, a log or a change it can't read kept aside with no word lost, the first
+launch's totals, also when the defaults change first, and the goal, and the core's stats read
+through the bundle).
+
 ## Saved data that can't be read
 
 Player's Recent, word notes, the Media Library's index, and the profile keep what a learner saved
-when this version of Zenbu can't read it, as Known Words and Lists do: the saved data is copied
+when this version of Zenbu can't read it, as Known Words, Lists, and the progress log do: the saved data is copied
 aside on the device (the newest three copies of each are kept) rather than written over, each
 keeps every video, note, or photo it can read, and new changes save as before. A profile that
 can't be read starts empty. If the Media Library's index can't be opened or copied aside, the
 Media Library shows nothing and saves nothing until it can, rather than write over it.
 
 Check: package `UnreadableCopyTests`, `WordNoteStorageTests`, `UserProfileTests`,
-`EncounterMediaStorageTests`, and `AccountSyncWatchHistoryTests`.
+`EncounterMediaStorageTests`, `AccountSyncWatchHistoryTests`, and `ProgressLogTests`.
