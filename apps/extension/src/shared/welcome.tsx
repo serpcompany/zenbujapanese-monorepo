@@ -2,6 +2,7 @@ import { Button } from '@zenbu/ui/components/button'
 import logo from '../assets/zenbu-icon.svg'
 import type { DataState } from './data-state'
 import { DictionaryProgress, type ReadData, useDataState } from './dictionary-progress'
+import { EverySite } from './every-site'
 import { labels } from './labels'
 
 export function Welcome({ read, check }: { read?: ReadData; check?: ReadData }) {
@@ -22,6 +23,7 @@ export function Welcome({ read, check }: { read?: ReadData; check?: ReadData }) 
             <li key={step}>{step}</li>
           ))}
         </ol>
+        <EverySite />
       </section>
     </main>
   )

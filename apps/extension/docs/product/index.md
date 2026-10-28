@@ -12,9 +12,9 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
 | Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). Its Translate tab: [`translate.md`](translate.md). | The tests and Chrome checks there; `e2e/pages.spec.ts` |
-| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
+| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. Then "Zenbu underlines Japanese only on the sites you allow." and Turn On for Every Site, which asks Chrome for every site, or, once it has them, "Zenbu can underline Japanese on every site." | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
 | Settings | Reading Aids, Frequency Dictionaries, Dictionary Data, Sites, and Credits, in a tab of its own. | [`settings.md`](settings.md) |
-| Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from a route; nothing opens one yet (#957). | `src/word-detail/*.interaction.test.tsx` |
+| Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from the word popup's Open Full Entry ([`word-popup.md`](word-popup.md)). | `src/word-detail/*.interaction.test.tsx` |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
 opens it again on the next request, and that first request is answered
@@ -56,14 +56,16 @@ set in Sentry.
 
 ## On pages
 
+- [Page lookup](page-lookup.md): on a site the learner allowed, the Japanese words underlined, the
+  reading aids, and a click on a word. Where Zenbu runs, and the site switch.
+- [Word popup](word-popup.md): the word's card that a click opens, its choice of words, and Open
+  Full Entry, Share, and Copy Link.
 - [YouTube captions and playback](youtube-captions.md): on a YouTube watch page, the video's
   Japanese captions, what happens when YouTube refuses them, and following the video. Nothing
   shows them yet.
 
 ## Not built yet
 
-The dictionary answers lookups, but no surface asks it yet: the word popup on a page, underlining,
-Word Detail, and saving aren't built, nor the Video tab and the caption on the player that show a
-YouTube video's lines, so the side panel's tabs but Translate show only their empty states. The
-reading aids and Zenbu Captions are stored but draw nothing yet, and the release build draws
-nothing on the pages a learner reads.
+Saving isn't built, nor the Video tab and the caption on the player that show a YouTube video's
+lines, so the side panel's tabs but Translate show only their empty states. Hide Furigana on Known
+Words, Sentence Translations, and Zenbu Captions are stored but draw nothing on a page yet.

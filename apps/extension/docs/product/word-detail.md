@@ -4,8 +4,8 @@ Word Detail is the side panel's page for one dictionary word, as the app's Word 
 ([`dictionary.md`](../../../ios/docs/product/dictionary.md)) without its saving: there are no
 Lists, Notes, Mark as Known, Add Photo, or Look Up. Two more pages open from it: a kanji's detail
 and the examples for one conjugated form. Each page draws only its content; the side panel draws
-Back over it and opens a page from a route ([`side-panel.md`](side-panel.md)). Nothing in the
-extension opens one yet: the word popup's Open Full Entry comes with #957.
+Back over it and opens a page from a route ([`side-panel.md`](side-panel.md)). The word popup's
+Open Full Entry opens a word's ([`word-popup.md`](word-popup.md)).
 
 Every check below is in `src/word-detail/`, in happy-dom, on the dictionary core's fixtures
 answered through a fixture source in the test, with Back drawn by the side panel itself: `word-detail-page.interaction.test.tsx` (word) and
@@ -48,8 +48,8 @@ answered through a fixture source in the test, with Back drawn by the side panel
 
 ## Not built yet
 
-Open Full Entry (#957) comes with the side panel's registrations. Checks in Chrome on the whole
-dictionary (食べる, 食, and で) wait for the extension's final check in Chrome.
+Checks in Chrome on the whole dictionary (食べる, 食, and で) wait for the extension's final check
+in Chrome.
 
 A form's page shows the form alone, with no explanation and no furigana, because its route
 carries only the form. The app's and the website's form headline follows Reading Aids

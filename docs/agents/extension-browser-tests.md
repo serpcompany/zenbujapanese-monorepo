@@ -18,6 +18,14 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   and `JLPTLevelPack.sqlite3` from the test build's data host, and each SHA-256 matches.
 - **Install:** the welcome page reaches ready, and the server was asked for `releases.json`, the
   manifest, `compressed.json`, every part, and every whole file (`install.spec.ts`).
+- **Page lookup and the word popup:** on `words.html`, light and dark, served as
+  `http://allowed.localhost/test-pages/words.html`, a site the test build holds: the underlines,
+  the page's layout kept, the reading aids, a site turned off, words added later, a site given
+  and taken back with `chrome.developerPrivate` from a `chrome://extensions` page, and the popup's
+  card, choice, placement, closing, links, Open Full Entry, Share, and Copy Link. The
+  `languageDataHeld` option holds the fixture release back until a test lets it go
+  (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
+  so Share falls back to copying as it does where there is no share sheet.
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1` and maps
   the test build's data host, `language-data.localhost`, to the local server; the
   `outsideRequests` fixture fails any test whose context asks anything but the local server and

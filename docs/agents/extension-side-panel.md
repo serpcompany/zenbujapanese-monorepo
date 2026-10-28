@@ -68,8 +68,8 @@ name a site the header can't see. The header has four states:
   but Zenbu doesn't have the site. The menu names the host and has Allow on This Site, which calls
   `chrome.permissions.request` for that origin.
 - **Can't see** (`unseen`): no `tab.url`. The menu says so and how to let Zenbu in through
-  Chrome's site access for the extension. It offers no Allow on every site: asking for every site
-  is an owner decision on permissions, which #957 revisits.
+  Chrome's site access for the extension. It offers no Allow on every site: that is Turn On for
+  Every Site, on the welcome tab and in Settings' Sites.
 - **Can't run** (`cant-run`): `tab.url` shows a page no extension runs on (`pageAt` returns
   `null`): Chrome's own pages, other extensions, `about:`, files, and the Chrome Web Store.
 

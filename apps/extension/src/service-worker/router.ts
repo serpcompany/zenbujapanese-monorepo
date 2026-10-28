@@ -13,6 +13,7 @@ export type FailureCode =
   | 'dictionary-answer'
   | 'translation-answer'
   | 'side-panel-behavior'
+  | 'page-script'
 
 type Relay = {
   ensureOffscreenDocument(): Promise<void>

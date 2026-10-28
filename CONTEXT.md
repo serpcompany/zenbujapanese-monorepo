@@ -57,14 +57,19 @@ page, and what it draws on the pages a learner reads. The app's share-sheet
 extension, `ZenbuShare`, is another thing.
 _Avoid_: extension (alone, where the Share extension could be meant), plugin, add-on
 
+**Page script**:
+The browser extension's content script that underlines words and opens the Word popup on a site
+Zenbu has (`apps/extension/src/content/page-lookup.ts`), registered at run time for those sites.
+_Avoid_: content script (alone, where the YouTube one or the test one could be meant)
+
 **Side panel**:
 The browser extension's panel beside the page, Chrome's side panel: a tab bar with Video,
 Translate, Images, Words, and Recent, each tab with its own pages, such as a word's.
 _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)
 
 **Word popup**:
-What the browser extension shows over a page for the word a learner points at: the surface,
-which draws that word's Word card and its romaji.
+What the browser extension shows for the word a learner clicks, over a page or under Translate's
+text: the surface, which draws that word's Word card and its romaji.
 _Avoid_: word card (the Word card is the entry the popup draws, not the popup), tooltip
 
 **Zenbu Captions**:

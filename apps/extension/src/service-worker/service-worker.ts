@@ -6,6 +6,7 @@ import {
 } from '../error-reports/error-reports'
 import { keepLanguageDataCurrent } from './language-data-updates'
 import { offscreenDocumentKeeper } from './offscreen-document'
+import { keepPageScriptRegistered } from './page-scripts'
 import { routeToOffscreen } from './router'
 import { startSettingsChannel } from './settings'
 import { startSidePanel } from './side-panel'
@@ -51,3 +52,7 @@ chrome.runtime.onMessage.addListener(
 
 startSettingsChannel()
 startSidePanel(reportFailure)
+keepPageScriptRegistered(
+  { permissions: chrome.permissions, scripting: chrome.scripting, tabs: chrome.tabs },
+  reportFailure
+)

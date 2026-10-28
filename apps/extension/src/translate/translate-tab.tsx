@@ -28,14 +28,29 @@ function DownloadProgress({ fraction }: { fraction: number }) {
   )
 }
 
-function ResultView({ result, services }: { result: Result; services: TranslateServices }) {
+function ResultView({
+  result,
+  services,
+  open
+}: {
+  result: Result
+  services: TranslateServices
+  open?: PanelTabProps['open']
+}) {
   switch (result.state) {
     case 'translating':
       return <p className="text-sm text-muted-foreground">{translateLabels.translating}</p>
     case 'downloading':
       return <DownloadProgress fraction={result.fraction} />
     case 'translated':
-      return <TranslationCard key={result.id} translated={result.translated} services={services} />
+      return (
+        <TranslationCard
+          key={result.id}
+          translated={result.translated}
+          services={services}
+          open={open}
+        />
+      )
     case 'notice':
       return <NoticeText notice={result.notice} />
     default:
@@ -45,7 +60,7 @@ function ResultView({ result, services }: { result: Result; services: TranslateS
 
 type TranslateTabProps = Partial<PanelTabProps> & { services?: TranslateServices }
 
-export function TranslateTab({ services = onDeviceServices }: TranslateTabProps) {
+export function TranslateTab({ services = onDeviceServices, open }: TranslateTabProps) {
   const [text, setText] = useState('')
   const [selectionNotice, setSelectionNotice] = useState<Notice | null>(null)
   const { result, translate, clear } = useTranslation(services)
@@ -94,7 +109,7 @@ export function TranslateTab({ services = onDeviceServices }: TranslateTabProps)
       </div>
       {selectionNotice && <NoticeText notice={selectionNotice} />}
       <div aria-live="polite">
-        <ResultView result={result} services={services} />
+        <ResultView result={result} services={services} open={open} />
       </div>
     </section>
   )

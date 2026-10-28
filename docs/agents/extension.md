@@ -34,8 +34,10 @@ To load a build, open `chrome://extensions`, turn on Developer mode, choose Load
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
 asks for Chrome 138 (`minimumChromeVersion` in `build/manifest.ts`), the first with the Translator
 API that the extension's translations use (#967); on-device speech recognition (#968) is
-outside the first version. It asks for `scripting` so the Translate tab's Use Selection can read
-the selected text on the active tab; reaching that tab also needs `activeTab` (#959).
+outside the first version. It asks for `scripting` to register the page script for the sites
+Zenbu holds ([`extension-page-lookup.md`](extension-page-lookup.md)), and so that Use Selection
+can read the selected text on a tab with no page script, which `activeTab` reaches after a click
+on the toolbar icon.
 
 ## Builds and packages
 
@@ -82,9 +84,11 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, `active-site.ts`), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
-| `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
+| `src/translate/` | The Translate tab: the box and its buttons, the result card, the Japanese source's words (`source-words.tsx`), Use Selection (`selection.ts`), which asks the page script first, Speak's voice, one on this computer (`speech.ts`), and its labels. |
+| `src/page-lookup/` | Page lookup, which the page script runs: finding the text, segmenting it, the underlines, the reading aids, and the click ([`extension-page-lookup.md`](extension-page-lookup.md)). |
+| `src/word-popup/` | The word popup, its card and choice, and the host that mounts it on a page in a shadow root. |
 | `src/worker/` | The dictionary worker, a dedicated module worker: it downloads the language data, opens it in sqlite-wasm, and answers from the core (`answer.ts`; [`extension-language-data.md`](extension-language-data.md)). |
-| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`). |
+| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`, and `page-lookup.ts`, the page script). |
 | `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
 | `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), and the content script's side on a watch page (`youtube-page.ts`). |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
@@ -93,7 +97,7 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
-| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and shows each reading aid's state (`settings-follower.tsx`). |
+| `test-pages/` | Two pages to mount on, the test surface, the test content script that mounts it and shows each reading aid's state (`settings-follower.tsx`), and the words page page lookup's browser tests read (`words.html`). |
 | `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local data server and its release (`local-server.ts`, `fixture-release.ts`). |
 | `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
@@ -120,28 +124,8 @@ is in [`extension-captions.md`](extension-captions.md).
 
 ### Translation
 
-Any surface translates with `translate(request)` (`src/translation/messages.ts`): it asks how
-available the translator is for a direction (`ja` to `en`, or `en` to `ja`), or translates lines of
-text. It sends `{ target: 'service-worker', translation }`, and the service worker opens the
-offscreen document as for the dictionary and passes it on as `{ target: 'offscreen', translation }`.
-The key is `translation`, not `request`, so the dictionary's listeners never answer it, nor the
-translation listeners a dictionary request. The offscreen document makes one Translator for each
-direction once Chrome says it is `available`, keeps it, and translates each line, leaving a blank
-one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes nothing
-then; a translation that fails, or doesn't answer within 30 seconds, comes back as `{ type:
-'failed', reason }`, and the offscreen document drops that Translator, destroying it, so the next
-one makes a new one. A page's text never goes in an error's message.
-
-Chrome downloads a model only from a click, and the click's activation lasts a few seconds, so a
-page asks `translatorAvailability(direction)` itself in that click and, while the model is
-`downloadable` or `downloading`, calls `downloadTranslator(direction, onProgress)` at once, before
-any message. It reports the download's progress from 0 to 1 and answers the state; a download with
-no progress for 60 seconds is stopped and answers Chrome's state then. The page then translates
-through the offscreen document, which makes its own Translator once the model is `available`. The
-offscreen document translates with no click once the model is `available`: checked on 2026-10-27 in
-Chrome 156, in the headful agent Chrome, by sending a translation from the test content script's
-world, with no user gesture, in a Chrome just started. Each direction has its own model. The model
-is Chrome's, on this computer, and nothing is sent anywhere to translate.
+How any surface translates through the offscreen document, and how a page downloads Chrome's
+model from a click, is in [`extension-translation.md`](extension-translation.md).
 
 ### Drawing on a page
 
@@ -170,6 +154,11 @@ root, and draws inside it:
 
 How the panel is built, opened, and checked is in [`extension-side-panel.md`](extension-side-panel.md).
 
+### Page lookup
+
+How the page script is registered for the sites Zenbu holds, underlines words, and opens the word
+popup is in [`extension-page-lookup.md`](extension-page-lookup.md).
+
 ## Test pages
 
 `pnpm test-pages` serves `hostile.html`, whose styles fight the extension (a 10px root font size,
@@ -178,8 +167,9 @@ and the theme's own token names set to other values), and `tailwind.html`, built
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
 Dialog, and Test error, which throws while drawing so the content script reports it. The release
-build's only content script is the YouTube one; `build/manifest.test.ts` checks that. How each part
-reports its errors is in [`extension-error-reports.md`](extension-error-reports.md).
+build declares only the YouTube content script, and registers the page script at run time;
+`build/manifest.test.ts` checks that. How each part reports its errors is in
+[`extension-error-reports.md`](extension-error-reports.md).
 
 ## Layers
 

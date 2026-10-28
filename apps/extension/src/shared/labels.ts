@@ -21,5 +21,10 @@ export const labels = {
       'Pin Zenbu to the toolbar to open it on any tab.'
     ]
   },
+  everySite: {
+    off: 'Zenbu underlines Japanese only on the sites you allow.',
+    on: 'Zenbu can underline Japanese on every site.',
+    turnOn: 'Turn On for Every Site'
+  },
   dictionary: { checkAgain: 'Check again' }
 }

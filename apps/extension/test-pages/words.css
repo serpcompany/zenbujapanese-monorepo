@@ -1,0 +1,64 @@
+:root {
+  color: rgb(17 24 39);
+  background: rgb(255 255 255);
+  font: 18px / 1.6 sans-serif;
+}
+
+:root.dark {
+  color: rgb(243 244 246);
+  background: rgb(17 17 17);
+}
+
+body {
+  margin: 0;
+  padding: 3rem 1rem 1rem;
+}
+
+nav {
+  padding: 0.5rem 1rem;
+}
+
+.bar {
+  position: fixed;
+  top: 40vh;
+  right: 0;
+  padding: 0.25rem 1rem;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+}
+
+a {
+  color: inherit;
+}
+
+.edges {
+  position: relative;
+  height: 100vh;
+}
+
+.edge {
+  position: absolute;
+}
+
+#top-left {
+  top: 0;
+  left: 0;
+}
+
+#top-right {
+  top: 0;
+  right: 0;
+}
+
+#bottom-left {
+  bottom: 0;
+  left: 0;
+}
+
+#bottom-right {
+  bottom: 0;
+  right: 0;
+}

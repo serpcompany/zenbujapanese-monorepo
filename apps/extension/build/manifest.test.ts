@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import packageJson from '../package.json' with { type: 'json' }
 import { environments, hosts } from './hosts.ts'
 import { extensionIdOf } from './key.ts'
-import { manifest, minimumChromeVersion } from './manifest.ts'
+import {
+  builtContentScripts,
+  contentScriptFile,
+  manifest,
+  minimumChromeVersion
+} from './manifest.ts'
 
 describe('manifest', () => {
   const youTubeScript = {
@@ -26,7 +31,25 @@ describe('manifest', () => {
         run_at: 'document_idle'
       }
     ])
-    expect(test.web_accessible_resources?.[0]?.resources).toEqual(['assets/*.woff2'])
+  })
+
+  it('builds the page lookup in every build, which the service worker registers for the sites the learner allows', () => {
+    for (const variant of ['release', 'test'] as const) {
+      expect(builtContentScripts(variant).map(contentScriptFile)).toContain('page-lookup.js')
+    }
+    expect(builtContentScripts('release').map(contentScriptFile)).not.toContain(
+      'test-content-script.js'
+    )
+  })
+
+  it('lets every site the learner may allow load the fonts the shadow root draws with', () => {
+    expect(manifest('release').web_accessible_resources).toEqual([
+      {
+        resources: ['assets/*.woff2'],
+        matches: ['http://*/*', 'https://*/*'],
+        use_dynamic_url: true
+      }
+    ])
   })
 
   it('needs a Chrome with the Translator API, asks only for what the offline dictionary, scripting and YouTube need, and asks for other sites only when the learner allows one', () => {
@@ -59,7 +82,8 @@ describe('manifest', () => {
     ])
     expect(manifest('test').host_permissions).toEqual([
       'http://language-data.localhost/*',
-      'https://www.youtube.com/*'
+      'https://www.youtube.com/*',
+      'http://allowed.localhost/*'
     ])
     expect(release.content_security_policy.extension_pages).toBe(
       "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"

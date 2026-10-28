@@ -1,6 +1,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { startExtension } from '../test/extension'
+import { allSites } from '../test/fake-chrome'
 import type { DataState } from './data-state'
 import type { ReadData } from './dictionary-progress'
 import { labels } from './labels'
@@ -13,7 +15,10 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root: Root | undefined
 
+let extension: ReturnType<typeof startExtension>
+
 beforeEach(() => {
+  extension = startExtension()
   vi.useFakeTimers()
 })
 
@@ -50,7 +55,8 @@ async function render({ read, check }: { read: ReadData; check?: ReadData }) {
     tryAgain: () =>
       [...container.querySelectorAll('button')].find(
         button => button.textContent === labels.welcome.tryAgain
-      )
+      ),
+    everySite: () => container.querySelector('[data-every-site]')
   }
 }
 
@@ -135,5 +141,16 @@ describe('the welcome tab', () => {
     const page = await render({ read })
     expect(page.state()).toBe('failed')
     expect(page.text()).toContain('The dictionary worker did not answer.')
+  })
+
+  it('asks Chrome for every site from Turn On for Every Site, then says Zenbu can run on every site', async () => {
+    const page = await render(worker([ready]))
+    expect(page.everySite()?.getAttribute('data-every-site')).toBe('off')
+    const turnOn = page.everySite()?.querySelector('button')
+    expect(turnOn?.textContent).toBe(labels.everySite.turnOn)
+    await act(async () => turnOn?.click())
+    expect(extension.requested).toEqual([allSites])
+    expect(page.everySite()?.getAttribute('data-every-site')).toBe('on')
+    expect(page.everySite()?.textContent).toBe(labels.everySite.on)
   })
 })
