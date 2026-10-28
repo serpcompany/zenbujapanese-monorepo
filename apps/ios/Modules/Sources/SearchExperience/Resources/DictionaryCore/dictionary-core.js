@@ -763,8 +763,9 @@
     const first = Math.min(today, ...logged);
     return Array.from({ length: today - first + 1 }, (_, index) => dayName(first + index));
   }
-  function lastDays(days, length2, goal) {
+  function lastDays(days, length2) {
     const first = dayNumber(days[0]?.day ?? "");
+    const goal = days[0]?.goal ?? 0;
     const before = Array.from({ length: Math.max(0, length2 - days.length) }, (_, index) => ({
       day: dayName(first - length2 + days.length + index),
       added: 0,
@@ -805,8 +806,8 @@
       if (changes.length > 0) words.push({ day, addedToLearning: added, markedKnown: knownNow });
     }
     const today = days.at(-1);
-    const last7 = lastDays(days, shortWindow, firstGoal ?? request.goal);
-    const last30 = lastDays(days, longWindow, firstGoal ?? request.goal);
+    const last7 = lastDays(days, shortWindow);
+    const last30 = lastDays(days, longWindow);
     const averaged = days.slice(0, -1).slice(-averagedDays);
     return {
       today,

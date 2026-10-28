@@ -176,7 +176,7 @@ describe('totals', () => {
     expect(result.totals.addedLast30).toBe(2)
   })
 
-  test('days before the log began are empty days in the last 7 and 30, with the first goal', () => {
+  test('days before the log began are empty days in the last 7 and 30, with the first day’s goal', () => {
     const result = stats({
       '2026-10-27': day([change(taberu, 'unknown', 'learning')], { goal: 3 })
     })
@@ -192,6 +192,14 @@ describe('totals', () => {
     expect(result.last30).toHaveLength(30)
     expect(result.last30[0]?.day).toBe('2026-09-29')
     expect(result.days).toHaveLength(2)
+  })
+
+  test('with the log beginning today and the goal changed, days before it take today’s goal', () => {
+    const result = stats({ '2026-10-28': learned(taberu) }, '2026-10-28', 10)
+    const goals = (days: readonly { goal: number }[]) => new Set(days.map(day => day.goal))
+    expect(result.today.goal).toBe(10)
+    expect(goals(result.last7)).toEqual(new Set([10]))
+    expect(goals(result.last30)).toEqual(new Set([10]))
   })
 })
 
