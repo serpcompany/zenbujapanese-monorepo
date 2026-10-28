@@ -12,6 +12,10 @@ type Granted = { origins?: string[] }
 
 type PermissionEvent = { addListener(listener: (permissions: Granted) => void): void }
 
+type InstallEvent = { addListener(listener: (details: { reason: string }) => void): void }
+
+const reloadsPageScripts = new Set(['install', 'update'])
+
 type PageScript = {
   id: string
   js: string[]
@@ -23,6 +27,7 @@ type PageScript = {
 type OpenTab = { id?: number; url?: string }
 
 export type PageScriptBrowser = {
+  runtime: { onInstalled: InstallEvent }
   permissions: { getAll(): Promise<Granted>; onAdded: PermissionEvent; onRemoved: PermissionEvent }
   scripting: {
     getRegisteredContentScripts(filter: { ids: string[] }): Promise<{ id: string }[]>
@@ -93,6 +98,11 @@ export function keepPageScriptRegistered(
   }
   browser.permissions.onAdded.addListener(({ origins = [] }) => {
     after(() => register(browser).then(() => injectInto(browser, pageOrigins(origins))))
+  })
+  browser.runtime.onInstalled.addListener(({ reason }) => {
+    if (reloadsPageScripts.has(reason)) {
+      after(() => register(browser).then(matches => injectInto(browser, matches)))
+    }
   })
   browser.permissions.onRemoved.addListener(() => {
     after(() => register(browser).then(matches => stopOutside(browser, matches)))

@@ -1,4 +1,4 @@
-import type { SegmentedToken } from '../cards/segmentation'
+import type { PageSegmentedToken } from '../cards/segmentation'
 import { sentenceRomaji } from '../detail/romaji'
 import type {
   ExampleCountRow,
@@ -131,14 +131,26 @@ function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
 }
 
 export interface SegmentedText {
-  tokens: SegmentedToken[]
+  tokens: PageSegmentedToken[]
   romaji: string | null
+}
+
+export interface SegmentOptions {
+  writtenAlike?: boolean
+}
+
+function writtenAlike(token: LinkedToken, lookup: FormLookup): { writtenAlike?: string[] } {
+  const { entry, lookupForm } = token
+  if (!entry || !lookupForm || !hasKanji(lookupForm)) return {}
+  const others = lookup(lookupForm).flatMap(found => (found.id === entry.id ? [] : [found.id]))
+  return others.length > 0 ? { writtenAlike: others } : {}
 }
 
 export function segmentText(
   db: ArtifactDatabase,
   text: string,
-  capabilities: { tokenize: Tokenize; lookup: FormLookup }
+  capabilities: { tokenize: Tokenize; lookup: FormLookup },
+  options: SegmentOptions = {}
 ): SegmentedText {
   const linked = linkedTokens(
     text,
@@ -159,7 +171,8 @@ export function segmentText(
       ...(token.entry ? { languageReferenceID: token.entry.id } : {}),
       ...(!token.entry && token.candidates.length > 0
         ? { candidates: token.candidates.map(candidate => candidate.id) }
-        : {})
+        : {}),
+      ...(options.writtenAlike ? writtenAlike(token, capabilities.lookup) : {})
     }
   })
   return { tokens, romaji: sentenceRomaji(linked) }

@@ -36,7 +36,7 @@ function lookUp(
 ): DictionaryAnswer | Failure {
   switch (request.type) {
     case 'segment':
-      return { type: 'segment', ...dictionary.segmentation(request.text) }
+      return { type: 'segment', ...dictionary.segmentation(request.text, { writtenAlike: true }) }
     case 'popup':
       return {
         type: 'popup',

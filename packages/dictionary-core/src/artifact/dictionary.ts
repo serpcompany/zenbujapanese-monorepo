@@ -39,6 +39,7 @@ import {
   exampleRows,
   examplesEntries,
   type SegmentedText,
+  type SegmentOptions,
   screenAccent,
   segmentText,
   senseExampleRows,
@@ -436,8 +437,8 @@ export class Dictionary {
     return this.segmentation(text).tokens
   }
 
-  segmentation(text: string): SegmentedText {
-    return segmentText(this.db, text, this.linking)
+  segmentation(text: string, options: SegmentOptions = {}): SegmentedText {
+    return segmentText(this.db, text, this.linking, options)
   }
 
   resolve(headword: string, reading: string): number | null {

@@ -72,6 +72,24 @@ describe('scanner', () => {
     expect(found.mock.calls[0][0]).toBe(node)
   })
 
+  it('reads text the page adds before the text it still holds from the first scan', async () => {
+    const read: string[] = []
+    const scan = scanner({
+      segment: async text => {
+        read.push(text)
+        return { type: 'segment', tokens: [{ text }], romaji: null }
+      },
+      found: vi.fn(),
+      problem: vi.fn(),
+      wait: vi.fn(),
+      running: 1
+    })
+    scan.add(['要求', '要る', '要所'].map(textNode))
+    scan.add([textNode('要項')], 'first')
+    await vi.waitFor(() => expect(read).toHaveLength(4))
+    expect(read).toEqual(['要求', '要項', '要る', '要所'])
+  })
+
   it('drops text that changed or left the page while it was read, and reads nothing once stopped', async () => {
     const found = vi.fn()
     const scan = scanner({

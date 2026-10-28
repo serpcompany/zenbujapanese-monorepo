@@ -15,7 +15,10 @@ Zenbu asks Chrome for no site at install. It runs on a site the learner gave it:
   ([`settings.md`](settings.md)), which asks Chrome for every site.
 - **Chrome's own site access** for the extension.
 
-A page that is open when its site is given starts at once, with no reload. A site taken back
+A page that is open when its site is given starts at once, with no reload, and so does one that
+is open when the extension is installed, reloaded, or updated: Zenbu puts its page script back
+into the open tabs of the sites it has, and the copy the old extension left takes no more part. A
+site taken back
 stops at once, and its underlines, reading aids, and popup go; taking back Every Site stops every
 tab no other site given still covers, YouTube's too. A click on the toolbar icon alone doesn't
 start it: it shows the header the tab's address, and Allow on This Site is the way in (#1099,
@@ -33,7 +36,10 @@ is lighter, whatever colour space the page writes it in, such as `oklch()`. Zenb
 what a learner reads, and leaves alone text boxes, buttons, labels, summaries, select menus,
 editable text, navigation, the page's own ARIA buttons, tabs, menu items, checkboxes, switches,
 radios and options, fixed and sticky bars, and its own popup. Text on screen goes
-first; text the page adds later, such as the next page of a feed, is underlined as it comes.
+first; text the page adds later, such as the next page of a feed, is underlined as it comes,
+ahead of whatever the first scan of a long page has still to read. The first scan has no cap: on
+a page the size of a long Wikipedia article, tens of thousands of words, it can take minutes, and
+each word drawn costs more as the count grows.
 
 Until the dictionary is ready, nothing is underlined and a click does what the page does. Once
 it is, the open pages underline with no reload.
@@ -55,7 +61,7 @@ Use Selection, in Translate, takes the selected text without them
 ## A click
 
 A click on an underlined word opens its popup beside it, or a choice when the text is several
-words. A click while text is selected doesn't, so selecting works as before. In a link, a plain
+words, or the word is written the same way as others, such as 何 (なに, なん) or 要. A click while text is selected doesn't, so selecting works as before. In a link, a plain
 click on the word, or on its furigana, opens the popup and leaves the address alone; a click
 with Ctrl or Command, a middle click, and Enter follow the link. A click on a label's, a
 summary's, or an ARIA control's words works the control, since Zenbu doesn't underline them.
@@ -66,15 +72,18 @@ The browser tests, on a light and a dark local page (`e2e/page-lookup.spec.ts`):
 words segment links…", "leaves every element's box and colour as they are…", "underlines in the
 dark page's colour when the page's text is oklch(…)" and "…color(display-p3 …)", "shows furigana,
 romaji and word meanings…", "underlines nothing and opens no popup on a site turned off…",
-"underlines words added to the page later", and "starts on an open page when Chrome grants its
-site…"; in `e2e/word-popup.spec.ts`, "a click on the words of a checkbox label or a summary works
+"underlines words added to the page later", "underlines words added to a long page before the
+rest of its first scan", and "starts on an open page when Chrome grants its site…"; in
+`e2e/extension-reload.spec.ts`, "an open page underlines new text and opens popups again after the
+extension reloads…"; in `e2e/word-popup.spec.ts`, "a click on the words of a checkbox label or a summary works
 the control…" and "a click on the furigana over a word in a link…"; and
 `e2e/page-lookup-before-data.spec.ts` for the dictionary not yet in. Unit and DOM tests:
 `src/page-lookup/words.test.ts`, `src/page-lookup/scan.test.ts`,
 `src/page-lookup/page-text.interaction.test.tsx`, `src/page-lookup/page-lookup.interaction.test.tsx`
 for nothing drawn or watched once it stops, and `src/service-worker/page-scripts.test.ts` for
-registering the page script for each site Zenbu has and stopping the tabs a site taken back
-leaves, such as YouTube's when Every Site goes.
+registering the page script for each site Zenbu has, putting it back into open tabs on install
+and update, and stopping the tabs a site taken back leaves, such as YouTube's when Every Site
+goes; `src/page-lookup/hand-over.test.ts` for one running copy per page.
 
 ## Not built yet
 

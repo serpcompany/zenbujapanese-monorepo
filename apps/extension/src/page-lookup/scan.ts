@@ -19,7 +19,7 @@ type Read =
 
 const plain = (text: string, start: number, end: number): PageToken => {
   const part = text.slice(start, end)
-  return { start, end, text: part, ids: [], ruby: [{ text: part }] }
+  return { start, end, text: part, ids: [], linked: null, ruby: [{ text: part }] }
 }
 
 export function covering(text: string, tokens: readonly PageToken[]): PageToken[] {
@@ -51,7 +51,9 @@ export async function readText(text: string, segment: Segment): Promise<Read> {
   return { type: 'found', found: { text, tokens: covering(text, tokens), romaji } }
 }
 
-export type Scanner = { add(nodes: readonly Text[]): void; stop(): void }
+type Order = 'first' | 'last'
+
+export type Scanner = { add(nodes: readonly Text[], order?: Order): void; stop(): void }
 
 type Options = {
   segment: Segment
@@ -80,18 +82,17 @@ export function backoff(wait: Wait) {
 }
 
 export function scanner({ segment, found, problem, wait, running = 4 }: Options): Scanner {
-  const queue: Text[] = []
+  let queue: Text[] = []
   const queued = new Set<Text>()
   let busy = 0
   let paused = false
   let stopped = false
   const delay = backoff(wait)
 
-  const enqueue = (node: Text, front = false) => {
-    if (queued.has(node)) return
-    queued.add(node)
-    if (front) queue.unshift(node)
-    else queue.push(node)
+  const enqueue = (nodes: readonly Text[], order: Order = 'last') => {
+    const fresh = nodes.filter(node => !queued.has(node))
+    for (const node of fresh) queued.add(node)
+    queue = order === 'first' ? [...fresh, ...queue] : [...queue, ...fresh]
   }
 
   const pause = () => {
@@ -105,7 +106,7 @@ export function scanner({ segment, found, problem, wait, running = 4 }: Options)
 
   const settle = (node: Text, text: string, read: Read) => {
     if (read.type === 'not-ready') {
-      enqueue(node, true)
+      enqueue([node], 'first')
       pause()
       return
     }
@@ -133,8 +134,8 @@ export function scanner({ segment, found, problem, wait, running = 4 }: Options)
   }
 
   return {
-    add(nodes) {
-      for (const node of nodes) enqueue(node)
+    add(nodes, order) {
+      enqueue(nodes, order)
       pump()
     },
     stop() {

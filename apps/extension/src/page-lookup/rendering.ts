@@ -38,10 +38,10 @@ type Options = {
 
 const needsWords = (tokens: readonly PageToken[], aids: Aids, glosses: Glosses) =>
   (aids.furigana && tokens.some(token => token.ruby.some(segment => segment.reading))) ||
-  (aids.meanings && tokens.some(token => token.ids.length === 1 && glosses.get(token.ids[0])))
+  (aids.meanings && tokens.some(token => token.linked !== null && glosses.get(token.linked)))
 
 export const wordIds = (tokens: readonly PageToken[]) =>
-  tokens.flatMap(token => (token.ids.length === 1 ? token.ids : []))
+  tokens.flatMap(token => (token.linked === null ? [] : [token.linked]))
 
 const readingAt = (node: Node) =>
   (node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement)?.closest('rt')

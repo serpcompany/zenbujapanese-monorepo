@@ -1,4 +1,4 @@
-import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
+import type { PageSegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
 import { attachment } from '@zenbu/dictionary-core/detail/romaji'
 import { type RubySegment, rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { hiragana } from '@zenbu/dictionary-core/detail/text'
@@ -8,20 +8,21 @@ export type PageToken = {
   end: number
   text: string
   ids: string[]
+  linked: string | null
   ruby: RubySegment[]
 }
 
 const kana = /^[\p{sc=Hiragana}\p{sc=Katakana}ー]+$/u
 
-const linkedIds = ({ languageReferenceID, candidates }: SegmentedToken) =>
-  languageReferenceID ? [languageReferenceID] : (candidates ?? [])
+const linkedIds = ({ languageReferenceID, candidates, writtenAlike = [] }: PageSegmentedToken) =>
+  languageReferenceID ? [languageReferenceID, ...writtenAlike] : (candidates ?? [])
 
-function ruby({ text, reading }: SegmentedToken): RubySegment[] {
+function ruby({ text, reading }: PageSegmentedToken): RubySegment[] {
   return reading && kana.test(reading) ? rubySegments(text, hiragana(reading)) : [{ text }]
 }
 
 export function pageTokens(
-  tokens: readonly SegmentedToken[],
+  tokens: readonly PageSegmentedToken[],
   text: string,
   offset = 0
 ): PageToken[] | null {
@@ -35,6 +36,7 @@ export function pageTokens(
       end: start + token.text.length,
       text: token.text,
       ids: linkedIds(token),
+      linked: token.languageReferenceID ?? null,
       ruby: ruby(token)
     })
     at += token.text.length

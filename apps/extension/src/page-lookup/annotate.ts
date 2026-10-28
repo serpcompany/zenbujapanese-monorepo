@@ -38,8 +38,8 @@ function tokenNodes(doc: Document, token: PageToken, furigana: boolean, pieces: 
 }
 
 export const glossOf = (group: readonly PageToken[], glosses: Glosses) => {
-  const word = group.find(token => token.ids.length === 1)
-  return word ? (glosses.get(word.ids[0]) ?? null) : null
+  const linked = group.find(token => token.linked !== null)?.linked
+  return linked ? (glosses.get(linked) ?? null) : null
 }
 
 export function annotate(

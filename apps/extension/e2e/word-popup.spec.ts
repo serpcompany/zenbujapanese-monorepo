@@ -116,7 +116,7 @@ for (const { name, aids } of readingAidCases) {
       await expect.poll(() => sidePanels(extension)).toBe(1)
     })
 
-    test('several entries open on a choice, and Open Full Entry offers them all', async ({
+    test('several entries open on a choice, the one the sentence links first, and Open Full Entry offers them all', async ({
       extension,
       page
     }) => {
@@ -128,8 +128,8 @@ for (const { name, aids } of readingAidCases) {
       await expect(entries).toHaveCount(2)
       expect(
         await entries.evaluateAll(found => found.map(entry => entry.getAttribute('data-choice')))
-      ).toEqual(['1609600', '2188720'])
-      await expect(entries.first()).toContainText('かなめ')
+      ).toEqual(['2188720', '1609600'])
+      await expect(entries.first()).toContainText('よう')
       await choice.locator('[data-choice="2188720"]').click()
       const popup = popupFor(page, '要')
       await expect(popup.locator('[data-word-card="2188720"]')).toBeVisible()
@@ -138,7 +138,7 @@ for (const { name, aids } of readingAidCases) {
       await popup.getByRole('button', { name: labels.openFullEntry }).click()
       await expect
         .poll(async () => (await panelOpens(extension)).routes)
-        .toEqual([{ page: { page: 'word', entSeq: 1609600, entries: [1609600, 2188720] } }])
+        .toEqual([{ page: { page: 'word', entSeq: 1609600, entries: [2188720, 1609600] } }])
     })
 
     test('the popup stays inside the window for a word at each edge, and follows the page as it scrolls until its word is gone', async ({

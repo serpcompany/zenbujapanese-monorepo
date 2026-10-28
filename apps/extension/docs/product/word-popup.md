@@ -16,9 +16,12 @@ The text is in `src/word-popup/labels.ts` and Word Detail's labels.
 | Meanings | The word's part of speech, then its meanings, numbered. |
 | At the foot | Close, and Open Full Entry. |
 
-Several words written the same way, such as 要, open a choice first: "Words written 要", "Choose
-the word you mean.", and each word with its reading, part of speech, and first meanings. A choice
-opens that word's card, with Back to the list.
+Several words written the same way, such as 何 or 要, open a choice first: "Words written 要",
+"Choose the word you mean.", and each word with its reading, part of speech, and first meanings.
+The word the sentence's reading points to comes first, then the others written that way, which
+the core names with the split (`writtenAlike` in `segmentText`). Text that could be several
+words, such as で, lists the ones it could be. A choice opens that word's card, with Back to the
+list.
 
 While it looks the word up it says "Looking up…". A word the dictionary doesn't have: "This
 word isn't in the dictionary."; a lookup that fails: "The dictionary couldn't answer. Try again."
@@ -54,7 +57,7 @@ The browser tests (`e2e/word-popup.spec.ts`), on a light and a dark page, each w
 reading aid off and with the default settings (Furigana on): "a click on a word
 opens its popup with headword, reading, pitch, badges and meanings…", "Open Full Entry sends
 Word Detail and the entry, and opens the closed side panel", "several entries open on a
-choice…", "the popup stays inside the window for a word at each edge, and follows the page as it
+choice, the one the sentence links first…", "the popup stays inside the window for a word at each edge, and follows the page as it
 scrolls until its word is gone", "closes on Escape,
 Close and a click outside…", "a word in a link opens the popup…", and "Share and Copy Link put
 the word's address on the clipboard…"; the first also checks the popup's font loads.

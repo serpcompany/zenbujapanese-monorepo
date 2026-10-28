@@ -15,7 +15,12 @@ function worker(open: OpenDictionary | null, state: DataState = downloading): Wo
 const kanjiRows = { kanji: { character: '要' }, strokes: null }
 
 const dictionary = {
-  segmentation: () => ({ tokens: [], romaji: 'tabemasu' }),
+  segmentation: (_text: string, options: { writtenAlike?: boolean }) => ({
+    tokens: options.writtenAlike
+      ? [{ text: '要', languageReferenceID: 'you', writtenAlike: ['kaname'] }]
+      : [],
+    romaji: 'tabemasu'
+  }),
   kanji: () => ({ rows: kanjiRows }),
   wordExamples: (entSeq: number) => (entSeq === 1546640 ? { rows: ['example'] } : null),
   formExamples: (form: string, from: number) => ({ rows: [`${form} from ${from}`], listed: 51 }),
@@ -50,10 +55,10 @@ describe('answering a dictionary request', () => {
     expect(answer({ type: 'state' }, asked)).toEqual({ type: 'state', data: downloading })
   })
 
-  it('looks up from the open dictionary once it is ready', () => {
+  it('splits text once it is ready, naming the other words written as each linked one', () => {
     expect(ask({ type: 'segment', text: '食べます' })).toEqual({
       type: 'segment',
-      tokens: [],
+      tokens: [{ text: '要', languageReferenceID: 'you', writtenAlike: ['kaname'] }],
       romaji: 'tabemasu'
     })
   })
