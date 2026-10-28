@@ -74,7 +74,6 @@ struct DailyListsView: View {
 }
 
 private struct DailyListRow: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .body) private var barWidth = 56.0
   let title: String
   let line: String
@@ -83,11 +82,7 @@ private struct DailyListRow: View {
   let isToday: Bool
 
   var body: some View {
-    let layout =
-      dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-      : AnyLayout(HStackLayout(spacing: 12))
-    layout {
+    StackedWhenLarge(spacing: 8, across: 12) {
       VStack(alignment: .leading, spacing: 2) {
         Text(title)
           .fontWeight(isToday ? .semibold : .regular)

@@ -147,15 +147,9 @@ private struct AccountExternalLink<Label: View>: View {
 }
 
 private struct AccountAboutHeader: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
   var body: some View {
-    let layout =
-      dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-      : AnyLayout(HStackLayout(spacing: 12))
     VStack(alignment: .leading, spacing: 12) {
-      layout {
+      StackedWhenLarge(spacing: 12, across: 12) {
         if let icon = AppIcon.image {
           icon
             .resizable()
