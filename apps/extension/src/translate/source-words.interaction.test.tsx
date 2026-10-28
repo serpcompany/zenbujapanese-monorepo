@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { settingDefaults, writeSettings } from '../shared/settings'
@@ -49,34 +48,7 @@ const button = (scope: ParentNode, name: string) => {
   return found
 }
 
-const readingAidsCss = readFileSync(
-  `${import.meta.dirname}/../word-detail/reading-aids.css`,
-  'utf8'
-)
-
 describe('the Japanese source of a translation', () => {
-  it('spaces neighbouring meanings apart and reads them in the muted foreground', async () => {
-    const style = document.createElement('style')
-    style.textContent = readingAidsCss.slice(0, readingAidsCss.indexOf('@layer'))
-    document.head.append(style)
-    const container = await showSource(services())
-    await act(() => writeSettings({ 'readingAids.wordMeanings': true }))
-    await settle()
-    const groups = [...container.querySelectorAll('[data-aid="meaning"]')].map(
-      meaning => meaning.parentElement as HTMLElement
-    )
-    expect(groups).toHaveLength(2)
-    for (const group of groups) {
-      const spacing = getComputedStyle(group)
-      expect(spacing.marginLeft).toBe('4px')
-      expect(spacing.marginRight).toBe('4px')
-    }
-    style.remove()
-    const meaningRule = readingAidsCss.match(/\[data-aid="meaning"\] \{[^}]*\}/)?.[0] ?? ''
-    expect(meaningRule).toContain('text-muted-foreground')
-    expect(meaningRule).not.toMatch(/blue/)
-  })
-
   it('shows each word as a button, with furigana in hiragana and the romaji line', async () => {
     const container = await showSource(services())
     expect(words(container)).toEqual(['要求', '要る'])
@@ -86,13 +58,23 @@ describe('the Japanese source of a translation', () => {
     expect(find(container, '[data-reading-aids]').getAttribute('data-romaji')).toBe('off')
   })
 
-  it('adds each word’s short meaning when Word Meanings is on', async () => {
+  it('adds each word’s short meaning when Word Meanings is on, with its full text as a tooltip', async () => {
     const using = services()
     const container = await showSource(using)
     expect(container.querySelector('[data-aid="meaning"]')).toBeNull()
     await act(() => writeSettings({ 'readingAids.wordMeanings': true }))
     await settle()
-    expect(texts(container, '[data-aid="meaning"]')).toEqual(['demand', 'be needed'])
+    expect(texts(container, '[data-aid="meaning"] [aria-hidden="true"]')).toEqual([
+      'demand',
+      'be needed'
+    ])
+    expect(texts(container, '[data-aid="meaning"] .sr-only')).toEqual([
+      'demand, request',
+      'to be needed'
+    ])
+    expect(
+      [...container.querySelectorAll<HTMLElement>('[data-aid="meaning"]')].map(found => found.title)
+    ).toEqual(['demand, request', 'to be needed'])
     expect(using.popupCard).toHaveBeenCalledWith('youkyuu', [])
   })
 

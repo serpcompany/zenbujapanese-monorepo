@@ -1,15 +1,21 @@
 import { shortGloss } from '@zenbu/dictionary-core/detail/text'
 import type { Lookup, PopupAnswer } from '../shared/dictionary'
+import type { Gloss, Glosses } from './annotate'
 
 export type GlossLookUp = (languageReferenceID: string) => Lookup<PopupAnswer>
 
 export type GlossCache = {
-  known: ReadonlyMap<string, string | null>
+  known: Glosses
   fetch(ids: readonly string[]): Promise<void>
 }
 
+function glossFrom(meaning: string): Gloss | null {
+  const short = shortGloss(meaning)
+  return short ? { short, full: meaning } : null
+}
+
 export function glossCache(lookUp: GlossLookUp, running = 4): GlossCache {
-  const known = new Map<string, string | null>()
+  const known = new Map<string, Gloss | null>()
   const asked = new Map<string, Promise<void>>()
   const waiting: (() => void)[] = []
   let busy = 0
@@ -36,7 +42,7 @@ export function glossCache(lookUp: GlossLookUp, running = 4): GlossCache {
           answer => {
             if (answer.type !== 'popup') return void asked.delete(id)
             const first = answer.card?.card.meanings[0]
-            known.set(id, first ? shortGloss(first.meaning) : null)
+            known.set(id, first ? glossFrom(first.meaning) : null)
           },
           () => void asked.delete(id)
         )

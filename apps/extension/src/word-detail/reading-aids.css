@@ -10,7 +10,10 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  margin: 0 0.25rem;
+}
+
+[data-reading-aids][data-word-meanings="on"] :has(> [data-aid="meaning"]):not(:first-child) {
+  margin-inline-start: 0.5rem;
 }
 
 @layer components {

@@ -56,7 +56,7 @@ describe('the Japanese text on a page', () => {
       tokens(),
       { furigana: true, romaji: false, meanings: true },
       new Map([
-        ['youkyuu', 'demand'],
+        ['youkyuu', { short: 'demand', full: 'demand, firm request' }],
         ['iru', null]
       ]),
       'light'
@@ -65,8 +65,11 @@ describe('the Japanese text on a page', () => {
     expect(inserted).toHaveLength(3)
     expect([...body.querySelectorAll('rt')].map(rt => rt.textContent)).toEqual(['ようきゅう', 'い'])
     expect(
-      [...body.querySelectorAll('[data-zenbu-aid="meaning"]')].map(aid => aid.textContent)
-    ).toEqual(['demand'])
+      [...body.querySelectorAll<HTMLElement>('[data-zenbu-aid="meaning"]')].map(aid => [
+        aid.querySelector('[aria-hidden="true"]')?.textContent,
+        aid.title
+      ])
+    ).toEqual([['demand', 'demand, firm request']])
     expect(pieces.map(piece => [piece.node.data, piece.token.text])).toEqual([
       ['要求', '要求'],
       ['が', 'が'],

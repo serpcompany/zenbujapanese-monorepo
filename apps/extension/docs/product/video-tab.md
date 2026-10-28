@@ -45,7 +45,8 @@ video only once it is shown").
 
 | Behavior | Check |
 | --- | --- |
-| Each word of a line is underlined, as in Translate, with the reading aids turned on in Settings: furigana, a romaji line, and each word's short meaning, in the muted foreground with a space between neighbours. Turning one on or off changes the rows with no reload. | Transcript: "follows the reading aids in the settings"; Translate: "spaces neighbouring meanings apart and reads them in the muted foreground" |
+| Each word of a line is underlined, as in Translate, with the reading aids turned on in Settings: furigana, a romaji line, and each word's short meaning. Turning one on or off changes the rows with no reload. | Transcript: "follows the reading aids in the settings" |
+| A meaning never touches its neighbour's: it is half a rem from the word before it, at 380 pixels and at the narrowest panel, 360. It is in the muted foreground, and the foreground on the line being played, at least 4.5:1 against the row in light and dark. One wider than its column is cut with an ellipsis, and its sense's full text is its tooltip and what a screen reader reads. | `e2e/transcript-meanings.spec.ts`: "spaces long neighbouring word meanings apart…", "gives a cut word meaning its full text…" |
 | A click on a word opens the word popup under its line, and the video pauses. Closing it, with Close or Escape, plays the video again, only if it was playing. | Transcript: "opens a word's popup and pauses the video…", "leaves a paused video paused…" |
 | One popup is open at a time: a word in another row closes the first, and the video plays again only when the last closes. | Transcript: "keeps one popup open at a time…" |
 | Closing the transcript with a popup open, by closing the panel or moving to another video, counts as closing the popup: a video that was playing plays again. | Transcript: "plays the video again when the transcript closes with a popup open" |
