@@ -55,8 +55,29 @@ final class ProgressLogTests {
     knowledge.setStatus(.learning, id: id, headword: headword, reading: headword)
   }
 
+  private func saveEkiAsKnown() async {
+    let first = WordKnowledge(fileURL: folder.appending(path: "word-knowledge.json"))
+    await first.flush()
+    first.setStatus(.known, id: eki, headword: "駅", reading: "えき")
+    await first.flush()
+  }
+
   private func ids(on day: String, in log: ProgressLog) -> [String] {
     log.days[day]?.changes.map(\.id) ?? []
+  }
+
+  private func share(
+    _ id: LanguageReferenceID, _ headword: String, _ status: WordKnowledgeStatus, madeAt made: Date
+  ) throws -> SharedChanges {
+    let inbox = SharedChanges(folder: folder.appending(path: "Inbox"))
+    try FileManager.default.createDirectory(at: inbox.folder, withIntermediateDirectories: true)
+    let name = String(
+      format: "%020llu-%010d-%@.json", UInt64(made.timeIntervalSince1970 * 1_000_000_000), 1,
+      UUID().uuidString)
+    let change = SharedChange.known(
+      KnownWordChange(storedID: id.rawValue, headword: headword, reading: headword, status: status))
+    try JSONEncoder.localStore.encode(change).write(to: inbox.folder.appending(path: name))
+    return inbox
   }
 
   @Test("changes at 23:59 and at 00:01 fall on two days, each kept as it happened")
@@ -83,15 +104,8 @@ final class ProgressLogTests {
 
   @Test("a share sheet change made at 23:59 and applied the next morning falls on its own day")
   func shareSheetChangeKeepsItsDay() async throws {
-    let inbox = SharedChanges(folder: folder.appending(path: "Inbox"))
-    try FileManager.default.createDirectory(at: inbox.folder, withIntermediateDirectories: true)
     let made = october(27, 23, 59)
-    let name = String(
-      format: "%020llu-%010d-%@.json", UInt64(made.timeIntervalSince1970 * 1_000_000_000), 1,
-      UUID().uuidString)
-    let change = SharedChange.known(
-      KnownWordChange(storedID: eki.rawValue, headword: "駅", reading: "えき", status: .learning))
-    try JSONEncoder.localStore.encode(change).write(to: inbox.folder.appending(path: name))
+    let inbox = try share(eki, "駅", .learning, madeAt: made)
 
     clock.now = october(28, 8, 0)
     let (knowledge, log) = await stores()
@@ -103,6 +117,48 @@ final class ProgressLogTests {
     #expect(log.days["2026-10-27"]?.changes.first?.at == made)
     #expect(ids(on: "2026-10-28", in: log).isEmpty)
     #expect(log.days["2026-10-28"]?.totals == ProgressTotals(known: 0, learning: 1))
+  }
+
+  @Test("a share sheet change applied the next morning moves its own day's totals")
+  func shareSheetChangeMovesItsDaysTotals() async throws {
+    clock.now = october(27, 20, 0)
+    let (first, firstLog) = await stores()
+    learn(taberu, "食べる", in: first)
+    await first.flush()
+    await firstLog.flush()
+    let inbox = try share(eki, "駅", .known, madeAt: october(27, 23, 59))
+
+    clock.now = october(28, 8, 0)
+    let (knowledge, log) = await stores()
+    #expect(log.days["2026-10-28"]?.totals == ProgressTotals(known: 0, learning: 1))
+    await inbox.apply(to: WordLists(fileURL: folder.appending(path: "word-lists.json")), knowledge)
+    await log.flush()
+
+    #expect(ids(on: "2026-10-27", in: log) == [taberu.rawValue, eki.rawValue])
+    #expect(log.days["2026-10-27"]?.totals == ProgressTotals(known: 1, learning: 1))
+    #expect(log.days["2026-10-28"]?.totals == ProgressTotals(known: 1, learning: 1))
+  }
+
+  @Test("a share sheet change counts on every logged day after its own until today")
+  func shareSheetChangeMovesLaterDays() async throws {
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let seeded = """
+      {"version":1,"days":{
+      "2026-10-26":{"changes":[],"goal":20,"known":2,"learning":3},
+      "2026-10-27":{"changes":[],"goal":20,"known":2,"learning":3}}}
+      """
+    try Data(seeded.utf8).write(to: logURL)
+    let inbox = try share(eki, "駅", .learning, madeAt: october(25, 23, 59))
+
+    clock.now = october(28, 8, 0)
+    let (knowledge, log) = await stores()
+    await inbox.apply(to: WordLists(fileURL: folder.appending(path: "word-lists.json")), knowledge)
+    await log.flush()
+
+    #expect(log.days["2026-10-25"]?.totals == ProgressTotals(known: 0, learning: 1))
+    #expect(log.days["2026-10-26"]?.totals == ProgressTotals(known: 2, learning: 4))
+    #expect(log.days["2026-10-27"]?.totals == ProgressTotals(known: 2, learning: 4))
+    #expect(log.days["2026-10-28"]?.totals == knowledge.totals)
   }
 
   @Test("a synced change updates the day's totals and isn't recorded as a change")
@@ -160,10 +216,7 @@ final class ProgressLogTests {
   @Test("a log it can't read is kept aside and loses none of the learner's words")
   func unreadableLog() async throws {
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-    let first = WordKnowledge(fileURL: folder.appending(path: "word-knowledge.json"))
-    await first.flush()
-    first.setStatus(.known, id: eki, headword: "駅", reading: "えき")
-    await first.flush()
+    await saveEkiAsKnown()
     try Data("{".utf8).write(to: logURL)
 
     clock.now = october(28, 9, 0)
@@ -181,12 +234,46 @@ final class ProgressLogTests {
     #expect(names.contains { $0.hasPrefix("progress-log.unreadable-") })
   }
 
+  @Test("a log with a change it can't read is kept aside before it's written again")
+  func unreadableChange() async throws {
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let at = Int(october(27, 9, 0).timeIntervalSince1970 * 1000)
+    let damaged = Data(
+      """
+      {"version":1,"days":{"2026-10-27":{"changes":[
+      {"id":"\(taberu.rawValue)","before":"unknown","after":"learning","at":\(at)},
+      {"id":"\(miru.rawValue)","before":"unknown"}],"goal":20,"known":0,"learning":2}}}
+      """.utf8)
+    try damaged.write(to: logURL)
+
+    clock.now = october(28, 9, 0)
+    let log = await log()
+
+    #expect(ids(on: "2026-10-27", in: log) == [taberu.rawValue])
+    let names = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+    let kept = try #require(names.first { $0.hasPrefix("progress-log.unreadable-") })
+    #expect(try Data(contentsOf: folder.appending(path: kept)) == damaged)
+    #expect(try Data(contentsOf: logURL) != damaged)
+  }
+
+  @Test("the first launch writes today's real totals when the defaults change before it listens")
+  func firstLaunchAfterADefaultsWrite() async {
+    await saveEkiAsKnown()
+
+    clock.now = october(28, 9, 0)
+    let knowledge = WordKnowledge(fileURL: folder.appending(path: "word-knowledge.json"))
+    knowledge.now = { [clock] in clock.now }
+    let log = await log()
+    defaults.set(7.0, forKey: DailyGoal.key)
+    await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
+    await log.listen(to: knowledge).value
+
+    #expect(log.days["2026-10-28"] == ProgressLogDay(goal: 7, totals: ProgressTotals(known: 1, learning: 0)))
+  }
+
   @Test("the first launch with the log writes today's totals, and today keeps the goal set")
   func firstLaunchAndGoal() async throws {
-    let first = WordKnowledge(fileURL: folder.appending(path: "word-knowledge.json"))
-    await first.flush()
-    first.setStatus(.known, id: eki, headword: "駅", reading: "えき")
-    await first.flush()
+    await saveEkiAsKnown()
 
     clock.now = october(28, 9, 0)
     let (_, log) = await stores()

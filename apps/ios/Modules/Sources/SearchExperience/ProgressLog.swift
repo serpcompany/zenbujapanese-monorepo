@@ -4,6 +4,18 @@ import Observation
 struct ProgressTotals: Codable, Hashable, Sendable {
   var known: Int
   var learning: Int
+
+  func moving(from before: WordKnowledgeStatus, to after: WordKnowledgeStatus) -> ProgressTotals {
+    var moved = self
+    for (status, step) in [(before, -1), (after, 1)] {
+      switch status {
+      case .known: moved.known = max(0, moved.known + step)
+      case .learning: moved.learning = max(0, moved.learning + step)
+      case .unknown, .unrecognized: break
+      }
+    }
+    return moved
+  }
 }
 
 enum WordKnowledgeEvent: Sendable {
@@ -24,22 +36,11 @@ struct ProgressLogDay: Codable, Hashable, Sendable {
   var known: Int
   var learning: Int
 
-  init(goal: Int, totals: ProgressTotals) {
-    changes = []
+  init(changes: [ProgressLogChange] = [], goal: Int, totals: ProgressTotals) {
+    self.changes = changes
     self.goal = goal
     known = totals.known
     learning = totals.learning
-  }
-
-  private enum CodingKeys: String, CodingKey { case changes, goal, known, learning }
-
-  init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-    changes = try container.decode([LossyDecodable<ProgressLogChange>].self, forKey: .changes)
-      .compactMap(\.value)
-    goal = try container.decode(Int.self, forKey: .goal)
-    known = try container.decode(Int.self, forKey: .known)
-    learning = try container.decode(Int.self, forKey: .learning)
   }
 
   var totals: ProgressTotals {
@@ -79,6 +80,7 @@ final class ProgressLog: LocalFileStore {
   @ObservationIgnored private let calendar: Calendar
   @ObservationIgnored private var heardBeforeLoading: [WordKnowledgeEvent] = []
   @ObservationIgnored private var goalObserver: NSObjectProtocol?
+  @ObservationIgnored private weak var knowledge: WordKnowledge?
   var canChange: Bool { isLoaded && readOnlyReason == nil }
   var goal: Int { DailyGoal.read(defaults) }
 
@@ -111,16 +113,20 @@ final class ProgressLog: LocalFileStore {
 
   @discardableResult
   func listen(to knowledge: WordKnowledge) -> Task<Void, Never> {
+    self.knowledge = knowledge
     knowledge.progressObserver = { [weak self] event in self?.record(event) }
     return Task {
       await knowledge.flush()
       await flush()
-      guard knowledge.canChange, canChange else { return }
-      let today = day(of: now())
-      guard days[today] == nil else { return }
-      days[today] = ProgressLogDay(goal: goal, totals: knowledge.totals)
-      persist()
+      if startToday() { persist() }
     }
+  }
+
+  private func startToday() -> Bool {
+    let today = day(of: now())
+    guard canChange, days[today] == nil, let knowledge, knowledge.canChange else { return false }
+    days[today] = ProgressLogDay(goal: goal, totals: knowledge.totals)
+    return true
   }
 
   func day(of time: Date) -> String {
@@ -135,10 +141,15 @@ final class ProgressLog: LocalFileStore {
     case .changed(let change, let previous, let totals):
       let time = change.changedAt ?? now()
       let changed = day(of: time)
-      days[changed, default: ProgressLogDay(goal: goal, totals: totals)].changes.append(
+      let today = day(of: now())
+      if changed < today {
+        movePastTotals(from: previous, to: change.status, since: changed, before: today, totals)
+      } else {
+        days[changed, default: ProgressLogDay(goal: goal, totals: totals)].totals = totals
+      }
+      days[changed]?.changes.append(
         ProgressLogChange(
           id: change.storedID, before: previous.stored, after: change.status.stored, at: time))
-      if days.keys.allSatisfy({ $0 <= changed }) { days[changed]?.totals = totals }
       keepToday(totals)
     case .synced(let totals):
       keepToday(totals)
@@ -152,11 +163,31 @@ final class ProgressLog: LocalFileStore {
     days[today]?.goal = goal
   }
 
+  private func movePastTotals(
+    from before: WordKnowledgeStatus, to after: WordKnowledgeStatus, since changed: String,
+    before today: String, _ totals: ProgressTotals
+  ) {
+    if days[changed] == nil {
+      let earlier = days.filter { $0.key < changed }.max { $0.key < $1.key }?.value
+      days[changed] = ProgressLogDay(
+        goal: earlier?.goal ?? goal,
+        totals: earlier?.totals ?? totals.moving(from: after, to: before))
+    }
+    for key in days.keys where key >= changed && key < today {
+      guard let past = days[key]?.totals else { continue }
+      days[key]?.totals = past.moving(from: before, to: after)
+    }
+  }
+
   private func keepTodaysGoal() {
     let today = day(of: now())
-    guard canChange, days[today]?.goal != goal else { return }
-    let latest = days.max { $0.key < $1.key }?.value.totals ?? ProgressTotals(known: 0, learning: 0)
-    days[today, default: ProgressLogDay(goal: goal, totals: latest)].goal = goal
+    guard canChange else { return }
+    if let current = days[today]?.goal {
+      guard current != goal else { return }
+      days[today]?.goal = goal
+    } else {
+      guard startToday() else { return }
+    }
     persist()
   }
 
@@ -177,8 +208,15 @@ private actor ProgressLogWriter {
     var days: [String: ProgressLogDay]
   }
 
+  private struct LoadedDay: Decodable {
+    let changes: [LossyDecodable<ProgressLogChange>]
+    let goal: Int
+    let known: Int
+    let learning: Int
+  }
+
   private struct LoadedFile: Decodable {
-    let days: [String: LossyDecodable<ProgressLogDay>]
+    let days: [String: LossyDecodable<LoadedDay>]
   }
 
   private let file: LocalJSONFile
@@ -193,8 +231,15 @@ private actor ProgressLogWriter {
     days: [String: ProgressLogDay], needsRewrite: Bool, readOnlyReason: LocalFileReadOnlyReason?
   ) {
     await file.load(LoadedFile.self, empty: [String: ProgressLogDay]()) { stored in
-      let days = stored.days.compactMapValues(\.value)
-      return (days, days.count == stored.days.count)
+      let loaded = stored.days.compactMapValues(\.value)
+      let days = loaded.mapValues { day in
+        ProgressLogDay(
+          changes: day.changes.compactMap(\.value), goal: day.goal,
+          totals: ProgressTotals(known: day.known, learning: day.learning))
+      }
+      let read = days.values.map(\.changes.count).reduce(0, +)
+      let written = loaded.values.map(\.changes.count).reduce(0, +)
+      return (days, loaded.count == stored.days.count && read == written)
     }
   }
 

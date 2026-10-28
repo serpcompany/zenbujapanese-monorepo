@@ -160,18 +160,20 @@ day, keyed by the device's calendar day (`yyyy-MM-dd`) when the change was made,
 - the Known and Learning totals after the day's last change.
 
 A change from the share sheet counts on the day it was made, even when Zenbu applies it the next
-day. Changes that arrive by sync update the day's totals but aren't logged as changes. The first
-launch with the log writes that day's totals, so Known over time starts there. Nothing is pruned.
+day, and moves that day's totals and those of each day logged since. Changes that arrive by sync
+update the day's totals but aren't logged as changes. The first launch with the log writes that
+day's totals, so Known over time starts there. Nothing is pruned.
 
 The daily goal is kept on the device under `progress.dailyGoal`: 20 until it's set, and read
 rounded and kept from 1 to 200. What counts toward the goal, the streaks, the averages, and Known
 over time are the shared core's (`progress/stats.ts`), which the app asks with the log's days.
 
 Check: core `progress/stats.test.ts` and `embedded/progress.test.ts`; package `ProgressLogTests`
-(changes at 23:59 and 00:01 on two days, a share sheet change kept on its own day, a synced
-change in the totals only, sync still told of each change, a newer log read-only, a log it can't
-read kept aside with no word lost, the first launch's totals and the goal, and the core's stats
-read through the bundle).
+(changes at 23:59 and 00:01 on two days, a share sheet change kept on its own day and moving its
+day's and later days' totals, a synced change in the totals only, sync still told of each change,
+a newer log read-only, a log or a change it can't read kept aside with no word lost, the first
+launch's totals, also when the defaults change first, and the goal, and the core's stats read
+through the bundle).
 
 ## Saved data that can't be read
 
