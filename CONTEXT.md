@@ -47,9 +47,9 @@ Unknown and Known. An app that shows only Known counts it as not known.
 _Avoid_: studying, in progress, a "Learning list" (it's a state, not a list)
 
 **Word card**:
-The short form of a dictionary entry, keyed by Language Reference ID, that an app without the
-language data shows.
-_Avoid_: flashcard, entry, word page
+The short form of a dictionary entry, keyed by Language Reference ID: the data. An app without the
+language data shows it, and the browser extension's Word popup draws it.
+_Avoid_: flashcard, entry, word page, word popup (the Word popup is where the extension shows it)
 
 **Browser extension**:
 The Zenbu Japanese extension for Chrome, built from `apps/extension`: its side panel, Settings
@@ -63,8 +63,9 @@ Translate, Images, Words, and Recent, each tab with its own pages, such as a wor
 _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)
 
 **Word popup**:
-What the browser extension shows over a page for the word a learner points at.
-_Avoid_: word card (a Word card is the short entry an app without the data shows), tooltip
+What the browser extension shows over a page for the word a learner points at: the surface,
+which draws that word's Word card and its romaji.
+_Avoid_: word card (the Word card is the entry the popup draws, not the popup), tooltip
 
 **Zenbu Captions**:
 The Japanese lines the browser extension gets for a YouTube video and shows itself, in the side

@@ -70,7 +70,10 @@ describe('the source credits', () => {
       const clients = everyCredit.find(listed => listed.name === credit)?.clients ?? []
       expect(clients.includes('app'), source).toBe(consumers.includes('iOS'))
       expect(clients.includes('website'), source).toBe(consumers.includes('Website'))
-      expect(consumers.filter(consumer => consumer !== 'iOS' && consumer !== 'Website')).toEqual([])
+      expect(clients.includes('extension'), source).toBe(consumers.includes('Extension'))
+      expect(
+        consumers.filter(consumer => !['iOS', 'Website', 'Extension'].includes(consumer))
+      ).toEqual([])
     }
   })
 
@@ -112,8 +115,26 @@ describe('the source credits', () => {
     expect(() => creditsShownBy('watch')).toThrow('No client is named watch')
   })
 
+  test('are shown by the extension for what it looks up offline, without search', () => {
+    expect(names(creditsShownBy('extension').credits)).toEqual([
+      'JMdict',
+      'KANJIDIC2',
+      'RADKFILE',
+      'KanjiVG',
+      'Kanjium',
+      'UniDic',
+      'JLPT vocabulary lists',
+      'JLPT kanji lists',
+      'TUBELEX',
+      'Wikipedia Word Frequency Clean',
+      'Jiten',
+      'Kuromoji',
+      'Tatoeba'
+    ])
+  })
+
   test('come with the sentence that says every source is converted and shared alike', () => {
-    for (const client of ['app', 'website']) {
+    for (const client of ['app', 'website', 'extension']) {
       expect(creditsShownBy(client).conversionNotice).toBe(
         'Zenbu converts each source into its own formats and shares converted Creative Commons data under the same licence.'
       )

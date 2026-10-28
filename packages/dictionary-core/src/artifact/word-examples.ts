@@ -130,11 +130,16 @@ function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   })
 }
 
+export interface SegmentedText {
+  tokens: SegmentedToken[]
+  romaji: string | null
+}
+
 export function segmentText(
   db: ArtifactDatabase,
   text: string,
   capabilities: { tokenize: Tokenize; lookup: FormLookup }
-): SegmentedToken[] {
+): SegmentedText {
   const linked = linkedTokens(
     text,
     kuromojiCandidates(text, capabilities.tokenize(text)),
@@ -145,7 +150,7 @@ export function segmentText(
   const entries = linkedEntries(db, [
     ...new Set(linked.flatMap(token => (token.entry ? [token.entry.id] : [])))
   ])
-  return linked.map((token, position) => {
+  const tokens = linked.map((token, position) => {
     const target = token.entry ? entries.get(token.entry.id) : undefined
     const row = rows[position]
     return {
@@ -157,6 +162,7 @@ export function segmentText(
         : {})
     }
   })
+  return { tokens, romaji: sentenceRomaji(linked) }
 }
 
 export function exampleCount(retrieved: EntryExamples): ExampleCountRow | null {

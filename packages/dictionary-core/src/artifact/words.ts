@@ -55,10 +55,16 @@ export interface WordRecord {
   relatedSlugs: Map<number, string>
 }
 
+export type FrequencyReader = (
+  db: ArtifactDatabase,
+  ids: readonly string[]
+) => Map<string, FrequencyRow[]>
+
 export function readWord(
   db: ArtifactDatabase,
   kanji: KanjiData,
-  entSeq: number
+  entSeq: number,
+  frequency: FrequencyReader = bundledFrequency
 ): WordRecord | null {
   const [record] = db.all<EntryRecord>(
     `${entrySelect} WHERE e.source_identity = ? AND e.source_record_id = ?`,
@@ -120,7 +126,7 @@ export function readWord(
   }
   return {
     entry,
-    frequency: bundledFrequency(db, [record.id]).get(record.id) ?? [],
+    frequency: frequency(db, [record.id]).get(record.id) ?? [],
     kanji: kanji.glossRows([entry.headword, ...writtenForms.map(form => form.value)]),
     fingerprint: record.fingerprint,
     slug: wordSlug(entry.headword, entry.reading),

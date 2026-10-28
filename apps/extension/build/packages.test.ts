@@ -3,15 +3,9 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { builtPages } from './extension-config.ts'
-import { type Environment, hosts } from './hosts.ts'
+import { type Environment, hosts, testLanguageDataHost, type Variant } from './hosts.ts'
 import { extensionIdOf, storeKey } from './key.ts'
-import {
-  contentScriptFile,
-  contentScripts,
-  extensionVersion,
-  manifest,
-  type Variant
-} from './manifest.ts'
+import { contentScriptFile, contentScripts, extensionVersion, manifest } from './manifest.ts'
 import { type PackageKind, packageFolder, packageProblems } from './packages.ts'
 import { unzipFiles, zipFiles } from './zip.ts'
 
@@ -98,7 +92,8 @@ describe('the check of a package', () => {
   it("fails a package holding the test build's content script", () => {
     const files = { ...built('staging', 'test'), 'test-content-script.js': '' }
     expect(problemsOf(files, 'unpacked', 'staging')).toEqual([
-      "The package holds the test build's test-content-script.js."
+      "The package holds the test build's test-content-script.js.",
+      `the test build's ${testLanguageDataHost} is in manifest.json.`
     ])
   })
 
@@ -125,6 +120,17 @@ describe('the check of a package', () => {
       "The manifest's homepage_url is https://staging.zenbujapanese.com, not https://zenbujapanese.com.",
       "staging's https://staging.zenbujapanese.com is in manifest.json.",
       "staging's https://api-staging.zenbujapanese.com is in assets/popup.js."
+    ])
+  })
+
+  it("passes the language data host both environments share, and fails the test build's", () => {
+    expect(problemsOf(built('production'), 'unpacked', 'production')).toEqual([])
+    const files = {
+      ...built('production'),
+      'assets/worker.js': `fetch(${JSON.stringify(`${testLanguageDataHost}/releases.json`)})`
+    }
+    expect(problemsOf(files, 'unpacked', 'production')).toEqual([
+      `the test build's ${testLanguageDataHost} is in assets/worker.js.`
     ])
   })
 

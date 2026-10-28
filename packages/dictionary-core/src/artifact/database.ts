@@ -102,7 +102,7 @@ function checkExampleIndex(db: ArtifactDatabase): void {
   if (!main.has('sense_examples')) refuse('it has no examples linked to meanings (sense_examples)')
 }
 
-function checkAttached(db: ArtifactDatabase, name: keyof typeof attachments): Map<string, string> {
+function checkAttached(db: ArtifactDatabase, name: AttachmentName): Map<string, string> {
   const expected = attachments[name]
   const recorded = metadata(db, name)
   const schema = recorded.get('artifact_schema')
@@ -117,15 +117,24 @@ export function checkExamples(db: ArtifactDatabase): void {
   checkAttached(db, 'word_index')
 }
 
-export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void {
+export type AttachmentName = keyof typeof attachments
+
+const allAttachments = Object.keys(attachments) as AttachmentName[]
+
+export function checkArtifact(
+  db: ArtifactDatabase,
+  sourceSha256: string,
+  attached: readonly AttachmentName[] = allAttachments
+): void {
   const main = metadata(db, 'main')
   const transform = main.get('transform')
   if (transform === undefined || !supportedTransforms.includes(transform)) {
     refuse(`unsupported artifact transform ${transform}; the core reads ${supportedTransforms}`)
   }
   checkExampleIndex(db)
-  for (const [name, expected] of Object.entries(attachments)) {
-    const recorded = checkAttached(db, name as keyof typeof attachments)
+  for (const name of attached) {
+    const expected = attachments[name]
+    const recorded = checkAttached(db, name)
     if ('packId' in expected && recorded.get('pack_id') !== expected.packId) {
       refuse(`${expected.file} is pack ${recorded.get('pack_id')}, not ${expected.packId}`)
     }
@@ -139,6 +148,7 @@ export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void 
       )
     }
   }
+  if (!attached.includes('ranked')) return
   const ranked = new Set(
     db.all<{ pack_id: string }>('SELECT pack_id FROM ranked.ranked_lists').map(row => row.pack_id)
   )

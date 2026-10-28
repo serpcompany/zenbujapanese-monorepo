@@ -26,7 +26,7 @@ export const extensionPages: ExtensionPage[] = [
   }
 ]
 
-export const dictionaryLabels = labels.dictionary
+export const dictionaryLabels = { ready: labels.progress.ready, ...labels.dictionary }
 
 export const testPage = '/test-pages/hostile.html'
 

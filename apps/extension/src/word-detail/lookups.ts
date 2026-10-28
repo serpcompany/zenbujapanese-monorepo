@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { NotReady } from '../shared/answers'
 import type { DataState } from '../shared/data-state'
 import {
   type Lookup,
@@ -6,7 +7,6 @@ import {
   lookUpKanji,
   lookUpWord,
   lookUpWordExamples,
-  type NotReady,
   resolveWord
 } from '../shared/dictionary'
 import { useDataState } from '../shared/dictionary-progress'

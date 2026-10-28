@@ -48,8 +48,8 @@ answered through a fixture source in the test, with Back drawn by the side panel
 
 ## Not built yet
 
-Open Full Entry (#957), and checks in Chrome on the whole dictionary (食べる, 食, and で), come
-with the side panel's registrations and #956's data.
+Open Full Entry (#957) comes with the side panel's registrations. Checks in Chrome on the whole
+dictionary (食べる, 食, and で) wait for the extension's final check in Chrome.
 
 A form's page shows the form alone, with no explanation and no furigana, because its route
 carries only the form. The app's and the website's form headline follows Reading Aids

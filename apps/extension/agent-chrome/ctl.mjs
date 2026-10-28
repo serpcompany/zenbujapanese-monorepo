@@ -67,6 +67,7 @@ const commands = {
         net: opts.net,
         pages: opts.pages,
         mapHost: opts['map-host'],
+        hostRule: opts['host-rule'],
         ext: opts.ext
       })
     )

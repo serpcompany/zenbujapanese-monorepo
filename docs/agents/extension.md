@@ -9,7 +9,9 @@ and a surface's own in its folder's `labels.ts`, such as `src/side-panel/labels.
 `src/translate/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
 behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Side
-panel, Word popup, Zenbu Captions, Video follower, Translation module).
+panel, Word popup, Zenbu Captions, Video follower, Translation module). How the dictionary worker
+downloads the language data, keeps it current, and answers from it is in
+[`extension-language-data.md`](extension-language-data.md).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -17,12 +19,12 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
+| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
 | `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
-| `pnpm language-data` | The local language-data server on its own, on a free port (or `PORT`); it prints its address. |
+| `pnpm language-data` | The local language-data server, on a free port (or `PORT`); it prints its address. |
 | `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
@@ -50,9 +52,10 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
   `api-staging.zenbujapanese.com`). The code reads them from `src/shared/hosts.ts`, which the build
   fills in, and the manifest's `homepage_url` is the website. Nothing in `apps/extension` writes
   the website or API host. The core can: `detail/links.ts` writes the website's, and #956's
-  language data host is `https://data.zenbujapanese.com`; a bundle that takes the website's from
-  the core fails the staging package's check (#958). No API host is in `host_permissions` until
-  the extension calls one (#961).
+  language data host is `https://data.zenbujapanese.com`, or the test build's
+  `http://language-data.localhost`, which fails a package's check, as does a bundle that takes
+  the website's host from the core in staging (#958). No API host is in `host_permissions`
+  until the extension calls one (#961).
 - **The packages.** `Extension packages` ([`ci-deploys.md`](ci-deploys.md)) builds both from
   `main`: the staging package, unpacked with the `key`, for loading by hand, and the store
   package, from the production build, for the owner to upload (#972). Agents never upload to the
@@ -74,40 +77,41 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 
 | Folder | What it holds |
 | --- | --- |
-| `src/pages/` | The side panel and the Settings page (the manifest's `options_ui`, opened in a tab); there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`), and opens the side panel on a route (`side-panel.ts`). |
+| `src/pages/` | The side panel, the Settings page (the manifest's `options_ui`, opened in a tab), and the welcome tab; there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`), opens the side panel on a route (`side-panel.ts`), and opens the welcome tab on install and asks for updates (`language-data-updates.ts`). |
 | `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, #959's), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
 | `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
-| `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
+| `src/worker/` | The dictionary worker, a dedicated module worker: it downloads the language data, opens it in sqlite-wasm, and answers from the core (`answer.ts`; [`extension-language-data.md`](extension-language-data.md)). |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`). |
 | `src/word-detail/` | Word Detail and the kanji and form pages it opens, drawn with `@zenbu/ui`'s dictionary parts from the core's `detail/` modules. They ask the dictionary through `src/shared/dictionary.ts`; their tests answer from the core's fixtures. |
 | `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
 | `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), and the content script's side on a watch page (`youtube-page.ts`). |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
-| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
+| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress (`dictionary-progress.tsx`), which every page that shows the download draws. Pages and content scripts look words up through `dictionary.ts`'s helpers, never with raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
+| `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
-| `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local language-data server (`local-server.ts`, `language-data.ts`). |
+| `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local data server and its release (`local-server.ts`, `fixture-release.ts`). |
 | `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
 ### Messages
 
 A page or content script calls `askDictionary(request)`, which sends `{ target: 'service-worker',
 request }` with `chrome.runtime.sendMessage`. The service worker opens the offscreen document if
-Chrome has closed it (it checks `chrome.runtime.getContexts`, and several requests at once share
-one `createDocument`), waits until the new document says it has started (`offscreenStarted`,
-which it sends once its listener is in place), then sends `{ target: 'offscreen', request }`.
-The offscreen document starts the worker on its first request,
-waits for the worker's first message, which says it has loaded, and then posts each request to it
-with a port; the worker answers on it. Each listener answers only its own `target`, and every
-failure on the way comes back as `{ type: 'failed', reason }`, never as a thrown error or a hang:
-a send that throws, an unknown request, a document that doesn't start within 10 seconds, a worker
-that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
-one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
-document it's waiting on, since Chrome stops it when it's idle.
+Chrome has closed it (it checks `chrome.runtime.getContexts`, and several requests at once share one
+`createDocument`), waits until the new document says it has started (`offscreenStarted`, which it
+sends once its listener is in place), then sends `{ target: 'offscreen', request }`. The offscreen
+document starts the worker on its first request, waits for the worker's first message, which says it
+has loaded, and then posts each request to it with a port; the worker answers on it. Each listener
+answers only its own `target`, and every failure on the way comes back as `{ type: 'failed', reason
+}`, never as a thrown error or a hang: a send that throws, an unknown request, a document that
+doesn't start within 10 seconds, a worker that fails or doesn't start within 10 seconds (the
+offscreen document ends it and starts a new one for the next request), and a worker that doesn't
+answer within 10 seconds. The service worker keeps nothing between messages but a document it's
+waiting on, since Chrome stops it when it's idle.
 
 ### Captions and the video
 
@@ -210,7 +214,9 @@ reports its errors is in [`extension-error-reports.md`](extension-error-reports.
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, an error in its content handed to its reporter, and unmounting, and
-  `DictionaryStatus` checking, ready, failed, and Check again. Translation, with a stand-in
+  `DictionaryStatus` drawing the data's state, never ready while it downloads or failed, and Check
+  again, and the welcome tab's progress, ready, updating, failed, and Try again; the lookup helpers;
+  the language data's download, resume, checks, and updates. Translation, with a stand-in
   Translator on `globalThis.Translator`: a text's direction, with the app's `WrittenLanguageTests`
   cases; a line from a content script through the service worker and the offscreen document and
   back, each way, its availability, one Translator for each direction, `not-available` with nothing

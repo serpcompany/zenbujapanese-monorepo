@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { announceStarted, askWorker, relayToWorker } from '../offscreen/relay'
 import { askDictionary, type DictionaryRequest } from '../shared/messages'
+import { installing } from '../test/fake-language-data'
 import { answer } from '../worker/answer'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
@@ -22,7 +23,7 @@ class FakeWorker extends EventTarget {
   terminate() {}
 
   postMessage(request: DictionaryRequest, [port]: Transferable[]) {
-    ;(port as MessagePort).postMessage(answer(request))
+    ;(port as MessagePort).postMessage(answer(request, installing))
   }
 }
 
@@ -139,7 +140,7 @@ describe('a page asks the dictionary worker', () => {
   })
 
   it('answers a request the worker does not know with a failure', () => {
-    expect(answer({ type: 'lookup' } as unknown as DictionaryRequest)).toEqual({
+    expect(answer({ type: 'lookup' } as unknown as DictionaryRequest, installing)).toEqual({
       type: 'failed',
       reason: 'The dictionary worker does not know this request.'
     })
