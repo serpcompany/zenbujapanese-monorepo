@@ -51,6 +51,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
       lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
     entriesContainingKanji: character => lookup().entriesContainingKanji(character),
     websiteRoute: link => lookup().websiteRoute(JSON.parse(link)),
+    jlptCoverage: request => lookup().jlptCoverage(JSON.parse(request)),
     lookUp: (text, analyze) => lookup().lookUp(text, { analyze }),
     relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
     savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),

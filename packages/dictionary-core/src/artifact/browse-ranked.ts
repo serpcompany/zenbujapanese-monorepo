@@ -1,4 +1,10 @@
-import { type RankedList, rankBandSize, rankBands, rankedListLimit } from '../browse/lists'
+import {
+  jlptLists,
+  type RankedList,
+  rankBandSize,
+  rankBands,
+  rankedListLimit
+} from '../browse/lists'
 import type { ArtifactDatabase, SqlValue } from './database'
 
 interface RankedSource {
@@ -65,13 +71,32 @@ export function rankedBandCounts(db: ArtifactDatabase, list: RankedList): number
   return Array.from({ length: rankBands }, (_, index) => counted.get(index + 1) ?? 0)
 }
 
+const jlptWords = `FROM jlpt.level_evidence j JOIN entries e ON e.id = j.language_reference_id`
+
+const jlptBrowseOrder = 'e.reading, e.source_record_id'
+
 export function jlptRowids(db: ArtifactDatabase, level: number): number[] {
   return db
     .all<{ rowid: number }>(
-      `SELECT e.rowid AS rowid FROM jlpt.level_evidence j
-       JOIN entries e ON e.id = j.language_reference_id
-       WHERE j.level = ? ORDER BY e.reading, e.source_record_id`,
+      `SELECT e.rowid AS rowid ${jlptWords} WHERE j.level = ? ORDER BY ${jlptBrowseOrder}`,
       [level]
     )
     .map(row => row.rowid)
+}
+
+export interface JlptLevelWords {
+  level: number
+  ids: string[]
+}
+
+export function jlptLevelWords(db: ArtifactDatabase): JlptLevelWords[] {
+  const levels = jlptLists.map(({ level }) => ({ level, ids: [] as string[] }))
+  const byLevel = new Map(levels.map(words => [words.level, words.ids]))
+  for (const { level, id } of db.all<{ level: number; id: string }>(
+    `SELECT j.level AS level, lower(hex(e.id)) AS id ${jlptWords}
+     ORDER BY j.level DESC, ${jlptBrowseOrder}`
+  )) {
+    byLevel.get(level)?.push(id)
+  }
+  return levels
 }

@@ -1227,6 +1227,21 @@
     return [...schoolLists, ...jlptKanjiLists].find((list) => list.slug === slug);
   }
 
+  // src/artifact/browse-ranked.ts
+  var jlptWords = `FROM jlpt.level_evidence j JOIN entries e ON e.id = j.language_reference_id`;
+  var jlptBrowseOrder = "e.reading, e.source_record_id";
+  function jlptLevelWords(db) {
+    const levels = jlptLists.map(({ level }) => ({ level, ids: [] }));
+    const byLevel = new Map(levels.map((words) => [words.level, words.ids]));
+    for (const { level, id } of db.all(
+      `SELECT j.level AS level, lower(hex(e.id)) AS id ${jlptWords}
+     ORDER BY j.level DESC, ${jlptBrowseOrder}`
+    )) {
+      byLevel.get(level)?.push(id);
+    }
+    return levels;
+  }
+
   // src/artifact/database.ts
   function searchDatabase(db) {
     return {
@@ -2198,6 +2213,59 @@
     }
     const word = wordSegment(page);
     return word ? { kind: "word", ...word } : home;
+  }
+
+  // src/progress/jlpt-coverage.ts
+  var dayLength = 864e5;
+  var calendarDayPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+  var calendarDayOf = (time) => new Date(time).toISOString().slice(0, 10);
+  function dayNumber(day) {
+    const parts = calendarDayPattern.exec(day);
+    const time = parts ? Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])) : Number.NaN;
+    if (Number.isNaN(time) || calendarDayOf(time) !== day) {
+      throw new Error(`${day} is not a calendar day written as YYYY-MM-DD`);
+    }
+    return time / dayLength;
+  }
+  function wholeNumberFromOne(value, name3) {
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+      throw new Error(`The ${name3} must be a whole number from 1`);
+    }
+    return value;
+  }
+  function pace(notStarted, goal, today) {
+    if (notStarted === 0) return null;
+    const days = Math.ceil(notStarted / goal);
+    return { date: calendarDayOf((today + days) * dayLength), days };
+  }
+  function jlptCoverage(levels, request) {
+    const goal = wholeNumberFromOne(request.goal, "goal");
+    const upNextCount = request.upNext === void 0 ? goal : wholeNumberFromOne(request.upNext, "Up next count");
+    const today = dayNumber(request.today);
+    const known = new Set(request.known.map((id) => id.toLowerCase()));
+    const learning = new Set(request.learning.map((id) => id.toLowerCase()));
+    return levels.map(({ level, ids }) => {
+      let knownCount = 0;
+      let learningCount = 0;
+      const upNext = [];
+      for (const id of ids) {
+        if (known.has(id)) knownCount++;
+        else if (learning.has(id)) learningCount++;
+        else if (upNext.length < upNextCount) upNext.push(id);
+      }
+      const notStarted = ids.length - knownCount - learningCount;
+      return {
+        level,
+        name: `N${level}`,
+        words: ids.length,
+        known: knownCount,
+        learning: learningCount,
+        notStarted,
+        percentKnown: ids.length === 0 ? 0 : Math.floor(knownCount * 100 / ids.length),
+        upNext,
+        pace: pace(notStarted, goal, today)
+      };
+    });
   }
 
   // src/examples/retrieval.ts
@@ -3374,6 +3442,7 @@
   var EmbeddedLookup = class {
     db;
     searchDb;
+    jlptLevels;
     constructor(host) {
       this.db = hostDatabase(host);
       this.searchDb = withParametersTruncatedAtNul(searchDatabase(this.db));
@@ -3398,6 +3467,10 @@
     }
     entriesContainingKanji(character) {
       return kanjiWords(character, kanjiCandidateRows(this.db, character)).map((row) => row.id);
+    }
+    jlptCoverage(request) {
+      this.jlptLevels ??= jlptLevelWords(this.db);
+      return jlptCoverage(this.jlptLevels, request);
     }
     websiteRoute(link) {
       const page = websitePage(link.host, link.path);
@@ -6617,6 +6690,7 @@ ${sense.noteText}` : sense.meaning
       entriesMatchingFirstForms: (alternatives) => lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
       entriesContainingKanji: (character) => lookup().entriesContainingKanji(character),
       websiteRoute: (link) => lookup().websiteRoute(JSON.parse(link)),
+      jlptCoverage: (request) => lookup().jlptCoverage(JSON.parse(request)),
       lookUp: (text3, analyze) => lookup().lookUp(text3, { analyze }),
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
