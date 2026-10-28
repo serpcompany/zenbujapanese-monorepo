@@ -53,7 +53,13 @@ describe('daily lists', () => {
       'applied',
       'applied'
     ])
-    expect(await codes(learner, randomUUID())).toEqual(['too_many_lists'])
+    const { results } = await accounts.mutate(learner.token, create(randomUUID()))
+    expect(results.map(result => result.error)).toEqual([
+      {
+        code: 'too_many_lists',
+        message: 'An account holds at most 500 lists, not counting its daily lists.'
+      }
+    ])
   })
 
   test('count like any list for a day two days ahead, before 2026-10-01, or one that does not exist', async () => {

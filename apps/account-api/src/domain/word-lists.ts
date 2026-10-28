@@ -28,7 +28,10 @@ const badListWord = rejection(
   "A list word's entityId is the list's UUID, a slash, and the item: `<list>/<item>`."
 )
 const taken = rejection('already_exists', 'A list with that ID already exists, or did.')
-const tooMany = rejection('too_many_lists', `An account holds at most ${listLimits.lists} lists.`)
+const tooMany = rejection(
+  'too_many_lists',
+  `An account holds at most ${listLimits.lists} lists, not counting its daily lists.`
+)
 const full = rejection('list_full', `A list holds at most ${listLimits.wordsPerList} words.`)
 const noList = rejection('unknown_list', 'That list is not in this account, or was deleted.')
 const badFields = rejection(
