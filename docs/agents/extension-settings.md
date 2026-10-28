@@ -29,7 +29,9 @@ the same way. The side panel's header and Settings read and write the storage di
 `useSettings`, and redraw on `chrome.storage.onChanged`. A content script never reads the
 storage: it asks the service worker with `askSettings()` (`{ target: 'service-worker', settings:
 'read' }`), and the service worker, which watches the storage, sends `{ target: 'settings',
-settings }` to every open tab when one changes, which `onSettingsChanged` hears. A tab that can't
+settings }` to every open tab when one changes, which `onSettingsChanged` hears. One content
+script writes one key: the YouTube one keeps `videos.captionPlace`, where the learner dragged the
+caption, with `writeSettings`, and hears it back the same way. A tab that can't
 take the message (a closed tab, a page with no content script) stops none of the others. Whether
 Zenbu runs on a site is `isZenbuOn(host, settings)`, from `sites.off`.
 

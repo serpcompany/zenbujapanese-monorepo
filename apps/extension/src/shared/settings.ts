@@ -2,6 +2,8 @@ import { defaultFrequencyPacks } from '@zenbu/dictionary-core/detail/frequency'
 
 const bundledPacks = defaultFrequencyPacks.map(pack => pack.id)
 
+export type CaptionPlace = { x: number; y: number }
+
 export const settingDefaults = {
   'readingAids.furigana': true,
   'readingAids.furiganaHiddenOnKnownWords': false,
@@ -12,6 +14,7 @@ export const settingDefaults = {
   'frequencyDictionaries.order': bundledPacks,
   'sites.off': [] as string[],
   'videos.zenbuCaptions': true,
+  'videos.captionPlace': null as CaptionPlace | null,
   'crashReports.send': true
 }
 
@@ -56,6 +59,11 @@ const isRecord = (value: unknown): value is Stored => typeof value === 'object' 
 
 const isSettingKey = (key: string): key is SettingKey => Object.hasOwn(settingDefaults, key)
 
+const isShare = (value: unknown) => typeof value === 'number' && value >= 0 && value <= 1
+
+const isCaptionPlace = (value: unknown): value is CaptionPlace =>
+  isRecord(value) && isShare(value.x) && isShare(value.y)
+
 function sameKind(value: unknown, fallback: unknown): boolean {
   if (Array.isArray(fallback)) {
     return Array.isArray(value) && value.every(item => typeof item === 'string')
@@ -63,8 +71,11 @@ function sameKind(value: unknown, fallback: unknown): boolean {
   return typeof value === typeof fallback
 }
 
+const fits = (key: SettingKey, value: unknown) =>
+  key === 'videos.captionPlace' ? isCaptionPlace(value) : sameKind(value, settingDefaults[key])
+
 export function settingFrom<K extends SettingKey>(key: K, value: unknown): Settings[K] {
-  return sameKind(value, settingDefaults[key]) ? (value as Settings[K]) : settingDefaults[key]
+  return fits(key, value) ? (value as Settings[K]) : settingDefaults[key]
 }
 
 export function settingsFrom(stored: Stored): Settings {

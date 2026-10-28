@@ -32,7 +32,11 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   requests reach it. On it: the line in the player in place of the site's captions, the words and
   reading aids, nothing added to the page's styles, one `timedtext` request whatever the controls
   do, the speed menu in and out of fullscreen, and a word's popup pausing the video
-  (`player-captions.spec.ts`).
+  (`player-captions.spec.ts`); dragging the caption, its cursor, its edges, and its place kept
+  through a resize, fullscreen, and the next video (`caption-drag.spec.ts`), which puts the place
+  back after each test since the browser and its storage last the worker. Both open the page
+  with `e2e/watch-page.ts`, and the stand-in's request log lasts the worker too, so a count of
+  requests starts from the log's length when the test began.
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1` and maps
   the test build's data host, `language-data.localhost`, to the local server, and, with
   `youTubeStandIn`, `www.youtube.com` to the stand-in site; the `outsideRequests` fixture fails any

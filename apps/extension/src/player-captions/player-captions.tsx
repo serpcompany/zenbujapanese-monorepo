@@ -1,6 +1,6 @@
 import { mountInShadowRoot, type ShadowMount } from '../content/shadow-mount'
 import type { PageToken } from '../page-lookup/words'
-import type { Settings } from '../shared/settings'
+import type { CaptionPlace, Settings } from '../shared/settings'
 import type { SourceServices } from '../translate/source-words'
 import type { VideoFollower } from '../video/follower'
 import { wordPopupEvents } from '../word-popup/popup-events'
@@ -14,7 +14,11 @@ import { holdForPopups } from './popup-hold'
 
 export const playerCaptionsAttribute = 'data-zenbu-player-captions'
 
-export type CaptionServices = SourceServices & PopupBrowser & { translate: Translate }
+export type CaptionServices = SourceServices &
+  PopupBrowser & {
+    translate: Translate
+    keepCaptionPlace(place: CaptionPlace | null): void
+  }
 
 export type ShownCaptions = {
   settingsChanged(settings: Settings): void
@@ -48,6 +52,9 @@ export function playerCaptions({
   return (follower, video, initial) => {
     let settings = initial
     const heard = new Set<() => void>()
+    const tell = () => {
+      for (const listener of [...heard]) listener()
+    }
     const source = {
       get: () => settings,
       subscribe(listener: () => void) {
@@ -67,6 +74,11 @@ export function playerCaptions({
     })
     const pick = (token: PageToken, word: HTMLElement) =>
       popup.open({ text: token.text, ids: token.ids, anchor: () => word.getBoundingClientRect() })
+    const keepPlace = (place: CaptionPlace | null) => {
+      settings = { ...settings, 'videos.captionPlace': place }
+      tell()
+      services.keepCaptionPlace(place)
+    }
     let mounted: ShadowMount | null = null
     let siteCaptionsShown = false
 
@@ -92,6 +104,7 @@ export function playerCaptions({
             services={services}
             settings={source}
             pick={pick}
+            keepPlace={keepPlace}
           />,
           { document: doc, report }
         )
@@ -108,7 +121,7 @@ export function playerCaptions({
     return {
       settingsChanged(next) {
         settings = next
-        for (const listener of [...heard]) listener()
+        tell()
       },
       seek: time => controls.seek(time),
       stop() {

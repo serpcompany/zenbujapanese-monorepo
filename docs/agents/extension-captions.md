@@ -108,6 +108,18 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
   always does. The word popup's host gets the same (`wordPopupHost`'s `prepare`), since in
   fullscreen it sits inside the player. While an ad shows it gives the site's captions back
   (`showSiteCaptions(!ad)`).
+- **Moving it** (`caption-place.ts`, `caption-drag.ts`): the caption box sits in a layer
+  `inset-x-4 inset-y-0` over the player. Its place, the `videos.captionPlace` setting, is `null`
+  for the default (centred, `bottom: max(64px, 12%)`) or `{ x, y }`, each a share from 0 to 1 of
+  the free room, the layer's size less the box's. It draws as `left: x%; top: y%; translate: -x%
+  -y%`, so the box stays wholly inside at any player or box size with no measuring at draw time.
+  `useCaptionDrag` takes a primary-button press on the box but not on a `[data-word]`, captures
+  the pointer, moves after 3 pixels, and on release, cancel, lost capture, or the caption
+  unmounting mid-drag keeps the place through `keepPlace`; a double-click on the background keeps
+  `null`. `player-captions.tsx`'s `keepPlace` puts it in its settings at once and calls the
+  services' `keepCaptionPlace`, which `youtube.ts` gives `writeSettings`; the echo comes back as
+  `settingsChanged`. The host stops presses, so YouTube's player hears none, but `pointermove`
+  reaches it, so the controls and the popup's pause act as on a hover.
 - **The line controls** (`line-controls.ts`) are the one module for Previous, Next, Repeat, Play,
   and the speed, on a `VideoFollower` only. The first playback after one of its own seeks is that
   seek's landing, however far from the target it lands, as is any within 700 ms and 1 s of the
@@ -151,7 +163,9 @@ through a stand-in `fetch`.
   controls, ads, the learner's speed, and hiding YouTube's captions
   (`youtube-follower.interaction.test.tsx`).
 - **The caption on the player,** on a stand-in clock for the video: the line controls
-  (`line-controls.test.ts`), the caption, its popup's pause, ads, and the controls' showing
+  (`line-controls.test.ts`), the caption's place (`caption-place.test.ts`), the caption, moving
+  it, its popup's pause, ads, and the controls' showing
   (`src/player-captions/*.interaction.test.tsx`), and when the watch page shows it
   (`youtube-page-captions.interaction.test.tsx`). In the browser, `e2e/player-captions.spec.ts`
-  on the stand-in watch page ([`extension-browser-tests.md`](extension-browser-tests.md)).
+  and `e2e/caption-drag.spec.ts` on the stand-in watch page, through `e2e/watch-page.ts`
+  ([`extension-browser-tests.md`](extension-browser-tests.md)).
