@@ -53,6 +53,8 @@ export function lineText(row: Element | null | undefined): string | undefined {
 
 const happyDOM = (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM
 
+type EnglishServices = Pick<VideoTabServices, 'translate' | 'availability' | 'download'>
+
 function translatorStandIn(state: TranslatorState) {
   let current = state
   let finishDownload = () => {}
@@ -71,13 +73,23 @@ function translatorStandIn(state: TranslatorState) {
       current = 'available'
       return current
     })
-  } satisfies Pick<VideoTabServices, 'translate' | 'availability' | 'download'>
+  } satisfies EnglishServices
   return { services, finishDownload: () => act(async () => finishDownload()) }
+}
+
+function translatingWith(translation: EnglishServices) {
+  const services = {
+    translate: vi.fn(translation.translate),
+    availability: vi.fn(translation.availability),
+    download: vi.fn(translation.download)
+  } satisfies EnglishServices
+  return { services, finishDownload: () => act(async () => {}) }
 }
 
 type Options = {
   captionsOn?: boolean
   translator?: TranslatorState
+  translation?: EnglishServices
   url?: string
   title?: string
   contentScript?: boolean
@@ -86,6 +98,7 @@ type Options = {
 export function watching({
   captionsOn = true,
   translator = 'available',
+  translation,
   url = watchURL(),
   title = '(2) 散歩の日 - YouTube',
   contentScript = true
@@ -95,7 +108,7 @@ export function watching({
   const video = followerStandIn()
   const page = watchedTab({ tabId, captionsOn, follow: video.follow, contentScript })
   const retries: (() => void)[] = []
-  const english = translatorStandIn(translator)
+  const english = translation ? translatingWith(translation) : translatorStandIn(translator)
   const tabWatchers = new Set<() => void>()
   const site: { tab: ActiveTab | null } = { tab: { id: tabId, url, title } }
   const services = {

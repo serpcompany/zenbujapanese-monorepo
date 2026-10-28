@@ -13,8 +13,8 @@ export const videoTabLabels = {
   transcript: 'Transcript',
   clock,
   goTo: (seconds: number) => `Go to ${clock(seconds)}`,
-  englishNeedsDownload: 'Download Japanese for Translate to see each line in English.',
-  download: 'Download',
+  englishNeedsDownload:
+    "To see each line in English, download Chrome's own Japanese translation. It's apart from Zenbu's dictionary.",
   noAnswer: "Zenbu didn't answer. Try again.",
   reloadToFollow: 'Reload this tab to follow the video.',
   reload: 'Reload',
