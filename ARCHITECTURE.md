@@ -103,9 +103,10 @@ saying where the code belongs:
 - **The account rules** import no runtime, framework, or client either, since they run in Node,
   in a browser, and in JavaScriptCore; only their tests' `src/test/` reads files
   ([`packages/account-rules/biome.json`](packages/account-rules/biome.json)).
-- **The word components** (`packages/ui`) import no client, no Next.js, theme switcher, or
-  toast, and of the core only its `detail/` and `sources/` modules, and read, keep, and log
-  nothing: a client passes text, links, and actions as props. The website's `src/lib` takes
+- **The word components** (`packages/ui`) import no client, no Next.js, or theme switcher, and
+  of the core only its `detail/` and `sources/` modules, and read, keep, and log nothing: a
+  client passes text, links, and actions as props. Only `components/sonner.tsx` loads Sonner,
+  and a client mounts it. The website's `src/lib` takes
   only their types, and neither service imports them
   ([`docs/agents/ui.md`](docs/agents/ui.md), What the package may import).
 - **The browser extension**: only its dictionary worker (`src/worker/`) loads the core's lookup

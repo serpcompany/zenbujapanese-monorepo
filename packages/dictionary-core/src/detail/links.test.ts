@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { kanjiSearchURL, parseWordSegment, websitePage, wordPath, wordURL } from './links'
+import { kanjiSearchURL, parseWordSegment, websitePage, wordURL } from './links'
 import { wordSlug } from './slug'
+import { wordPath } from './word-path'
 
 const page = (path: string, host: string | null = 'zenbujapanese.com') => websitePage(host, path)
 

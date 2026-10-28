@@ -7,11 +7,12 @@ import type {
 } from '@zenbu/dictionary-core/detail/conjugation'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { graphemes } from '@zenbu/dictionary-core/detail/text'
+import { cn } from 'cn'
 import { ChevronRightIcon, EqualIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from '../components/tabs'
 import { accent } from './accent'
-import { Disclosure, DisclosureSection } from './disclosure'
+import { Disclosure, DisclosureSection, disclosureButtonClass } from './disclosure'
 import {
   type ExampleActions,
   ExampleList,
@@ -170,6 +171,36 @@ function FormExamples({
   )
 }
 
+function rowLabel(row: ShownConjugationRow, text: ConjugationsText) {
+  return fill(text.conjugations.rowLabel, {
+    title: row.title,
+    surface: row.surface,
+    reading: row.reading
+  })
+}
+
+function ConjugatedFormSummary({ row }: { row: ShownConjugationRow }) {
+  return (
+    <>
+      <span className="text-muted-foreground">{row.title}</span>
+      <span lang="ja" className="ml-auto text-xl" data-conjugation-surface>
+        {row.rowFurigana ? (
+          <>
+            <HeadwordRuby
+              segments={row.ruby}
+              highlightedEnding={row.ending}
+              highlightsKanji={false}
+            />
+            <RomajiLine romaji={row.romaji} className="text-right text-sm" />
+          </>
+        ) : (
+          <EndingText surface={row.surface} ending={row.ending} />
+        )}
+      </span>
+    </>
+  )
+}
+
 function ConjugatedFormDisclosure({
   row,
   labels,
@@ -181,31 +212,9 @@ function ConjugatedFormDisclosure({
   return (
     <Disclosure
       data-conjugation-row={row.kind}
-      label={fill(props.text.conjugations.rowLabel, {
-        title: row.title,
-        surface: row.surface,
-        reading: row.reading
-      })}
+      label={rowLabel(row, props.text)}
       buttonClassName="px-2 py-2"
-      summary={
-        <>
-          <span className="text-muted-foreground">{row.title}</span>
-          <span lang="ja" className="ml-auto text-xl" data-conjugation-surface>
-            {row.rowFurigana ? (
-              <>
-                <HeadwordRuby
-                  segments={row.ruby}
-                  highlightedEnding={row.ending}
-                  highlightsKanji={false}
-                />
-                <RomajiLine romaji={row.romaji} className="text-right text-sm" />
-              </>
-            ) : (
-              <EndingText surface={row.surface} ending={row.ending} />
-            )}
-          </span>
-        </>
-      }
+      summary={<ConjugatedFormSummary row={row} />}
     >
       {opened => (
         <div className="flex flex-col gap-4 px-2 pt-2 pb-4">
@@ -221,12 +230,50 @@ function ConjugatedFormDisclosure({
   )
 }
 
-export function ConjugationTableContent({
-  conjugations,
+type OpenForm = (row: ShownConjugationRow) => void
+
+type RowOpening =
+  | { loadFormExamples: LoadFormExamples; openForm?: undefined }
+  | { openForm: OpenForm; loadFormExamples?: undefined }
+
+type RowProps = Omit<ConjugationsProps, 'loadFormExamples'> & RowOpening
+
+type ConjugationTableProps = RowProps & { conjugations: ShownConjugations }
+
+function ConjugatedFormRow({
+  row,
+  labels,
   ...props
-}: ConjugationsProps & {
-  conjugations: ShownConjugations
+}: RowProps & {
+  row: ShownConjugationRow
+  labels: FormExampleLabels
 }) {
+  if (props.openForm) {
+    const { openForm } = props
+    return (
+      <button
+        type="button"
+        data-conjugation-row={row.kind}
+        aria-label={rowLabel(row, props.text)}
+        className={cn(disclosureButtonClass, 'px-2 py-2')}
+        onClick={() => openForm(row)}
+      >
+        <ConjugatedFormSummary row={row} />
+        <ChevronRightIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+      </button>
+    )
+  }
+  return (
+    <ConjugatedFormDisclosure
+      row={row}
+      labels={labels}
+      {...props}
+      loadFormExamples={props.loadFormExamples}
+    />
+  )
+}
+
+export function ConjugationTableContent({ conjugations, ...props }: ConjugationTableProps) {
   const [mode, setMode] = useState<ConjugationMode>('Plain')
   return (
     <div className="flex flex-col gap-4" data-conjugation-table>
@@ -260,7 +307,7 @@ export function ConjugationTableContent({
         >
           {conjugations.rows[option].map(row => (
             <li key={row.kind}>
-              <ConjugatedFormDisclosure row={row} labels={conjugations.examples} {...props} />
+              <ConjugatedFormRow row={row} labels={conjugations.examples} {...props} />
             </li>
           ))}
         </ul>
@@ -282,20 +329,48 @@ export function ConjugationsSection({
   )
 }
 
-export function ConjugationsLink({ label, opens }: { label: string; opens: string }) {
+const conjugationsLinkClass =
+  '-mx-2 flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1 text-left text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none'
+
+export function ConjugationsLink({
+  label,
+  opens,
+  onOpen
+}: {
+  label: string
+  opens: string
+  onOpen?: () => void
+}) {
+  const content = (
+    <>
+      <span>{label}</span>
+      <span className="sr-only">{opens}</span>
+      <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />
+    </>
+  )
+  if (onOpen) {
+    return (
+      <button
+        type="button"
+        data-opens-conjugations
+        className={cn(conjugationsLinkClass, 'w-[calc(100%+1rem)]')}
+        onClick={onOpen}
+      >
+        {content}
+      </button>
+    )
+  }
   const href = `#${conjugationsAnchor}`
   return (
     <a
       href={href}
       data-opens-conjugations
-      className="-mx-2 flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1 text-left text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+      className={conjugationsLinkClass}
       onClick={() => {
         if (window.location.hash === href) window.dispatchEvent(new HashChangeEvent('hashchange'))
       }}
     >
-      <span>{label}</span>
-      <span className="sr-only">{opens}</span>
-      <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />
+      {content}
     </a>
   )
 }

@@ -25,11 +25,6 @@ export const labels = {
     }
   },
   signUp: 'Sign up or sign in',
-  placeholder: {
-    word: 'Word',
-    kanji: 'Kanji',
-    form: 'Form'
-  },
   testPage: {
     title: 'Test page',
     openAnother: 'Open a page over this one'

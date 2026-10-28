@@ -1,4 +1,5 @@
 import { Button } from '@zenbu/ui/components/button'
+import { Toaster } from '@zenbu/ui/components/sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@zenbu/ui/components/tabs'
 import { ChevronLeft } from 'lucide-react'
 import { type ComponentType, useEffect, useRef } from 'react'
@@ -169,6 +170,7 @@ export function SidePanel({ host, data, again }: { host: PanelHost } & Dictionar
     <div className="flex h-dvh min-w-0 flex-col">
       <PanelHeader />
       {state && <PanelTabs state={state} dictionary={{ data, again }} {...navigate} />}
+      <Toaster />
     </div>
   )
 }

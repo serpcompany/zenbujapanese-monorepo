@@ -35,8 +35,8 @@ doesn't sign in yet (#961).
   page revealed, or to the tab (`panel.interaction.test.tsx`).
 - **Each tab keeps its own pages:** choosing another tab and coming back finds the page where it
   was (`panel.interaction.test.tsx`).
-- **The pages for a word, a kanji, and a form** show what they were opened with until Word Detail
-  draws them (#958).
+- **The pages for a word, a kanji, and a form** are Word Detail's
+  ([`word-detail.md`](word-detail.md)).
 - **The test page,** in the test build only, shows its text and opens another page over itself.
   The release build refuses a route to it (`route.test.ts`).
 
