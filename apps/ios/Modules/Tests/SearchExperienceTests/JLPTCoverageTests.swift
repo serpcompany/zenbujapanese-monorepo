@@ -130,4 +130,29 @@ final class JLPTCoverageTests {
     #expect(level(afterGoal, "N5")?.upNext.count == 5)
     #expect(asked.withLock { $0.map(\.goal) } == [20, 20, 5])
   }
+
+  @Test("the model asks again when the calendar day changes")
+  func asksAgainOnANewDay() async throws {
+    let knowledge = await loadedKnowledge()
+    let center = NotificationCenter()
+    let now = OSAllocatedUnfairLock(initialState: october28)
+    let model = JLPTCoverageModel(
+      knowledge: knowledge, goal: 20, ask: { [data] in try await data.jlptCoverage($0) },
+      calendar: calendar, today: { now.withLock { $0 } }, center: center)
+    let following = Task { await model.follow() }
+    defer { following.cancel() }
+
+    let first = await settled(model) { _ in true }
+    #expect(level(first, "N5")?.pace == JLPTCoverage.Pace(date: "2026-12-01", days: 34))
+
+    now.withLock { $0 = $0.addingTimeInterval(120) }
+    let deadline = ContinuousClock.now + .seconds(60)
+    while level(model.coverage, "N5")?.pace?.date == "2026-12-01",
+      ContinuousClock.now < deadline
+    {
+      center.post(name: .NSCalendarDayChanged, object: nil)
+      try await Task.sleep(for: .milliseconds(50))
+    }
+    #expect(level(model.coverage, "N5")?.pace == JLPTCoverage.Pace(date: "2026-12-02", days: 34))
+  }
 }

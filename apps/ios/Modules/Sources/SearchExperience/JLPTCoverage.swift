@@ -74,28 +74,39 @@ final class JLPTCoverageModel {
   @ObservationIgnored private let ask: Ask
   @ObservationIgnored private let calendar: Calendar
   @ObservationIgnored private let today: @MainActor () -> Date
+  @ObservationIgnored private let center: NotificationCenter
   @ObservationIgnored private var answered: JLPTCoverageRequest?
+  private var daysTurned = 0
 
   init(
     knowledge: WordKnowledge,
     goal: Int,
     ask: @escaping Ask = JLPTCoverageModel.live,
     calendar: Calendar = .current,
-    today: @escaping @MainActor () -> Date = { Date() }
+    today: @escaping @MainActor () -> Date = { Date() },
+    center: NotificationCenter = .default
   ) {
     self.knowledge = knowledge
     self.goal = goal
     self.ask = ask
     self.calendar = calendar
     self.today = today
+    self.center = center
   }
 
   func follow() async {
+    let days = Task { [weak self, center] in
+      for await _ in center.notifications(named: .NSCalendarDayChanged).map({ _ in }) {
+        self?.daysTurned += 1
+      }
+    }
+    defer { days.cancel() }
     while !Task.isCancelled {
       let (changed, change) = AsyncStream.makeStream(
         of: Void.self, bufferingPolicy: .bufferingNewest(1))
       let request = withObservationTracking {
-        JLPTCoverageRequest(knowledge: knowledge, goal: goal, on: today(), in: calendar)
+        _ = daysTurned
+        return JLPTCoverageRequest(knowledge: knowledge, goal: goal, on: today(), in: calendar)
       } onChange: {
         change.yield()
         change.finish()
