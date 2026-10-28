@@ -14,10 +14,6 @@ export const labels = {
       title: 'No video on this tab',
       description: 'Play a video with Japanese captions, and its transcript shows here.'
     },
-    translate: {
-      title: 'Nothing to translate yet',
-      description: 'Japanese or English you translate shows here.'
-    },
     images: { title: 'Reading text in pictures is coming soon' },
     words: {
       title: 'No words yet',
@@ -29,11 +25,6 @@ export const labels = {
     }
   },
   signUp: 'Sign up or sign in',
-  placeholder: {
-    word: 'Word',
-    kanji: 'Kanji',
-    form: 'Form'
-  },
   testPage: {
     title: 'Test page',
     openAnother: 'Open a page over this one'

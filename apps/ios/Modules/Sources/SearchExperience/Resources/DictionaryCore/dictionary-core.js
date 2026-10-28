@@ -221,9 +221,8 @@
   var predefined = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
   var blank = /^[ \t\r\n]*$/;
   var declaration = /^xml(?:[ \t\r\n]|$)/i;
-  function isCharacter(code) {
-    return code === 9 || code === 10 || code === 13 || code >= 32 && code <= 55295 || code >= 57344 && code <= 65533 || code >= 65536 && code <= 1114111;
-  }
+  var outsideCharacters = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u;
+  var isCharacter = (code) => code <= 1114111 && !outsideCharacters.test(String.fromCodePoint(code));
   function resolved(raw) {
     if (!raw.includes("&")) return raw;
     if (raw.replace(references, "").includes("&")) return void 0;
@@ -272,6 +271,7 @@
   }
   function readXML(document, reading) {
     const source = document.startsWith("\uFEFF") ? document.slice(1) : document;
+    if (outsideCharacters.test(source)) return false;
     const open = [];
     let roots = 0;
     tokens.lastIndex = 0;
@@ -1005,8 +1005,9 @@
   }
 
   // src/sources/credits.ts
-  var creditClients = ["app", "website"];
+  var creditClients = ["app", "website", "extension"];
   var everyClient = creditClients;
+  var appAndWebsite = ["app", "website"];
   var ccBySa4 = { name: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" };
   var bsd3 = { name: "BSD-3-Clause", url: "https://opensource.org/license/bsd-3-clause" };
   var edrdgLicence = {
@@ -1110,7 +1111,7 @@
       url: "https://github.com/WorksApplications/SudachiDict",
       credit: "Japanese word analysis by Sudachi.rs and SudachiDict.",
       license: { name: "Apache-2.0 · BSD-3-Clause · MIT" },
-      clients: everyClient
+      clients: appAndWebsite
     },
     kuromoji: {
       id: "kuromoji",
@@ -1322,6 +1323,7 @@
     checkExampleIndex(db);
     checkAttached(db, "word_index");
   }
+  var allAttachments = Object.keys(attachments);
 
   // src/search/database.ts
   var interruptedSearch = "The search was interrupted";
@@ -2152,12 +2154,14 @@
   // src/artifact/words.ts
   var jmdictSource = "edrdg.jmdict";
 
-  // src/detail/links.ts
-  var websiteHost = "zenbujapanese.com";
-  var websiteOrigin = `https://${websiteHost}`;
+  // src/detail/word-path.ts
   function wordPath(entry) {
     return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`;
   }
+
+  // src/detail/links.ts
+  var websiteHost = "zenbujapanese.com";
+  var websiteOrigin = `https://${websiteHost}`;
   function searchPath(query) {
     return `/dictionary/search/${encodeURIComponent(query).replaceAll(".", "%2E")}/`;
   }

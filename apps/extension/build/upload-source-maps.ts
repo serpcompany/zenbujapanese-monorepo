@@ -1,14 +1,11 @@
 import { spawnSync } from 'node:child_process'
 import { readdirSync, readFileSync, rmSync } from 'node:fs'
-import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { releaseName, sentryOrganization, sentryProject } from './error-reports.ts'
 
 export const sentryCli = '@sentry/cli@3.8.0'
 export const tokenVariable = 'SENTRY_AUTH_TOKEN'
-export const keychainItem = 'zenbu-sentry-auth-token'
-const keychain = join(homedir(), 'Library', 'Keychains', 'login.keychain-db')
 const installTimeout = 300_000
 const uploadTimeout = 600_000
 const usage = 'usage: pnpm upload-source-maps [a build folder, dist by default]'
@@ -19,15 +16,6 @@ export type Run = (command: string[], options: { env: Environ; timeout?: number 
 export type Say = { log(message: string): void; warn(message: string): void }
 
 type Step = { what: string; command: string[]; env: Environ; timeout: number }
-
-export function findToken(environ: Environ, run: Run): string {
-  const fromEnvironment = environ[tokenVariable]?.trim()
-  if (fromEnvironment) return fromEnvironment
-  const found = run(['security', 'find-generic-password', '-s', keychainItem, '-w', keychain], {
-    env: environ
-  })
-  return found.status === 0 ? found.stdout.trim() : ''
-}
 
 export function sourceMaps(folder: string): string[] {
   return readdirSync(folder, { recursive: true, encoding: 'utf8' })
@@ -116,17 +104,12 @@ function send(folder: string, maps: string[], environ: Environ, run: Run, say: S
   }
   const { version } = JSON.parse(readFileSync(join(folder, 'manifest.json'), 'utf8'))
   const release = releaseName(version)
-  const knownToken = environ[tokenVariable]?.trim() ?? ''
+  const token = environ[tokenVariable]?.trim() ?? ''
   for (const step of preparing(folder, environ)) {
-    if (!runStep(step, run, say, knownToken)) return false
+    if (!runStep(step, run, say, token)) return false
   }
-  const token = findToken(environ, run)
   if (!token) {
-    say.warn(
-      warning(
-        `no Sentry token: set ${tokenVariable}, or keep it in the login keychain as ${keychainItem}`
-      )
-    )
+    say.warn(warning(`no Sentry token in ${tokenVariable}, so nothing went to Sentry`))
     return false
   }
   const uploaded = runStep(uploading(folder, release, environ, token), run, say, token)

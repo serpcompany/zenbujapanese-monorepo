@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative, sep } from 'node:path'
 import { builtPages } from './extension-config.ts'
-import { type Environment, environments, hosts } from './hosts.ts'
+import { type Environment, environments, hosts, testLanguageDataHost } from './hosts.ts'
 import { extensionIdOf, storeExtensionId } from './key.ts'
 import { contentScriptFile, contentScripts, extensionVersion } from './manifest.ts'
 import { unzipFiles, type ZipEntry, zipFiles } from './zip.ts'
@@ -132,9 +132,13 @@ function hostProblems(
   environment: Environment
 ): string[] {
   const website = hosts[environment].website
-  const others = environments
-    .filter(other => other !== environment)
-    .flatMap(other => Object.values(hosts[other]).map(origin => ({ other, origin })))
+  const own: string[] = Object.values(hosts[environment])
+  const others = [
+    ...environments
+      .filter(other => other !== environment)
+      .flatMap(other => Object.values(hosts[other]).map(origin => ({ other, origin }))),
+    { other: 'the test build', origin: testLanguageDataHost }
+  ].filter(({ origin }) => !own.includes(origin))
   return [
     ...(manifest.homepage_url === website
       ? []

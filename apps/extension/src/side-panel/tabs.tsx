@@ -7,6 +7,7 @@ import {
   ScanText
 } from 'lucide-react'
 import type { ComponentType } from 'react'
+import { TranslateTab } from '../translate/translate-tab'
 import { emptyTab, SignUpButton } from './empty-tab'
 import { labels } from './labels'
 import type { PanelTab, PanelTabProps } from './route'
@@ -29,7 +30,7 @@ export const tabs: PanelTabDefinition[] = [
     id: 'translate',
     label: labels.tabs.translate,
     icon: Languages,
-    Content: emptyTab(Languages, labels.empty.translate)
+    Content: TranslateTab
   },
   {
     id: 'images',

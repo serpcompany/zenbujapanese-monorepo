@@ -25,11 +25,11 @@ export interface WordCardMeaning {
   partsOfSpeech: string[]
 }
 
-interface WordCardLevel extends FrequencyResult {
+export interface WordCardLevel extends FrequencyResult {
   level: number
 }
 
-interface WordCardRank extends FrequencyResult {
+export interface WordCardRank extends FrequencyResult {
   list: string
   rank: number | null
 }
@@ -51,12 +51,18 @@ export type ListRanks = ReadonlyMap<string, number>
 
 export type CardRows = Pick<WordRows, 'entry' | 'frequency' | 'kanji'>
 
-export function wordCard(rows: CardRows, ranks: ListRanks): WordCard {
-  const { entry } = rows
-  const detail = wordDetail({ ...rows, examples: [], exampleCount: null, senseExamples: [] })
+export type WordCardBody = Omit<WordCard, 'jlpt' | 'frequency'>
+
+export function wordCardBody({ entry, kanji }: Omit<CardRows, 'frequency'>): WordCardBody {
+  const detail = wordDetail({
+    entry,
+    kanji,
+    frequency: [],
+    examples: [],
+    exampleCount: null,
+    senseExamples: []
+  })
   const pitchRow = shownPitch(entry)
-  const jlpt = rows.frequency.find(row => row.pack === 'jlpt')
-  const youtube = rows.frequency.find(row => row.pack === 'tubelex')
   return {
     languageReferenceID: entry.id,
     entSeq: entry.entSeq,
@@ -80,25 +86,36 @@ export function wordCard(rows: CardRows, ranks: ListRanks): WordCard {
       meaning,
       notes,
       partsOfSpeech
-    })),
-    jlpt: jlpt?.pack === 'jlpt' ? { ...levelResult('JLPT', jlpt.level), level: jlpt.level } : null,
-    frequency: rankedLists.map(list => {
-      const rank =
-        list.source.kind === 'tubelex'
+    }))
+  }
+}
+
+export const jlptChip = (level: number): WordCardLevel => ({
+  ...levelResult('JLPT', level),
+  level
+})
+
+export const rankChip = (list: string, source: string, rank: number | null): WordCardRank =>
+  rank === null
+    ? { list, rank: null, source, value: 'No rank', tier: null, spokenTier: null }
+    : { list, rank, ...rankResult(source, rank) }
+
+export function wordCard(rows: CardRows, ranks: ListRanks): WordCard {
+  const jlpt = rows.frequency.find(row => row.pack === 'jlpt')
+  const youtube = rows.frequency.find(row => row.pack === 'tubelex')
+  return {
+    ...wordCardBody(rows),
+    jlpt: jlpt?.pack === 'jlpt' ? jlptChip(jlpt.level) : null,
+    frequency: rankedLists.map(list =>
+      rankChip(
+        list.slug,
+        list.chip,
+        (list.source.kind === 'tubelex'
           ? youtube?.pack === 'tubelex'
             ? youtube.rank
             : undefined
-          : ranks.get(list.source.packId)
-      return rank === undefined
-        ? {
-            list: list.slug,
-            rank: null,
-            source: list.chip,
-            value: 'No rank',
-            tier: null,
-            spokenTier: null
-          }
-        : { list: list.slug, rank, ...rankResult(list.chip, rank) }
-    })
+          : ranks.get(list.source.packId)) ?? null
+      )
+    )
   }
 }

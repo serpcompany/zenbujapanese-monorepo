@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { PanelRoute } from '../side-panel/route'
-import { openPanelListener, type PanelWindows } from './side-panel'
+import { openOnToolbarClick, openPanelListener, type PanelWindows } from './side-panel'
 
 const route: PanelRoute = { tab: 'words', page: { page: 'kanji', character: '猫' } }
 
@@ -96,5 +96,23 @@ describe('openPanelListener', () => {
       expect(respond).not.toHaveBeenCalled()
     }
     expect(windows.open).not.toHaveBeenCalled()
+  })
+})
+
+describe('openOnToolbarClick', () => {
+  it('has Chrome open the panel from the toolbar icon, and reports nothing when Chrome agrees', async () => {
+    const setPanelBehavior = vi.fn(async () => undefined)
+    const reportFailure = vi.fn()
+    await openOnToolbarClick(setPanelBehavior, reportFailure)
+    expect(setPanelBehavior).toHaveBeenCalledExactlyOnceWith({ openPanelOnActionClick: true })
+    expect(reportFailure).not.toHaveBeenCalled()
+  })
+
+  it('reports a refusal once, by its code alone, and leaves no rejection behind', async () => {
+    const reportFailure = vi.fn()
+    await expect(
+      openOnToolbarClick(() => Promise.reject(new Error('No side panel here.')), reportFailure)
+    ).resolves.toBeUndefined()
+    expect(reportFailure.mock.calls).toEqual([['side-panel-behavior']])
   })
 })

@@ -1,8 +1,6 @@
 import packageJson from '../package.json' with { type: 'json' }
-import { defaultEnvironment, type Environment, hosts } from './hosts.ts'
+import { defaultEnvironment, type Environment, hosts, hostsOf, type Variant } from './hosts.ts'
 import { storeKey } from './key.ts'
-
-export type Variant = 'release' | 'test'
 
 export type ContentScript = { name: string; entry: string; matches: string[] }
 
@@ -16,10 +14,18 @@ const testPagesContentScript: ContentScript = {
   matches: ['http://localhost/*', 'http://127.0.0.1/*']
 }
 
+const youTubeContentScript: ContentScript = {
+  name: 'youtube',
+  entry: 'src/content/youtube.ts',
+  matches: ['https://www.youtube.com/*']
+}
+
 export const contentScriptFile = (script: ContentScript) => `${script.name}.js`
 
 export function contentScripts(variant: Variant): ContentScript[] {
-  return variant === 'test' ? [testPagesContentScript] : []
+  return variant === 'test'
+    ? [youTubeContentScript, testPagesContentScript]
+    : [youTubeContentScript]
 }
 
 function onPages(scripts: ContentScript[]) {
@@ -49,8 +55,24 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
     side_panel: { default_path: 'pages/side-panel.html' },
     options_ui: { page: 'pages/settings.html', open_in_tab: true },
     background: { service_worker: 'service-worker.js', type: 'module' },
-    permissions: ['offscreen', 'sidePanel', 'storage', 'activeTab'],
+    permissions: [
+      'offscreen',
+      'sidePanel',
+      'storage',
+      'activeTab',
+      'unlimitedStorage',
+      'alarms',
+      'scripting',
+      'declarativeNetRequestWithHostAccess'
+    ],
+    host_permissions: [
+      `${hostsOf(variant, environment).languageData}/*`,
+      'https://www.youtube.com/*'
+    ],
     optional_host_permissions: ['http://*/*', 'https://*/*'],
+    content_security_policy: {
+      extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    },
     ...onPages(contentScripts(variant))
   }
 }

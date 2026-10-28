@@ -1,4 +1,5 @@
 import type { WordCard } from '../cards/card'
+import type { PopupCard } from '../cards/popup-card'
 import type { SegmentedToken } from '../cards/segmentation'
 import { examplesPerPage } from '../detail/examples'
 import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../detail/rows'
@@ -14,7 +15,7 @@ import {
   type SearchResults
 } from '../search/search'
 import { type Cache, LruCache } from './cache'
-import { type ArtifactDatabase, searchDatabase } from './database'
+import { type ArtifactDatabase, type AttachmentName, searchDatabase } from './database'
 import {
   type EntryExamples,
   type ExampleSentence,
@@ -25,9 +26,10 @@ import { bundledFrequency } from './frequency'
 import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
 import { formLookup } from './lookup'
+import { bundledFrequencyLists, readPopupCard } from './popup-card'
 import type { RetiredEntries } from './retired'
 import { primaryExamplesEntry, resultsExampleCount, resultsExamples } from './search-examples'
-import { readWordCards } from './word-cards'
+import { readWordCards, resolveEntSeq } from './word-cards'
 import {
   conjugatedFormExamples,
   type ExamplesEntry,
@@ -35,6 +37,7 @@ import {
   exampleLinkEntSeqs,
   exampleRows,
   examplesEntries,
+  type SegmentedText,
   screenAccent,
   segmentText,
   senseExampleRows,
@@ -96,6 +99,7 @@ export interface DictionaryOptions {
   kanji: KanjiData
   retired: RetiredEntries
   capabilities: DictionaryCapabilities
+  attached?: readonly AttachmentName[]
   cacheSize?: number
 }
 
@@ -134,6 +138,7 @@ export class Dictionary {
   private readonly kanjiData: KanjiData
   private readonly retiredEntries: RetiredEntries
   private readonly capabilities: DictionaryCapabilities
+  private readonly withStrokes: boolean
   private readonly searchCore: DictionarySearch
   private readonly lookup: ReturnType<typeof formLookup>
   private readonly searches: Cache<string, SearchResponse>
@@ -150,6 +155,7 @@ export class Dictionary {
     this.kanjiData = options.kanji
     this.retiredEntries = options.retired
     this.capabilities = options.capabilities
+    this.withStrokes = options.attached?.includes('strokes') ?? true
     this.searchCore = new DictionarySearch(searchDatabase(options.db), {
       morphology: options.capabilities.morphology
     })
@@ -353,7 +359,7 @@ export class Dictionary {
   kanji(character: string): KanjiResponse | null {
     const cached = this.kanjiPages.get(character)
     if (cached !== undefined) return cached
-    const rows = readKanji(this.db, this.kanjiData, character)
+    const rows = readKanji(this.db, this.kanjiData, character, this.withStrokes)
     const response = rows
       ? {
           rows,
@@ -422,6 +428,23 @@ export class Dictionary {
   }
 
   segment(text: string): SegmentedToken[] {
+    return this.segmentation(text).tokens
+  }
+
+  segmentation(text: string): SegmentedText {
     return segmentText(this.db, text, this.linking)
+  }
+
+  resolve(headword: string, reading: string): number | null {
+    return resolveEntSeq(this.db, headword, reading)
+  }
+
+  popupCard(languageReferenceID: string, packIds: readonly string[]): PopupCard | null {
+    return readPopupCard(
+      this.db,
+      this.kanjiData,
+      languageReferenceID,
+      bundledFrequencyLists(this.db, packIds)
+    )
   }
 }

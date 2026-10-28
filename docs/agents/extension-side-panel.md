@@ -11,11 +11,18 @@ The panel draws its header, the tab bar, and the Back row over a page; a tab or 
 its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, label, icon, and
 `Content`, which gets `open(page)`. A page is a kind in `PanelPage` (`route.ts`) and a line in
 `pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
+The Translate tab's `Content` is `TranslateTab` (`src/translate/translate-tab.tsx`,
+[`translate.md`](../../apps/extension/docs/product/translate.md)). Word Detail and the kanji and
+form pages it opens are `src/word-detail/`'s, drawn with `@zenbu/ui`'s dictionary parts from the
+core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts`
+([`word-detail.md`](../../apps/extension/docs/product/word-detail.md)).
 
 - **The toolbar icon opens it.** The manifest's `action` has no popup, and the service worker
   calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` when it starts
-  (owner, 2026-10-28). The header's trailing side is `HeaderControls`: the site switch and the
-  menu, which has the reading aids, Zenbu Captions, and Settings ([The header's site](#the-headers-site)).
+  (owner, 2026-10-28); if Chrome refuses, it reports `side-panel-behavior` once
+  ([`extension-error-reports.md`](extension-error-reports.md)). The header's trailing side is
+  `HeaderControls`: the site switch and the menu, which has the reading aids, Zenbu Captions, and
+  Settings ([The header's site](#the-headers-site)).
 - **`openPanel(route)` opens it, from a click.** An extension page or a content
   script calls it in the click handler itself, before any `await`. Chrome opens a side panel only
   in response to a user gesture, and the gesture lasts through one message only if the service
@@ -35,8 +42,10 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
   `import.meta.env.MODE` is `test`, as it is in Vitest and `pnpm build:test`.
 - **Before the dictionary is ready,** while `useDataState()` says it is checking, downloading, or
   failed, every tab but Translate, which doesn't need it, draws `DictionaryProgress`
-  (`src/shared/dictionary-progress.tsx`) instead of its content, and the tab bar stays. A failure
-  adds Try again, which calls `useDataState()`'s second item to start again.
+  (`src/shared/dictionary-progress.tsx`) instead of its content, and the tab bar stays. A page
+  over any tab, Translate's too, draws it under its Back row instead of the page, and the tab
+  below keeps what it holds, such as Translate's box. A failure adds Try again, which calls
+  `useDataState()`'s second item to start again.
 - **Focus follows the page shown.** Opening a page focuses its Back row; Back focuses the Back row
   of the page it reveals, or the tab's panel.
 - **The tab bar is compact, an exception to stock sizes.** Its triggers set `px-0.5 py-1 text-xs`
@@ -75,12 +84,14 @@ the states Chrome does.
 - **Unit and DOM tests,** with `pnpm test` in `apps/extension`: the manifest with no popup;
   routes and tab stacks; the service worker opening the panel from the toolbar icon, calling
   `open` before it awaits anything, handing the route over, and leaving none when Chrome refuses;
-  and, in happy-dom, the five tabs and their empty states, the arrow keys, pages over a tab and
-  Back, focus after each, the last tab, the sign-up links, the dictionary progress on every tab
-  but Translate, Try again, and `openPanel` through a fake Chrome to the panel, closed and open.
-  The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)
-  lists, with the test content script beside it on one fake Chrome.
-- **In Chrome,** in the agent Chrome harness ([`extension.md`](extension.md), Checks): open the
+  a refused `setPanelBehavior` reported once; and, in happy-dom, the five tabs, Translate's box
+  and the other tabs' empty states, the arrow keys, pages over a tab and Back, focus after each,
+  the last tab, the sign-up links, the dictionary progress on every tab but Translate and on a
+  page over Translate, Try again, and `openPanel` through a fake Chrome to the panel, closed and
+  open. The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)
+  lists, with the test content script beside it on one fake Chrome. The browser tests open
+  `side-panel.html` with no popup ([`extension-browser-tests.md`](extension-browser-tests.md)).
+- **In Chrome,** with the `verify-extension` skill ([`extension.md`](extension.md), Checks): open the
   side panel from the toolbar icon and with `openPanel` from a click, closed and open, and check
   that nothing scrolls sideways at 320 px. Check it in the side panel itself: in a background tab,
   `side-panel.html` waits for the tab to come to the front before it hides the tab it left.

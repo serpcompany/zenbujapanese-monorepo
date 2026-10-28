@@ -75,7 +75,7 @@ function fakeBrowser(windowId = 7) {
       }
     }
   })
-  startSidePanel()
+  startSidePanel(vi.fn())
   const inTab = (tabWindowId: number) => ({
     sendMessage: (message: OpenPanel) => deliver(message, { tab: { windowId: tabWindowId } })
   })

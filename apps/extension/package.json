@@ -15,19 +15,26 @@
     "lint": "biome check",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:browser": "pnpm build:test && playwright test",
+    "language-data": "node --experimental-strip-types --no-warnings --import ./e2e/typescript-imports.mjs e2e/serve.ts",
+    "agent-chrome": "node --experimental-strip-types --no-warnings --import ./e2e/typescript-imports.mjs agent-chrome/ctl.mjs",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm build:test"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
     "@sentry/browser": "11.7.0",
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1",
     "@zenbu/dictionary-core": "workspace:*",
     "@zenbu/ui": "workspace:*",
+    "hash-wasm": "4.12.0",
     "lucide-react": "^1.48.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "sonner": "^2.0.8"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/chrome": "^0.3.6",
     "@types/node": "^22.20.4",
@@ -35,6 +42,7 @@
     "@types/react-dom": "^19",
     "happy-dom": "^20.14.5",
     "postcss": "^8.5.28",
+    "puppeteer-core": "24.43.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^8.3.1",

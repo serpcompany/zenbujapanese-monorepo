@@ -1,4 +1,5 @@
 import { Button } from '@zenbu/ui/components/button'
+import { Toaster } from '@zenbu/ui/components/sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@zenbu/ui/components/tabs'
 import { ChevronLeft } from 'lucide-react'
 import { type ComponentType, useEffect, useRef } from 'react'
@@ -87,37 +88,33 @@ function TabStack({
 >) {
   const top = stack.at(-1)
   const { panel, backRow } = useFocusOnMove(top?.key)
-  const waiting = worksWithoutDictionary.includes(tab.id) ? null : dictionary.data
+  const waiting = isWaitingForData(dictionary.data) ? dictionary.data : null
+  const tabWaits = waiting !== null && !worksWithoutDictionary.includes(tab.id)
+  const wait = waiting && <DictionaryWait data={waiting} again={dictionary.again} />
   return (
     <TabsContent ref={panel} value={tab.id} keepMounted className="min-h-0">
-      {isWaitingForData(waiting) ? (
-        <DictionaryWait data={waiting} again={dictionary.again} />
-      ) : (
-        <>
-          <div hidden={top !== undefined} className="h-full overflow-y-auto">
-            <tab.Content open={open} />
+      <div hidden={top !== undefined} className="h-full overflow-y-auto">
+        {tabWaits ? wait : <tab.Content open={open} />}
+      </div>
+      {stack.map(({ key, page }) => (
+        <div key={key} hidden={key !== top?.key} className="flex h-full flex-col">
+          <div className="border-b px-2 py-1">
+            <Button
+              ref={backRow(key)}
+              variant="ghost"
+              size="sm"
+              aria-label={labels.backTo(tab.label)}
+              onClick={back}
+            >
+              <ChevronLeft data-icon="inline-start" />
+              {tab.label}
+            </Button>
           </div>
-          {stack.map(({ key, page }) => (
-            <div key={key} hidden={key !== top?.key} className="flex h-full flex-col">
-              <div className="border-b px-2 py-1">
-                <Button
-                  ref={backRow(key)}
-                  variant="ghost"
-                  size="sm"
-                  aria-label={labels.backTo(tab.label)}
-                  onClick={back}
-                >
-                  <ChevronLeft data-icon="inline-start" />
-                  {tab.label}
-                </Button>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <PageView page={page} open={open} />
-              </div>
-            </div>
-          ))}
-        </>
-      )}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {wait || <PageView page={page} open={open} />}
+          </div>
+        </div>
+      ))}
     </TabsContent>
   )
 }
@@ -173,6 +170,7 @@ export function SidePanel({ host, data, again }: { host: PanelHost } & Dictionar
     <div className="flex h-dvh min-w-0 flex-col">
       <PanelHeader />
       {state && <PanelTabs state={state} dictionary={{ data, again }} {...navigate} />}
+      <Toaster />
     </div>
   )
 }

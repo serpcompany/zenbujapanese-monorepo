@@ -1,6 +1,38 @@
-export type DictionaryRequest = { type: 'ping' }
+import type {
+  FormExamplesAnswer,
+  KanjiAnswer,
+  NotReady,
+  PopupAnswer,
+  ResolveAnswer,
+  SegmentAnswer,
+  StateAnswer,
+  WordAnswer,
+  WordExamplesAnswer
+} from './answers'
 
-export type DictionaryAnswer = { type: 'pong'; from: 'dictionary-worker' }
+export type DictionaryRequest =
+  | { type: 'ping' }
+  | { type: 'state' }
+  | { type: 'update' }
+  | { type: 'segment'; text: string }
+  | { type: 'popup'; languageReferenceID: string; frequency: readonly string[] }
+  | { type: 'word'; entSeq: number }
+  | { type: 'kanji'; character: string }
+  | { type: 'word-examples'; entSeq: number; from: number }
+  | { type: 'form-examples'; form: string; from: number }
+  | { type: 'resolve'; headword: string; reading: string }
+
+export type DictionaryAnswer =
+  | { type: 'pong'; from: 'dictionary-worker' }
+  | StateAnswer
+  | NotReady
+  | SegmentAnswer
+  | PopupAnswer
+  | WordAnswer
+  | KanjiAnswer
+  | WordExamplesAnswer
+  | FormExamplesAnswer
+  | ResolveAnswer
 
 export type Failure = { type: 'failed'; reason: string }
 
