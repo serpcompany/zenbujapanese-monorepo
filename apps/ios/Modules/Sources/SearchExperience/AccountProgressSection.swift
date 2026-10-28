@@ -1,32 +1,25 @@
 import SwiftUI
 
 struct AccountProgressSection: View {
-  @Environment(ProgressLog.self) private var progressLog
   @AppStorage(DailyGoal.key) private var storedGoal = Double(DailyGoal.standard)
   @State private var stats: ProgressStats?
   @State private var choosesGoal = false
 
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
   private var goal: Int { DailyGoal.clamped(storedGoal) }
-
-  private var rowLayout: AnyLayout {
-    dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
-      : AnyLayout(HStackLayout())
-  }
 
   var body: some View {
     Section {
       TodayProgressCard(stats: stats, goal: goal)
-        .task(id: StatsAsked(days: progressLog.days, goal: goal, today: progressLog.today)) {
-          stats = await progressLog.stats()
-        }
+        .readsProgressStats(into: $stats)
+      NavigationLink(value: AccountRoute.progress) {
+        SettingsRowLabel("Progress", systemImage: "chart.line.uptrend.xyaxis", tint: .pink)
+      }
+      .accessibilityIdentifier("account.progress")
       Button {
         choosesGoal = true
       } label: {
         HStack {
-          rowLayout {
+          StackedWhenLarge(spacing: 4) {
             SettingsRowLabel("Daily Goal", systemImage: "target", tint: .green)
             Spacer(minLength: 0)
             Text(ProgressWording.newWords(goal))
@@ -45,93 +38,123 @@ struct AccountProgressSection: View {
       }
     }
   }
+}
 
-  private struct StatsAsked: Equatable {
+private struct ProgressStatsReader: ViewModifier {
+  @Environment(ProgressLog.self) private var progressLog
+  @AppStorage(DailyGoal.key) private var storedGoal = Double(DailyGoal.standard)
+  @Binding var stats: ProgressStats?
+
+  func body(content: Content) -> some View {
+    content.task(
+      id: Asked(days: progressLog.days, goal: DailyGoal.clamped(storedGoal), today: progressLog.today)
+    ) {
+      stats = await progressLog.stats()
+    }
+  }
+
+  private struct Asked: Equatable {
     let days: [String: ProgressLogDay]
     let goal: Int
     let today: String
   }
 }
 
-enum ProgressWording {
-  static func newWords(_ count: Int) -> String {
-    String(AttributedString(localized: "^[\(count) new word](inflect: true)").characters)
-  }
-
-  static func ofGoal(_ added: Int, _ goal: Int) -> String {
-    "\(added) of \(newWords(goal))"
-  }
-
-  static func streak(_ days: Int) -> String {
-    "\(days)-day streak"
-  }
-
-  static func perMonth(_ goal: Int) -> Int {
-    goal * 30
-  }
-
-  static func paceDate(
-    _ pace: JLPTCoverage.Pace?, today: Date = .now, timeZone: TimeZone = .autoupdatingCurrent
-  ) -> String {
-    guard let pace else { return "Done" }
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = timeZone
-    guard let date = ProgressWeek.date(of: pace.date, in: calendar) else { return pace.date }
-    let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: today)
-    let format = Date.FormatStyle(timeZone: timeZone).month(.abbreviated).day()
-    return date.formatted(sameYear ? format : format.year())
+extension View {
+  func readsProgressStats(into stats: Binding<ProgressStats?>) -> some View {
+    modifier(ProgressStatsReader(stats: stats))
   }
 }
 
-struct TodayProgressCard: View {
+struct GoalRing<Center: View>: View {
+  let added: Int
+  let goal: Int
+  let diameter: Double
+  @ViewBuilder let center: () -> Center
+
+  var body: some View {
+    ZStack {
+      Circle()
+        .stroke(.orange.opacity(0.2), lineWidth: diameter / 9)
+      Circle()
+        .trim(from: 0, to: goal > 0 ? min(Double(added) / Double(goal), 1) : 0)
+        .stroke(.orange, style: StrokeStyle(lineWidth: diameter / 9, lineCap: .round))
+        .rotationEffect(.degrees(-90))
+      center()
+    }
+    .frame(width: diameter, height: diameter)
+  }
+}
+
+protocol ShowsTodaysProgress {
+  var stats: ProgressStats? { get }
+  var goal: Int { get }
+}
+
+extension ShowsTodaysProgress {
+  var added: Int { stats?.today.added ?? 0 }
+  var todaysGoal: Int { stats?.today.goal ?? goal }
+  var met: Bool { stats?.today.met ?? false }
+  var streak: Int { stats?.streak ?? 0 }
+
+  func spokenToday(sayingWhatsLeft: Bool) -> String {
+    var parts = ["Today", ProgressWording.ofGoal(added, todaysGoal)]
+    if met {
+      parts.append(ProgressWording.goalMetInLine)
+    } else if sayingWhatsLeft {
+      parts.append(ProgressWording.moreToGo(todaysGoal - added))
+    }
+    if streak > 0 { parts.append(ProgressWording.streak(streak)) }
+    return parts.joined(separator: ", ")
+  }
+}
+
+struct TodayProgressCard: View, ShowsTodaysProgress {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(\.openAccountRoute) private var openAccountRoute
   @ScaledMetric(relativeTo: .title3) private var ringSize = 58.0
   let stats: ProgressStats?
   let goal: Int
-
-  private var added: Int { stats?.today.added ?? 0 }
-  private var todaysGoal: Int { stats?.today.goal ?? goal }
-  private var met: Bool { stats?.today.met ?? false }
-  private var streak: Int { stats?.streak ?? 0 }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
       summary
       ProgressWeekStrip(stats: stats)
-      if streak > 0 {
-        Label {
-          Text(ProgressWording.streak(streak)).fontWeight(.semibold)
-        } icon: {
-          Image(systemName: "flame.fill").foregroundStyle(.orange)
+      StackedWhenLarge(spacing: 8) {
+        if streak > 0 {
+          Label {
+            Text(ProgressWording.streak(streak)).fontWeight(.semibold)
+          } icon: {
+            Image(systemName: "flame.fill").foregroundStyle(.orange)
+          }
         }
+        Spacer(minLength: 0)
+        Text(Self.seeProgress).hidden()
       }
     }
     .fixedSize(horizontal: false, vertical: true)
     .padding(.vertical, 6)
     .redacted(reason: stats == nil ? .placeholder : [])
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(spoken)
+    .accessibilityLabel(spokenToday(sayingWhatsLeft: false))
     .accessibilityIdentifier("account.progress.today")
+    .overlay(alignment: dynamicTypeSize.isAccessibilitySize ? .bottomLeading : .bottomTrailing) {
+      Button(Self.seeProgress) { openAccountRoute(.progress) }
+        .buttonStyle(.borderless)
+        .padding(.bottom, 6)
+        .accessibilityIdentifier("account.progress.see")
+    }
   }
 
+  private static let seeProgress = "See progress"
+
   private var summary: some View {
-    let layout =
-      dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-      : AnyLayout(HStackLayout(spacing: 16))
-    return layout {
-      ZStack {
-        Circle()
-          .stroke(.orange.opacity(0.2), lineWidth: ringSize / 9)
-        Circle()
-          .trim(from: 0, to: todaysGoal > 0 ? min(Double(added) / Double(todaysGoal), 1) : 0)
-          .stroke(.orange, style: StrokeStyle(lineWidth: ringSize / 9, lineCap: .round))
-          .rotationEffect(.degrees(-90))
+    StackedWhenLarge(spacing: 12, across: 16) {
+      GoalRing(added: added, goal: todaysGoal, diameter: ringSize) {
         Text(added, format: .number)
           .font(.title3.bold())
           .monospacedDigit()
       }
-      .frame(width: ringSize, height: ringSize)
       VStack(alignment: .leading, spacing: 2) {
         Text("Today")
           .font(.caption.weight(.semibold))
@@ -140,7 +163,7 @@ struct TodayProgressCard: View {
         Text(ProgressWording.ofGoal(added, todaysGoal))
           .font(.title3.bold())
         if met {
-          Label("Goal met", systemImage: "checkmark.circle.fill")
+          Label(ProgressWording.goalMet, systemImage: "checkmark.circle.fill")
             .foregroundStyle(.green)
         } else {
           Text("\(todaysGoal - added) more to reach today’s goal")
@@ -148,13 +171,6 @@ struct TodayProgressCard: View {
         }
       }
     }
-  }
-
-  private var spoken: String {
-    var parts = ["Today", ProgressWording.ofGoal(added, todaysGoal)]
-    if met { parts.append("goal met") }
-    if streak > 0 { parts.append(ProgressWording.streak(streak)) }
-    return parts.joined(separator: ", ")
   }
 }
 
@@ -190,8 +206,7 @@ struct ProgressWeek {
   }
 
   static func days(endingWith stats: ProgressStats?, calendar: Calendar = .autoupdatingCurrent) -> [Day] {
-    var gregorian = Calendar(identifier: .gregorian)
-    gregorian.timeZone = calendar.timeZone
+    let gregorian = gregorian(in: calendar.timeZone)
     let todayName = stats?.today.day
     let today = todayName.flatMap { date(of: $0, in: gregorian) } ?? gregorian.startOfDay(for: .now)
     let met = Set(stats?.last7.filter(\.met).map(\.day) ?? [])
@@ -202,6 +217,12 @@ struct ProgressWeek {
         id: name, letter: day.formatted(.dateTime.weekday(.narrow)), met: met.contains(name),
         isToday: back == 0)
     }
+  }
+
+  static func gregorian(in timeZone: TimeZone = .autoupdatingCurrent) -> Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = timeZone
+    return calendar
   }
 
   static func date(of name: String, in calendar: Calendar) -> Date? {

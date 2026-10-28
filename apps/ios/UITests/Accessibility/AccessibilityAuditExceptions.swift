@@ -63,10 +63,15 @@ struct AllowedFinding {
   ]
 
   static let list =
-    systemControls + linkedWords + textThatScales + playerControls + clocks + previews + design
+    systemControls + linkedWords + textThatScales + playerControls + clocks + previews + design + chartDays
 }
 
 private let touch: Set<TestDevice.Kind> = [.phone, .pad]
+private let chartDays = [
+  allow(
+    .hitRegion, .identifiedBy(prefix: "progress.new-words.bar."),
+    on: ["Progress, a month of new words", "Progress, its end"], [.phone], because: Why.monthBar),
+]
 private let iPadSheets = [
   "Image's sources", "A frequency rank's details", "Add to List", "A word's photo", "Handwriting", "Radicals",
   "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account", "Subscribe", "Subscribe, its plans",
@@ -135,6 +140,8 @@ private enum Why {
     "Player's control bar stays at the largest standard size at the accessibility sizes, so it keeps to one line, and pressing and holding a button shows it larger (product docs, Player)"
   static let headword =
     "A long headword shrinks one size to keep its reading beside the pitch accent, as the product docs say; at the accessibility sizes it is full size on a line of its own"
+  static let monthBar =
+    "With dates on the x axis, Swift Charts grouped the bars two to an element, so VoiceOver read two-day ranges; each bar is its own element now, 12 points wide on an iPhone, and a tap selects by its position across the chart"
   static let largerText =
     "Image Search's Text view sets its text one size larger than the device's, so the audit always reports it as missing the device's size, though it grows with it, as the largest-size pass shows. Its list lays every row out again at each size the audit steps through, so the audit often loses the text it found and reports it with no element to name, which no allowance can match. The text-clipped audit still runs there"
 }
@@ -200,7 +207,10 @@ private let textThatScales = [
       "Apple Translation", "Translate Player Captions With", "Translation Language", "English", "YouTube",
       "Show Furigana", "Show Word Meanings", "Hide Furigana on Known Words",
     ]), on: ["Reading Aids"], because: Why.scales),
-  allow(.dynamicType, .labels(["Learning", "Lists", "1", "Translations", "0"]), on: ["Account"], because: Why.scales),
+  allow(
+    .dynamicType, .labels(["Learning", "Lists", "1", "Translations", "0", "Progress"]), on: ["Account"],
+    because: Why.scales),
+  allow(.dynamicType, .identifier("account.progress.see"), on: ["Account"], because: Why.scales),
   allow(
     .dynamicType,
     .labels([
@@ -225,7 +235,7 @@ private let textThatScales = [
     ]),
     on: ["Account"], because: Why.scales),
   allow(
-    .textClipped, .labels(["Learning", "Lists", "Daily Goal"]), on: ["Account"], touch, [.standard],
+    .textClipped, .labels(["Learning", "Lists", "Daily Goal", "Progress"]), on: ["Account"], touch, [.standard],
     because: Why.scales),
   allow(
     .textClipped, .labels(["Media Library", "Known Words", "Learning"]), on: ["Account's library rows, alone"], [.phone],

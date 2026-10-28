@@ -37,6 +37,8 @@ struct AccountTabRoot: View {
           FrequencyDictionariesView(client: .live)
         case .credits:
           CreditsView()
+        case .progress:
+          ProgressScreen()
         }
       }
       .modifier(TranslateDestinations(experience: translate, words: words))
@@ -145,15 +147,9 @@ private struct AccountExternalLink<Label: View>: View {
 }
 
 private struct AccountAboutHeader: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
   var body: some View {
-    let layout =
-      dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-      : AnyLayout(HStackLayout(spacing: 12))
     VStack(alignment: .leading, spacing: 12) {
-      layout {
+      StackedWhenLarge(spacing: 12, across: 12) {
         if let icon = AppIcon.image {
           icon
             .resizable()
@@ -192,6 +188,10 @@ private enum AppBundleInfo {
   }
 }
 
+extension EnvironmentValues {
+  @Entry var openAccountRoute: (AccountRoute) -> Void = { _ in }
+}
+
 enum AccountRoute: Hashable {
   case profile
   case zenbuAccount
@@ -204,6 +204,7 @@ enum AccountRoute: Hashable {
   case wordList(UUID)
   case frequencyDictionaries
   case credits
+  case progress
 }
 
 struct ReadingAidSettingsView: View {

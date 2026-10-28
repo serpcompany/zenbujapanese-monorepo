@@ -20,6 +20,17 @@ struct ProgressStats: Decodable, Hashable, Sendable {
     let learning: Int
     let markedKnownLast7: Int
     let addedLast7: Int
+    let addedLast30: Int
+  }
+
+  struct GoalMet: Decodable, Hashable, Sendable {
+    let met: Int
+    let days: Int
+  }
+
+  struct GoalMetDays: Decodable, Hashable, Sendable {
+    let last7: GoalMet
+    let last30: GoalMet
   }
 
   struct KnownOnDay: Decodable, Hashable, Sendable {
@@ -44,6 +55,7 @@ struct ProgressStats: Decodable, Hashable, Sendable {
   let bestStreak: Streak?
   let last7: [Day]
   let last30: [Day]
+  let goalMet: GoalMetDays
   let totals: Totals
   let knownOverTime: [KnownOnDay]
   let dailyAverage: DailyAverage

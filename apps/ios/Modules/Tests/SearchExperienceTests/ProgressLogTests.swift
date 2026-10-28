@@ -372,7 +372,10 @@ final class ProgressLogTests {
     #expect(stats.today == ProgressStats.Day(day: "2026-10-28", added: 0, markedKnown: 0, goal: 3, met: false))
     #expect(stats.streak == 2)
     #expect(stats.bestStreak == ProgressStats.Streak(length: 2, first: "2026-10-26", last: "2026-10-27"))
-    #expect(stats.totals == ProgressStats.Totals(known: 1, learning: 2, markedKnownLast7: 1, addedLast7: 2))
+    #expect(stats.totals == ProgressStats.Totals(
+      known: 1, learning: 2, markedKnownLast7: 1, addedLast7: 2, addedLast30: 2))
+    #expect(stats.last7.map(\.added) == [0, 0, 0, 0, 1, 1, 0])
+    #expect(stats.goalMet.last7 == ProgressStats.GoalMet(met: 2, days: 2))
     #expect(stats.knownOverTime.map(\.known) == [0, 1, 1])
     #expect(stats.dailyAverage == ProgressStats.DailyAverage(average: 1, days: 2))
     #expect(stats.words.last == ProgressStats.Words(

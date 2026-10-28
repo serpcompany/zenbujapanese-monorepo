@@ -27,6 +27,7 @@ enum LaunchHarness {
   static let problemReportStandInKey = "ZENBU_PROBLEM_REPORT_STAND_IN"
   static let progressStreakKey = "ZENBU_PROGRESS_STREAK"
   static let dailyGoalKey = "ZENBU_DAILY_GOAL"
+  static let progressSeedKey = "ZENBU_PROGRESS_SEED"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -367,33 +368,12 @@ enum LaunchHarness {
       if let streak = environment[progressStreakKey].flatMap(Int.init) {
         seedProgress(metDays: streak)
       }
+      if let seed = environment[progressSeedKey] {
+        seedProgress(from: URL(filePath: seed))
+      }
       if let days = environment[dailyListsKey].flatMap(Int.init) {
         seedDailyLists(days: days)
       }
     #endif
   }()
 }
-
-#if DEBUG
-  extension LaunchHarness {
-    struct SeededProgress: Encodable {
-      let version = 1
-      let days: [String: ProgressLogDay]
-    }
-
-    private static func seedProgress(metDays: Int) {
-      guard metDays > 0 else { return }
-      var calendar = Calendar(identifier: .gregorian)
-      calendar.timeZone = .autoupdatingCurrent
-      var days: [String: ProgressLogDay] = [:]
-      for back in 1...metDays {
-        guard let day = calendar.date(byAdding: .day, value: -back, to: .now) else { continue }
-        let change = ProgressLogChange(
-          id: "042e07f7052f611fed33ddddf37f55fd", before: "unknown", after: "learning", at: day)
-        days[ProgressLog.day(of: day, in: calendar)] = ProgressLogDay(
-          changes: [change], goal: 1, totals: ProgressTotals(known: 0, learning: 1))
-      }
-      write(SeededProgress(days: days), to: ProgressLog.defaultFileURL)
-    }
-  }
-#endif

@@ -16,6 +16,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
 
   private func auditAccount(_ pass: AuditPass) throws {
     auditTheAccountAndItsSettings(pass)
+    auditProgress(pass)
     auditReportingAProblem(pass)
     auditTheLearnersWords(pass)
     auditTheDailyLists(pass)
@@ -81,6 +82,20 @@ final class AccountAuditUITests: AccessibilityAuditCase {
       auditAlone("Account's settings rows, alone", "settings", showing: "account.frequency-dictionaries", pass)
     }
     auditAlone("Account, its about rows", "about", showing: "account.about", pass)
+  }
+
+  private func auditProgress(_ pass: AuditPass) {
+    let app = launch(pass, progressSeed)
+    open(.account, in: app)
+    openAccountRow("account.progress", showing: find("progress.today", in: app), in: app)
+    audit("Progress", in: app)
+    auditAtTheLargestSize("Progress, its tiles", showing: find("progress.daily-average", in: app), in: app)
+    let chart = find("progress.new-words.chart", in: app)
+    audit("Progress, a week of new words", placing: chart, in: app)
+    tap(reveal(app.segmentedControls["progress.span"].buttons["Month"], in: app))
+    audit("Progress, a month of new words", placing: chart, in: app)
+    auditAtTheLargestSize("Progress, JLPT coverage", showing: find("progress.jlpt.n1", in: app), in: app)
+    audit("Progress, its end", placing: find("progress.known-over-time.chart", in: app), in: app)
   }
 
   private func auditAlone(_ screen: String, _ section: String, showing identifier: String, _ pass: AuditPass) {

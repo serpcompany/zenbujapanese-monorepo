@@ -11,11 +11,6 @@
       let deletedDailyLists: [UUID] = []
     }
 
-    private struct SeededKnowledge: Encodable {
-      let version = 2
-      let records: [WordKnowledgeRecord]
-    }
-
     private static let seededWords = """
       262ea7b4342d41837de1d4302b25b5a2 飲む のむ
       7f490a9c9c0da94f4e9474f4efe74be1 見る みる
