@@ -20,7 +20,7 @@ struct ProgressTotals: Codable, Hashable, Sendable {
 
 enum WordKnowledgeEvent: Sendable {
   case changed(KnownWordChange, previous: WordKnowledgeStatus, totals: ProgressTotals)
-  case synced(totals: ProgressTotals)
+  case synced([ProgressLogChange], totals: ProgressTotals)
 }
 
 struct ProgressLogChange: Codable, Hashable, Sendable {
@@ -103,6 +103,8 @@ final class ProgressLog: LocalFileStore {
   private var daysTurned = 0
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var now: () -> Date = Date.init
+  @ObservationIgnored var askForDays: @Sendable (ProgressDaysRequest) async -> [String: ProgressLogDay]? =
+    ProgressLog.filledDays
   @ObservationIgnored private let writer: ProgressLogWriter
   @ObservationIgnored private let defaults: UserDefaults
   @ObservationIgnored private let calendar: Calendar
@@ -181,42 +183,44 @@ final class ProgressLog: LocalFileStore {
     switch event {
     case .changed(let change, let previous, let totals):
       let time = change.changedAt ?? now()
-      let changed = day(of: time)
-      let today = day(of: now())
-      if changed < today {
-        movePastTotals(from: previous, to: change.status, since: changed, before: today, totals)
-      } else {
-        days[changed, default: ProgressLogDay(goal: goal, totals: totals)].totals = totals
-      }
-      days[changed]?.changes.append(
-        ProgressLogChange(
-          id: change.storedID, before: previous.stored, after: change.status.stored, at: time))
-      keepToday(totals)
-    case .synced(let totals):
-      keepToday(totals)
+      add(
+        [
+          ProgressLogChange(
+            id: change.storedID, before: previous.stored, after: change.status.stored, at: time)
+        ], totals: totals)
+    case .synced(let changes, let totals):
+      add(changes, totals: totals)
     }
-    persist()
   }
 
-  private func keepToday(_ totals: ProgressTotals) {
+  private func add(_ changes: [ProgressLogChange], totals: ProgressTotals) {
+    let today = day(of: now())
+    let past = changes.filter { day(of: $0.at) < today }
+    keepToday(totals, adding: changes.filter { day(of: $0.at) >= today })
+    persist()
+    if !past.isEmpty { fill(past) }
+  }
+
+  private func keepToday(_ totals: ProgressTotals, adding changes: [ProgressLogChange]) {
     let today = day(of: now())
     days[today, default: ProgressLogDay(goal: goal, totals: totals)].totals = totals
     days[today]?.goal = goal
+    days[today]?.changes.append(contentsOf: changes)
   }
 
-  private func movePastTotals(
-    from before: WordKnowledgeStatus, to after: WordKnowledgeStatus, since changed: String,
-    before today: String, _ totals: ProgressTotals
-  ) {
-    if days[changed] == nil {
-      let earlier = days.filter { $0.key < changed }.max { $0.key < $1.key }?.value
-      days[changed] = ProgressLogDay(
-        goal: earlier?.goal ?? goal,
-        totals: earlier?.totals ?? totals.moving(from: after, to: before))
-    }
-    for key in days.keys where key >= changed && key < today {
-      guard let past = days[key]?.totals else { continue }
-      days[key]?.totals = past.moving(from: before, to: after)
+  private func fill(_ changes: [ProgressLogChange]) {
+    writes.queue { [self] in
+      guard canChange else { return }
+      let today = day(of: now())
+      let request = ProgressDaysRequest(
+        days: days, changes: changes.map { ProgressDaysRequest.Change($0, day: day(of: $0.at)) },
+        goal: goal, today: today,
+        totals: days[today]?.totals ?? knowledge?.totals ?? ProgressTotals(known: 0, learning: 0))
+      guard let filled = await askForDays(request), canChange else { return }
+      let past = filled.filter { $0.key < day(of: now()) }
+      guard !past.isEmpty else { return }
+      days.merge(past) { $1 }
+      persist()
     }
   }
 

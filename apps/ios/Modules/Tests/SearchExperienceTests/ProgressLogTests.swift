@@ -70,15 +70,9 @@ final class ProgressLogTests {
   private func share(
     _ id: LanguageReferenceID, _ headword: String, _ status: WordKnowledgeStatus, madeAt made: Date
   ) throws -> SharedChanges {
-    let inbox = SharedChanges(folder: folder.appending(path: "Inbox"))
-    try FileManager.default.createDirectory(at: inbox.folder, withIntermediateDirectories: true)
-    let name = String(
-      format: "%020llu-%010d-%@.json", UInt64(made.timeIntervalSince1970 * 1_000_000_000), 1,
-      UUID().uuidString)
-    let change = SharedChange.known(
-      KnownWordChange(storedID: id.rawValue, headword: headword, reading: headword, status: status))
-    try JSONEncoder.localStore.encode(change).write(to: inbox.folder.appending(path: name))
-    return inbox
+    try SharedChanges.holding(
+      KnownWordChange(storedID: id.rawValue, headword: headword, reading: headword, status: status),
+      madeAt: made, in: folder)
   }
 
   @Test("changes at 23:59 and at 00:01 fall on two days, each kept as it happened")

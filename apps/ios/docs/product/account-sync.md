@@ -53,7 +53,7 @@ the app sends the account everything on the phone: every word Known or Learning,
 list's words, Recent's videos, bookmarked sentences, notes, photos with their words (each photo's
 file first), the profile photo, each setting changed from its standard, and the frequency
 dictionaries chosen if they aren't the standard ones, then brings down everything the account
-already has.
+already has, each word with the time it last changed ([Progress log](saved-data.md#progress-log)).
 Recent searches go up once the account's first answer brings the key their IDs are made with, and
 a search removed before then is removed from the account too. The first sync gathers all of it,
 so the sign-in sheet closes at once, and a phone that's closed or signed out before that sync
@@ -82,18 +82,18 @@ as a new list.
 Check: package `AccountSignedOutTests`.
 
 **When it syncs.** After each change to a known word, a list, Recent, a bookmark, a note, a photo or
-its words, a setting, or the profile (a search goes with the next sync, rather than starting
-one), when the app opens or returns to
-the foreground with changes waiting or a last sync over 15 minutes ago, when iOS gives it time in
-the background, and when the learner taps **Sync Now** on Zenbu Account. Never on a timer. Offline,
-changes wait on the phone, in order, across relaunches, and go when it's back; a failed sync tries
-again a few times, waiting longer each time, only while the app is open. A sync the account
-answers as not subscribed (`402`), for the sync or for a photo's file going up or coming down,
-keeps every change and photo on the phone, says syncing needs a subscription, and isn't tried
-again until the next change, launch, or **Sync Now**.
+its words, a setting, or the profile (a search goes with the next sync, rather than starting one),
+when the app opens or returns to the foreground with changes waiting or a last sync over 15 minutes
+ago, when iOS gives it time in the background, and when the learner taps **Sync Now** on Zenbu
+Account. Never on a timer. Offline, changes wait on the phone, in order, across relaunches, and go
+when it's back; a failed sync tries again a few times, waiting longer each time, only while the app
+is open. A sync the account answers as not subscribed (`402`), for the sync or for a photo's file
+going up or coming down, keeps every change and photo on the phone, says syncing needs a
+subscription, and isn't tried again until the next change, launch, or **Sync Now**. A word's change
+goes with the time it was made, in the share sheet too.
 
 Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, `AccountSyncKeptTests` (a `402`),
-and `AccountSyncPhotoTests` (a `402` download); UI
+`AccountSyncPhotoTests` (a `402` download), and `AccountSyncProgressTests` (a change's time); UI
 `SubscriptionUITests.testAPhotoSavedWithoutASubscriptionStaysOnTheDeviceWhileSyncingWaitsForOne`
 (iPhone and iPad).
 

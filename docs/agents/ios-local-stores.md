@@ -24,17 +24,23 @@ records are shaped to become database rows, and a membership keeps its headword 
 still be found if its entry's ID changes. Each store reports a learner's change to the account
 sync (`changeObserver`, or for the actors that keep notes, the Media Library, and recent searches,
 a `KeptChangeRelay`), and takes the account's changes through `applySynced`, which reports nothing
-([How the iOS app syncs](ios-account-sync.md)).
+to sync ([How the iOS app syncs](ios-account-sync.md)).
 
 The progress log (`ProgressLog.swift`, `progress-log.json` at version 1 beside the known words)
 hears `WordKnowledge` through its own `progressObserver`, so sync's `changeObserver` stays as it
 is. Each change carries its time (`KnownWordChange.changedAt`), which fixes its day; a Share
-extension change takes the time in its inbox file's name, and one applied after its day moves that
-day's totals and each later logged day's but today's, which take the current totals. `applySynced`
-tells the log only the new totals. A goal change with no day logged for today starts it only from
-the known words' totals once they're loaded, never from an earlier day's. A
-day's changes decode one at a time, and a file missing any is copied aside like any store's. The numbers are the core's (`progressStats`, [`dictionary-core.md`](dictionary-core.md)),
-asked off the main thread by `ProgressLog.stats`.
+extension change takes the time in its inbox file's name, and a synced word the account's
+`stateChangedAt`. `applySynced` reports `.synced`, with each dated change, never `.changed`, which
+only the device's own changes report; `AccountSync.pull` holds them (`holdSyncedProgress`), so a
+read of any number of pages tells the log once. The log keeps today itself: a change dated today or
+later joins today's changes, and today takes the current totals and goal. Changes dated earlier go
+to the core's `progressDays` on the log's write queue (`LocalFileWriteQueue.queue`), once per
+event, and the days it answers are merged in; the log has no rule of its own for an earlier day. A
+goal change with no day logged for today starts it only from the known words' totals once they're
+loaded, never from an earlier day's. A day's changes decode one at a time, and a file missing any
+is copied aside like any store's. The numbers are the core's (`progressStats` and `progressDays`,
+[`dictionary-core.md`](dictionary-core.md)), asked off the main thread by `ProgressLog.stats` and
+`ProgressLog.filledDays`.
 
 ## Recent, notes, the profile, and the Media Library
 

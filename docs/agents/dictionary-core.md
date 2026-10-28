@@ -151,7 +151,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
   | `phraseNote` | A phrase with its entry's meanings and parts of speech | A set phrase's first three meanings, or null |
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
-  | `progressStats` | The log's days, the goal, and today | `ProgressStats` |
+  | `progressStats`, `progressDays` | The log's days, goal, today, changes | Stats; days filled |
   | `youTubeVideo`, `youTubeCaptions`, `youTubeTranslatedCaptions` | A player response; timed text; captions, translated timed text | Its track and playability; captions; them paired; or null |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the

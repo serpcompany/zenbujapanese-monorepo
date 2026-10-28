@@ -96,6 +96,7 @@ struct SyncedKnownWord: Decodable, Sendable {
   let reading: String
   let known: Bool
   let state: String?
+  let stateChangedAt: Date?
 }
 
 struct SyncedList: Decodable, Sendable {
