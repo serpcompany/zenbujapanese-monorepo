@@ -9,10 +9,17 @@ checked. What it does for a learner is in its
 
 The panel draws its header, the tab bar, and the Back row over a page; a tab or a page draws only
 its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, label, icon, and
-`Content`, which gets `open(page)`. A page is a kind in `PanelPage` (`route.ts`) and a line in
+`Content`, which gets `open(page)` and `shown`, true while its tab is chosen and no page is over
+it. Every tab's `Content` stays mounted, so a tab that reads Chrome or follows something does it
+only while `shown`. A page is a kind in `PanelPage` (`route.ts`) and a line in
 `pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
 The Translate tab's `Content` is `TranslateTab` (`src/translate/translate-tab.tsx`,
-[`translate.md`](../../apps/extension/docs/product/translate.md)). Word Detail and the kanji and
+[`translate.md`](../../apps/extension/docs/product/translate.md)), and the Video tab's is
+`VideoTab` (`src/video-tab/video-tab.tsx`,
+[`video-tab.md`](../../apps/extension/docs/product/video-tab.md)): it reads the active tab
+(`chrome.tabs.query`, then `tabs.onActivated` and `tabs.onUpdated`) once it is first shown, asks
+for the video's captions, and follows the video on its port
+([`extension-captions.md`](extension-captions.md#the-video-tabs-port)) only while shown. Word Detail and the kanji and
 form pages it opens are `src/word-detail/`'s, drawn with `@zenbu/ui`'s dictionary parts from the
 core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts`
 ([`word-detail.md`](../../apps/extension/docs/product/word-detail.md)).
@@ -85,7 +92,7 @@ a granted origin covers it or the toolbar icon was clicked on that tab, and its 
   routes and tab stacks; the service worker opening the panel from the toolbar icon, calling
   `open` before it awaits anything, handing the route over, and leaving none when Chrome refuses;
   a refused `setPanelBehavior` reported once; and, in happy-dom, the five tabs, Translate's box
-  and the other tabs' empty states, the arrow keys, pages over a tab and Back, focus after each,
+  and the other tabs' empty states (the Video tab's transcript is checked in `src/video-tab/`), the arrow keys, pages over a tab and Back, focus after each,
   the last tab, the sign-up links, the dictionary progress on every tab but Translate and on a
   page over Translate, Try again, and `openPanel` through a fake Chrome to the panel, closed and
   open. The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)

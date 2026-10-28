@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { TranslateTab } from '../translate/translate-tab'
+import { VideoTab } from '../video-tab/video-tab'
 import { emptyTab, SignUpButton } from './empty-tab'
 import { labels } from './labels'
 import type { PanelTab, PanelTabProps } from './route'
@@ -24,7 +25,7 @@ export const tabs: PanelTabDefinition[] = [
     id: 'video',
     label: labels.tabs.video,
     icon: MonitorPlay,
-    Content: emptyTab(MonitorPlay, labels.empty.video)
+    Content: VideoTab
   },
   {
     id: 'translate',

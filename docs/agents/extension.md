@@ -90,12 +90,13 @@ on the toolbar icon.
 | `src/worker/` | The dictionary worker, a dedicated module worker: it downloads the language data, opens it in sqlite-wasm, and answers from the core (`answer.ts`; [`extension-language-data.md`](extension-language-data.md)). |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`, and `page-lookup.ts`, the page script). |
 | `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
-| `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), and the content script's side on a watch page (`youtube-page.ts`). |
+| `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), the content script's side on a watch page (`youtube-page.ts`), and the Video tab's port (`video-tab-port.ts`). |
+| `src/video-tab/` | The side panel's Video tab, a video's transcript ([`extension-side-panel.md`](extension-side-panel.md)). |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `src/settings/` | Settings and its pages ([`extension-settings.md`](extension-settings.md)). |
 | `src/shared/` | The messages and their types, the settings, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress every page that shows the download draws (`dictionary-progress.tsx`). Pages and content scripts look words up with `dictionary.ts`'s helpers, never raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
-| `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
+| `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), error reports' recording transport, and the Video tab's stand-ins (`video-tab-harness.tsx`). Layers treat it as tests. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, the test content script that mounts it and shows each reading aid's state (`settings-follower.tsx`), and the words page page lookup's browser tests read (`words.html`). |
 | `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local data server and its release (`local-server.ts`, `fixture-release.ts`). |
@@ -227,8 +228,9 @@ build declares only the YouTube content script, and registers the page script at
   request per video, kept for the session, the waits after a 429 on a fake clock, Try again, and
   Zenbu Captions off (`captions-service.test.ts`); and, in happy-dom, a watch page asking once per
   video and nothing for seeking, line moves, Repeat, or speed, and asking again only once the wait
-  is over (`youtube-page.interaction.test.tsx`), and the follower's controls, ads, the learner's
-  speed, and hiding YouTube's captions (`youtube-follower.interaction.test.tsx`).
+  is over, and sending playback only to an open Video tab (`youtube-page.interaction.test.tsx`,
+  `video-tab-port.test.ts`), and the follower's controls, ads, the learner's speed, and hiding
+  YouTube's captions (`youtube-follower.interaction.test.tsx`).
 - **Browser tests,** with `pnpm test:browser`, in Playwright's Chromium, in CI
   ([`extension-browser-tests.md`](extension-browser-tests.md)).
 - **In branded Chrome,** the `verify-extension` skill: the same pages, the offscreen document's

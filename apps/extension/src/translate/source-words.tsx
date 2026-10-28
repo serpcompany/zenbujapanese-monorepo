@@ -134,20 +134,31 @@ function usePicked(source: RefObject<HTMLParagraphElement | null>) {
   return [picked, setPicked, close] as const
 }
 
-function Linked({
-  found,
-  settings,
-  services,
-  open
-}: {
-  found: Found
+type LineProps = {
   settings: Settings
   services: SourceServices
   open?(page: PanelPage): void
-}) {
+  onPopup?(open: boolean, dismiss: () => void): void
+}
+
+function useReportPopup(
+  popupOpen: boolean,
+  onPopup: LineProps['onPopup'],
+  setPicked: (picked: null) => void
+) {
+  const reported = useRef(false)
+  useEffect(() => {
+    if (reported.current === popupOpen) return
+    reported.current = popupOpen
+    onPopup?.(popupOpen, () => setPicked(null))
+  }, [popupOpen, onPopup, setPicked])
+}
+
+function Linked({ found, settings, services, open, onPopup }: LineProps & { found: Found }) {
   const glosses = useGlosses(found, settings['readingAids.wordMeanings'], services)
   const source = useRef<HTMLParagraphElement>(null)
   const [picked, setPicked, close] = usePicked(source)
+  useReportPopup(picked !== null, onPopup, setPicked)
   const frequency = settings['frequencyDictionaries.chosen']
   const lookUp = useCallback(
     (id: string) => services.popupCard(id, frequency),
@@ -184,6 +195,22 @@ function Linked({
   )
 }
 
+export function SourceLine({
+  source,
+  settings,
+  ...line
+}: Omit<LineProps, 'settings'> & { source: string; settings: Settings | null }) {
+  const found = useFound(source, line.services)
+  if (!found || !settings) {
+    return (
+      <p lang="ja" data-source className={sourceClass}>
+        {source}
+      </p>
+    )
+  }
+  return <Linked found={found} settings={settings} {...line} />
+}
+
 export function SourceWords({
   source,
   services,
@@ -194,13 +221,5 @@ export function SourceWords({
   open?(page: PanelPage): void
 }) {
   const settings = useSettings()
-  const found = useFound(source, services)
-  if (!found || !settings) {
-    return (
-      <p lang="ja" data-source className={sourceClass}>
-        {source}
-      </p>
-    )
-  }
-  return <Linked found={found} settings={settings} services={services} open={open} />
+  return <SourceLine source={source} settings={settings} services={services} open={open} />
 }

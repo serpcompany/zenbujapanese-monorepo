@@ -13,11 +13,13 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
   bar and choose the tab they land on, wrapping at the ends (`panel.interaction.test.tsx`).
 - **Translate on its box,** to translate Japanese or English: [`translate.md`](translate.md)
   (`panel.interaction.test.tsx`, "opens Translate from its tab").
+- **Video on the transcript** of the YouTube video in the tab the learner is on:
+  [`video-tab.md`](video-tab.md). On a tab with no video, its empty state.
 - **Each other tab on its empty state,** until the issue that fills it (`panel.interaction.test.tsx`):
 
 | Tab | Empty state |
 | --- | --- |
-| Video | "No video on this tab", and that a video with Japanese captions shows its transcript here. |
+| Video, on a tab with no video | "No video on this tab", and that a video with Japanese captions shows its transcript here. |
 | Images | "Reading text in pictures is coming soon", with no button. |
 | Words | "No words yet", that a Zenbu account keeps known words, lists and notes on all devices, and "Sign up or sign in". |
 | Recent | "No recent videos", that a Zenbu account keeps the videos watched on all devices, and "Sign up or sign in". |
@@ -29,7 +31,7 @@ doesn't sign in yet (#961).
 ## Pages over a tab
 
 - **A page opens over the tab it was opened from,** with a row above it that goes Back, named for
-  the tab ("Video"). Back goes back one page at a time, to the tab's empty state at the end. The
+  the tab ("Video"). Back goes back one page at a time, to the tab itself at the end. The
   tab bar stays in view (`panel.interaction.test.tsx`).
 - **Focus goes to what is shown:** to a new page's Back row, and after Back to the Back row of the
   page revealed, or to the tab (`panel.interaction.test.tsx`).

@@ -1,23 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { captionsService } from '../captions/captions-service'
-import { memoryStorage } from '../captions/fixtures/memory-storage'
 import {
   japaneseLines,
   japaneseVideo,
-  secondJapaneseVideo,
-  youTubeStandIn
+  secondJapaneseVideo
 } from '../captions/fixtures/youtube-stand-in'
-import {
-  askCaptions,
-  type CaptionsAnswer,
-  type CaptionsEnvelope,
-  type CaptionsRequest
-} from '../captions/messages'
-import { answerCaptions } from '../captions/serve-captions'
+import { watchedTab } from '../test/watched-tab'
 import type { VideoControl } from './controls'
-import { watchedVideoId } from './watch-page'
 import { youTubeFollower } from './youtube-follower'
-import { followYouTubePage } from './youtube-page'
 
 const tabId = 5
 
@@ -25,8 +14,6 @@ const minute = 60_000
 
 const watchPageHTML =
   '<div id="movie_player" class="html5-video-player"><video></video><div class="ytp-caption-window-container"></div></div>'
-
-type ContentListener = (message: unknown) => false
 
 const happyDOM = (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM
 
@@ -37,66 +24,40 @@ function navigate(path: string, event: 'yt-navigate-finish' | 'popstate' = 'yt-n
 }
 
 function youTubeTab({ captionsOn = true } = {}) {
-  const youTube = youTubeStandIn()
-  const contentScript = new Set<ContentListener>()
-  const settings = { captionsOn }
   const followers: ReturnType<typeof youTubeFollower>[] = []
-  const opened: string[] = []
-  const announced: string[] = []
-  const serviceWorker = answerCaptions(
-    captionsService({
-      storage: memoryStorage(),
-      fetch: youTube.fetch,
-      prepareRequests: async () => undefined,
-      tabVideo: async () => watchedVideoId(location.href),
-      captionsOn: async () => settings.captionsOn,
-      announce: change => {
-        announced.push(change.captions.state)
-        for (const listener of contentScript) listener(change)
-      },
-      now: () => Date.now(),
-      random: () => 0.5
-    })
-  )
-  const sendFrom =
-    (sender: { tab?: { id?: number } }) =>
-    (message: CaptionsEnvelope): Promise<CaptionsAnswer> =>
-      new Promise(resolve => serviceWorker(message, sender, resolve))
-  const stop = followYouTubePage(document, {
-    runtime: {
-      sendMessage: message => {
-        if (message.captions.type === 'video-opened') opened.push(message.captions.videoId)
-        return sendFrom({ tab: { id: tabId } })(message)
-      },
-      onMessage: {
-        addListener: listener => contentScript.add(listener),
-        removeListener: listener => contentScript.delete(listener)
-      }
-    },
+  const subscriptions = { open: 0 }
+  const watched = watchedTab({
+    tabId,
+    captionsOn,
     follow: (page, videoId) => {
       const follower = youTubeFollower(page, videoId)
+      const subscribe = follower.subscribe
+      follower.subscribe = listener => {
+        subscriptions.open += 1
+        const unsubscribe = subscribe(listener)
+        return () => {
+          subscriptions.open -= 1
+          unsubscribe()
+        }
+      }
       followers.push(follower)
       return follower
     }
   })
-  const sidePanel = { sendMessage: sendFrom({}) }
   return {
-    youTube,
-    settings,
+    ...watched,
     followers,
-    opened,
-    announced,
-    stop,
-    videoTab: (request: CaptionsRequest) => askCaptions(request, sidePanel),
+    subscriptions,
+    videoTab: watched.askCaptions,
     control(control: unknown) {
-      for (const listener of contentScript) listener({ target: 'video', control })
+      watched.toContentScript({ target: 'video', control })
     },
     announce(captions: unknown) {
-      for (const listener of contentScript) listener({ target: 'captions', tabId, captions })
+      watched.toContentScript({ target: 'captions', tabId, captions })
     },
     async shown(state: string) {
       await vi.waitFor(async () => {
-        const answer = await askCaptions({ type: 'captions', tabId }, sidePanel)
+        const answer = await watched.askCaptions({ type: 'captions', tabId })
         expect('state' in answer && answer.state).toBe(state)
       })
     }
@@ -228,5 +189,56 @@ describe('the YouTube watch page', () => {
     expect(follower?.playback).toBeNull()
     tab.control({ type: 'play' })
     expect(tab.followers).toHaveLength(1)
+  })
+})
+
+describe('the playback it sends a Video tab', () => {
+  const sent = () => tab?.ports.posted.length ?? 0
+
+  it('sends nothing until a Video tab opens for it, and nothing once that tab closes', async () => {
+    tab = youTubeTab()
+    video().dispatchEvent(new Event('seeked'))
+    expect(tab.followers).toHaveLength(0)
+    const heard: unknown[] = []
+    const panel = tab.ports.connect(tabId)
+    panel.onMessage.addListener(message => heard.push(message))
+    await vi.waitFor(() => expect(heard).toHaveLength(1))
+    expect(heard[0]).toEqual({
+      target: 'video-tab',
+      playback: { videoId: japaneseVideo, time: 0, playing: false, rate: 1, ad: false }
+    })
+    tab.control({ type: 'seek', time: 5.4 })
+    video().dispatchEvent(new Event('seeked'))
+    await vi.waitFor(() => expect(heard.at(-1)).toMatchObject({ playback: { time: 5.4 } }))
+    expect(tab.subscriptions.open).toBe(1)
+    panel.disconnect()
+    await Promise.resolve()
+    expect(tab.subscriptions.open).toBe(0)
+    const before = sent()
+    video().dispatchEvent(new Event('seeked'))
+    video().dispatchEvent(new Event('timeupdate'))
+    expect(sent()).toBe(before)
+  })
+
+  it('tells an open Video tab when the page leaves the video and opens the next one', async () => {
+    tab = youTubeTab()
+    const heard: unknown[] = []
+    tab.ports.connect(tabId).onMessage.addListener(message => heard.push(message))
+    await vi.waitFor(() => expect(heard).toHaveLength(1))
+    navigate('/results?search_query=japanese')
+    await vi.waitFor(() => expect(heard.at(-1)).toEqual({ target: 'video-tab', playback: null }))
+    navigate(`/watch?v=${secondJapaneseVideo}`)
+    await vi.waitFor(() =>
+      expect(heard.at(-1)).toMatchObject({ playback: { videoId: secondJapaneseVideo } })
+    )
+  })
+
+  it('answers no other port', async () => {
+    tab = youTubeTab()
+    const heard: unknown[] = []
+    tab.ports.connect(tabId, 'another').onMessage.addListener(message => heard.push(message))
+    await vi.advanceTimersByTimeAsync(minute)
+    expect(heard).toEqual([])
+    expect(tab.followers).toHaveLength(0)
   })
 })

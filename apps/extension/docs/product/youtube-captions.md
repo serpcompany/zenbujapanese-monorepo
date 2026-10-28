@@ -1,9 +1,8 @@
 # YouTube captions and playback
 
 On a YouTube watch page, the extension gets the video's Japanese captions and follows the video,
-so the side panel's Video tab (#963) and the caption on the player (#964) can show them and drive
-it. Neither of those is built yet: today nothing on the page or in the side panel shows the lines.
-How it's built is in [`docs/agents/extension.md`](../../../../docs/agents/extension.md), Captions
+so the side panel's Video tab ([`video-tab.md`](video-tab.md)) and the caption on the player
+(#964) can show them and drive it. The caption on the player isn't built yet. How it's built is in [`docs/agents/extension.md`](../../../../docs/agents/extension.md), Captions
 and the video.
 
 The page is `https://www.youtube.com/watch?v=<id>`, also when YouTube moves to it without loading
@@ -40,7 +39,8 @@ minutes." Then:
 
 | Behavior | Check |
 | --- | --- |
-| The extension starts following the video only when something asks it to control the video, and stops on leaving it. | `src/video/youtube-page.interaction.test.tsx` |
+| The extension starts following the video only when a Video tab opens for the tab or something asks it to control the video, and stops on leaving it. | `src/video/youtube-page.interaction.test.tsx` |
+| While a Video tab is open for the tab, the page sends it the video's playback, at most ten times a second while it plays and at once on any other change, and nothing once the last one closes. On leaving a video it says there is none, then sends the next video's. | `src/video/youtube-page.interaction.test.tsx`, `src/video/video-tab-port.test.ts` |
 | It knows the time, whether the video plays, and its speed, and seeks, plays, pauses, and sets the speed of YouTube's own video. | `src/video/youtube-follower.interaction.test.tsx` |
 | It knows which line is playing, from its start up to its end, and that none is between lines. | `src/video/follower.test.ts` |
 | While an ad shows, no line is playing, the time holds where the video was, nothing plays, and the controls do nothing. After the ad, the learner's speed, such as 0.75×, comes back. | `src/video/follower.test.ts`, `src/video/youtube-follower.interaction.test.tsx` |
