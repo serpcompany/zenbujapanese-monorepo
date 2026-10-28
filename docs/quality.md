@@ -76,7 +76,7 @@ account in [`quality-ios-account.md`](quality-ios-account.md); the website in
   service's Dockerfile checks the app's files and the image's copies against the pinned release,
   then rebuilds it, checks its retired entries against every pinned release, and compares it with
   its pin. Main gap: publishing has run only against the fake bucket, as the `language-data-release`
-  environment has no R2 token (#828), and its address is checked by hand, not in CI (#985).
+  environment has no R2 token (#828), and its address is checked by hand, not in CI (#985, #1113).
 - **Language-data tools, B.** The `iOS` workflow runs the contract tests before merge, and a rebuild
   is one command, on a pinned Python, from sources archived beside their records. But most
   importers, such as `language-data/tools/import_jmdict.py`'s entries, have no tests of their own

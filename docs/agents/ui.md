@@ -33,14 +33,15 @@ The package runs in a Next.js server component, in the browser, and in an extens
 root, so a check refuses anything only one of them has:
 
 - **No client and no framework.** Biome (`packages/ui/biome.json`, `noRestrictedImports`)
-  refuses `next`, `next/*`, `@opennextjs/*`, `server-only`, `next-themes`, `sonner`, and the
-  website's `@/` paths; `pnpm verify` refuses an import of `apps/` or `tools/`
+  refuses `next`, `next/*`, `@opennextjs/*`, `server-only`, `next-themes`, and the website's `@/`
+  paths, in every file; `pnpm verify` refuses an import of `apps/` or `tools/`
   (`ui-imports-no-client`) and anything that reaches Next.js or the theme switcher, however
   indirectly (`ui-needs-no-next`, `verify.json`).
 - **One Toaster.** shadcn's Sonner, `components/sonner.tsx`, is the one file that imports
   `sonner`. It takes the theme as a prop, so each client passes its own: the website its
   `next-themes` theme, the extension's side panel the system's. Nothing else in the package
-  reaches it (`ui-toasts-only-in-toaster`): a component takes a notice as a callback, and the
+  reaches it, however indirectly (`ui-toasts-only-in-toaster`, `verify.json`), so Biome doesn't
+  list `sonner` and lifts nothing for that file: a component takes a notice as a callback, and the
   client shows the toast. Sonner adds its styles to the page's head, so a shadow root mounts no
   Toaster.
 - **Only the core's answers.** Of `@zenbu/dictionary-core`, only `detail/` and `sources/`: a

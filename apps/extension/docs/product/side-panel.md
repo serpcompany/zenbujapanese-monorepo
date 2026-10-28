@@ -69,4 +69,4 @@ and the tab comes back once the dictionary is ready (`panel.interaction.test.tsx
 
 The panel is designed at 380 px wide and works down to 320 px: nothing scrolls sideways, on any
 tab or on a page with a long line of Japanese (in Chrome by an agent on 2026-10-28,
-at 320 and 380 px; a browser test is #952's).
+at 320 and 380 px). It is checked by hand only; a browser test is #1112.

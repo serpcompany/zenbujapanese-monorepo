@@ -11,8 +11,7 @@ the three that run Claude, and the JMdict monthly update, that code would run wi
 token, the registry's, Cloudflare's, Claude's, or one that pushes. The others hold less, but not
 nothing: each job that installs holds a token that reads the private `@serpcompany/verify`, the
 `Pull request` jobs one that reads the pull request, and `Dictionary API`'s run on a push to `main`
-saves the Git LFS cache that `Dictionary API deploy` and `Extension`'s browser job restore under
-the same key. A pin also runs the same code on every run.
+saves the Git LFS cache that `Dictionary API deploy` restores under the same key. A pin also runs the same code on every run.
 
 `tools/checks/src/workflow-rules.test.ts` fails a workflow or action that names another by
 anything but its commit, and holds the table below to the pins. The last workflows were pinned on
@@ -39,7 +38,6 @@ To update one, pin the new release's commit and change this table in the same pu
 | `pnpm/action-setup` | `0977fd99725f1db4007ccb2928dbb4e90d06cc86` | v6.0.10 | `.github/workflows/account-api.yml`, `.github/workflows/claude.yml`, `.github/workflows/dictionary-api.yml`, `.github/workflows/dictionary-core.yml`, `.github/workflows/extension-packages.yml`, `.github/workflows/extension.yml`, `.github/workflows/jmdict-update.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/repository.yml`, `.github/workflows/web-deploy.yml`, `.github/workflows/web.yml` |
 | `actions/upload-artifact` | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` | v7.0.2 | `.github/workflows/account-api.yml`, `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/extension-packages.yml`, `.github/workflows/extension.yml`, `.github/workflows/ios.yml`, `.github/workflows/language-data-build.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web.yml` |
 | `actions/cache` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0 | `.github/actions/package-language-data/action.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/dictionary-api.yml`, `.github/workflows/ios.yml` |
-| `actions/cache/restore` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0, restoring only | `.github/workflows/extension.yml` |
 | `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml`, `.github/workflows/ios.yml`, `.github/workflows/language-data-build.yml` |
 | `docker/setup-buildx-action` | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | v4.4.1 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |

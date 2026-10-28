@@ -19,9 +19,9 @@ captions }`, to the extension's pages and to that tab. For this the manifest ask
   requests to `www.youtube.com/youtubei/`, as the spike (#945) did: POSTs only, from no tab, and
   with the extension as initiator. The service worker adds it before its first request
   (`prepareRequests`); if Chrome refuses it, no request goes, the video fails with "Zenbu couldn't
-  get ready to ask YouTube.", and the next request tries again. Whether `initiatorDomains`
-  matches the service worker's own requests is for #952's stand-in check, before any request to
-  YouTube.
+  get ready to ask YouTube.", and the next request tries again. The browser tests' stand-in
+  YouTube (`e2e/youtube-stand-in.ts`) doesn't look at `Origin`, so whether `initiatorDomains`
+  matches the service worker's own requests is unchecked until a run on YouTube itself.
 - **A 15-second timeout** (`AbortSignal.timeout`) on each request, so a request YouTube leaves
   unanswered fails as "Zenbu couldn't reach YouTube." and frees the queue for the other tabs.
 - **One request at a time.** Every request to YouTube goes through one queue, and each tab's

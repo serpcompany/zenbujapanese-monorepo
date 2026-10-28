@@ -88,7 +88,7 @@ export function captionsService(dependencies: CaptionsDependencies) {
         await store.setRateLimit(next)
         return rateLimited(videoId, next.retryAt)
       }
-      if (fetched.state === 'lines' && limit) await store.setRateLimit(undefined)
+      if (limit) await store.setRateLimit(undefined)
       return { ...fetched, videoId }
     }).catch((error: unknown) => failed(videoId, failure(error).reason))
   }

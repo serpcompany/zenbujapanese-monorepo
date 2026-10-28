@@ -131,10 +131,10 @@ Clients read the bucket at **`https://data.zenbujapanese.com`**, an R2 custom do
 The name is #941's recommendation, which Francis accepted on 2026-10-27 (its Open question 18). It
 lives in this section; in `public_address.py`, the download check's default
 ([Checking the download](#checking-the-download)); and in the extension, under `apps/extension/`,
-as `languageDataHost` in `src/shared/language-data.ts` and in its manifest's `host_permissions`,
-which `build/manifest.ts` builds from it. So a new name is an edit to all of them, and an
-amendment to ADR 0006, which records it. Publishing doesn't use it; the workflow writes through the
-S3 endpoint.
+as `languageData` in `build/hosts.ts`, which the build hands the code as `languageDataOrigin` in
+`src/shared/hosts.ts` and `build/manifest.ts` puts in the manifest's `host_permissions`. So a new
+name is an edit to all of them, and an amendment to ADR 0006, which records it. Publishing doesn't
+use it; the workflow writes through the S3 endpoint.
 
 The owner sets it up once, by hand, with a Cloudflare token that can edit R2 and the zone, not the
 workflow's, which reaches only the bucket's objects. From `apps/web`, where `wrangler` is
@@ -164,7 +164,7 @@ start from (#943), which [`release_download.py`](pipeline/release_download.py) l
 `LanguageReferenceData`, `CompoundPitch`, `JLPTLevelPack`, `TUBELEXFrequencyPack`, and
 `ExampleWordIndex`, the two kanji JSON files, `RetiredEntries.json`, and the 11 Kuromoji files, each
 with the `artifact_schema` the extension reads. Its `FIRST_SET` mirrors `firstSet` in the
-extension's `src/worker/release.ts`, and nothing checks one against the other, so change both
+extension's `src/worker/release-files.ts`, and nothing checks one against the other, so change both
 together. It:
 
 1. reads `releases.json` and picks the release the extension installs, the newest by
@@ -192,7 +192,7 @@ python3 language-data/pipeline/check_download.py
 `--release 2026.10.12` checks a named release, and `--address` defaults to the public address. The
 extension goes on to an older release when the newest has a schema it doesn't read; this check fails
 instead, since a release it can't read is a release to fix. Run it by hand, after a release is
-published: it isn't in CI, for Bot Fight Mode and its download size, 801 MB for release 2026.10.12
+published: it isn't in CI (#1113), for Bot Fight Mode and its download size, 801 MB for release 2026.10.12
 (245 MB of it gzipped), which took 3 minutes on the owner's Mac. It sends its own `User-Agent`,
 `zenbu-language-data-check`, since Cloudflare refuses Python's with error 1010. Its tests, in
 `test_release_download.py`, run against a fake address, with no network.

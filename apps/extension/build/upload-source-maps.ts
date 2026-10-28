@@ -97,12 +97,25 @@ function runStep(step: Step, run: Run, say: Say, token: string): Ran | undefined
   return undefined
 }
 
+function manifestVersion(folder: string): string | undefined {
+  try {
+    const { version } = JSON.parse(readFileSync(join(folder, 'manifest.json'), 'utf8'))
+    return typeof version === 'string' ? version : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function send(folder: string, maps: string[], environ: Environ, run: Run, say: Say): boolean {
   if (maps.length === 0) {
     say.warn(warning(`${folder} holds no source maps, so none went to Sentry`))
     return false
   }
-  const { version } = JSON.parse(readFileSync(join(folder, 'manifest.json'), 'utf8'))
+  const version = manifestVersion(folder)
+  if (version === undefined) {
+    say.warn(warning(`${folder}/manifest.json has no readable version, so no maps went to Sentry`))
+    return false
+  }
   const release = releaseName(version)
   const token = environ[tokenVariable]?.trim() ?? ''
   for (const step of preparing(folder, environ)) {

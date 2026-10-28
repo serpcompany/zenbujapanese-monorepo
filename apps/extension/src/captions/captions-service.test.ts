@@ -63,6 +63,15 @@ function lines(answer: CaptionsAnswer | undefined) {
   return answer.state === 'lines' ? answer.lines.map(line => line.text) : answer.state
 }
 
+async function rateLimitedOnce() {
+  const page = harness()
+  page.youTube.answerTimedText(429)
+  await page.open(1, japaneseVideo)
+  const limited = await page.settled(1)
+  if (limited?.state !== 'rate-limited') throw new Error('expected a rate limit')
+  return { page, limited }
+}
+
 describe('captions service', () => {
   it("gives a video's lines, asking YouTube once for them however often they are asked for", async () => {
     const page = harness()
@@ -196,11 +205,7 @@ describe('captions service', () => {
   })
 
   it('with Zenbu Captions off, hands the watch page no wait, also one that is over', async () => {
-    const page = harness()
-    page.youTube.answerTimedText(429)
-    await page.open(1, japaneseVideo)
-    const limited = await page.settled(1)
-    if (limited?.state !== 'rate-limited') throw new Error('expected a rate limit')
+    const { page, limited } = await rateLimitedOnce()
     page.clock.captionsOn = false
     const requests = page.youTube.sent.length
     for (const now of [limited.retryAt - 1, limited.retryAt + 20 * 60_000]) {
@@ -229,6 +234,19 @@ describe('captions service', () => {
     await page.open(2, secondJapaneseVideo)
     const next = await page.settled(2)
     expect(next?.state === 'rate-limited' && next.retryAt - page.clock.now).toBeLessThanOrEqual(
+      (rateLimitWaits[0] ?? 0) * (1 + rateLimitJitter)
+    )
+  })
+
+  it('starts over at 15 minutes after any answer that is not a 429, such as a video with no Japanese captions', async () => {
+    const { page, limited } = await rateLimitedOnce()
+    page.clock.now = limited.retryAt
+    await page.open(2, englishVideo)
+    expect(await page.settled(2)).toEqual({ state: 'no-japanese-captions', videoId: englishVideo })
+    await page.open(3, secondJapaneseVideo)
+    const next = await page.settled(3)
+    if (next?.state !== 'rate-limited') throw new Error('expected a rate limit')
+    expect(next.retryAt - page.clock.now).toBeLessThanOrEqual(
       (rateLimitWaits[0] ?? 0) * (1 + rateLimitJitter)
     )
   })

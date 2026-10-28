@@ -140,6 +140,22 @@ describe('uploadSourceMaps', () => {
     expect(said.join('\n')).toMatch(/couldn't install @sentry\/cli@3\.8\.0 \(exit 1\)/)
   })
 
+  it('warns, and still takes the maps out, when the manifest is missing or unreadable', () => {
+    for (const manifest of [null, '{ not json', JSON.stringify({ name: 'Zenbu' })]) {
+      build()
+      if (manifest === null) rmSync(join(folder, 'manifest.json'))
+      else writeFileSync(join(folder, 'manifest.json'), manifest)
+      calls = []
+      said = []
+      expect(uploadSourceMaps(folder, { [tokenVariable]: token }, runner(), say)).toBe(false)
+      expect(calls).toEqual([])
+      expect(said.join('\n')).toMatch(/manifest\.json has no readable version/)
+      expect(filesLeft().filter(path => path.endsWith('.map'))).toEqual([])
+      rmSync(folder, { recursive: true, force: true })
+      mkdirSync(folder)
+    }
+  })
+
   it('warns about a build without maps', () => {
     build({ maps: false })
     expect(uploadSourceMaps(folder, { [tokenVariable]: token }, runner(), say)).toBe(false)

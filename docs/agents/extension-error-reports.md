@@ -53,7 +53,10 @@ with one difference below. There are no usage analytics.
   couldn't be reached), `dictionary-answer` (it answered with a failure, such as a worker that
   failed or didn't answer), or `translation-answer` (the Translator failed or didn't answer in
   time). It reports `side-panel-behavior` when Chrome refuses, as the service worker starts, to
-  open the side panel from the toolbar icon (`src/service-worker/side-panel.test.ts`). A translator that isn't available is an answer, not a failure. Never the failure's text,
+  open the side panel from the toolbar icon (`src/service-worker/side-panel.test.ts`), and
+  `page-script` when registering or injecting the page script fails
+  (`src/service-worker/page-scripts.test.ts`). A translator that isn't available is an answer, not
+  a failure. Never the failure's text,
   the request, the selected text, or the translation. A code that fails again and again is
   reported once per service-worker life: `dedupeIntegration` drops an event that repeats the one
   before it.
@@ -77,9 +80,12 @@ with one difference below. There are no usage analytics.
   store zip, made from the folder afterwards, holds none. The token comes only from
   `SENTRY_AUTH_TOKEN`, never the login keychain (the app's token there got a 400), and the script
   never prints it. No maps, no token (then no upload is tried), or a step that fails or stalls is
-  a warning and exits 0. Without a token the scripts still get their debug IDs, so the package can
+  a warning and exits 0, and so is a `manifest.json` that is missing or has no version: the maps
+  are still deleted. Without a token the scripts still get their debug IDs, so the package can
   ship; build the same commit again and upload its maps later (the debug IDs come from the files'
-  contents, so they match). #986's workflow runs it on each package.
+  contents, so they match). The `Extension packages` workflow runs it only on the Chrome Web Store
+  package, and only on `main` ([`ci-deploys.md`](ci-deploys.md)): the staging package's maps are
+  deleted without an upload, so its scripts get no debug IDs and its events aren't symbolicated.
 - **Checking one arrives.** In the agent Chrome harness, load a build with the DSN, then throw
   from each context: `setTimeout(() => { throw new Error('Zenbu test error: <part>') })` evaluated
   in a page, the service worker, the offscreen document, and the dictionary worker, and Test
