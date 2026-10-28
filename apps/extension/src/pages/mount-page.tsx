@@ -1,4 +1,5 @@
 import '../styles/pages.css'
+import { PronounceWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-button'
 import type { ReactNode } from 'react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -13,5 +14,9 @@ export function mountPage(title: string, page: ReactNode): void {
   addGeist()
   followSystemColorScheme(document.documentElement)
   const container = document.body.appendChild(document.createElement('div'))
-  createRoot(container).render(<StrictMode>{page}</StrictMode>)
+  createRoot(container).render(
+    <StrictMode>
+      <PronounceWithoutLocalVoice value="unsupported">{page}</PronounceWithoutLocalVoice>
+    </StrictMode>
+  )
 }

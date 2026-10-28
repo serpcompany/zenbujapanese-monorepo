@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { bestLocalVoice, type Voice } from './voice'
+import { bestLocalVoice, type Voice, voiceToSpeak } from './voice'
 
 const onThisComputer = (name: string, lang = 'ja-JP', voiceURI = name): Voice => ({
   name,
@@ -68,5 +68,22 @@ describe('the voice that pronounces a word', () => {
     expect(bestLocalVoice([matildaEnhanced, samantha], 'en-US')).toBe(samantha)
     expect(bestLocalVoice([samantha, matildaEnhanced], 'en')).toBe(matildaEnhanced)
     expect(bestLocalVoice([googleJapanese, matildaEnhanced], 'en-US')).toBe(matildaEnhanced)
+  })
+})
+
+describe('the voice to speak in', () => {
+  test('is the best local voice under either rule', () => {
+    expect(voiceToSpeak([googleJapanese, kyoko], 'ja-JP', 'unsupported')).toBe(kyoko)
+    expect(voiceToSpeak([googleJapanese, kyoko], 'ja-JP', 'browser-voice')).toBe(kyoko)
+  })
+
+  test('with only a network voice, is the browser’s own on the website and none in the extension', () => {
+    expect(voiceToSpeak([googleJapanese], 'ja-JP', 'browser-voice')).toBeNull()
+    expect(voiceToSpeak([googleJapanese], 'ja-JP', 'unsupported')).toBe('unsupported')
+  })
+
+  test('with no voices listed at all, is the browser’s own under either rule', () => {
+    expect(voiceToSpeak([], 'ja-JP', 'browser-voice')).toBeNull()
+    expect(voiceToSpeak([], 'ja-JP', 'unsupported')).toBeNull()
   })
 })

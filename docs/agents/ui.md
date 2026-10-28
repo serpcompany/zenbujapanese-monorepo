@@ -79,10 +79,16 @@ app's `SpeechSynthesisClient.swift` does: at 0.82 of the default rate, in the vo
 computer itself, never a network one (`localService` false), of the language asked for: one of the
 region asked for (`ja-JP`, or `en-US` for a meaning) before one of another, then a premium voice, an
 enhanced one (by its name or voice URI, in English or Japanese), any other, and Apple's Eloquence
-voices last, with the browser's order between equals. With none, the utterance names only its
-`lang`, so the browser speaks in its own voice rather than not at all. The browser lists its voices
-late, so a click before they load waits for `voiceschanged`, up to a second. Each click cancels what
-is being spoken first. The extension's Translate tab takes its voice from `bestLocalVoice` too, for
+voices last, with the browser's order between equals. With none, `voiceToSpeak` applies the rule
+the surface passes through `PronounceWithoutLocalVoice`: the website keeps the default,
+`browser-voice`, so the utterance names only its `lang` and the browser speaks in its own voice,
+which may be an online one; the extension's roots (`mountPage` and `mountInShadowRoot`) pass
+`unsupported`, so it calls `onUnsupported` and speaks nothing (#1122's D4 is the extension's). An
+empty list, under either rule, gets the `lang`-only utterance. `useWithoutLocalVoice` asks for
+`getVoices()` when a speaker mounts, so a click usually speaks inside its handler and keeps the user
+gesture. A click before the voices load waits for a `voiceschanged` that lists a local voice of the
+language, up to a second, and a later click drops that wait. Each click cancels what is being
+spoken first. The extension's Translate tab takes its voice from `bestLocalVoice` too, for
 `ja-JP` or `en-US` ([`extension.md`](extension.md)). The order is the owner's choice (#1122's D4,
 #1125): the app gets the system's Japanese voice (Kyoko, on a Mac with no better one), and a Mac
 also has Apple's older Eloquence voices (Eddy, Flo, Grandma, Grandpa, Reed, Rocko, Sandy, and

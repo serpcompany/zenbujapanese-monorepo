@@ -25,3 +25,15 @@ export function bestLocalVoice<V extends Voice>(voices: readonly V[], lang: stri
       null
     )
 }
+
+export type WithoutLocalVoice = 'browser-voice' | 'unsupported'
+
+export function voiceToSpeak<V extends Voice>(
+  voices: readonly V[],
+  lang: string,
+  withoutLocalVoice: WithoutLocalVoice
+): V | null | 'unsupported' {
+  const voice = bestLocalVoice(voices, lang)
+  if (voice || voices.length === 0 || withoutLocalVoice === 'browser-voice') return voice
+  return 'unsupported'
+}

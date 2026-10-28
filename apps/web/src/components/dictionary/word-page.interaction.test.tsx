@@ -157,9 +157,17 @@ describe('pronouncing the word', () => {
   const said: Said[] = []
   const kyoko = { name: 'Kyoko', voiceURI: 'Kyoko', lang: 'ja-JP', localService: true }
   const kyokoEnhanced = { ...kyoko, name: 'Kyoko (Enhanced)', voiceURI: 'Kyoko (Enhanced)' }
+  const googleJapanese = {
+    ...kyoko,
+    name: 'Google 日本語',
+    voiceURI: 'Google 日本語',
+    localService: false
+  }
+  let listed: unknown[] = []
 
   beforeEach(() => {
     said.length = 0
+    listed = [kyoko, kyokoEnhanced]
     vi.stubGlobal(
       'SpeechSynthesisUtterance',
       class {
@@ -168,7 +176,7 @@ describe('pronouncing the word', () => {
       }
     )
     vi.stubGlobal('speechSynthesis', {
-      getVoices: () => [kyoko, kyokoEnhanced],
+      getVoices: () => listed,
       cancel: () => {},
       speak: ({ text, lang, voice, rate }: Said) => said.push({ text, lang, voice, rate })
     })
@@ -186,6 +194,14 @@ describe('pronouncing the word', () => {
     expect(said).toEqual([])
     act(() => speaker.click())
     expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP', voice: kyokoEnhanced, rate: 0.82 }])
+  })
+
+  test('a computer with only a network Japanese voice still says the reading, in the browser’s own voice', async () => {
+    listed = [googleJapanese]
+    const speaker = renderHeader(capsule, 'en', <Toaster />)
+    await act(async () => speaker.click())
+    expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP', voice: null, rate: 0.82 }])
+    expect(document.body.textContent).not.toContain(getDictionary('en').pronounce.unsupported)
   })
 
   test('a browser that can’t speak shows the page’s unsupported toast', async () => {
