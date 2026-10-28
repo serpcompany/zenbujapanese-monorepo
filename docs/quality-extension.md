@@ -17,7 +17,7 @@ to re-grade a row are in [`quality.md`](quality.md), with the other areas' grade
   install, offline. The `verify-extension` skill shows the same in branded Chrome with proof. Main gap,
   both tracked in [`tech-debt.md`](tech-debt.md) (Browser extension): the test surface's menu and
   dialog are driven by hand (#1062), and branded Chrome, where Chrome's own Translator runs, runs
-  only on an agent's Mac, not in CI (#1063). The header's site switch on a real tab, and Settings, are checked by hand, and so is the side panel's width at 320 and 380 px (#1112). The YouTube content script runs in the browser tests on the
+  only on an agent's Mac, not in CI (#1063). The side panel's tab bar and Back, the header's site switch on a real tab, Settings, Word Detail in the panel, and Translate are checked by hand, with no browser test, and so is the side panel's width at 320 and 380 px (#1112, each a row in [`tech-debt.md`](tech-debt.md)). The YouTube content script runs in the browser tests on the
   agent Chrome harness's stand-in watch page under YouTube's host, but never on YouTube. The browser tests install a
   fixture release but don't look a word up in it, resume a cut download, fail a wrong SHA-256,
   or update to a second release; the welcome tab has no screenshots, the install-to-first-lookup
