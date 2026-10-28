@@ -55,18 +55,6 @@ export interface WordRecord {
   relatedSlugs: Map<number, string>
 }
 
-function bySense<Row extends { sense_order: number }, Value>(
-  rows: Row[],
-  value: (row: Row) => Value | null
-): Map<number, Value[]> {
-  const senses = new Map<number, Value[]>()
-  for (const row of rows) {
-    const found = value(row)
-    if (found !== null) senses.set(row.sense_order, [...(senses.get(row.sense_order) ?? []), found])
-  }
-  return senses
-}
-
 export function readWord(
   db: ArtifactDatabase,
   kanji: KanjiData,
@@ -78,25 +66,19 @@ export function readWord(
   )
   if (!record) return null
 
-  const restrictions = bySense(
-    db.all<{ sense_order: number; kind: number; form: string }>(
-      `SELECT sense_order, kind, form FROM sense_form_restrictions WHERE entry_id = unhex(?)
-       ORDER BY sense_order, kind, form`,
-      [record.id]
-    ),
-    (row): SenseRestrictionRow | null => {
-      const kind = formKinds[row.kind]
-      return kind ? { kind, form: row.form } : null
-    }
-  )
-  const glosses = bySense(
-    db.all<{ sense_order: number; text: string }>(
-      `SELECT sense_order, text FROM gloss_atoms WHERE entry_id = unhex(?)
-       ORDER BY sense_order, gloss_order`,
-      [record.id]
-    ),
-    row => row.text
-  )
+  const restrictions = new Map<number, SenseRestrictionRow[]>()
+  for (const row of db.all<{ sense_order: number; kind: number; form: string }>(
+    `SELECT sense_order, kind, form FROM sense_form_restrictions WHERE entry_id = unhex(?)
+     ORDER BY sense_order, kind, form`,
+    [record.id]
+  )) {
+    const kind = formKinds[row.kind]
+    if (!kind) continue
+    restrictions.set(row.sense_order, [
+      ...(restrictions.get(row.sense_order) ?? []),
+      { kind, form: row.form }
+    ])
+  }
 
   const relationships = JSON.parse(record.relationships_json) as RelationshipRecord[]
   const targetIds = [
@@ -115,13 +97,9 @@ export function readWord(
     writtenForms,
     readingForms: JSON.parse(record.reading_forms_json),
     senses: (
-      JSON.parse(record.senses_json) as Pick<
-        EntryRow['senses'][number],
-        'meaning' | 'notes' | 'partsOfSpeech'
-      >[]
+      JSON.parse(record.senses_json) as Omit<EntryRow['senses'][number], 'restrictions'>[]
     ).map(({ meaning, notes, partsOfSpeech }, order) => ({
       meaning,
-      glosses: glosses.get(order) ?? [],
       notes,
       partsOfSpeech,
       restrictions: restrictions.get(order) ?? []

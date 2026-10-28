@@ -248,7 +248,7 @@ describe('Word Detail', () => {
     expect(named('[data-slot="card-title"]', 'Frequency')).toBeUndefined()
   })
 
-  test('a meaning’s Speak reads its glosses in an English voice', async () => {
+  test('a meaning’s Speak reads it in an English voice', async () => {
     const speak = vi.fn<(utterance: { text: string; lang: string }) => void>()
     vi.stubGlobal('speechSynthesis', { cancel: vi.fn(), speak })
     vi.stubGlobal(
@@ -258,10 +258,11 @@ describe('Word Detail', () => {
         constructor(readonly text: string) {}
       }
     )
-    await show({ page: 'word', entSeq: 1577980 })
+    await show({ page: 'word', entSeq: iru })
     await openMenu(wordDetailLabels.meaning.actions.replace('{number}', '1'))
     await click(named('[data-slot="dropdown-menu-item"]', 'Speak', document))
-    expect(speak.mock.calls[0]?.[0]).toMatchObject({ lang: 'en-US', text: 'to be, to exist' })
+    expect(speak.mock.calls[0]?.[0]).toMatchObject({ lang: 'en-US' })
+    expect(speak.mock.calls[0]?.[0].text).toContain('need')
   })
 
   test('a meaning’s Copy writes the meaning to the clipboard', async () => {

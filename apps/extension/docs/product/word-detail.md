@@ -20,7 +20,7 @@ answered through a fixture source in the test, with Back drawn by the side panel
 | Frequency lists the learner's chosen dictionaries in their chosen order (`frequencyDictionaries.chosen`, JLPT among them), and leaves the section out when none has the word. | word: Frequency follows the chosen dictionaries |
 | A word with several entries, such as 要, shows each entry's reading as a tab, starting on the one that was chosen. | word: 要's two entries |
 | The part of speech opens the conjugation table in a sheet. A form in it opens that form's examples. | word: the conjugation table |
-| Each meaning has a menu: Speak reads its glosses in an English voice, without their trailing notes in brackets, as the app does (いる's first meaning is read "to be, to exist"), and Copy puts it on the clipboard and says "Meaning copied". | word: a meaning's Speak; a meaning's Copy |
+| Each meaning has a menu: Speak reads it in an English voice, and Copy puts it on the clipboard and says "Meaning copied". | word: a meaning's Speak; a meaning's Copy |
 | A page's notices, such as "Meaning copied", "Link copied", a browser that can't speak, or a related word not found, show as a toast over the side panel, where they're seen however far the page is scrolled. The toast is a live region. One Toaster, `@zenbu/ui`'s shadcn Sonner, sits in the side panel. | word: a meaning's Copy; a related word with no target |
 | Share sends the word's zenbujapanese.com page to the system's share sheet; Copy Link, under •••, copies it. Without a share sheet, Share copies the link. | word: Share and Copy Link |
 | Examples show 25 sentences; Load more examples fetches the next 25. | word: Load More |
