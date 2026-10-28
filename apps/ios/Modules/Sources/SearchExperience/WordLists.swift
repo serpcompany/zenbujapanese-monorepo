@@ -26,7 +26,7 @@ final class WordLists: LocalFileStore {
   static let shared = WordLists(
     sharedCopy: SharedContainer.copy(named: SharedContainer.wordLists))
 
-  static let defaultListName = String(localized: "Favorites")
+  nonisolated static let defaultListName = String(localized: "Favorites")
   nonisolated static let favoritesID = UUID(uuidString: "2177c773-9e88-410f-9348-6cefaebe0a93")!
 
   private(set) var isLoaded = false
@@ -35,6 +35,7 @@ final class WordLists: LocalFileStore {
   private(set) var lists: [WordList] = []
   private(set) var membershipsByList: [UUID: [WordListMembership]] = [:]
   private(set) var movedListIDs: [UUID: UUID] = [:]
+  private(set) var deletedDailyListIDs: Set<UUID> = []
   @ObservationIgnored private let writer: WordListsWriter
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
@@ -52,6 +53,7 @@ final class WordLists: LocalFileStore {
           }
           .values)
         membershipsByList = Self.grouped(contents.memberships, in: lists)
+        deletedDailyListIDs = Set(contents.deletedDailyLists)
       }
       isLoaded = true
       if loaded.contents == nil {
@@ -86,10 +88,14 @@ final class WordLists: LocalFileStore {
 
   @discardableResult
   func createList(named name: String, id: UUID = UUID()) -> WordList? {
-    guard canChange, !hasList(id), let name = AccountRules.shared.listName(name) else { return nil }
+    guard canChange, !hasList(id), !deletedDailyListIDs.contains(id),
+      let name = AccountRules.shared.listName(name)
+    else { return nil }
     let now = Date()
+    let isDaily = Self.day(of: id) != nil
+    let sameKind = lists.filter { (Self.day(of: $0.id) != nil) == isDaily }
     let list = WordList(
-      id: id, name: name, position: (lists.map(\.position).max() ?? -1) + 1,
+      id: id, name: name, position: (sameKind.map(\.position).max() ?? -1) + 1,
       createdAt: now, updatedAt: now)
     lists.append(list)
     persist()
@@ -112,21 +118,25 @@ final class WordLists: LocalFileStore {
     guard canChange, lists.contains(where: { $0.id == listID }) else { return }
     lists.removeAll { $0.id == listID }
     membershipsByList[listID] = nil
+    rememberDeleted(listID)
     persist()
     changeObserver?(.listDeleted(listID))
   }
 
   func moveLists(fromOffsets source: IndexSet, toOffset destination: Int) {
     guard canChange else { return }
-    lists.move(fromOffsets: source, toOffset: destination)
+    var own = ownLists
+    own.move(fromOffsets: source, toOffset: destination)
     let now = Date()
     var moved: [(WordList, previous: WordList)] = []
-    for index in lists.indices where lists[index].position != index {
-      let previous = lists[index]
-      lists[index].position = index
-      lists[index].updatedAt = now
-      moved.append((lists[index], previous))
+    for index in own.indices where own[index].position != index {
+      let previous = own[index]
+      own[index].position = index
+      own[index].updatedAt = now
+      moved.append((own[index], previous))
     }
+    let placed = Dictionary(uniqueKeysWithValues: own.map { ($0.id, $0) })
+    lists = Self.ordered(lists.map { placed[$0.id] ?? $0 })
     persist()
     for (list, previous) in moved { changeObserver?(.listChanged(list, previous: previous)) }
   }
@@ -238,10 +248,16 @@ final class WordLists: LocalFileStore {
   }
 
   func applySyncedRemoval(ofList listID: UUID) {
-    guard canChange, hasList(listID) else { return }
+    let forgetsDaily = Self.day(of: listID) != nil && !deletedDailyListIDs.contains(listID)
+    guard canChange, hasList(listID) || forgetsDaily else { return }
     lists.removeAll { $0.id == listID }
     membershipsByList[listID] = nil
+    rememberDeleted(listID)
     persist()
+  }
+
+  private func rememberDeleted(_ listID: UUID) {
+    if Self.day(of: listID) != nil { deletedDailyListIDs.insert(listID) }
   }
 
   func applySynced(_ membership: WordListMembership) {
@@ -264,7 +280,9 @@ final class WordLists: LocalFileStore {
     guard canChange else { return }
     let writer = writer
     writes.save { [self] in
-      await writer.write(lists: lists, memberships: membershipsByList.values.flatMap(\.self))
+      await writer.write(
+        lists: lists, memberships: membershipsByList.values.flatMap(\.self),
+        deletedDailyLists: deletedDailyListIDs.sorted { $0.uuidString < $1.uuidString })
     }
   }
 
@@ -303,16 +321,19 @@ private actor WordListsWriter {
     var version = currentVersion
     var lists: [WordList]
     var memberships: [WordListMembership]
+    var deletedDailyLists: [UUID]
   }
 
   private struct LoadedFile: Decodable {
     let lists: [LossyDecodable<WordList>]
     let memberships: [LossyDecodable<WordListMembership>]
+    let deletedDailyLists: [LossyDecodable<UUID>]?
   }
 
   struct Contents: Sendable {
     var lists: [WordList] = []
     var memberships: [WordListMembership] = []
+    var deletedDailyLists: [UUID] = []
   }
 
   struct Loaded: Sendable {
@@ -363,11 +384,15 @@ private actor WordListsWriter {
   private static func readableContents(_ stored: LoadedFile) -> Contents {
     Contents(
       lists: stored.lists.compactMap(\.value),
-      memberships: stored.memberships.compactMap(\.value))
+      memberships: stored.memberships.compactMap(\.value),
+      deletedDailyLists: (stored.deletedDailyLists ?? []).compactMap(\.value))
   }
 
-  func write(lists: [WordList], memberships: [WordListMembership]) async -> Bool {
-    let stored = StoredFile(lists: lists, memberships: memberships)
+  func write(
+    lists: [WordList], memberships: [WordListMembership], deletedDailyLists: [UUID]
+  ) async -> Bool {
+    let stored = StoredFile(
+      lists: lists, memberships: memberships, deletedDailyLists: deletedDailyLists)
     guard let data = try? JSONEncoder.localStore.encode(stored) else { return false }
     return await file.write(data)
   }

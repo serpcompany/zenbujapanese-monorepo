@@ -159,6 +159,16 @@ final class FakeAccountService: @unchecked Sendable {
     return profile
   }
 
+  private func isDaily(_ listID: String) -> Bool {
+    UUID(uuidString: listID).flatMap(WordLists.day(of:)) != nil
+  }
+
+  private func ownListCount(of user: String) -> Int {
+    (accounts[user] ?? [:]).count {
+      $0.key.hasPrefix("list:") && $0.value.data != nil && !isDaily(String($0.key.dropFirst(5)))
+    }
+  }
+
   private func apply(_ mutation: StubSyncRequest.Mutation, for user: String) -> [String: Any] {
     if mutation.entity == "profile" { _ = profile(of: user) }
     if SyncEntity.kept.contains(mutation.entity) { return applyKept(mutation, for: user) }
@@ -175,6 +185,9 @@ final class FakeAccountService: @unchecked Sendable {
     switch (mutation.entity, mutation.operation) {
     case ("list", "create"):
       guard current == nil else { return StubSync.rejected(mutation.id, "already_exists") }
+      guard isDaily(mutation.entityId) || ownListCount(of: user) < 500 else {
+        return StubSync.rejected(mutation.id, "too_many_lists")
+      }
       var position = 0
       if case .number(let value) = mutation.fields?["position"] { position = value }
       return save(

@@ -66,8 +66,14 @@ extension AccountSync {
   nonisolated static let unknownOperation = "unknown_operation"
 
   static func keepsTheDevicesState(_ change: QueuedSyncChange, code: String) -> Bool {
-    change.key.entity == SyncEntity.knownWord && change.operation == "set"
-      && code == unknownOperation
+    switch (change.key.entity, change.operation, code) {
+    case (SyncEntity.knownWord, "set", unknownOperation):
+      true
+    case (SyncEntity.list, "create", "already_exists"):
+      UUID(uuidString: change.key.entityID).flatMap(WordLists.day(of:)) != nil
+    default:
+      false
+    }
   }
 
   func resendWithoutLearning(_ change: QueuedSyncChange) {

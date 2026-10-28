@@ -103,6 +103,7 @@ final class ProgressLog: LocalFileStore {
   private var daysTurned = 0
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var now: () -> Date = Date.init
+  @ObservationIgnored var changeRecorded: ((KnownWordChange, String) -> Void)?
   @ObservationIgnored private let writer: ProgressLogWriter
   @ObservationIgnored private let defaults: UserDefaults
   @ObservationIgnored private let calendar: Calendar
@@ -192,6 +193,7 @@ final class ProgressLog: LocalFileStore {
         ProgressLogChange(
           id: change.storedID, before: previous.stored, after: change.status.stored, at: time))
       keepToday(totals)
+      changeRecorded?(change, changed)
     case .synced(let totals):
       keepToday(totals)
     }
