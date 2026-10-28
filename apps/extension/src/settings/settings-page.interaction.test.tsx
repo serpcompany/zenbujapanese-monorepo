@@ -1,23 +1,12 @@
+import { creditsShownBy } from '@zenbu/dictionary-core/sources/credits'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { dictionary, resetDictionary } from '../test/dictionary'
 import { startExtension } from '../test/extension'
 import { byText, click, find, isOn, type Rendered, render, settle, switchFor } from '../test/render'
 import { SettingsPage } from './settings-page'
 
-const credits = vi.hoisted(() => ({ clients: [] as string[] }))
-
 vi.mock('../shared/dictionary', () => import('../test/dictionary'))
 vi.mock('../shared/dictionary-progress', () => import('../test/dictionary'))
-vi.mock('@zenbu/dictionary-core/sources/credits', async original => {
-  const core = await original<typeof import('@zenbu/dictionary-core/sources/credits')>()
-  return {
-    ...core,
-    creditsShownBy: (client: string) => {
-      credits.clients.push(client)
-      return core.creditsShownBy('website')
-    }
-  }
-})
 
 const jlpt = 'zenbu.jlpt.waller.levels'
 const youtube = 'zenbu.tubelex.youtube.ja.unidic-3.1'
@@ -37,7 +26,6 @@ const pageShown = (settings: HTMLElement) =>
 afterEach(() => {
   opened?.unmount()
   opened = undefined
-  credits.clients = []
   resetDictionary()
   location.hash = ''
 })
@@ -149,11 +137,15 @@ describe('Settings', () => {
     expect(find(settings, 'main p').textContent).toBe('Zenbu is on for every site it can run on.')
   })
 
-  it("credits the sources the extension's client shows", async () => {
+  it('credits every source the core lists for the extension, with its link', async () => {
     startExtension()
     const settings = await openSettings('#credits')
-    expect(credits.clients).toContain('extension')
-    expect(settings.querySelectorAll('main li').length).toBeGreaterThan(0)
-    expect(byText(settings, 'a', 'JMdict').getAttribute('href')).toContain('edrdg')
+    const shown = creditsShownBy('extension')
+    expect(shown.credits.length).toBeGreaterThan(0)
+    expect(byText(settings, 'main p', shown.conversionNotice)).toBeTruthy()
+    expect(settings.querySelectorAll('main li')).toHaveLength(shown.credits.length)
+    for (const source of shown.credits) {
+      expect(byText(settings, 'main li a', source.name).getAttribute('href')).toBe(source.url)
+    }
   })
 })

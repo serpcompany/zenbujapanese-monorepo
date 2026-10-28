@@ -4,7 +4,7 @@ import {
 } from '@zenbu/dictionary-core/detail/frequency'
 import type { Settings } from '../shared/settings'
 
-export type FrequencyRow = { dictionary: FrequencyDictionary; chosen: boolean }
+type FrequencyRow = { dictionary: FrequencyDictionary; chosen: boolean }
 
 type FrequencyChoice = Pick<
   Settings,

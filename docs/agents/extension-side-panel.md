@@ -76,8 +76,8 @@ name a site the header can't see. The header has four states:
 It reads the site again when another tab comes to the front (`tabs.onActivated`), a tab finishes
 loading (`tabs.onUpdated`), and Zenbu's site access changes (`permissions.onAdded` and
 `onRemoved`). The fake Chrome in the tests (`src/test/fake-chrome.ts`) gives `tab.url` only where
-a granted origin covers it or the toolbar icon was clicked on that tab, so the tests reach only
-the states Chrome does.
+a granted origin covers it or the toolbar icon was clicked on that tab, and its `grant` and
+`revoke` fire `onAdded` and `onRemoved`, so the tests reach only the states Chrome does.
 
 ## Checks
 

@@ -15,12 +15,3 @@ export function mountPage(title: string, page: ReactNode): void {
   const container = document.body.appendChild(document.createElement('div'))
   createRoot(container).render(<StrictMode>{page}</StrictMode>)
 }
-
-export function PageShell({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <main className="flex flex-col gap-4 p-4">
-      <h1 className="font-heading text-lg font-semibold">{title}</h1>
-      {children}
-    </main>
-  )
-}

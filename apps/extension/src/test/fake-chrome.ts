@@ -40,6 +40,7 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
   const activated = chromeEvent<() => void>()
   const updated = chromeEvent<TabUpdated>()
   const added = chromeEvent<() => void>()
+  const removed = chromeEvent<() => void>()
   const inTabs = new Map<number, ReturnType<typeof chromeEvent<MessageListener>>>()
   const sent: unknown[] = []
   const requested: string[][] = []
@@ -114,13 +115,18 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
         return Promise.resolve(true)
       },
       onAdded: added.event,
-      onRemoved: chromeEvent<() => void>().event
+      onRemoved: removed.event
     }
   }
 
   const grant = (origins: string[]) => {
     site.granted = [...site.granted, ...origins]
     for (const listener of [...added.listeners]) listener()
+  }
+
+  const revoke = (origins: string[]) => {
+    site.granted = site.granted.filter(pattern => !origins.includes(pattern))
+    for (const listener of [...removed.listeners]) listener()
   }
 
   const inTab = (tabId: number) => ({
@@ -160,6 +166,7 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
     switchTo,
     load,
     clickIcon,
-    grant
+    grant,
+    revoke
   }
 }

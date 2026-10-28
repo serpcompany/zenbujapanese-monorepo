@@ -14,7 +14,7 @@ is in `src/settings/labels.ts`. Each check is in
 | Frequency Dictionaries | JLPT Levels, then YouTube, each with its domain, up and down buttons, and a switch. The order is the order of ranks in the word popup and Word Detail; a dictionary turned off keeps its place. Neither can be removed. | `moves YouTube above JLPT Levels, which changes the chosen order`; `src/settings/frequency-order.test.ts` |
 | Dictionary Data | The dictionary's progress as the welcome tab shows it, the installed release, its size, when Zenbu last checked, and Check for Updates, which waits while a download runs. | `shows the installed release and checks for updates`; `draws the shared progress while the dictionary downloads, and Check for Updates waits` |
 | Sites | Each site Zenbu is off on, with Turn On; "Zenbu is on for every site it can run on." when there are none. | `says Zenbu is on everywhere when no site is turned off`; Turn On in `src/side-panel/header-controls.interaction.test.tsx` |
-| Credits | The sources the extension uses, each linked with its licence, and how Zenbu converts them. | `credits the sources the extension's client shows` |
+| Credits | The sources the extension uses, each linked with its licence, and how Zenbu converts them. | `credits every source the core lists for the extension, with its link` |
 
 Every switch is `@zenbu/ui`'s Switch. Settings are kept in the browser, one key per setting
 (`src/shared/settings.ts`); the reading aids and frequency dictionaries take the account's names so

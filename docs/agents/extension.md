@@ -5,8 +5,8 @@ repository to read the shared language data (ADR 0006) and replaces the 1.1.0 pr
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
 only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
 draws with `@zenbu/ui` ([`ui.md`](ui.md)). It keeps its interface text in `src/shared/labels.ts`,
-and a surface's own in its folder's `labels.ts`, such as `src/side-panel/labels.ts`,
-`src/settings/labels.ts`, and `src/translate/labels.ts`. What it does for a learner, and the check for each behavior, is in its
+and a surface's own in its folder's `labels.ts`, such as `src/side-panel/labels.ts` and
+`src/translate/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
 behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Side
 panel, Word popup, Zenbu Captions, Video follower, Translation module). How the dictionary worker
@@ -89,11 +89,11 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), and the content script's side on a watch page (`youtube-page.ts`). |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `src/settings/` | Settings and its pages ([`extension-settings.md`](extension-settings.md)). |
-| `src/shared/` | The messages and their types, the settings (`settings.ts`, `use-settings.ts`), the shared labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress (`dictionary-progress.tsx`), which every page that shows the download draws. Pages and content scripts look words up through `dictionary.ts`'s helpers, never with raw requests. |
+| `src/shared/` | The messages and their types, the settings, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress every page that shows the download draws (`dictionary-progress.tsx`). Pages and content scripts look words up with `dictionary.ts`'s helpers, never raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
-| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and follows the settings (`settings-follower.tsx`). |
+| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and shows each reading aid's state (`settings-follower.tsx`). |
 | `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local data server and its release (`local-server.ts`, `fixture-release.ts`). |
 | `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
@@ -121,16 +121,16 @@ is in [`extension-captions.md`](extension-captions.md).
 ### Translation
 
 Any surface translates with `translate(request)` (`src/translation/messages.ts`): it asks how
-available the translator is for a direction (`ja` to `en`, or `en` to `ja`), or translates lines
-of text. It sends `{ target: 'service-worker', translation }`, and the service worker opens the
-offscreen document as for the dictionary and passes it on as
-`{ target: 'offscreen', translation }`. The key is `translation`, not `request`, so the
-dictionary's listeners never answer it, nor the translation listeners a dictionary request. The offscreen document makes one Translator for
-each direction once Chrome says it is `available`, keeps it, and translates each line, leaving a
-blank one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes
-nothing then; a translation that fails, or doesn't answer within 30 seconds, comes back as
-`{ type: 'failed', reason }`, and the offscreen document drops that Translator, destroying it, so
-the next one makes a new one. A page's text never goes in an error's message.
+available the translator is for a direction (`ja` to `en`, or `en` to `ja`), or translates lines of
+text. It sends `{ target: 'service-worker', translation }`, and the service worker opens the
+offscreen document as for the dictionary and passes it on as `{ target: 'offscreen', translation }`.
+The key is `translation`, not `request`, so the dictionary's listeners never answer it, nor the
+translation listeners a dictionary request. The offscreen document makes one Translator for each
+direction once Chrome says it is `available`, keeps it, and translates each line, leaving a blank
+one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes nothing
+then; a translation that fails, or doesn't answer within 30 seconds, comes back as `{ type:
+'failed', reason }`, and the offscreen document drops that Translator, destroying it, so the next
+one makes a new one. A page's text never goes in an error's message.
 
 Chrome downloads a model only from a click, and the click's activation lasts a few seconds, so a
 page asks `translatorAvailability(direction)` itself in that click and, while the model is
@@ -138,11 +138,10 @@ page asks `translatorAvailability(direction)` itself in that click and, while th
 any message. It reports the download's progress from 0 to 1 and answers the state; a download with
 no progress for 60 seconds is stopped and answers Chrome's state then. The page then translates
 through the offscreen document, which makes its own Translator once the model is `available`. The
-offscreen document
-translates with no click once the model is `available`: checked on 2026-10-27 in Chrome 156, in
-the headful agent Chrome, by sending a translation from the test content script's world, with no
-user gesture, in a Chrome just started. Each direction has its own model. The model is Chrome's,
-on this computer, and nothing is sent anywhere to translate.
+offscreen document translates with no click once the model is `available`: checked on 2026-10-27 in
+Chrome 156, in the headful agent Chrome, by sending a translation from the test content script's
+world, with no user gesture, in a Chrome just started. Each direction has its own model. The model
+is Chrome's, on this computer, and nothing is sent anywhere to translate.
 
 ### Drawing on a page
 
@@ -178,10 +177,9 @@ Comic Sans, letter spacing, uppercase, dashed borders on every element, `button 
 and the theme's own token names set to other values), and `tailwind.html`, built with its own
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
-Dialog, Test error, which throws while drawing so the content script reports it, and each reading
-aid's state ([`extension-settings.md`](extension-settings.md)). The release build's only content
-script is the YouTube one; `build/manifest.test.ts` checks that. How each part reports its errors
-is in [`extension-error-reports.md`](extension-error-reports.md).
+Dialog, and Test error, which throws while drawing so the content script reports it. The release
+build's only content script is the YouTube one; `build/manifest.test.ts` checks that. How each part
+reports its errors is in [`extension-error-reports.md`](extension-error-reports.md).
 
 ## Layers
 
@@ -231,8 +229,7 @@ is in [`extension-error-reports.md`](extension-error-reports.md).
   client sending its own error but never the page's, with no global handler, the pages' and a
   worker's uncaught errors sent with their part, all through a recording transport
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
-  taken out (`build/upload-source-maps.test.ts`). The settings' are in
-  [`extension-settings.md`](extension-settings.md), and the side panel's in
+  taken out (`build/upload-source-maps.test.ts`). The side panel's are in
   [`extension-side-panel.md`](extension-side-panel.md).
 - **Captions and the video,** with YouTube's answers from `src/captions/fixtures/` through a
   stand-in `fetch`, never the network: the two requests and the core's rules, No Japanese

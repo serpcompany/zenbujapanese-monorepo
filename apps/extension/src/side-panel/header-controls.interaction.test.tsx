@@ -192,6 +192,25 @@ describe("the side panel's header", () => {
     expect(find(header, siteSwitchName)).toBeTruthy()
   })
 
+  it("gives the switch up when Chrome's site access is taken back, for Allow on a tab the toolbar icon shows, and for can't see on any other", async () => {
+    const fake = startExtension({
+      tabs: [article, { id: 8, url: `https://${host}/news/easy/k10015.html` }],
+      granted
+    })
+    fake.clickIcon(article.id)
+    const header = await drawHeader()
+    expect(find(header, siteSwitchName)).toBeTruthy()
+    fake.revoke(granted)
+    await settle()
+    expect(header.querySelector('[role="switch"]')).toBeNull()
+    const menu = await openMenu(header)
+    expect(find(menu, '[data-site]').getAttribute('data-site')).toBe('no-access')
+    expect(byText(menu, '[role="menuitem"]', 'Allow on This Site')).toBeTruthy()
+    fake.switchTo(8)
+    await settle()
+    expect(find(menu, '[data-site]').getAttribute('data-site')).toBe('unseen')
+  })
+
   it("says Zenbu can't run on the Chrome Web Store, where Chrome shows the address, with no switch", async () => {
     startExtension({
       tabs: [{ id: 2, url: 'https://chromewebstore.google.com/detail/zenbu/abc' }],
