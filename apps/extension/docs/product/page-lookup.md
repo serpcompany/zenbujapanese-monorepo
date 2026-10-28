@@ -53,7 +53,7 @@ page's text is as it was, under its underlines.
 | --- | --- |
 | Furigana | The reading in hiragana over each word's kanji. |
 | Romaji | A line in romaji under each paragraph. |
-| Word Meanings | Each word's short meaning under it, in the underline's blue; its sense's full text is its tooltip and what a screen reader reads. |
+| Word Meanings | Each word's short meaning under it, muted in the page's own text colour so it reads on a light and a dark page, with room either side so neighbouring meanings don't touch; its sense's full text is its tooltip and what a screen reader reads. |
 
 Use Selection, in Translate, takes the selected text without them
 ([`translate.md`](translate.md)).

@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { textContrast } from './contrast.ts'
 import { type Extension, expect, test } from './fixtures.ts'
 import {
   addedWords,
@@ -99,6 +100,36 @@ test('shows furigana, romaji and word meanings when each is turned on, and takes
   await expect.poll(() => underlinesIn(page)).toEqual(pageWords)
   expect(await page.evaluate(() => 'notReloaded' in window)).toBe(true)
 })
+
+for (const tone of tones) {
+  test(`spaces neighbouring word meanings apart and mutes them, readable on a ${tone} page`, async ({
+    extension,
+    page
+  }) => {
+    await changeSettings(extension, { 'readingAids.wordMeanings': true })
+    await openWordsPage(page, extension, tone)
+    const meanings = page.locator('#choice [data-zenbu-aid="meaning"]')
+    await expect.poll(() => meanings.count()).toBeGreaterThan(1)
+    const shown = await page.locator('#choice').evaluate(choice =>
+      [...choice.querySelectorAll('[data-zenbu-aid="meaning"]')].map(meaning => {
+        const group = meaning.parentElement as HTMLElement
+        const style = getComputedStyle(group)
+        return { before: style.marginInlineStart, after: style.marginInlineEnd }
+      })
+    )
+    const quarterRem = await page.evaluate(
+      () => `${Number.parseFloat(getComputedStyle(document.documentElement).fontSize) / 4}px`
+    )
+    for (const margins of shown) expect(margins).toEqual({ before: quarterRem, after: quarterRem })
+    for (const meaning of await meanings.all()) {
+      expect(await meaning.evaluate(element => getComputedStyle(element).color)).not.toBe(
+        underlineColors[tone]
+      )
+      expect(await textContrast(meaning)).toBeGreaterThanOrEqual(4.5)
+    }
+    await page.screenshot({ path: test.info().outputPath(`page-meanings-${tone}.png`) })
+  })
+}
 
 test('underlines nothing and opens no popup on a site turned off, and starts when it is turned back on', async ({
   extension,

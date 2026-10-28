@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { hostElementName } from '../content/shadow-mount'
+import { meaningGap, mutedMeaningColor } from '../shared/meaning-aid'
 import { sentence, sentenceTokens } from '../test/word-cards'
 import { annotate, romajiLine } from './annotate'
 import { selectedPageText } from './selection'
@@ -58,8 +59,7 @@ describe('the Japanese text on a page', () => {
       new Map([
         ['youkyuu', { short: 'demand', full: 'demand, firm request' }],
         ['iru', null]
-      ]),
-      'light'
+      ])
     )
     node.remove()
     expect(inserted).toHaveLength(3)
@@ -80,10 +80,26 @@ describe('the Japanese text on a page', () => {
     expect(romajiLine(document).lang).toBe('ja-Latn')
   })
 
+  it('spaces a word with a meaning from its neighbours and mutes the meaning in the page’s own text colour', () => {
+    const body = page('<p>要求が要る。</p>')
+    const node = body.querySelector('p')?.firstChild as Text
+    annotate(
+      node,
+      tokens(),
+      { furigana: false, romaji: false, meanings: true },
+      new Map([['youkyuu', { short: 'demand', full: 'demand, firm request' }]])
+    )
+    node.remove()
+    const meaning = body.querySelector<HTMLElement>('[data-zenbu-aid="meaning"]')
+    expect(meaning?.getAttribute('style')).toContain(`color: ${mutedMeaningColor}`)
+    expect(meaning?.getAttribute('style')).not.toContain('rgb(')
+    expect(meaning?.parentElement?.getAttribute('style')).toContain(`margin-inline: ${meaningGap}`)
+  })
+
   it('writes the words alone when every reading aid is off', () => {
     const body = page('<p>要求が要る。</p>')
     const node = body.querySelector('p')?.firstChild as Text
-    annotate(node, tokens(), noAids, new Map(), 'dark')
+    annotate(node, tokens(), noAids, new Map())
     node.remove()
     expect(body.querySelector('rt, [data-zenbu-aid="meaning"]')).toBeNull()
     expect(body.textContent).toBe(sentence)

@@ -1,4 +1,4 @@
-import { type Tone, underlineColors } from './underline'
+import { meaningGap, mutedMeaningColor } from '../shared/meaning-aid'
 import { aidAttribute } from './walker'
 import { type PageToken, wordGroups } from './words'
 
@@ -12,9 +12,11 @@ export type Gloss = { short: string; full: string }
 
 export type Glosses = ReadonlyMap<string, Gloss | null>
 
-const meaningStyle = (tone: Tone) =>
+const meaningStyle =
   'display: block; max-width: 8em; overflow: hidden; text-overflow: ellipsis; ' +
-  `white-space: nowrap; font-size: 0.7em; line-height: 1.3; color: ${underlineColors[tone]};`
+  `white-space: nowrap; font-size: 0.7em; line-height: 1.3; color: ${mutedMeaningColor};`
+
+const groupWithMeaningStyle = `display: inline-flex; flex-direction: column; align-items: center; margin-inline: ${meaningGap};`
 
 const spokenStyle =
   'position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;'
@@ -51,8 +53,7 @@ export function annotate(
   node: Text,
   tokens: readonly PageToken[],
   aids: Aids,
-  glosses: Glosses,
-  tone: Tone
+  glosses: Glosses
 ): Annotation {
   const doc = node.ownerDocument
   const pieces: Piece[] = []
@@ -63,11 +64,7 @@ export function annotate(
       doc,
       'span',
       plain ? 'text' : 'word',
-      gloss
-        ? 'display: inline-flex; flex-direction: column; align-items: center;'
-        : plain
-          ? undefined
-          : 'white-space: nowrap;'
+      gloss ? groupWithMeaningStyle : plain ? undefined : 'white-space: nowrap;'
     )
     const written = group.flatMap(token => tokenNodes(doc, token, aids.furigana, pieces))
     if (!gloss) {
@@ -77,7 +74,7 @@ export function annotate(
     const line = doc.createElement('span')
     line.setAttribute('style', 'white-space: nowrap;')
     line.append(...written)
-    const meaning = aid(doc, 'span', 'meaning', meaningStyle(tone))
+    const meaning = aid(doc, 'span', 'meaning', meaningStyle)
     meaning.title = gloss.full
     const shown = doc.createElement('span')
     shown.setAttribute('aria-hidden', 'true')
