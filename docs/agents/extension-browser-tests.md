@@ -11,7 +11,12 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
 
 - **Pages:** each page the manifest names (`side_panel.default_path` and `options_ui.page`; there
   is no toolbar popup) is in the build, opens, and shows its title and text, so a build missing a
-  page fails. The side panel shows its header and the Video tab's empty state.
+  page fails. The side panel shows its header and Look Up's search box.
+- **The side panel's tabs:** the app's four, Look Up first and chosen on a first open; Translate's
+  box and its Image row opening Image Search; Player's empty state and Recent; Account's and its
+  Words'; and a last tab kept from the five tabs before them opening on the tab that took it over
+  (`side-panel-tabs.spec.ts`). No browser test searches: the fixture dictionary has no search
+  tables.
 - **Content script:** on `hostile.html`, the test content script's surface shows `食べる` and
   "The dictionary is ready.", and answers again after `chrome.offscreen.closeDocument()`.
 - **Language data:** an extension page downloads `releases.json`, the fixture release's manifest,

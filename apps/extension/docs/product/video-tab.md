@@ -1,6 +1,7 @@
-# Video tab
+# Player tab
 
-The side panel's Video tab is the transcript of the YouTube video in the tab the learner is on:
+The side panel's Player tab, which was its Video tab, is the transcript of the YouTube video in
+the tab the learner is on, with Recent under it ([`side-panel.md`](side-panel.md)):
 its lines, the line playing, each line's words and English, and a click to go to a line. The
 lines and the video come from the watch page ([`youtube-captions.md`](youtube-captions.md)); the
 words, their popup, and the English are Translate's ([`translate.md`](translate.md),
@@ -50,7 +51,7 @@ video only once it is shown").
 | One popup is open at a time: a word in another row closes the first, and the video plays again only when the last closes. | Transcript: "keeps one popup open at a time…" |
 | Closing the transcript with a popup open, by closing the panel or moving to another video, counts as closing the popup: a video that was playing plays again. | Transcript: "plays the video again when the transcript closes with a popup open" |
 | A word's short meaning is looked up once for the whole transcript, however many rows it is in. | Transcript: "looks up a word's meaning once for the whole transcript" |
-| The popup's Open Full Entry opens the word's Word Detail over the Video tab. | Transcript: "opens Word Detail from the popup's Open Full Entry" |
+| The popup's Open Full Entry opens the word's Word Detail over the Player tab. | Transcript: "opens Word Detail from the popup's Open Full Entry" |
 
 ## English
 
@@ -70,9 +71,9 @@ Translator nothing.
 ## Following the video
 
 The tab follows the video only while it is shown: it tells the watch page when it opens and when
-it closes, and the page sends its playback only while a Video tab is open for it, at most ten times
+it closes, and the page sends its playback only while a Player tab is open for it, at most ten times
 a second while it plays, and at once on a jump of a second or more, a pause, a speed change, or an
-ad. When the last Video tab for the page closes, the page stops following the video. A page that
+ad. When the last Player tab for the page closes, the page stops following the video. A page that
 isn't ready yet is asked again, after 2 seconds, then longer each time, up to 10
 (`src/video/youtube-page.interaction.test.tsx`, "the playback it sends a Video tab";
 `src/video/video-tab-port.test.ts`).
@@ -88,6 +89,6 @@ tab: "in a tab with no content script, says to reload it…"). How it's built is
 
 The share of the video's words the learner knows, beside the title, is #965's, and No Japanese
 Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing: nothing marks a word
-known. No browser test opens the Video tab on a watch page: the tests above run in happy-dom. The agent
+known. No browser test opens the Player tab on a watch page: the tests above run in happy-dom. The agent
 Chrome harness's stand-in watch page is where it is checked in Chrome
 ([`tech-debt.md`](../../../../docs/tech-debt.md)).

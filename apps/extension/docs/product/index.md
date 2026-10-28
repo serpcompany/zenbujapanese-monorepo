@@ -11,10 +11,10 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). Its Video tab, a YouTube video's transcript: [`video-tab.md`](video-tab.md). Its Translate tab: [`translate.md`](translate.md). | The tests and Chrome checks there; `e2e/pages.spec.ts` |
+| Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with the app's Look Up, Translate, Player, and Account, what each tab shows, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). Its Look Up tab, a search over the dictionary: [`look-up.md`](look-up.md). Its Translate tab, with Image Search: [`translate.md`](translate.md). Its Player tab, a YouTube video's transcript and Recent: [`video-tab.md`](video-tab.md). | The tests and Chrome checks there; `e2e/pages.spec.ts`, `e2e/side-panel-tabs.spec.ts` |
 | Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. Then "Zenbu underlines Japanese only on the sites you allow." and Turn On for Every Site, which asks Chrome for every site, or, once it has them, "Zenbu can underline Japanese on every site." | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
 | Settings | Reading Aids, Frequency Dictionaries, Dictionary Data, Sites, and Credits, in a tab of its own. | [`settings.md`](settings.md) |
-| Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from the word popup's Open Full Entry ([`word-popup.md`](word-popup.md)). | `src/word-detail/*.interaction.test.tsx` |
+| Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from the word popup's Open Full Entry ([`word-popup.md`](word-popup.md)), and over Look Up from a result ([`look-up.md`](look-up.md)). | `src/word-detail/*.interaction.test.tsx` |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
 opens it again on the next request, and that first request is answered
@@ -62,13 +62,14 @@ set in Sentry.
   Full Entry, Share, and Copy Link.
 - [YouTube captions and playback](youtube-captions.md): on a YouTube watch page, the video's
   Japanese captions, what happens when YouTube refuses them, and following the video. The side
-  panel's Video tab shows them ([`video-tab.md`](video-tab.md)).
+  panel's Player tab shows them ([`video-tab.md`](video-tab.md)).
 - [The caption on the player](player-captions.md): on a YouTube watch page, the line being heard
   on the player in place of YouTube's captions, its words, English, and popup, and the line
   controls: previous, play or pause, next, Repeat line, and the speed.
 
 ## Not built yet
 
-Saving isn't built, so the side panel's Images, Words, and Recent tabs show only their empty
-states. Hide Furigana on Known Words is stored but changes nothing yet. Sentence Translations
-shows English only in the Video tab and under the caption on the player, not on other pages.
+Saving and signing in aren't built, so the side panel's Account, its Words, Player's Recent, and
+Translate's Image Search show only their empty states. Hide Furigana on Known Words is stored but
+changes nothing yet. Sentence Translations shows English only in the Player tab and under the
+caption on the player, not on other pages.

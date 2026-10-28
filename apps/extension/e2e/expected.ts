@@ -1,6 +1,6 @@
+import { lookUpLabels } from '../src/look-up/labels.ts'
 import { settingsLabels } from '../src/settings/labels.ts'
 import { labels } from '../src/shared/labels.ts'
-import { labels as sidePanelLabels } from '../src/side-panel/labels.ts'
 
 export type ExtensionPage = {
   name: string
@@ -20,7 +20,7 @@ export const extensionPages: ExtensionPage[] = [
     documentTitle: labels.name,
     heading: labels.name,
     headingDrawn: false,
-    text: sidePanelLabels.empty.video.title
+    text: lookUpLabels.search
   },
   {
     name: 'settings',
