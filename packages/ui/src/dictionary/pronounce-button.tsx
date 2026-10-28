@@ -2,8 +2,30 @@
 
 import { Volume2Icon } from 'lucide-react'
 import { Button } from '../components/button'
+import { bestLocalVoice } from './voice'
 
 export type OnUnsupported = (message: string) => void
+
+const appSpeechRate = 0.82
+const voicesLoadLimitMs = 1000
+
+function withLoadedVoices(
+  synthesis: SpeechSynthesis,
+  use: (voices: readonly SpeechSynthesisVoice[]) => void
+) {
+  const voices = synthesis.getVoices()
+  if (voices.length > 0) {
+    use(voices)
+    return
+  }
+  const loaded = () => {
+    clearTimeout(limit)
+    synthesis.removeEventListener('voiceschanged', loaded)
+    use(synthesis.getVoices())
+  }
+  const limit = setTimeout(loaded, voicesLoadLimitMs)
+  synthesis.addEventListener('voiceschanged', loaded)
+}
 
 export function speak(
   text: string,
@@ -15,10 +37,15 @@ export function speak(
     onUnsupported(unsupported)
     return
   }
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = lang
-  window.speechSynthesis.cancel()
-  window.speechSynthesis.speak(utterance)
+  const synthesis = window.speechSynthesis
+  withLoadedVoices(synthesis, voices => {
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = lang
+    utterance.voice = bestLocalVoice(voices, lang)
+    utterance.rate = appSpeechRate
+    synthesis.cancel()
+    synthesis.speak(utterance)
+  })
 }
 
 export function speakJapanese(text: string, unsupported: string, onUnsupported: OnUnsupported) {

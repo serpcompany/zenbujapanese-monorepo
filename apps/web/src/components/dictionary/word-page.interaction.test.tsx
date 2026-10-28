@@ -153,7 +153,10 @@ function renderHeader(pitch: typeof capsule | null, locale: Locale, toaster?: Re
 }
 
 describe('pronouncing the word', () => {
-  const said: { text: string; lang: string }[] = []
+  type Said = { text: string; lang: string; voice: unknown; rate: number }
+  const said: Said[] = []
+  const kyoko = { name: 'Kyoko', voiceURI: 'Kyoko', lang: 'ja-JP', localService: true }
+  const kyokoEnhanced = { ...kyoko, name: 'Kyoko (Enhanced)', voiceURI: 'Kyoko (Enhanced)' }
 
   beforeEach(() => {
     said.length = 0
@@ -165,8 +168,9 @@ describe('pronouncing the word', () => {
       }
     )
     vi.stubGlobal('speechSynthesis', {
+      getVoices: () => [kyoko, kyokoEnhanced],
       cancel: () => {},
-      speak: ({ text, lang }: { text: string; lang: string }) => said.push({ text, lang })
+      speak: ({ text, lang, voice, rate }: Said) => said.push({ text, lang, voice, rate })
     })
   })
 
@@ -177,11 +181,11 @@ describe('pronouncing the word', () => {
     ['the speaker of a word without pitch', null, 'en'],
     ['on a Japanese page, the pitch capsule', capsule, 'ja'],
     ['on a Japanese page, the speaker of a word without pitch', null, 'ja']
-  ] as const)('%s says the reading in the browser’s Japanese voice', (_, pitch, locale) => {
+  ] as const)('%s says the reading in the best Japanese voice on this computer, at the app’s rate', (_, pitch, locale) => {
     const speaker = renderHeader(pitch, locale)
     expect(said).toEqual([])
     act(() => speaker.click())
-    expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP' }])
+    expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP', voice: kyokoEnhanced, rate: 0.82 }])
   })
 
   test('a browser that can’t speak shows the page’s unsupported toast', async () => {

@@ -15,12 +15,12 @@ answered through a fixture source in the test, with Back drawn by the side panel
 
 | Behavior | Check |
 | --- | --- |
-| The top: the headword with furigana, pitch with its speaker or a Pronounce button, and the part of speech. Then Meaning, Frequency, Alternatives, Kanji, Alternative Kanji, Related Words, and Examples, each only when the word has it. 要る shows Meaning, Frequency, Kanji, and Examples. | word: 要る's top and sections |
+| The top: the headword with furigana, pitch with its speaker or a Pronounce button, which speak in the word popup's voice ([`word-popup.md`](word-popup.md), Its actions), and the part of speech. Then Meaning, Frequency, Alternatives, Kanji, Alternative Kanji, Related Words, and Examples, each only when the word has it. 要る shows Meaning, Frequency, Kanji, and Examples. | word: 要る's top and sections |
 | Reading Aids follow Settings: with Furigana off, the furigana goes and the reading shows under the headword. | word: Furigana off |
 | Frequency lists the learner's chosen dictionaries in their chosen order (`frequencyDictionaries.chosen`, JLPT among them), and leaves the section out when none has the word. | word: Frequency follows the chosen dictionaries |
 | A word with several entries, such as 要, shows each entry's reading as a tab, starting on the one that was chosen. | word: 要's two entries |
 | The part of speech opens the conjugation table in a sheet. A form in it opens that form's examples. | word: the conjugation table |
-| Each meaning has a menu: Speak reads it in an English voice, and Copy puts it on the clipboard and says "Meaning copied". | word: a meaning's Speak; a meaning's Copy |
+| Each meaning has a menu: Speak reads it in the best US English voice on this computer, or another English one when it has none, chosen as Pronounce chooses a Japanese one, at the same rate, and Copy puts it on the clipboard and says "Meaning copied". | word: a meaning's Speak; a meaning's Copy |
 | A page's notices, such as "Meaning copied", "Link copied", a browser that can't speak, or a related word not found, show as a toast over the side panel, where they're seen however far the page is scrolled. The toast is a live region. One Toaster, `@zenbu/ui`'s shadcn Sonner, sits in the side panel. | word: a meaning's Copy; Share without a share sheet; a browser that can't speak; a related word with no target |
 | Share sends the word's zenbujapanese.com page to the system's share sheet; Copy Link, under •••, copies it. Without a share sheet, Share copies the link and says "Link copied". | word: Share and Copy Link; Share without a share sheet |
 | Examples show 25 sentences; Load more examples fetches the next 25. When that fails, the button says Try again, and Try again fetches them. | word: Load More; Load More that fails |

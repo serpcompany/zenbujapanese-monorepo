@@ -50,6 +50,14 @@ word.
   zenbujapanese.com. Where there is no share sheet, it copies the address and says "Link copied".
 - **Copy Link** copies the word's address on zenbujapanese.com, and says "Link copied". Where
   nothing can copy: "Couldn't copy. Try again."
+- **Pronounce**, and a click on the pitch accent, speak the reading as the app does: in the best
+  Japanese voice on this computer, at 0.82 of the default rate. A premium voice comes first,
+  then an enhanced one, then any other on this computer, with Apple's Eloquence voices (Eddy, Flo,
+  and the rest) last; Chrome's online voices, such as Google 日本語, are never chosen. A computer
+  with no Japanese voice of its own speaks in Chrome's default Japanese voice. A click before
+  Chrome has listed its voices waits for them, up to a second, and a click while a word is spoken
+  stops it and speaks the new one whole. Word Detail and the website speak the same way, from
+  `@zenbu/ui`'s pronounce button and `packages/ui/src/dictionary/voice.ts`.
 
 ## Checks
 
@@ -65,3 +73,9 @@ DOM tests: `src/word-popup/word-popup.interaction.test.tsx`,
 `src/word-popup/popup-host.interaction.test.tsx` for the fullscreen element, the bare video,
 the open and close events, and closing when the More menu shuts, and
 `src/word-popup/position.test.ts`; in Translate, `src/translate/source-words.interaction.test.tsx`.
+The voice: `packages/ui/src/dictionary/voice.test.ts` (the order above, and no voice when only an
+online one speaks Japanese), and `packages/ui/src/dictionary/pronounce-button.interaction.test.tsx`
+(the voice, `ja-JP`, the 0.82 rate, a second click, and voices that load late or never). On a Mac
+whose Japanese voices are Kyoko and the eight Eloquence ones, the test build in the agent's Chrome
+picks Kyoko, as the app does (2026-10-29, Chrome 156). How it sounds is one of the owner's checks
+in Chrome on his Mac (#987): テーブル spoken whole, in the popup and in the side panel.

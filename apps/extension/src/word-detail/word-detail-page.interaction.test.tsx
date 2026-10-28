@@ -250,9 +250,15 @@ describe('Word Detail', () => {
     expect(named('[data-slot="card-title"]', 'Frequency')).toBeUndefined()
   })
 
-  test('a meaning’s Speak reads it in an English voice', async () => {
+  test('a meaning’s Speak reads it in the best English voice on this computer, at the app’s rate', async () => {
     const speak = vi.fn<(utterance: { text: string; lang: string }) => void>()
-    vi.stubGlobal('speechSynthesis', { cancel: vi.fn(), speak })
+    const samantha = { name: 'Samantha', voiceURI: 'Samantha', lang: 'en-US', localService: true }
+    const google = { ...samantha, name: 'Google US English', localService: false }
+    vi.stubGlobal('speechSynthesis', {
+      cancel: vi.fn(),
+      speak,
+      getVoices: () => [google, samantha]
+    })
     vi.stubGlobal(
       'SpeechSynthesisUtterance',
       class {
@@ -263,7 +269,7 @@ describe('Word Detail', () => {
     await show({ page: 'word', entSeq: iru })
     await openMenu(wordDetailLabels.meaning.actions.replace('{number}', '1'))
     await click(named('[data-slot="dropdown-menu-item"]', 'Speak', document))
-    expect(speak.mock.calls[0]?.[0]).toMatchObject({ lang: 'en-US' })
+    expect(speak.mock.calls[0]?.[0]).toMatchObject({ lang: 'en-US', voice: samantha, rate: 0.82 })
     expect(speak.mock.calls[0]?.[0].text).toContain('need')
   })
 
