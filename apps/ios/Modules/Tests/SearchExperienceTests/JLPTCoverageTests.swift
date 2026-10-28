@@ -95,15 +95,18 @@ final class JLPTCoverageTests {
     #expect(inPack == [667, 630, 1_651, 1_738, 3_061])
   }
 
-  @Test(
-    "today is the Gregorian day in the device's time zone, whatever its calendar",
-    arguments: [Calendar.Identifier.japanese, .buddhist, .gregorian])
-  func todayIsGregorian(_ identifier: Calendar.Identifier) async {
-    var device = Calendar(identifier: identifier)
-    device.timeZone = calendar.timeZone
-    let request = JLPTCoverageRequest(
-      knowledge: await loadedKnowledge(), goal: 20, on: october28, in: device)
-    #expect(request.today == "2026-10-28")
+  private func askingModel(
+    _ knowledge: WordKnowledge, today: @escaping @MainActor () -> String
+  ) -> (JLPTCoverageModel, OSAllocatedUnfairLock<[JLPTCoverageRequest]>) {
+    let asked = OSAllocatedUnfairLock(initialState: [JLPTCoverageRequest]())
+    let model = JLPTCoverageModel(
+      knowledge: knowledge, goal: 20,
+      ask: { [data] request in
+        asked.withLock { $0.append(request) }
+        return try await data.jlptCoverage(request)
+      },
+      today: today)
+    return (model, asked)
   }
 
   @Test("the model asks again after a word changes state and after the goal changes")
@@ -112,14 +115,7 @@ final class JLPTCoverageTests {
     mark(.known, au, in: knowledge)
     mark(.learning, isogu, in: knowledge)
     knowledge.setStatus(.known, for: sai)
-    let asked = OSAllocatedUnfairLock(initialState: [JLPTCoverageRequest]())
-    let model = JLPTCoverageModel(
-      knowledge: knowledge, goal: 20,
-      ask: { [data] request in
-        asked.withLock { $0.append(request) }
-        return try await data.jlptCoverage(request)
-      },
-      calendar: calendar, today: { [october28] in october28 })
+    let (model, asked) = askingModel(knowledge, today: { "2026-10-28" })
     let following = Task { await model.follow() }
     defer { following.cancel() }
 
@@ -142,14 +138,16 @@ final class JLPTCoverageTests {
     #expect(asked.withLock { $0.map(\.goal) } == [20, 20, 5])
   }
 
-  @Test("the model asks again when the calendar day changes")
+  @Test("the model asks again when the log's day moves, and only then")
   func asksAgainOnANewDay() async throws {
     let knowledge = await loadedKnowledge()
     let center = NotificationCenter()
+    let log = ProgressLog(
+      fileURL: directory.appending(path: "progress-log.json"), defaults: .standard,
+      timeZone: calendar.timeZone, center: center)
     let now = OSAllocatedUnfairLock(initialState: october28)
-    let model = JLPTCoverageModel(
-      knowledge: knowledge, goal: 20, ask: { [data] in try await data.jlptCoverage($0) },
-      calendar: calendar, today: { now.withLock { $0 } }, center: center)
+    log.now = { now.withLock { $0 } }
+    let (model, asked) = askingModel(knowledge, today: { log.today })
     let following = Task { await model.follow() }
     defer { following.cancel() }
 
@@ -157,13 +155,16 @@ final class JLPTCoverageTests {
     #expect(level(first, "N5")?.pace == JLPTCoverage.Pace(date: "2026-12-01", days: 34))
 
     now.withLock { $0 = $0.addingTimeInterval(120) }
+    log.refreshDay()
     let deadline = ContinuousClock.now + .seconds(60)
-    while level(model.coverage, "N5")?.pace?.date == "2026-12-01",
-      ContinuousClock.now < deadline
-    {
-      center.post(name: .NSCalendarDayChanged, object: nil)
-      try await Task.sleep(for: .milliseconds(50))
+    while asked.withLock({ $0.count }) < 2, ContinuousClock.now < deadline {
+      try await Task.sleep(for: .milliseconds(20))
     }
+    #expect(asked.withLock { $0.map(\.today) } == ["2026-10-28", "2026-10-29"])
     #expect(level(model.coverage, "N5")?.pace == JLPTCoverage.Pace(date: "2026-12-02", days: 34))
+
+    log.refreshDay()
+    try await Task.sleep(for: .milliseconds(300))
+    #expect(asked.withLock { $0.count } == 2)
   }
 }

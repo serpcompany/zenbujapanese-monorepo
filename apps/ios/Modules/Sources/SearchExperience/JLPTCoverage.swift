@@ -43,16 +43,11 @@ struct JLPTCoverageRequest: Encodable, Hashable, Sendable {
   }
 
   @MainActor
-  init(knowledge: WordKnowledge, goal: Int, on day: Date, in calendar: Calendar) {
+  init(knowledge: WordKnowledge, goal: Int, today: String) {
     let words = { (status: WordKnowledgeStatus) in
       knowledge.marked(status).filter { $0.kanji == nil }.map(\.entryID).sorted()
     }
-    var gregorian = Calendar(identifier: .gregorian)
-    gregorian.timeZone = calendar.timeZone
-    let parts = gregorian.dateComponents([.year, .month, .day], from: day)
-    self.init(
-      known: words(.known), learning: words(.learning), goal: goal,
-      today: String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0))
+    self.init(known: words(.known), learning: words(.learning), goal: goal, today: today)
   }
 }
 
@@ -79,41 +74,27 @@ final class JLPTCoverageModel {
   private(set) var coverage: JLPTCoverage?
   @ObservationIgnored private let knowledge: WordKnowledge
   @ObservationIgnored private let ask: Ask
-  @ObservationIgnored private let calendar: Calendar
-  @ObservationIgnored private let today: @MainActor () -> Date
-  @ObservationIgnored private let center: NotificationCenter
+  @ObservationIgnored private let today: @MainActor () -> String
   @ObservationIgnored private var answered: JLPTCoverageRequest?
-  private var daysTurned = 0
 
   init(
     knowledge: WordKnowledge,
     goal: Int,
     ask: @escaping Ask = JLPTCoverageModel.live,
-    calendar: Calendar = .current,
-    today: @escaping @MainActor () -> Date = { Date() },
-    center: NotificationCenter = .default
+    today: @escaping @MainActor () -> String
   ) {
     self.knowledge = knowledge
     self.goal = goal
     self.ask = ask
-    self.calendar = calendar
     self.today = today
-    self.center = center
   }
 
   func follow() async {
-    let days = Task { [weak self, center] in
-      for await _ in center.notifications(named: .NSCalendarDayChanged).map({ _ in }) {
-        self?.daysTurned += 1
-      }
-    }
-    defer { days.cancel() }
     while !Task.isCancelled {
       let (changed, change) = AsyncStream.makeStream(
         of: Void.self, bufferingPolicy: .bufferingNewest(1))
       let request = withObservationTracking {
-        _ = daysTurned
-        return JLPTCoverageRequest(knowledge: knowledge, goal: goal, on: today(), in: calendar)
+        JLPTCoverageRequest(knowledge: knowledge, goal: goal, today: today())
       } onChange: {
         change.yield()
         change.finish()
