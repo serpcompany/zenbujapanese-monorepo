@@ -81,7 +81,7 @@ const dayNumber = (day: string) => {
 
 const dayName = (number: number) => new Date(number * dayLength).toISOString().slice(0, 10)
 
-const isDay = (day: string) => /^\d{4}-\d{2}-\d{2}$/.test(day)
+export const isDay = (day: string) => /^\d{4}-\d{2}-\d{2}$/.test(day)
 
 function addedToLearning(changes: readonly ProgressChange[]): string[] {
   const added = new Map<string, boolean>()

@@ -68,6 +68,21 @@ final class WordKnowledgeTests {
     #expect(knowledge.knownRecords.map(\.headword) == ["食べる"])
   }
 
+  @Test("a word changed earlier but applied later is listed by its own time, as after a reload")
+  func earlierChangeListedByItsTime() async {
+    let knowledge = await loadedKnowledge()
+    let morning = Date(timeIntervalSince1970: 1_793_098_800)
+    knowledge.now = { morning.addingTimeInterval(3600) }
+    knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる", at: morning)
+    await knowledge.flush()
+
+    #expect(knowledge.records[miru.rawValue]?.updatedAt == morning)
+    #expect(knowledge.knownRecords.map(\.headword) == ["食べる", "見る"])
+    let reloaded = await loadedKnowledge()
+    #expect(reloaded.knownRecords.map(\.headword) == ["食べる", "見る"])
+  }
+
   @Test("setting the same status again does not change when it was marked")
   func repeatedStatusIsIgnored() async {
     let knowledge = await loadedKnowledge()

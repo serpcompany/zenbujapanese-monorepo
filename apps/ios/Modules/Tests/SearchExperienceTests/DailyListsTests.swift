@@ -105,6 +105,23 @@ final class DailyListsTests {
     #expect(try words(on: "2026-10-28", in: stores) == [miru.rawValue])
   }
 
+  @Test("a share sheet change filed on a later day goes in the list of the day it was made, in order by its time")
+  func shareSheetChangeFiledLater() async throws {
+    clock.now = at("28T09:00")
+    let stores = await stores()
+    await mark(.learning, taberu, "食べる", in: stores)
+    clock.now = at("29T09:00")
+    stores.knowledge.setStatus(.learning, id: eki, headword: "駅", reading: "えき", at: at("28T08:00"))
+    stores.knowledge.setStatus(.learning, id: miru, headword: "見る", reading: "みる", at: at("27T12:00"))
+    await stores.keeper.settled()
+
+    let ordered = stores.lists.words(in: try listID("2026-10-28"))
+    #expect(ordered.map(\.entryID) == [taberu.rawValue, eki.rawValue])
+    #expect(ordered.last?.addedAt == at("28T08:00"))
+    #expect(try words(on: "2026-10-27", in: stores) == [miru.rawValue])
+    #expect(stores.lists.dailyLists.map(\.day) == ["2026-10-28", "2026-10-27"])
+  }
+
   @Test("a word set back to Unknown the same day leaves, one marked Known stays, and a later day's change leaves an earlier list alone")
   func unknownLeavesKnownStays() async throws {
     let stores = await storesWithTwoWords()

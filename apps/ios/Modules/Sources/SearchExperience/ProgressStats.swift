@@ -81,3 +81,38 @@ extension ProgressLog {
     return try? core.answer("progressStats", String(decoding: asked, as: UTF8.self))
   }
 }
+
+struct ProgressDaysRequest: Encodable, Sendable {
+  struct Change: Encodable, Sendable {
+    private enum CodingKeys: String, CodingKey { case day }
+
+    let change: ProgressLogChange
+    let day: String
+
+    init(_ change: ProgressLogChange, day: String) {
+      self.change = change
+      self.day = day
+    }
+
+    func encode(to encoder: Encoder) throws {
+      try change.encode(to: encoder)
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(day, forKey: .day)
+    }
+  }
+
+  let days: [String: ProgressLogDay]
+  let changes: [Change]
+  let goal: Int
+  let today: String
+  let totals: ProgressTotals
+}
+
+extension ProgressLog {
+  nonisolated static func filledDays(_ request: ProgressDaysRequest) async -> [String: ProgressLogDay]?
+  {
+    guard let asked = try? JSONEncoder.localStore.encode(request) else { return nil }
+    return try? PresentationCore.shared.answer(
+      "progressDays", String(decoding: asked, as: UTF8.self), decodedBy: .localStore)
+  }
+}

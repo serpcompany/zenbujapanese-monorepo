@@ -25,7 +25,7 @@ struct KnownWordChange: Codable, Hashable, Sendable {
   init(_ record: WordKnowledgeRecord) {
     self.init(
       storedID: record.entryID, headword: record.headword, reading: record.reading,
-      status: record.status)
+      status: record.status, changedAt: record.updatedAt)
   }
 
   init(from decoder: Decoder) throws {
@@ -64,6 +64,7 @@ extension SyncedKnownWord {
 
 extension AccountSync {
   nonisolated static let unknownOperation = "unknown_operation"
+  nonisolated static let setOnly: Set<String> = ["state", "stateChangedAt"]
 
   static func keepsTheDevicesState(_ change: QueuedSyncChange, code: String) -> Bool {
     switch (change.key.entity, change.operation, code) {
@@ -88,7 +89,7 @@ extension AccountSync {
       QueuedSyncChange(
         id: UUID().uuidString.lowercased(), key: change.key,
         operation: status == .known ? "mark" : "clear", baseVersion: state.version(of: change.key),
-        fields: status == .known ? change.fields?.filter { $0.key != "state" } : nil,
+        fields: status == .known ? change.fields?.filter { !Self.setOnly.contains($0.key) } : nil,
         undo: change.undo))
   }
 

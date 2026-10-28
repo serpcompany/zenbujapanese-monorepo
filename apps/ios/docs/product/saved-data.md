@@ -154,26 +154,35 @@ Zenbu keeps a log of the learner's progress on the device, `progress-log.json` (
 beside the known words, for the daily goal, streaks, and stats. It has no screen yet. For each
 day, keyed by the device's calendar day (`yyyy-MM-dd`) when the change was made, it keeps:
 
-- each change the learner made on this device to a word's or kanji's status, in order: its
+- each change to a word's or kanji's status, made on this device or brought by sync, in order: its
   Language Reference ID (or `kanji:` and the character), the status before and after, and the time;
 - the daily goal in force when the day ended;
 - the Known and Learning totals after the day's last change.
 
 A change from the share sheet counts on the day it was made, even when Zenbu applies it the next
-day, and moves that day's totals and those of each day logged since. Changes that arrive by sync
-update the day's totals but aren't logged as changes. The first launch with the log writes that
-day's totals, so Known over time starts there. Nothing is pruned.
+day. A change that arrives by sync counts on the day the account says the word moved, by this
+device's calendar, so a phone signing in to an account fills each earlier day from its words'
+times and shows its streak at once. One dated today counts toward today's goal. A change dated
+before today moves that day's totals and each later logged day's; a day this device logged keeps
+its own goal, and a day only a change fills takes the goal of the logged day before it, or the goal
+when it's filled. A change the log already has isn't counted again, and a word the account has no
+time for (moved before it kept times) counts in the totals only. The first launch with the log
+writes that day's totals, so Known over time starts there. Nothing is pruned.
 
 The daily goal is kept on the device under `progress.dailyGoal`: 20 until it's set, and read
 rounded and kept from 1 to 200. What counts toward the goal, the streaks, the averages, and Known
-over time are the shared core's (`progress/stats.ts`), which the app asks with the log's days.
+over time are the shared core's (`progress/stats.ts`), which the app asks with the log's days, and
+so are the earlier days a change fills (`progress/days.ts`).
 
-Check: core `progress/stats.test.ts` and `embedded/progress.test.ts`; package `ProgressLogTests`
-(changes at 23:59 and 00:01 on two days, a share sheet change kept on its own day and moving its
-day's and later days' totals, a synced change in the totals only, sync still told of each change,
+Check: core `progress/stats.test.ts`, `progress/days.test.ts`, and `embedded/progress.test.ts`;
+package `ProgressLogTests` (changes at 23:59 and 00:01 on two days, a share sheet change kept on its
+own day and moving its day's and later days' totals, a synced change with no time in the totals
+only, sync still told of each change,
 a newer log read-only, a log or a change it can't read kept aside with no word lost, the first
 launch's totals, also when the defaults change first, and the goal, and the core's stats read
-through the bundle).
+through the bundle) and `AccountSyncProgressTests` (a first read of many words asking the core once
+and filling each day, a synced change today counting toward the goal, synced changes never told as
+the device's own, and a logged day keeping its goal).
 
 ## Saved data that can't be read
 

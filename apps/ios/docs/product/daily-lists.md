@@ -14,6 +14,8 @@ core's progress stats:
 - A word moved from Known back to Learning, and a kanji, isn't added.
 - A change made after midnight goes in the next day's list, and a later change leaves an earlier
   day's list alone.
+- A share sheet change filed on a later day goes in the list of the day it was made, among that
+  day's words by when it was made.
 - A change synced from another device or app touches no daily list: each device puts only its own
   marks in, and the lists themselves sync ([Zenbu account and sync](account-sync.md)): a day's
   list made on two devices is one list, with both devices' words.
