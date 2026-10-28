@@ -53,7 +53,7 @@ neither the Video tab nor Translate asks; Translate's first English to Japanese 
 Translator from its own Translate click, from the pack. Translate shows the download line only
 once a progress event reports `0 < loaded < 1`, so that `[0, 1]` stays "Translating…". The
 stand-in Translator (`src/test/translator-stand-in.ts`) holds one pack the same way. A page
-that finds `downloading` shows Chrome's download under way with no Download, and
+that finds `downloading`, which the spec allows and Chrome 156 never reported, shows Chrome's download under way with no Download, and
 `useTranslationModel` checks `availability` again every 2 seconds (`recheckMs`) until it changes. Whether the model is in is never
 stored: Chrome's `availability` is the one record, so a model Chrome removes is asked for again.
 `translation-model.tsx` also holds what pages show of it: `useTranslationModel`, the state from
