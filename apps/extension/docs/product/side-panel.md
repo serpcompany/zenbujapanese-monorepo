@@ -6,8 +6,11 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
 
 ## What a learner sees
 
-- **A header:** the Zenbu mark and "Zenbu Japanese", then this site's switch and a menu with the
-  reading aids and Settings: [`side-panel-header.md`](side-panel-header.md). There is no gear.
+- **A header:** this site's switch and a menu with the reading aids and Settings, at its right:
+  [`side-panel-header.md`](side-panel-header.md). There is no gear. It draws neither Zenbu's mark
+  nor "Zenbu Japanese", since Chrome's own title above the panel shows both and can't be removed.
+  A screen reader still hears the panel named "Zenbu Japanese", from a heading only it reads
+  (`panel.interaction.test.tsx`; `e2e/pages.spec.ts`, with the page's title).
 - **A tab bar at the bottom,** always in view: Video, Translate, Images, Words, and Recent, in
   that order, each an icon over its name. A click chooses a tab. The arrow keys move along the
   bar and choose the tab they land on, wrapping at the ends (`panel.interaction.test.tsx`).
@@ -44,6 +47,13 @@ doesn't sign in yet (#961).
 
 ## Opening it
 
+- **The toolbar, Chrome's title above the panel, and `chrome://extensions` show Zenbu's logo,**
+  the brand's `assets/brand/extensions/` PNGs at 16, 32, 48, and 128 px, which the build copies to
+  `icons/` and the manifest names as `icons` and `action.default_icon`
+  (`build/manifest.test.ts`; `build/extension-config.test.ts`, that the build emits those files at
+  those sizes; `build/packages.test.ts`, that the package check fails a package missing one; on
+  `chrome://extensions` by an agent on 2026-10-29. The toolbar and the panel's title are not
+  checked: the headless harness has no toolbar).
 - **A click on the Zenbu icon in the toolbar opens the panel.** There is no toolbar popup
   (`build/manifest.test.ts`, `open-panel.interaction.test.tsx`).
 - **A click on a page opens the panel on a tab and a page.** A closed panel

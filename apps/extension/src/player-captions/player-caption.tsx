@@ -17,7 +17,7 @@ type Props = {
 }
 
 const captionClass =
-  'pointer-events-auto absolute w-max max-w-[min(92%,48em)] cursor-grab touch-none select-none data-dragging:cursor-grabbing data-dragging:**:cursor-grabbing rounded-lg bg-black/75 px-[0.6em] py-[0.3em] text-center text-[clamp(16px,2.4cqw,34px)] text-white [&_[data-aid=romaji]]:text-[0.6em] [&_[data-aid=romaji]]:text-white/80 [&_[data-source]]:text-white'
+  'pointer-events-auto absolute w-max max-w-[min(92%,48em)] cursor-grab touch-none select-none data-dragging:cursor-grabbing data-dragging:**:cursor-grabbing rounded-lg bg-black/75 px-[0.6em] py-[0.3em] text-center text-[clamp(16px,2.4cqw,34px)] text-white [&_[data-aid=romaji]]:text-[0.6em] [&_[data-aid=romaji]]:text-white/80 [&_[data-aid=meaning]]:text-white/70 [&_[data-source]]:text-white'
 
 export function PlayerCaption({
   lines,
