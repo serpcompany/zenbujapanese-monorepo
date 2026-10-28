@@ -55,8 +55,8 @@ When the text is Japanese, each dictionary word in it is underlined as on a page
 one opens its word popup under the text ([`word-popup.md`](word-popup.md)). The popup's Open Full
 Entry opens the word's Word Detail over the tab; Close or Escape puts the popup away and gives
 focus back to the word. The text has the reading aids turned on in Settings: furigana over its
-kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
-Reading Aids). Until the dictionary is ready, the text is plain; the tab asks again, waiting longer
+kanji, a romaji line under it, and each word's short meaning, in the muted foreground with a space
+between neighbours ([`settings.md`](settings.md), Reading Aids). Until the dictionary is ready, the text is plain; the tab asks again, waiting longer
 each time as page lookup does, and links the words once it is ready.
 
 Check: `src/translate/source-words.interaction.test.tsx`, and the tab's test, "links the words of

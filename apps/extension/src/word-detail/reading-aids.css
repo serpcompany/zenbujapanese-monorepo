@@ -10,6 +10,7 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 0.25rem;
 }
 
 @layer components {
@@ -19,6 +20,6 @@
   }
 
   [data-reading-aids] [data-aid="meaning"] {
-    @apply max-w-24 truncate text-xs leading-snug text-blue-600 dark:text-blue-400;
+    @apply max-w-24 truncate text-xs leading-snug text-muted-foreground;
   }
 }
