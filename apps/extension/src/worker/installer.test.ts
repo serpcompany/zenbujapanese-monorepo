@@ -351,6 +351,52 @@ describe('updating the language data', () => {
     expect(kept.every(path => current.some(sha256 => path.includes(sha256)))).toBe(true)
   })
 
+  async function strokesUpdate() {
+    const server = await published({ release: '2026.10.1' })
+    const first = extension(server, new MemoryStorage(), new MemoryPool(16))
+    await first.languageData.start()
+    await server.publish({ release: '2026.10.2', changed: ['KanjiStrokeData.sqlite3'] })
+    const old = databaseName(await sha256Of('KanjiStrokeData.sqlite3', '2026.10.1'))
+    const updated = databaseName(await sha256Of('KanjiStrokeData.sqlite3', '2026.10.2'))
+    const strokesOpened = () =>
+      first.opened.map(installed => installed.files['KanjiStrokeData.sqlite3'])
+    return { server, ...first, old, updated, strokesOpened }
+  }
+
+  it('keeps the old strokes answering, and in the pool, when the new later file fails', async () => {
+    const { server, languageData, pool, old, updated, strokesOpened } = await strokesUpdate()
+    server.failOn = partOf('KanjiStrokeData.sqlite3', 1)
+    await languageData.update()
+
+    expect(languageData.state()).toMatchObject({
+      state: 'ready',
+      release: '2026.10.2',
+      updateFailed: 'Failed to fetch'
+    })
+    expect(databaseName(strokesOpened().at(-1) ?? '')).toBe(old)
+    expect(pool.databases.get(old)).toEqual(contentOf('KanjiStrokeData.sqlite3', '2026.10.1'))
+    expect(pool.databases.has(updated)).toBe(false)
+    expect(pool.most).toBeLessThanOrEqual(16)
+  })
+
+  it('answers from the new strokes once they install, and only then deletes the old ones', async () => {
+    const { languageData, pool, old, updated, strokesOpened } = await strokesUpdate()
+    const unlink = pool.unlink.bind(pool)
+    const unlinkedBeforeNew: string[] = []
+    pool.unlink = name => {
+      if (!pool.databases.has(updated)) unlinkedBeforeNew.push(name)
+      return unlink(name)
+    }
+    await languageData.update()
+
+    expect(languageData.state()).toEqual(ready('2026.10.2'))
+    expect(strokesOpened().slice(-2).map(databaseName)).toEqual([old, updated])
+    expect(unlinkedBeforeNew).not.toContain(old)
+    expect(pool.databases.has(old)).toBe(false)
+    expect(pool.databases.get(updated)).toEqual(contentOf('KanjiStrokeData.sqlite3', '2026.10.2'))
+    expect(pool.most).toBeLessThanOrEqual(16)
+  })
+
   it('shows a check for updates at once, and records when it checked', async () => {
     const server = await published({ release: '2026.10.1' })
     const { languageData } = extension(server)

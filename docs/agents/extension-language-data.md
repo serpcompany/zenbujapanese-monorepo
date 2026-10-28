@@ -9,8 +9,8 @@ a learner sees is in its [product docs](../../apps/extension/docs/product/index.
 The host is `languageDataOrigin` in `apps/extension/src/shared/hosts.ts`, which the build fills
 in from `build/hosts.ts`: `https://data.zenbujapanese.com` for production and staging (#941's
 Open question 18), and `http://language-data.localhost` for the test build, which the browser
-tests map to their local server. The manifest's `host_permissions` name only it, since a learner
-can narrow a content script's site access. The
+tests map to their local server. The manifest's `host_permissions` list it beside YouTube's,
+since a learner can narrow a content script's site access. The
 bucket's layout is [`language-data/README.md`](../../language-data/README.md)'s.
 
 The worker reads, in order (`src/worker/release.ts`, `download.ts`):
@@ -72,7 +72,9 @@ again if Chrome cleared it), once a day (the `language-data-update` alarm), and 
 (`checkForUpdates`), the service worker sends `update`
 (`src/service-worker/language-data-updates.ts`). Files are content-addressed, so only files whose
 SHA-256 changed download. The old set answers until the new one opens and checks; then
-`installed.json` swaps and the old files are deleted. An update that fails keeps the installed set:
+`installed.json` swaps and the old files are deleted. A later file whose SHA-256 changed is the
+exception: the first swap keeps the old one, its pool database and its `files/<sha>` folder, so
+kanji keep their strokes, until the new one installs. An update that fails keeps the installed set:
 the state stays `ready`, with `updateFailed` saying why. A pool that failed to open is opened again
 by the next try (`src/worker/opened-once.ts`), not kept as a failure.
 
@@ -94,8 +96,7 @@ until the first set is in, never an empty result.
 
 | Request | Answer |
 | --- | --- |
-| `state`, `update` | `state`, with the data's state (`src/shared/data-state.ts`): `checking`, `downloading` (gzipped bytes done of the total, from `compressed.json`'s part sizes, or the
-manifest's for a file with no parts), `ready` or `updating` with the installed release, its size, and when it last checked for an update, or `failed` with why. An asked-for update shows `updating` at once, with a total of 0 until it knows what changed. |
+| `state`, `update` | `state`, with the data's state (`src/shared/data-state.ts`): `checking`, `downloading` (gzipped bytes done of the total, from `compressed.json`'s part sizes, or the manifest's for a file with no parts), `ready` or `updating` with the installed release, its size, and when it last checked for an update, or `failed` with why. An asked-for update shows `updating` at once, with a total of 0 until it knows what changed. |
 | `segment` | The words in a text, with each token's reading, and the text's romaji |
 | `popup` | The word popup's Word card for a Language Reference ID, with `frequency` from the learner's frequency dictionaries in their order, through `readFrequency`, and the reading's romaji (core `artifact/popup-card.ts`) |
 | `word`, `kanji` | Word Detail's rows from `word()`, and the kanji details' from `kanji()`, with `strokes` saying whether the stroke data is in. An unknown entry or character answers `rows: null`. |
@@ -113,7 +114,8 @@ manifest's for a file with no parts), `ready` or `updating` with the installed r
   on the next update, and an
   update that downloads only the changed file, answers from the old set until the swap, and
   then deletes the old one, and a cut update's files deleted before the next, so the pool never
-  runs out of room. `src/worker/opened-once.test.ts`: a pool that failed to open opens again.
+  runs out of room, and a changed `KanjiStrokeData` whose old copy answers, and stays, until the
+  new one installs. `src/worker/opened-once.test.ts`: a pool that failed to open opens again.
 - `src/worker/answer.test.ts`: `not-ready` before the first set, the state, each lookup, and
   kanji rows while the stroke data downloads. `src/shared/dictionary.test.ts`: each helper's
   request, and a failure for a wrong answer or a throw. The core's `kanji.test.ts` and

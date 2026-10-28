@@ -139,14 +139,18 @@ export function installer(options: InstallerOptions) {
     report(0)
     await fetchFiles(changed, report)
     if (!installed) state = { state: 'checking' }
-    const files = [...release.first, ...release.later.filter(isInstalled)]
+    const previous = installed?.files ?? {}
+    const later = release.later.filter(file => file.name in previous)
     await swap(
       {
         release: release.release,
-        bytes: bytesOf(files),
+        bytes: bytesOf([...release.first, ...later]),
         checkedAt: installed?.checkedAt ?? null,
         manifestSha256: release.manifestSha256,
-        files: Object.fromEntries(files.map(file => [file.name, file.sha256]))
+        files: Object.fromEntries([
+          ...release.first.map(file => [file.name, file.sha256]),
+          ...later.map(file => [file.name, previous[file.name]])
+        ])
       },
       release
     )
