@@ -30,6 +30,7 @@ export interface AreaProps {
   locale: Locale
   text: AccountText
   listId: string | null
+  dailyLists: boolean
   pages: ItemPages
   change: (
     entity: string,

@@ -62,6 +62,10 @@ export function render(element: ReactElement): HTMLElement {
   return container
 }
 
+export function rerender(element: ReactElement) {
+  act(() => root?.render(element))
+}
+
 export function unmount() {
   act(() => root?.unmount())
   root = null

@@ -1,7 +1,7 @@
 import { SyncedAreaView } from '@/components/account/synced/synced-area'
 import type { SyncedArea } from '@/lib/account/synced'
 import { getDictionary } from '@/lib/i18n/dictionary'
-import { answer, render, stubAccountService } from './account-page'
+import { answer, render, rerender, stubAccountService } from './account-page'
 import { profile, sessionAnswer, settings, signedIn } from './signed-in-account'
 import { withSynced } from './synced-service'
 import { SyncedStandIn } from './synced-stand-in'
@@ -12,24 +12,48 @@ export const verbs = '6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c'
 export const miru = { headword: '見る', reading: 'みる' }
 export const taberu = { headword: '食べる', reading: 'たべる' }
 
-export const renderArea = (area: SyncedArea, listId: string | null = null) =>
-  render(
-    <SyncedAreaView
-      area={area}
-      locale="en"
-      text={getDictionary('en').account}
-      settings={settings()}
-      listId={listId}
-    />
-  )
+export const list = (id: string, name: string, position: number) => ({
+  id,
+  name,
+  position,
+  createdAt: '2026-10-01T00:00:00.000Z'
+})
+
+export const onList = (listId: string, itemId: string, text: object, addedAt: string) => ({
+  listId,
+  itemId,
+  ...text,
+  addedAt
+})
+
+const areaView = (area: SyncedArea, listId: string | null, dailyLists: boolean) => (
+  <SyncedAreaView
+    area={area}
+    locale="en"
+    text={getDictionary('en').account}
+    settings={settings()}
+    listId={listId}
+    dailyLists={dailyLists}
+  />
+)
+
+export const renderArea = (area: SyncedArea, listId: string | null = null, dailyLists = false) =>
+  render(areaView(area, listId, dailyLists))
+
+export const moveTo = (area: SyncedArea, listId: string | null, dailyLists = false) =>
+  rerender(areaView(area, listId, dailyLists))
 
 export function openArea(
   area: SyncedArea,
   standIn: SyncedStandIn = new SyncedStandIn(),
-  { listId = null, more = {} }: { listId?: string | null; more?: Record<string, Response> } = {}
+  {
+    listId = null,
+    dailyLists = false,
+    more = {}
+  }: { listId?: string | null; dailyLists?: boolean; more?: Record<string, Response> } = {}
 ) {
   const service = withSynced(standIn, signedIn({ more }))
-  return { page: renderArea(area, listId), standIn, service }
+  return { page: renderArea(area, listId, dailyLists), standIn, service }
 }
 
 export const subscriptionAnswering = (cloudAccess: string) =>

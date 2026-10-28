@@ -3,6 +3,7 @@
 import type { ComponentType } from 'react'
 import type { SyncedArea } from '@/lib/account/synced'
 import { Bookmarks, RecentVideos } from './app-only'
+import { DailyLists } from './daily-lists'
 import { KnownWords } from './known-words'
 import { ListWords } from './list-words'
 import { Lists } from './lists'
@@ -13,7 +14,8 @@ import { RecentSearches } from './recent-searches'
 import { Settings } from './settings'
 
 function ListsOrOne(props: AreaProps) {
-  return props.listId ? <ListWords {...props} listId={props.listId} /> : <Lists {...props} />
+  if (props.listId) return <ListWords {...props} listId={props.listId} />
+  return props.dailyLists ? <DailyLists {...props} /> : <Lists {...props} />
 }
 
 export const areaViews: Readonly<Record<SyncedArea, ComponentType<AreaProps>>> = {

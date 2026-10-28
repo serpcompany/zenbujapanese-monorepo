@@ -28,7 +28,7 @@ export default async function SyncedAreaPage({
 }: PageProps<'/[locale]/account/[area]'>) {
   const area = await areaOf(params)
   const locale = await localeOf(params)
-  const list = (await searchParams).list
+  const { list, view } = await searchParams
   return (
     <AccountPageShell page={area} locale={locale} settings={await accountSettings()}>
       {settings => (
@@ -38,6 +38,7 @@ export default async function SyncedAreaPage({
           text={getDictionary(locale).account}
           settings={settings}
           listId={area === 'lists' && typeof list === 'string' ? list : null}
+          dailyLists={area === 'lists' && view === 'daily'}
         />
       )}
     </AccountPageShell>

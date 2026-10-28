@@ -36,6 +36,7 @@ type View =
 interface Drawn {
   copy: SyncedCopy
   listId: string | null
+  dailyLists: boolean
   pages: ItemPages
 }
 
@@ -58,13 +59,15 @@ export function SyncedAreaView({
   locale,
   text,
   settings,
-  listId = null
+  listId = null,
+  dailyLists = false
 }: {
   area: Area
   locale: Locale
   text: AccountText
   settings: AccountSettings
   listId?: string | null
+  dailyLists?: boolean
 }) {
   const api = useMemo(() => accountApi(settings.apiUrl, locale), [settings.apiUrl, locale])
   const tokens = useMemo(() => accessTokens(api), [api])
@@ -108,12 +111,12 @@ export function SyncedAreaView({
     if (!copy) return
     let current = true
     void readItemPages(linkedItems(copy, syncedAreas[area], listId)).then(pages => {
-      if (current) setDrawn({ copy, listId, pages })
+      if (current) setDrawn({ copy, listId, dailyLists, pages })
     })
     return () => {
       current = false
     }
-  }, [copy, area, listId])
+  }, [copy, area, listId, dailyLists])
 
   const shown = drawn !== null && drawn.copy === copy ? drawn : null
   const settled = useCallback(
@@ -134,6 +137,7 @@ export function SyncedAreaView({
     locale,
     text,
     listId: shown.listId,
+    dailyLists: shown.dailyLists,
     pages: shown.pages,
     change: async (entity, operation, entityId, fields, base) =>
       settled([await shown.copy.change(entity, operation, entityId, fields, base)]),

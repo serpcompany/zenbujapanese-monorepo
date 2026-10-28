@@ -334,6 +334,15 @@
         "keepList": "残す",
         "none": "まだリストはありません。",
         "allLists": "すべてのリスト",
+        "dailyLists": "毎日のリスト",
+        "dailyCount": {
+          "one": "{count}件",
+          "other": "{count}件"
+        },
+        "thisWeek": "今週",
+        "today": "今日",
+        "yesterday": "昨日",
+        "noDailyLists": "毎日のリストはまだありません。",
         "empty": "このリストにはまだ単語がありません。単語のページから追加できます。",
         "search": "このリストを検索",
         "noMatch": "このリストに一致する単語はありません。",
