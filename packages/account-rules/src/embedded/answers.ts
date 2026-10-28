@@ -1,3 +1,4 @@
+import { dailyListDay, dailyListId } from '../daily-lists'
 import { listNameCutToFit } from '../lists'
 import { keptNoteText, noteText } from '../notes'
 import { accountName, accountUsername, usernameToSave } from '../profile'
@@ -10,6 +11,8 @@ const answers: Record<string, (argument: string) => unknown> = {
   usernameToSave,
   signInCode: signInCodeOf,
   listName: listNameCutToFit,
+  dailyListId,
+  dailyListDay,
   keptNoteText,
   noteText,
   sentWatches: watches => sentWatchMarks(JSON.parse(watches) as Watch[])

@@ -1,3 +1,4 @@
+import dailyListId from '../../cases/daily-list-id.json'
 import listName from '../../cases/list-name.json'
 import name from '../../cases/name.json'
 import noteText from '../../cases/note-text.json'
@@ -40,6 +41,13 @@ export const signInCodeCases = signInCode as {
   length: number
   accepted: (Case & { code: string })[]
   refused: Case[]
+}
+
+export const dailyListIdCases = dailyListId as {
+  days: { covers: string; day: string; id: string }[]
+  upperCase: { covers: string; id: string; day: string }[]
+  notDays: { covers: string; day: string }[]
+  notDailyLists: { covers: string; id: string }[]
 }
 
 export const listNameCases = listName as {
