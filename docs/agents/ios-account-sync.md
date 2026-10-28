@@ -49,8 +49,10 @@ input to the rules the account service and the website do.
   it.
 - **Known words.** Each change to a word's state goes as `set`, with its `state` (`known`,
   `learning`, or `unknown`), its time as `stateChangedAt`, and the headword and reading unless it's
-  Unknown; the first upload sends each word that isn't Unknown, oldest first, with its `updatedAt`.
-  A word that comes down brings its `stateChangedAt` into `KnownWordChange.changedAt`. A service
+  Unknown; the first upload sends each word that isn't Unknown, oldest first, with its `updatedAt`:
+  the change's own time, which is the inbox file's for a Share extension change.
+  A word that comes down brings its `stateChangedAt` into `KnownWordChange.changedAt`, and into
+  `updatedAt` (the time it arrived when the account has none). A service
   older than Learning refuses `set` as `unknown_operation`, and the word keeps its state on the
   phone: a held copy of the phone's own earlier change is dropped, unless it's newer than the
   refused change's base. Unless a newer change to the word is queued, a Known goes again as `mark`,

@@ -222,4 +222,50 @@ final class AccountSyncProgressTests {
     #expect(sent.map(\.entityId) == [Self.eki])
     #expect(sent.first?.fields?["stateChangedAt"] == .string("2026-10-27T11:00:00.000Z"))
   }
+
+  @Test("a word changed in the share sheet before signing in goes up first with the time it was made")
+  func shareSheetChangeBeforeSignInSendsItsTime() async throws {
+    let fixture = Fixture()
+    fixture.serve()
+    await fixture.launch()
+    fixture.wordKnowledge.now = { [today] in today }
+    let word = KnownWordChange(
+      storedID: Self.eki, headword: "駅", reading: "えき", status: .learning)
+    let inbox = try SharedChanges.holding(word, madeAt: yesterdayEvening, in: fixture.directory)
+    await inbox.apply(to: fixture.wordLists, fixture.wordKnowledge)
+
+    try await fixture.signIn()
+
+    let sent = try #require(fixture.server.requests(to: "POST /v1/sync").first?.sync)
+    let set = sent.mutations.filter { $0.entity == "knownWord" }
+    #expect(set.map(\.entityId) == [Self.eki])
+    #expect(set.first?.fields?["stateChangedAt"] == .string("2026-10-27T11:00:00.000Z"))
+  }
+
+  @Test("a word that came from the account goes to another account with the account's time")
+  func syncedWordKeepsTheAccountsTime() async throws {
+    let server = StubAccountServer()
+    let service = FakeAccountService(on: server)
+    service.change(
+      for: Fixture.email,
+      .init(
+        id: UUID().uuidString.lowercased(), entity: "knownWord", operation: "set",
+        entityId: Self.eki, baseVersion: 0,
+        fields: [
+          "state": .string("learning"), "headword": .string("駅"), "reading": .string("えき"),
+          "stateChangedAt": .string(Self.yesterdayMorning),
+        ]))
+    let phone = Fixture(server: server)
+    await phone.launch()
+    phone.wordKnowledge.now = { [today] in today }
+    try await phone.signIn()
+    #expect(phone.wordKnowledge.status(storedID: Self.eki) == .learning)
+    await phone.account.signOut()
+
+    try await phone.signIn(as: "other@example.com")
+
+    let word = service.data(of: "knownWord:\(Self.eki)", for: "other@example.com")
+    #expect(word?["state"] as? String == "learning")
+    #expect(word?["stateChangedAt"] as? String == Self.yesterdayMorning)
+  }
 }
