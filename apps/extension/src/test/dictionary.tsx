@@ -3,12 +3,11 @@ import type { DataState } from '../shared/data-state'
 export const dictionary = {
   data: null as DataState | null,
   welcomeTabs: 0,
-  checks: 0,
-  polls: 0
+  checks: 0
 }
 
 export function resetDictionary(data: DataState | null = null): void {
-  Object.assign(dictionary, { data, welcomeTabs: 0, checks: 0, polls: 0 })
+  Object.assign(dictionary, { data, welcomeTabs: 0, checks: 0 })
 }
 
 export function openWelcomeTab(): Promise<void> {
@@ -21,13 +20,8 @@ export function checkForUpdates(): Promise<{ type: 'state'; data: DataState }> {
   return Promise.resolve({ type: 'state', data: { state: 'checking' } })
 }
 
-export function useDataState(): [DataState | null, () => void] {
-  return [
-    dictionary.data,
-    () => {
-      dictionary.polls += 1
-    }
-  ]
+export function useDataState(): [DataState | null, () => Promise<void>] {
+  return [dictionary.data, () => checkForUpdates().then(() => undefined)]
 }
 
 export function DictionaryProgress({ data }: { data: DataState }) {

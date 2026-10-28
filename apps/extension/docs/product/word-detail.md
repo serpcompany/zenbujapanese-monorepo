@@ -34,7 +34,7 @@ answered through a fixture source in the test, with Back drawn by the side panel
 | Behavior | Check |
 | --- | --- |
 | A kanji's page shows its readings, meanings, sections, and stroke order, and its words open their own pages. | kanji: 要's details |
-| While the stroke order is still downloading, the page says so and shows the rest. It asks again each time the dictionary's data changes, and shows the stroke order once it has downloaded. | kanji: downloading; asks again when the data changes |
+| While the stroke order is still downloading, the page says so and shows the rest. It asks again each time the dictionary's data changes, and every second while the data is ready but the strokes are not, and shows the stroke order once it has downloaded. | kanji: downloading; asks again when the data changes; a kanji page opened while the strokes download (`strokes-arrive.interaction.test.tsx`) |
 | The side panel draws its word, kanji, and form pages with these three. | kanji: the side panel's pages |
 | A form's page shows the form with a Pronounce button and the sentences that use it, 25 at a time, or "No example sentences use this form yet." | form: いる; a form none uses |
 

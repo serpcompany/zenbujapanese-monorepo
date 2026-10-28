@@ -57,8 +57,26 @@ test('draws the line being heard inside the player, in place of the site’s cap
   })
   const timedText = () => extension.youTube?.asked.filter(line => line.includes('/api/timedtext'))
   expect(timedText()).toHaveLength(1)
+  await page.evaluate(() => {
+    const element = document.querySelector('video')
+    element?.addEventListener(
+      'seeked',
+      () => {
+        element.dataset.landedAt = String(element.currentTime)
+      },
+      { once: true }
+    )
+  })
   await overlay(page).getByRole('button', { name: labels.nextLine }).click()
-  await expect.poll(async () => (await videoState(page)).time).toBe(5)
+  const landedAt = () =>
+    page.evaluate(() => Number(document.querySelector('video')?.dataset.landedAt ?? Number.NaN))
+  await expect.poll(async () => Math.abs((await landedAt()) - 5)).toBeLessThan(0.05)
+  await expect
+    .poll(async () => {
+      const { paused, time = 0 } = await videoState(page)
+      return paused && time >= 9 - 0.05 && time < 10
+    })
+    .toBe(true)
   await overlay(page).getByRole('button', { name: labels.repeatLine }).click()
   await chooseSpeed(page, 1, 0.75)
   expect(timedText()).toHaveLength(1)

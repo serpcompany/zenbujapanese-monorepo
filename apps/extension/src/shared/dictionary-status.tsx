@@ -4,7 +4,7 @@ import { DictionaryProgress, type ReadData, useDataState } from './dictionary-pr
 import { labels } from './labels'
 
 export function DictionaryStatus({ read, check }: { read?: ReadData; check?: ReadData }) {
-  const [data, again] = useDataState(read, check)
+  const [data, again] = useDataState({ read, check })
   const shown: DataState = data ?? { state: 'checking' }
   return (
     <div data-dictionary-status={shown.state} className="flex flex-col items-start gap-3">

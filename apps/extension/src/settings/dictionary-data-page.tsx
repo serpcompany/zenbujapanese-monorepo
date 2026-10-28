@@ -2,7 +2,6 @@ import { Button } from '@zenbu/ui/components/button'
 import { RefreshCwIcon } from 'lucide-react'
 import { useState } from 'react'
 import type { InstalledRelease } from '../shared/data-state'
-import { checkForUpdates } from '../shared/dictionary'
 import { DictionaryProgress, useDataState } from '../shared/dictionary-progress'
 import { settingsLabels } from './labels'
 
@@ -38,7 +37,7 @@ function Release({ release }: { release: InstalledRelease }) {
 }
 
 export function DictionaryDataPage() {
-  const [data, pollAgain] = useDataState()
+  const [data, checkAgain] = useDataState()
   const [checking, setChecking] = useState(false)
   const downloading = data?.state === 'downloading' || data?.state === 'updating'
   const installed = data?.state === 'ready' || data?.state === 'updating' ? data : null
@@ -56,10 +55,7 @@ export function DictionaryDataPage() {
         disabled={checking || downloading}
         onClick={() => {
           setChecking(true)
-          checkForUpdates().finally(() => {
-            setChecking(false)
-            pollAgain()
-          })
+          checkAgain().finally(() => setChecking(false))
         }}
       >
         <RefreshCwIcon data-icon="inline-start" />

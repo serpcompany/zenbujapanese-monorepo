@@ -65,7 +65,8 @@ export function useLookup<T extends Answer>(
   answerWaits?: (answer: T) => boolean
 ): [Looked<T>, () => void] {
   const [result, setResult] = useState<Looked<T>>({ state: 'looking' })
-  const [data] = useDataState()
+  const answerIsPartial = result.state === 'answered' && waitsForData(result, answerWaits)
+  const [data] = useDataState({ waiting: answerIsPartial })
   const latest = useRef(0)
   const seen = useRef(data)
   const run = useCallback(

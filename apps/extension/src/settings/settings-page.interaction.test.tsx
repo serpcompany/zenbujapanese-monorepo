@@ -104,7 +104,7 @@ describe('Settings', () => {
     expect(rows()).toEqual([youtube, jlpt])
   })
 
-  it('shows the installed release and checks for updates', async () => {
+  it('shows the installed release, and sends one update check for one click', async () => {
     startExtension()
     resetDictionary({
       state: 'ready',
@@ -118,7 +118,6 @@ describe('Settings', () => {
     expect(settings.querySelector('dd')?.textContent).toBe('2026-10-01')
     await click(byText(settings, 'button', 'Check for Updates'))
     expect(dictionary.checks).toBe(1)
-    expect(dictionary.polls).toBe(1)
   })
 
   it('draws the shared progress while the dictionary downloads, and Check for Updates waits', async () => {

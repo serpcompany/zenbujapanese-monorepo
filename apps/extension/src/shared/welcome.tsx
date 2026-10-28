@@ -6,7 +6,7 @@ import { EverySite } from './every-site'
 import { labels } from './labels'
 
 export function Welcome({ read, check }: { read?: ReadData; check?: ReadData }) {
-  const [data, again] = useDataState(read, check)
+  const [data, again] = useDataState({ read, check })
   const shown: DataState = data ?? { state: 'checking' }
   return (
     <main className="mx-auto flex w-full max-w-[600px] flex-col items-center gap-8 px-4 py-16 text-center">

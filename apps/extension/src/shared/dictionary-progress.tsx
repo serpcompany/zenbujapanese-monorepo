@@ -11,31 +11,40 @@ const pollMs = 1000
 const shown = (answer: StateAnswer | Failure): DataState =>
   answer.type === 'state' ? answer.data : { state: 'failed', reason: answer.reason }
 
-export function useDataState(
-  read: ReadData = readDataState,
-  check: ReadData = checkForUpdates
-): [DataState | null, () => void] {
+export type DataStateOptions = { read?: ReadData; check?: ReadData; waiting?: boolean }
+
+export function useDataState({
+  read = readDataState,
+  check = checkForUpdates,
+  waiting = false
+}: DataStateOptions = {}): [DataState | null, () => Promise<void>] {
   const [data, setData] = useState<DataState | null>(null)
 
-  const send = useCallback((ask: ReadData) => {
-    Promise.resolve()
-      .then(ask)
-      .then(
-        answer => setData(shown(answer)),
-        (error: unknown) =>
-          setData({
-            state: 'failed',
-            reason: error instanceof Error ? error.message : String(error)
-          })
-      )
-  }, [])
+  const send = useCallback(
+    (ask: ReadData) =>
+      Promise.resolve()
+        .then(ask)
+        .then(
+          answer => setData(shown(answer)),
+          (error: unknown) =>
+            setData({
+              state: 'failed',
+              reason: error instanceof Error ? error.message : String(error)
+            })
+        ),
+    []
+  )
 
-  useEffect(() => send(read), [send, read])
+  useEffect(() => {
+    send(read)
+  }, [send, read])
 
-  const settled = data?.state === 'ready' || data?.state === 'failed'
+  const settled = !waiting && (data?.state === 'ready' || data?.state === 'failed')
   useEffect(() => {
     if (settled) return
-    const timer = setInterval(() => send(read), pollMs)
+    const timer = setInterval(() => {
+      send(read)
+    }, pollMs)
     return () => clearInterval(timer)
   }, [send, read, settled])
 
