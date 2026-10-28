@@ -163,7 +163,9 @@ describe('the transcript’s words', () => {
     shown.services.popupCard.mockImplementation(async () => popupAnswer('youkyuu'))
     const aids = () => shown.row('散歩に行きましょう')?.querySelector('[data-reading-aids]')
     const meanings = () =>
-      [...(aids()?.querySelectorAll('[data-aid="meaning"]') ?? [])].map(found => found.textContent)
+      [...(aids()?.querySelectorAll('[data-aid="meaning"] [aria-hidden="true"]') ?? [])].map(
+        found => found.textContent
+      )
     await vi.waitFor(() => expect(aids()?.getAttribute('data-furigana')).toBe('on'))
     expect(aids()?.getAttribute('data-romaji')).toBe('off')
     expect(meanings()).toEqual([])

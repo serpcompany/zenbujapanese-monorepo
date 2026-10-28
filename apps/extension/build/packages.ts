@@ -21,7 +21,8 @@ type BuiltManifest = {
   version?: string
   key?: string
   homepage_url?: string
-  action?: { default_popup?: string }
+  icons?: Record<string, string>
+  action?: { default_popup?: string; default_icon?: Record<string, string> }
   side_panel?: { default_path?: string }
   options_ui?: { page?: string }
   background?: { service_worker?: string }
@@ -109,6 +110,8 @@ function keyProblems(kind: PackageKind, { key }: BuiltManifest): string[] {
 
 function namedFiles(manifest: BuiltManifest): string[] {
   return [
+    ...Object.values(manifest.icons ?? {}),
+    ...Object.values(manifest.action?.default_icon ?? {}),
     manifest.action?.default_popup,
     manifest.side_panel?.default_path,
     manifest.options_ui?.page,

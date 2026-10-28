@@ -12,6 +12,10 @@
   align-items: center;
 }
 
+[data-reading-aids][data-word-meanings="on"] :has(> [data-aid="meaning"]):not(:first-child) {
+  margin-inline-start: 0.5rem;
+}
+
 @layer components {
   [data-reading-aids] [data-aid="romaji"],
   [data-reading-aids] [data-aid="reading"] {
@@ -19,6 +23,6 @@
   }
 
   [data-reading-aids] [data-aid="meaning"] {
-    @apply max-w-24 truncate text-xs leading-snug text-blue-600 dark:text-blue-400;
+    @apply max-w-24 truncate text-xs leading-snug text-muted-foreground;
   }
 }

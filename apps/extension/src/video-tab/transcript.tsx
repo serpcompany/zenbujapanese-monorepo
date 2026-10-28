@@ -34,7 +34,7 @@ const timeClass =
   'shrink-0 cursor-pointer pt-1 text-xs text-muted-foreground tabular-nums outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-3 focus-visible:after:ring-ring/50'
 
 const textClass =
-  'pointer-events-none relative flex min-w-0 flex-1 flex-col gap-1 data-current:[&_[data-source]]:text-foreground [&_[data-word-popup]]:pointer-events-auto [&_button]:pointer-events-auto'
+  'pointer-events-none relative flex min-w-0 flex-1 flex-col gap-1 data-current:[&_[data-source]]:text-foreground data-current:[&_[data-aid=meaning]]:text-foreground [&_[data-word-popup]]:pointer-events-auto [&_button]:pointer-events-auto'
 
 const Row = memo(function Row({
   line,

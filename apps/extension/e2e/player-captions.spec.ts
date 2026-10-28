@@ -1,7 +1,9 @@
+import { writeFileSync } from 'node:fs'
 import type { Page } from '@playwright/test'
 import { playerCaptionLabels as labels } from '../src/player-captions/labels.ts'
+import { textContrast } from './contrast.ts'
 import { expect, test } from './fixtures.ts'
-import { wordPopup } from './words-page.ts'
+import { changeSettings, tones, wordPopup } from './words-page.ts'
 import { standInWatchPage } from './youtube-stand-in.ts'
 
 test.use({ youTubeStandIn: true })
@@ -80,6 +82,24 @@ test('draws the line being heard inside the player, in place of the site’s cap
   await overlay(page).getByRole('button', { name: labels.repeatLine }).click()
   await chooseSpeed(page, 1, 0.75)
   expect(timedText()).toHaveLength(1)
+})
+
+test('draws word meanings on the caption at least 4.5:1 against its band over the brightest frame, in either page theme', async ({
+  extension,
+  page
+}) => {
+  await changeSettings(extension, { 'readingAids.wordMeanings': true })
+  await openAt(page, 1)
+  const meaning = caption(page).locator('[data-aid="meaning"]').first()
+  await expect(meaning).toBeVisible()
+  const measured: Record<string, number> = {}
+  for (const tone of tones) {
+    await page.emulateMedia({ colorScheme: tone })
+    measured[tone] = await textContrast(meaning, '[data-player-caption]')
+    expect(measured[tone]).toBeGreaterThanOrEqual(4.5)
+  }
+  writeFileSync(test.info().outputPath('contrast.json'), JSON.stringify(measured))
+  await changeSettings(extension, { 'readingAids.wordMeanings': false })
 })
 
 test('draws the caption in Geist with no request from the page for the extension’s files', async ({

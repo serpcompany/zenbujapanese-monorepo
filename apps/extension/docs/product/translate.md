@@ -57,11 +57,14 @@ Entry opens the word's Word Detail over the tab; Escape or a press outside the p
 away. Escape gives focus back to the word; a press leaves focus where it lands. While the popup's
 ••• menu is open, a press closes only the menu. The text has the reading aids turned on in
 Settings: furigana over its kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
-Reading Aids). Until the dictionary is ready, the text is plain; the tab asks again, waiting longer
+Reading Aids). A meaning is in the muted foreground, half a rem from the word before it; one wider
+than its column is cut with an ellipsis, and its sense's full text is its tooltip and what a screen
+reader reads. Until the dictionary is ready, the text is plain; the tab asks again, waiting longer
 each time as page lookup does, and links the words once it is ready.
 
 Check: `src/translate/source-words.interaction.test.tsx`, and the tab's test, "links the words of
-a Japanese source…".
+a Japanese source…". The spacing, colour and tooltip are checked in the Video tab's transcript,
+which draws the same line (`e2e/transcript-meanings.spec.ts`).
 
 ## Downloading and unavailable
 
