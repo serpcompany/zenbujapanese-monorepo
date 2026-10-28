@@ -30,7 +30,12 @@ extension LanguageReferenceData {
       }
     }
     do {
-      try Self.attachCompoundPitch(opened)
+      try Self.attach(
+        opened, "compound_pitch", from: "CompoundPitch",
+        orEmpty: "entry_pitch (entry_id BLOB PRIMARY KEY, pitch_accent_json TEXT NOT NULL)")
+      try Self.attach(
+        opened, "jlpt", from: "JLPTLevelPack",
+        orEmpty: "level_evidence (language_reference_id BLOB PRIMARY KEY, level INTEGER NOT NULL)")
     } catch {
       sqlite3_close(opened)
       throw error
@@ -40,11 +45,13 @@ extension LanguageReferenceData {
     return statements
   }
 
-  private static func attachCompoundPitch(_ database: OpaquePointer) throws {
-    let url = BundledData.bundle.url(forResource: "CompoundPitch", withExtension: "sqlite3")
+  private static func attach(
+    _ database: OpaquePointer, _ schema: String, from resource: String, orEmpty table: String
+  ) throws {
+    let url = BundledData.bundle.url(forResource: resource, withExtension: "sqlite3")
     var statement: OpaquePointer?
     guard
-      sqlite3_prepare_v2(database, "ATTACH DATABASE ? AS compound_pitch", -1, &statement, nil)
+      sqlite3_prepare_v2(database, "ATTACH DATABASE ? AS \(schema)", -1, &statement, nil)
         == SQLITE_OK,
       let statement
     else { throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database))) }
@@ -52,10 +59,7 @@ extension LanguageReferenceData {
     sqliteBind(url?.path ?? ":memory:", at: 1, to: statement)
     guard sqlite3_step(statement) == SQLITE_DONE,
       url != nil
-        || sqlite3_exec(
-          database,
-          "CREATE TABLE compound_pitch.entry_pitch (entry_id BLOB PRIMARY KEY, pitch_accent_json TEXT NOT NULL)",
-          nil, nil, nil) == SQLITE_OK
+        || sqlite3_exec(database, "CREATE TABLE \(schema).\(table)", nil, nil, nil) == SQLITE_OK
     else { throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database))) }
   }
 
