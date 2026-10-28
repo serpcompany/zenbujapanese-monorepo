@@ -143,15 +143,15 @@ Zenbu Dev's under `com.zenbujapanese.dictionary.dev`.
 ### Tests on every platform
 
 Every suite runs on the iPhone Simulator, an iPad Simulator, and the Mac, as the `iOS` workflow's
-`swift` job does ([`ci-ios.md`](ci-ios.md)). The Simulators are this checkout's own, an iPhone Pro
-Max and an iPad Pro 13-inch: `python3 apps/ios/Tools/simulator.py` prints the iPhone's UDID, and
-with `--device ipad` the iPad's ([`verification.md`](verification.md)).
+`swift` job does ([`ci-ios.md`](ci-ios.md)), on this checkout's own Simulators, whose UDIDs
+`python3 apps/ios/Tools/simulator.py` prints ([`verification.md`](verification.md)).
 
 **The package's tests**, `SearchExperienceTests` and `TranslatorCoreTests`, from `apps/ios/Modules`:
 
 ```sh
 TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES test
+  -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES \
+  -collect-test-diagnostics never test
 xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
 ```
 
@@ -169,7 +169,7 @@ or Mac, and its saved data is the only data they erase. From the repository root
 ```sh
 xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
   -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
-  ZENBU_BUNDLE_ID_SUFFIX=.uitests test
+  ZENBU_BUNDLE_ID_SUFFIX=.uitests -collect-test-diagnostics never test
 xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
   -destination 'platform=macOS,arch=arm64' ZENBU_BUNDLE_ID_SUFFIX=.uitests \
   CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= test
@@ -422,7 +422,7 @@ Simulator. Run it from `apps/ios/Modules` with:
 
 ```sh
 TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<simulator-udid>' \
+  -destination 'platform=iOS Simulator,id=<simulator-udid>' -collect-test-diagnostics never \
   ONLY_ACTIVE_ARCH=YES test
 ```
 

@@ -90,7 +90,7 @@ done
 
 rm -rf "$run/run.xcresult" "$run/run.mp4" "$run/shots"
 xcodebuild "${arguments[@]}" "${only[@]}" -resultBundlePath "$run/run.xcresult" \
-  test-without-building >"$run/test.log" 2>&1 &
+  -collect-test-diagnostics never test-without-building >"$run/test.log" 2>&1 &
 tests=$!
 proof="run.xcresult, test.log, doctor.txt"
 if [ "$record" = yes ]; then
