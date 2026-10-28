@@ -44,7 +44,11 @@ describe('manifest', () => {
 
   it('lets every site the learner may allow load the fonts the shadow root draws with', () => {
     expect(manifest('release').web_accessible_resources).toEqual([
-      { resources: ['assets/*.woff2'], matches: ['http://*/*', 'https://*/*'] }
+      {
+        resources: ['assets/*.woff2'],
+        matches: ['http://*/*', 'https://*/*'],
+        use_dynamic_url: true
+      }
     ])
   })
 

@@ -26,8 +26,16 @@ word isn't in the dictionary."; a lookup that fails: "The dictionary couldn't an
 ## Where it goes
 
 On a page, it opens beside the word, inside the window for a word at any edge, and follows the
-word as the page scrolls. Escape, Close, and a click outside close it and give focus back to
-where it was. In Translate, it opens under the text, and Escape and Close give focus back to the
+word as the page scrolls. Once the word scrolls wholly out of the window, it closes, unless its
+More menu is open. Escape, Close, and a click outside close it and give focus back to where it
+was.
+
+In a page's fullscreen element, such as a video player, it opens inside that element, so it shows
+over the video, and moves back to the page when fullscreen ends. A bare `<video>` in fullscreen
+can't hold other elements, so there it stays in the page's body, behind the video; YouTube's
+player is an element that can hold it. It tells the page script's other parts once when it
+opens and once when it closes (`src/word-popup/popup-events.ts`), which pausing the video (#964)
+uses. In Translate, it opens under the text, and Escape and Close give focus back to the
 word.
 
 ## Its actions
@@ -42,10 +50,15 @@ word.
 
 ## Checks
 
-The browser tests (`e2e/word-popup.spec.ts`), on a light and a dark page: "a click on a word
+The browser tests (`e2e/word-popup.spec.ts`), on a light and a dark page, each with every
+reading aid off and with the default settings (Furigana on): "a click on a word
 opens its popup with headword, reading, pitch, badges and meanings…", "Open Full Entry sends
 Word Detail and the entry, and opens the closed side panel", "several entries open on a
-choice…", "the popup stays inside the window for a word at each edge…", "closes on Escape,
+choice…", "the popup stays inside the window for a word at each edge, and follows the page as it
+scrolls until its word is gone", "closes on Escape,
 Close and a click outside…", "a word in a link opens the popup…", and "Share and Copy Link put
-the word's address on the clipboard…". DOM tests: `src/word-popup/word-popup.interaction.test.tsx`
-and `src/word-popup/position.test.ts`; in Translate, `src/translate/source-words.interaction.test.tsx`.
+the word's address on the clipboard…"; the first also checks the popup's font loads.
+DOM tests: `src/word-popup/word-popup.interaction.test.tsx`,
+`src/word-popup/popup-host.interaction.test.tsx` for the fullscreen element, the bare video, and
+the open and close events, and `src/word-popup/position.test.ts`; in Translate,
+`src/translate/source-words.interaction.test.tsx`.

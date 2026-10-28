@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test'
 import { wordPath } from '@zenbu/dictionary-core/detail/word-path'
 import { highlightNames, type Tone } from '../src/page-lookup/underline.ts'
-import type { Settings } from '../src/shared/settings.ts'
+import { readingAidKeys, type Settings, settingDefaults } from '../src/shared/settings.ts'
 import type { Extension } from './fixtures.ts'
 
 export { highlightNames }
@@ -15,8 +15,10 @@ export const underlineColors: Record<Tone, string> = {
 
 export const allowedHost = 'allowed.localhost'
 
-const wordsPageUrl = (extension: Extension, tone: Tone) =>
-  `${extension.server.allowedSiteUrl}/test-pages/words.html${tone === 'dark' ? '?dark' : ''}`
+export const darkTextColours = ['oklch(0.985 0 0)', 'color(display-p3 1 1 1)']
+
+const wordsPageUrl = (extension: Extension, tone: Tone, colour: string) =>
+  `${extension.server.allowedSiteUrl}/test-pages/words.html${tone === 'dark' ? `?dark=${encodeURIComponent(colour)}` : ''}`
 
 export const noReadingAids: Partial<Settings> = {
   'readingAids.furigana': false,
@@ -24,6 +26,16 @@ export const noReadingAids: Partial<Settings> = {
   'readingAids.wordMeanings': false,
   'sites.off': []
 }
+
+export const defaultReadingAids: Partial<Settings> = {
+  ...Object.fromEntries(readingAidKeys.map(key => [key, settingDefaults[key]])),
+  'sites.off': []
+}
+
+export const readingAidCases = [
+  { name: 'with every reading aid off', aids: noReadingAids },
+  { name: 'with the default settings, Furigana on', aids: defaultReadingAids }
+]
 
 export const pageWords = {
   sentence: ['要求', '要る'],
@@ -116,6 +128,6 @@ export function wordPopup(page: Page) {
   return page.locator('[data-zenbu-word-popup]').locator('[data-word-popup]')
 }
 
-export async function openWordsPage(page: Page, extension: Extension, tone: Tone) {
-  await page.goto(wordsPageUrl(extension, tone))
+export async function openWordsPage(page: Page, extension: Extension, tone: Tone, colour = '') {
+  await page.goto(wordsPageUrl(extension, tone, colour))
 }

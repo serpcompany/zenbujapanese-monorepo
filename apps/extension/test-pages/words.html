@@ -5,9 +5,9 @@
     <title>Japanese words</title>
     <link rel="stylesheet" href="./words.css" />
     <script>
-      if (new URLSearchParams(location.search).has('dark')) {
-        document.documentElement.classList.add('dark')
-      }
+      const dark = new URLSearchParams(location.search).get('dark')
+      if (dark !== null) document.documentElement.classList.add('dark')
+      if (dark) document.documentElement.style.color = dark
     </script>
   </head>
   <body>
@@ -25,6 +25,8 @@
         <button type="button" id="page-button">要領</button>
       </form>
       <div id="editable" contenteditable="true">要項</div>
+      <label id="agree"><input id="agree-box" type="checkbox" />要求に同意する</label>
+      <details id="more"><summary id="more-summary">要領を見る</summary><p id="more-inside">Inside.</p></details>
       <div class="edges">
         <span class="edge" id="top-left">要求</span>
         <span class="edge" id="top-right">要求</span>

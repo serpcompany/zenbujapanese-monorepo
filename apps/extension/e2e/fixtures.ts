@@ -13,6 +13,7 @@ export type Extension = {
   context: BrowserContext
   id: string
   origin: string
+  dynamicOrigin: string
   serviceWorker: Worker
   server: LocalServer
   manifest: Record<string, unknown>
@@ -20,9 +21,11 @@ export type Extension = {
 
 const extensionSchemes = new Set(['chrome-extension:', 'chrome:', 'data:', 'blob:', 'about:'])
 
-function isAllowedRequest(url: string, server: LocalServer, extensionOrigin: string) {
+function isAllowedRequest(url: string, server: LocalServer, extension: Extension) {
   const { protocol, host, origin } = new URL(url)
-  if (protocol === 'chrome-extension:') return `${protocol}//${host}` === extensionOrigin
+  if (protocol === 'chrome-extension:') {
+    return [extension.origin, extension.dynamicOrigin].includes(`${protocol}//${host}`)
+  }
   return (
     extensionSchemes.has(protocol) ||
     [server.url, server.languageDataUrl, server.allowedSiteUrl].includes(origin)
@@ -55,8 +58,12 @@ export const test = base.extend<
         context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
       const id = new URL(serviceWorker.url()).host
       const origin = `chrome-extension://${id}`
+      const dynamicId = await serviceWorker.evaluate(
+        () => (chrome.runtime as typeof chrome.runtime & { dynamicId: string }).dynamicId
+      )
+      const dynamicOrigin = `chrome-extension://${dynamicId}`
       const manifest = JSON.parse(readFileSync(join(extensionBuild, 'manifest.json'), 'utf8'))
-      await use({ context, id, origin, serviceWorker, server, manifest })
+      await use({ context, id, origin, dynamicOrigin, serviceWorker, server, manifest })
       await context.close()
       await server.close()
       rmSync(profile, { recursive: true, force: true })
@@ -67,7 +74,7 @@ export const test = base.extend<
     async ({ extension }, use) => {
       const outside: string[] = []
       const record = (request: { url(): string }) => {
-        if (!isAllowedRequest(request.url(), extension.server, extension.origin)) {
+        if (!isAllowedRequest(request.url(), extension.server, extension)) {
           outside.push(request.url())
         }
       }

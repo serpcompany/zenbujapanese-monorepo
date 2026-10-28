@@ -43,6 +43,9 @@ const needsWords = (tokens: readonly PageToken[], aids: Aids, glosses: Glosses) 
 export const wordIds = (tokens: readonly PageToken[]) =>
   tokens.flatMap(token => (token.ids.length === 1 ? token.ids : []))
 
+const readingAt = (node: Node) =>
+  (node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement)?.closest('rt')
+
 const inDocumentOrder = (left: Node, right: Node) =>
   left.compareDocumentPosition(right) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
 
@@ -156,18 +159,25 @@ export function pageRendering({ doc, view, underlines, aids, glosses, quiet }: O
     },
     wordAt(x, y) {
       const caret = doc.caretPositionFromPoint?.(x, y)
-      const list = caret ? pieces.get(caret.offsetNode as Text) : undefined
-      if (!caret || !list) return null
+      if (!caret) return null
+      const holds = (boxes: Iterable<DOMRect>) =>
+        [...boxes].some(box => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)
+      const reading = readingAt(caret.offsetNode)
+      if (reading) {
+        const base = pieces.get(reading.parentElement?.firstChild as Text)
+        const word = base?.find(piece => piece.token.ids.length > 0)
+        return word && holds(reading.getClientRects()) ? word : null
+      }
       return (
-        list.find(
-          piece =>
-            piece.token.ids.length > 0 &&
-            piece.start <= caret.offset &&
-            caret.offset <= piece.end &&
-            [...rangeOf(piece).getClientRects()].some(
-              box => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom
-            )
-        ) ?? null
+        pieces
+          .get(caret.offsetNode as Text)
+          ?.find(
+            piece =>
+              piece.token.ids.length > 0 &&
+              piece.start <= caret.offset &&
+              caret.offset <= piece.end &&
+              holds(rangeOf(piece).getClientRects())
+          ) ?? null
       )
     }
   }

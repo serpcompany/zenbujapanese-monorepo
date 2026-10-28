@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { popupPlacement } from './position'
+import { outOfWindow, popupPlacement } from './position'
 
 const window = { width: 1000, height: 800 }
 const popup = { width: 320, height: 300 }
@@ -38,5 +38,13 @@ describe('where the word popup sits', () => {
 
   it('keeps to the top margin when the popup is taller than the window', () => {
     expect(popupPlacement(word(100, 100), { width: 320, height: 900 }, window).top).toBe(8)
+  })
+
+  it('counts its word gone once the word is wholly outside the window', () => {
+    expect(outOfWindow(word(100, -20), window)).toBe(true)
+    expect(outOfWindow(word(100, 800), window)).toBe(true)
+    expect(outOfWindow(word(-40, 100), window)).toBe(true)
+    expect(outOfWindow(word(100, -19), window)).toBe(false)
+    expect(outOfWindow(word(100, 799), window)).toBe(false)
   })
 })

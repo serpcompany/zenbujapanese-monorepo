@@ -40,14 +40,14 @@ export type PageScriptBrowser = {
 export const pageOrigins = (granted: readonly string[]): string[] =>
   granted.filter(origin => !ownHosts.includes(origin))
 
-async function register(browser: PageScriptBrowser): Promise<void> {
+async function register(browser: PageScriptBrowser): Promise<string[]> {
   const { origins = [] } = await browser.permissions.getAll()
   const matches = pageOrigins(origins)
   const ids = [pageScriptId]
   const registered = await browser.scripting.getRegisteredContentScripts({ ids })
   if (matches.length === 0) {
     if (registered.length > 0) await browser.scripting.unregisterContentScripts({ ids })
-    return
+    return matches
   }
   const script: PageScript = {
     id: pageScriptId,
@@ -59,6 +59,7 @@ async function register(browser: PageScriptBrowser): Promise<void> {
   await (registered.length > 0
     ? browser.scripting.updateContentScripts([script])
     : browser.scripting.registerContentScripts([script]))
+  return matches
 }
 
 const eachTab = (tabs: OpenTab[], act: (tabId: number) => Promise<unknown>) =>
@@ -71,9 +72,11 @@ async function injectInto(browser: PageScriptBrowser, origins: string[]): Promis
   )
 }
 
-async function stopWithoutAccess(browser: PageScriptBrowser): Promise<void> {
-  const hidden = (await browser.tabs.query({})).filter(tab => tab.url === undefined)
-  await eachTab(hidden, tabId => browser.tabs.sendMessage(tabId, stopPageLookup))
+async function stopOutside(browser: PageScriptBrowser, matches: string[]): Promise<void> {
+  const covered = matches.length > 0 ? await browser.tabs.query({ url: matches }) : []
+  const kept = new Set(covered.map(tab => tab.id))
+  const left = (await browser.tabs.query({})).filter(tab => !kept.has(tab.id))
+  await eachTab(left, tabId => browser.tabs.sendMessage(tabId, stopPageLookup))
 }
 
 export function keepPageScriptRegistered(
@@ -81,15 +84,18 @@ export function keepPageScriptRegistered(
   reportFailure: (code: FailureCode) => void
 ): Promise<void> {
   let queue = Promise.resolve()
-  const after = (step: () => Promise<void>) => {
-    queue = queue.then(step).catch(() => reportFailure('page-script'))
+  const after = (step: () => Promise<unknown>) => {
+    queue = queue
+      .then(step)
+      .then(() => undefined)
+      .catch(() => reportFailure('page-script'))
     return queue
   }
   browser.permissions.onAdded.addListener(({ origins = [] }) => {
     after(() => register(browser).then(() => injectInto(browser, pageOrigins(origins))))
   })
   browser.permissions.onRemoved.addListener(() => {
-    after(() => register(browser).then(() => stopWithoutAccess(browser)))
+    after(() => register(browser).then(matches => stopOutside(browser, matches)))
   })
   return after(() => register(browser))
 }

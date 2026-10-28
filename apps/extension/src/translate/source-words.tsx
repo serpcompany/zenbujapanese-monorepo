@@ -11,7 +11,7 @@ import {
 } from 'react'
 import { type Glosses, glossOf } from '../page-lookup/annotate'
 import { type GlossLookUp, glossCache } from '../page-lookup/glosses'
-import type { Found } from '../page-lookup/rendering'
+import { type Found, wordIds } from '../page-lookup/rendering'
 import { readText, type Segment } from '../page-lookup/scan'
 import { type PageToken, wordGroups } from '../page-lookup/words'
 import type { Settings } from '../shared/settings'
@@ -55,8 +55,7 @@ function useGlosses(found: Found | null, on: boolean, services: SourceServices):
   useEffect(() => {
     if (!found || !on) return
     let live = true
-    const ids = found.tokens.flatMap(token => (token.ids.length === 1 ? token.ids : []))
-    cache.fetch([...new Set(ids)]).then(() => {
+    cache.fetch([...new Set(wordIds(found.tokens))]).then(() => {
       if (live) redraw()
     })
     return () => {

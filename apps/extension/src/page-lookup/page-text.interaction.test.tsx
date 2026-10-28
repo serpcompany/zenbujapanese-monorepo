@@ -37,6 +37,17 @@ describe('the Japanese text on a page', () => {
     expect(japaneseText(read, leftAloneIn(window))).toEqual([read])
   })
 
+  it('leaves the words in labels, summaries, and ARIA controls to the page, so a click works the control', () => {
+    const body = page(`
+      <label id="agree"><input type="checkbox"> 利用規約に同意する</label>
+      <details id="more"><summary>詳細を見る</summary><p id="inside">要求が要る。</p></details>
+      ${['button', 'tab', 'menuitem', 'checkbox', 'switch', 'radio', 'option']
+        .map(role => `<div role="${role}"><span>要求</span></div>`)
+        .join('')}`)
+    const found = japaneseText(body, leftAloneIn(window))
+    expect(found.map(node => node.parentElement?.id)).toEqual(['inside'])
+  })
+
   it('takes furigana and each word’s meaning from Zenbu when the learner turns them on', () => {
     const body = page('<p>要求が要る。</p>')
     const node = body.querySelector('p')?.firstChild as Text
@@ -92,6 +103,7 @@ describe('the Japanese text on a page', () => {
   it('underlines in the dark colour on a page whose text is light', () => {
     expect(toneOf('rgb(17, 24, 39)')).toBe('light')
     expect(toneOf('rgb(243, 244, 246)')).toBe('dark')
+    expect(toneOf('rgb(255 255 255 / 0.8)')).toBe('dark')
     expect(toneOf('canvastext')).toBe('light')
   })
 })

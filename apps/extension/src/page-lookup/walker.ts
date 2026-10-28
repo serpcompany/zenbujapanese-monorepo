@@ -10,6 +10,8 @@ const leftAlone = new Set([
   'select',
   'option',
   'button',
+  'label',
+  'summary',
   'script',
   'style',
   'noscript',
@@ -28,6 +30,17 @@ const leftAlone = new Set([
   hostElementName
 ])
 
+const leftAloneRoles = new Set([
+  'navigation',
+  'button',
+  'tab',
+  'menuitem',
+  'checkbox',
+  'switch',
+  'radio',
+  'option'
+])
+
 const pinned = new Set(['fixed', 'sticky'])
 
 type View = Pick<Window, 'getComputedStyle'>
@@ -44,7 +57,7 @@ export function leftAloneIn(view: View): LeftAlone {
   const own = (element: Element) =>
     leftAlone.has(element.localName) ||
     element.hasAttribute(aidAttribute) ||
-    element.getAttribute('role') === 'navigation' ||
+    leftAloneRoles.has(element.getAttribute('role') ?? '') ||
     editable(element) ||
     pinned.has(view.getComputedStyle(element).position)
   const check = (element: Element): boolean => {

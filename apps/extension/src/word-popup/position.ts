@@ -24,3 +24,9 @@ export function popupPlacement(anchor: Edges, popup: Size, window: Size): Placem
     top: clamp(side === 'below' ? below : above, margin, window.height - margin - popup.height)
   }
 }
+
+export const outOfWindow = (anchor: Edges, window: Size) =>
+  anchor.bottom <= 0 ||
+  anchor.top >= window.height ||
+  anchor.right <= 0 ||
+  anchor.left >= window.width

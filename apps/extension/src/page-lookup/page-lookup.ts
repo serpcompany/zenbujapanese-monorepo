@@ -88,8 +88,15 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
   }
 
   function start(): Running {
-    const observe = () =>
-      observer.observe(doc.documentElement, { childList: true, characterData: true, subtree: true })
+    let live = true
+    const observe = () => {
+      if (live)
+        observer.observe(doc.documentElement, {
+          childList: true,
+          characterData: true,
+          subtree: true
+        })
+    }
     const quiet = (change: () => void) => {
       const pending = observer.takeRecords()
       observer.disconnect()
@@ -159,6 +166,7 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
       underlines,
       observer,
       stop() {
+        live = false
         view.removeEventListener('click', onClick, true)
         observer.disconnect()
         scan.stop()

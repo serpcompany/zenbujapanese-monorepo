@@ -13,7 +13,10 @@ function fakeBrowser({ granted = [] as string[], tabs = [] as Tab[], failing = f
   const removed = new Set<Listener>()
   const injected: number[] = []
   const stopped: number[] = []
-  const shows = (tab: Tab) => site.granted.includes(tab.hostPattern)
+  const covers = (patterns: readonly string[], tab: Tab) =>
+    patterns.includes(tab.hostPattern) ||
+    (patterns.includes(everyHttpsSite) && tab.url.startsWith('https://'))
+  const shows = (tab: Tab) => covers(site.granted, tab) || ownHosts.includes(tab.hostPattern)
   const browser: PageScriptBrowser = {
     permissions: {
       getAll: () =>
@@ -45,7 +48,7 @@ function fakeBrowser({ granted = [] as string[], tabs = [] as Tab[], failing = f
       query: ({ url }) =>
         Promise.resolve(
           tabs
-            .filter(tab => url === undefined || url.includes(tab.hostPattern))
+            .filter(tab => url === undefined || covers(url, tab))
             .map(tab => (shows(tab) ? { id: tab.id, url: tab.url } : { id: tab.id }))
         ),
       sendMessage: (tabId, message) => {
@@ -67,6 +70,12 @@ function fakeBrowser({ granted = [] as string[], tabs = [] as Tab[], failing = f
   }
   return { browser, site, injected, stopped, grant, revoke }
 }
+
+const everyHttpsSite = 'https://*/*'
+
+const youtube = 'https://www.youtube.com/*'
+
+const ownHosts = [youtube]
 
 const example = 'https://example.com/*'
 const exampleTab: Tab = { id: 7, url: 'https://example.com/a', hostPattern: example }
@@ -128,6 +137,19 @@ describe('page script registration', () => {
     expect(fake.stopped).toEqual([7])
     await fake.revoke([other.hostPattern])
     expect(fake.site.registered).toEqual([])
+  })
+
+  it('stops the tabs Every Site reached, YouTube’s too, when Every Site is taken back', async () => {
+    const video: Tab = { id: 9, url: 'https://www.youtube.com/watch?v=a', hostPattern: youtube }
+    const fake = fakeBrowser({
+      granted: [youtube, everyHttpsSite, example],
+      tabs: [video, exampleTab]
+    })
+    await keepPageScriptRegistered(fake.browser, () => undefined)
+    expect(fake.site.registered.map(script => script.matches)).toEqual([[everyHttpsSite, example]])
+    await fake.revoke([everyHttpsSite])
+    expect(fake.site.registered.map(script => script.matches)).toEqual([[example]])
+    expect(fake.stopped).toEqual([9])
   })
 
   it('carries on when a tab has closed before it hears the stop', async () => {

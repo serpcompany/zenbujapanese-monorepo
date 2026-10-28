@@ -16,8 +16,10 @@ Zenbu asks Chrome for no site at install. It runs on a site the learner gave it:
 - **Chrome's own site access** for the extension.
 
 A page that is open when its site is given starts at once, with no reload. A site taken back
-stops at once, and its underlines, reading aids, and popup go. A click on the toolbar icon alone
-doesn't start it: it shows the header the tab's address, and Allow on This Site is the way in.
+stops at once, and its underlines, reading aids, and popup go; taking back Every Site stops every
+tab no other site given still covers, YouTube's too. A click on the toolbar icon alone doesn't
+start it: it shows the header the tab's address, and Allow on This Site is the way in (#1099,
+[`tech-debt.md`](../../../../docs/tech-debt.md)).
 
 The site switch in the header turns Zenbu off for one site (`sites.off`): nothing is underlined,
 the reading aids go, and a click does what the page does. Turning it on draws everything again,
@@ -27,8 +29,10 @@ with no reload.
 
 Each word gets a 2-pixel underline in Zenbu's blue, drawn by Chrome's CSS Custom Highlight API,
 so the page's boxes, colours, and links stay as they are. On a page whose text is light, the blue
-is lighter. Zenbu underlines what a learner reads, and leaves alone text boxes, buttons, select
-menus, editable text, navigation, fixed and sticky bars, and its own popup. Text on screen goes
+is lighter, whatever colour space the page writes it in, such as `oklch()`. Zenbu underlines
+what a learner reads, and leaves alone text boxes, buttons, labels, summaries, select menus,
+editable text, navigation, the page's own ARIA buttons, tabs, menu items, checkboxes, switches,
+radios and options, fixed and sticky bars, and its own popup. Text on screen goes
 first; text the page adds later, such as the next page of a feed, is underlined as it comes.
 
 Until the dictionary is ready, nothing is underlined and a click does what the page does. Once
@@ -52,19 +56,25 @@ Use Selection, in Translate, takes the selected text without them
 
 A click on an underlined word opens its popup beside it, or a choice when the text is several
 words. A click while text is selected doesn't, so selecting works as before. In a link, a plain
-click opens the popup and leaves the address alone; a click with Ctrl or Command, a middle
-click, and Enter follow the link.
+click on the word, or on its furigana, opens the popup and leaves the address alone; a click
+with Ctrl or Command, a middle click, and Enter follow the link. A click on a label's, a
+summary's, or an ARIA control's words works the control, since Zenbu doesn't underline them.
 
 ## Checks
 
 The browser tests, on a light and a dark local page (`e2e/page-lookup.spec.ts`): "underlines the
-words segment links…", "leaves every element's box and colour as they are…", "shows furigana,
+words segment links…", "leaves every element's box and colour as they are…", "underlines in the
+dark page's colour when the page's text is oklch(…)" and "…color(display-p3 …)", "shows furigana,
 romaji and word meanings…", "underlines nothing and opens no popup on a site turned off…",
 "underlines words added to the page later", and "starts on an open page when Chrome grants its
-site…"; `e2e/page-lookup-before-data.spec.ts` for the dictionary not yet in. Unit and DOM tests:
+site…"; in `e2e/word-popup.spec.ts`, "a click on the words of a checkbox label or a summary works
+the control…" and "a click on the furigana over a word in a link…"; and
+`e2e/page-lookup-before-data.spec.ts` for the dictionary not yet in. Unit and DOM tests:
 `src/page-lookup/words.test.ts`, `src/page-lookup/scan.test.ts`,
-`src/page-lookup/page-text.interaction.test.tsx`, and `src/service-worker/page-scripts.test.ts`
-for registering the page script for each site Zenbu has.
+`src/page-lookup/page-text.interaction.test.tsx`, `src/page-lookup/page-lookup.interaction.test.tsx`
+for nothing drawn or watched once it stops, and `src/service-worker/page-scripts.test.ts` for
+registering the page script for each site Zenbu has and stopping the tabs a site taken back
+leaves, such as YouTube's when Every Site goes.
 
 ## Not built yet
 

@@ -4,6 +4,7 @@ import {
   allowedHost,
   changeSettings,
   clickWord,
+  darkTextColours,
   highlightNames,
   noReadingAids,
   openWordsPage,
@@ -56,6 +57,17 @@ for (const tone of tones) {
     await changeSettings(extension, noReadingAids)
     await expect.poll(async () => Object.keys((await underlinedWords(page))[tone])).not.toEqual([])
     expect(await pageLayout(page)).toEqual(off)
+  })
+}
+
+for (const colour of darkTextColours) {
+  test(`underlines in the dark page's colour when the page's text is ${colour}`, async ({
+    extension,
+    page
+  }) => {
+    await openWordsPage(page, extension, 'dark', colour)
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).color)).toBe(colour)
+    await expect.poll(() => underlinedWords(page)).toEqual({ dark: pageWords, light: {} })
   })
 }
 

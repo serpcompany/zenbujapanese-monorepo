@@ -15,11 +15,26 @@ const rule = (tone: Tone) =>
   `text-decoration-thickness: 2px; text-decoration-color: ${underlineColors[tone]}; ` +
   'text-underline-offset: 0.2em; }'
 
+const measured = new Map<string, Tone>()
+
+function srgbOf(color: string): number[] {
+  if (/^rgba?\(/.test(color)) return (color.match(/[\d.]+/g) ?? []).map(Number)
+  if (typeof OffscreenCanvas === 'undefined') return []
+  const context = new OffscreenCanvas(1, 1).getContext('2d')
+  if (!context) return []
+  context.fillStyle = color
+  context.fillRect(0, 0, 1, 1)
+  return [...context.getImageData(0, 0, 1, 1).data]
+}
+
 export function toneOf(color: string): Tone {
-  const [red, green, blue] = (color.match(/[\d.]+/g) ?? []).map(Number)
-  if (blue === undefined) return 'light'
-  const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255
-  return luminance > 0.5 ? 'dark' : 'light'
+  const known = measured.get(color)
+  if (known) return known
+  const [red, green, blue] = srgbOf(color)
+  const luminance = blue === undefined ? 0 : (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255
+  const tone = luminance > 0.5 ? 'dark' : 'light'
+  measured.set(color, tone)
+  return tone
 }
 
 export type Underlines = {
