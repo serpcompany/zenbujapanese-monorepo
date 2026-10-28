@@ -38,14 +38,14 @@ async function openPages(browser, id, folder, failures) {
   return page
 }
 
-async function checkAfterOffscreenCloses(browser, id, page, folder) {
-  await page.goto(`chrome-extension://${id}/pages/side-panel.html`)
+async function checkAfterOffscreenCloses(browser, id, page, server, folder) {
+  await page.goto(`${server.url}${testPage}`)
   await page.waitForSelector(text(dictionaryLabels.ready), { visible: true, timeout: 15_000 })
   const worker = await serviceWorkerOf(browser, id)
   await worker.evaluate(() => chrome.offscreen.closeDocument())
   await page.locator(text(dictionaryLabels.checkAgain)).click()
   await page.waitForSelector(text(dictionaryLabels.ready), { visible: true, timeout: 15_000 })
-  await page.screenshot({ path: join(folder, 'side-panel-after-offscreen-closed.png') })
+  await page.screenshot({ path: join(folder, 'test-surface-after-offscreen-closed.png') })
 }
 
 async function checkContentScript(page, server, folder) {
@@ -70,7 +70,7 @@ async function drive({ browser, state }, result, failures, server, folder) {
   result.id = id
   const page = await openPages(browser, id, folder, failures)
   const steps = {
-    offscreen: () => checkAfterOffscreenCloses(browser, id, page, folder),
+    offscreen: () => checkAfterOffscreenCloses(browser, id, page, server, folder),
     contentScript: () => checkContentScript(page, server, folder),
     languageData: () => checkLanguageData(page, id, server)
   }

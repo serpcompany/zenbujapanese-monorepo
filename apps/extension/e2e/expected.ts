@@ -1,4 +1,5 @@
 import { labels } from '../src/shared/labels.ts'
+import { labels as sidePanelLabels } from '../src/side-panel/labels.ts'
 
 export type ExtensionPage = {
   name: string
@@ -13,15 +14,8 @@ export const extensionPages: ExtensionPage[] = [
     name: 'side-panel',
     path: 'pages/side-panel.html',
     manifestKey: 'side_panel.default_path',
-    title: labels.sidePanel.title,
-    text: labels.progress.ready
-  },
-  {
-    name: 'popup',
-    path: 'pages/popup.html',
-    manifestKey: 'action.default_popup',
-    title: labels.popup.title,
-    text: labels.popup.body
+    title: labels.name,
+    text: sidePanelLabels.empty.video.title
   },
   {
     name: 'settings',

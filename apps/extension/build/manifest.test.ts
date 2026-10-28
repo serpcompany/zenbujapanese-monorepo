@@ -64,6 +64,14 @@ describe('manifest', () => {
     )
   })
 
+  it('has no toolbar popup, so a click on the toolbar icon opens the side panel', () => {
+    for (const variant of ['release', 'test'] as const) {
+      const built = manifest(variant)
+      expect(built.action).toEqual({ default_title: 'Zenbu Japanese' })
+      expect(built.side_panel).toEqual({ default_path: 'pages/side-panel.html' })
+    }
+  })
+
   it("gets the Chrome Web Store item's ID from its key, in every build", () => {
     for (const variant of ['release', 'test'] as const) {
       expect(extensionIdOf(manifest(variant).key)).toBe('kaalpflpefadijdemimciikalgpgjmok')

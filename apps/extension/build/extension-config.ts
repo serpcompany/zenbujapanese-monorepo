@@ -11,7 +11,7 @@ const fromPackage = (path: string) => fileURLToPath(new URL(path, new URL('..', 
 
 const outputFolders: Record<Variant, string> = { release: 'dist', test: 'dist-test' }
 
-const pages = ['side-panel', 'popup', 'settings', 'welcome']
+const pages = ['side-panel', 'settings', 'welcome']
 
 const offscreenDocument = 'offscreen/offscreen.html'
 

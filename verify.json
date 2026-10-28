@@ -554,12 +554,11 @@
         ],
         "testCode": "(\\.test\\.tsx?$|^src/test/|^src/captions/fixtures/|^e2e/|^agent-chrome/)",
         "entries": [
-          "^src/pages/(side-panel|popup|settings|welcome)\\.tsx$",
+          "^src/pages/(side-panel|settings|welcome)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
           "^src/content/youtube\\.ts$",
-          "^src/shared/hosts\\.ts$",
           "^test-pages/test-content-script\\.tsx$",
           "^e2e/[\\w-]+\\.spec\\.ts$",
           "^e2e/serve\\.ts$",

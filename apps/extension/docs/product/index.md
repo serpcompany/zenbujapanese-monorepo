@@ -11,21 +11,20 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | "Zenbu Japanese", and the dictionary's state, drawn as the welcome tab draws it: "Checking the dictionary…", the download's progress, "The dictionary is ready.", or "The dictionary didn't download." with why; with Check again once it is ready or has failed. Under it, [Translate](translate.md). | `src/shared/dictionary-status.interaction.test.tsx`, with the worker's round trip in `src/service-worker/round-trip.test.ts`; `e2e/pages.spec.ts` |
-| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try Again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
-| Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | `e2e/pages.spec.ts` |
+| Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). Its Translate tab: [`translate.md`](translate.md). | The tests and Chrome checks there; `e2e/pages.spec.ts` |
+| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
 | Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | `e2e/pages.spec.ts` |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
 opens it again on the next request, and that first request is answered
 (`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`,
-`e2e/pages.spec.ts`).
+`e2e/content-script.spec.ts`).
 
 ## First run
 
 Installing the extension opens the welcome tab once and starts downloading the dictionary, about
 237 MB, which its progress bar counts. Closing the tab doesn't stop it. A download cut by a closed
-browser or a lost connection goes on from where it was, keeping the files it finished, and a damaged file fails with why, with Try Again. Once the dictionary
+browser or a lost connection goes on from where it was, keeping the files it finished, and a damaged file fails with why, with Try again. Once the dictionary
 is in, the extension works offline (`src/worker/installer.test.ts`).
 
 ## Updates
@@ -63,4 +62,5 @@ set in Sentry.
 
 The dictionary answers lookups, but no surface asks it yet: the word popup on a page, underlining,
 Word Detail, and saving aren't built, nor the Video tab and the caption on the player that show a
-YouTube video's lines. The release build draws nothing on the pages a learner reads.
+YouTube video's lines, so the side panel's tabs but Translate show only their empty states. The
+release build draws nothing on the pages a learner reads.

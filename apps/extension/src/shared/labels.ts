@@ -1,7 +1,5 @@
 export const labels = {
   name: 'Zenbu Japanese',
-  sidePanel: { title: 'Zenbu Japanese' },
-  popup: { title: 'Zenbu Japanese', body: 'Open the side panel to look up Japanese words.' },
   settings: { title: 'Settings', body: 'Nothing to set yet.' },
   progress: {
     checking: 'Checking the dictionary…',
@@ -16,7 +14,7 @@ export const labels = {
   },
   welcome: {
     title: 'Welcome to Zenbu',
-    tryAgain: 'Try Again',
+    tryAgain: 'Try again',
     firstSteps: 'First steps',
     steps: [
       'Open a Japanese page, or a YouTube video with Japanese captions.',

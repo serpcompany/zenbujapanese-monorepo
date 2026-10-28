@@ -51,7 +51,7 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
     key: storeKey,
     homepage_url: hosts[environment].website,
     minimum_chrome_version: minimumChromeVersion,
-    action: { default_title: 'Zenbu Japanese', default_popup: 'pages/popup.html' },
+    action: { default_title: 'Zenbu Japanese' },
     side_panel: { default_path: 'pages/side-panel.html' },
     options_ui: { page: 'pages/settings.html', open_in_tab: true },
     background: { service_worker: 'service-worker.js', type: 'module' },

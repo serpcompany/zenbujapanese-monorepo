@@ -12,6 +12,7 @@ pull request as the workflow.
 - [`ci-deploys.md`](ci-deploys.md): the workflows that deploy or publish.
 - [`ci-ios.md`](ci-ios.md): the `iOS` workflow. [`ci-pinned-actions.md`](ci-pinned-actions.md)
   has the commit every workflow runs each action at, and why.
+- [`ci-extension.md`](ci-extension.md): the `Extension` workflow.
 
 Every job runs on `ubuntu-latest` and reads the repository's contents only, unless its section
 says otherwise. The pnpm jobs set up pnpm from the root `package.json` and the Node that
@@ -30,7 +31,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site, its word components, or the core changed | This doc |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
-| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, or the core changed | This doc |
+| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, the core, or `assets/brand` changed | [`ci-extension.md`](ci-extension.md) |
 | `Extension packages` | `.github/workflows/extension-packages.yml` | Pushes to `main` and pull requests that change the browser extension, `packages/ui`, the core, or `assets/brand`; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed, the word components in `packages/ui` among them; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
@@ -170,23 +171,6 @@ its rule that keeps runtimes and frameworks out, typecheck, and Vitest) on pull 
 the core, or `docs/data-sources.md`, which its source credits are held to. Those tests need no data:
 the app-recorded suites run through the core in
 `Dictionary API`, and `Web` builds the site with it. See [`dictionary-core.md`](dictionary-core.md).
-
-## Extension
-
-`.github/workflows/extension.yml` runs `pnpm check` in `apps/extension` (Biome with its layer
-rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
-extension, `packages/ui`, which draws it, or the core ([`extension.md`](extension.md)). On the same
-pull requests, `Extension packages` builds and checks the staging and Chrome Web Store packages
-([`ci-deploys.md`](ci-deploys.md)). It filters by `paths`, so it isn't a check to require.
-
-Its `browser` job starts once `check` passes, under a 20-minute limit. It loads the test build in
-Playwright's Chromium and runs the browser tests (`pnpm test:browser`,
-[`extension.md`](extension.md), Browser tests), all offline, against a local language-data server.
-That server serves one real release file, `JLPTLevelPack.sqlite3`, so the job restores
-`Dictionary API`'s Git LFS cache (`actions/cache/restore`, the same key, never saving: a cache with
-one file under that key would leave `Dictionary API` without the rest) and pulls that file, which a
-cache miss fetches from Git LFS. A failed test isn't retried; its report, traces, and screenshots
-go up as the `extension-playwright-report` artifact for a week.
 
 ## Dictionary API
 

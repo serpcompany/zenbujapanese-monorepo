@@ -111,7 +111,7 @@ describe('the welcome tab', () => {
     expect(page.text().toLowerCase()).not.toContain('subscription')
   })
 
-  it('says why a download failed, and Try Again starts it again', async () => {
+  it('says why a download failed, and Try again starts it again', async () => {
     const reason = 'JLPTLevelPack.sqlite3 part 1 is 00, but compressed.json pins ff'
     const fake = worker([
       { state: 'failed', reason },

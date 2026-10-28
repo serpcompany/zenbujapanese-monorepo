@@ -9,11 +9,11 @@ first). One persistent Chromium context per run loads the build with `--load-ext
 Playwright can't open the browser-level CDP session `Extensions.loadUnpacked` needs, and
 Playwright's Chromium, unlike branded Chrome 137 and later, still honors the switch.
 
-- **Pages:** each page the manifest names (`side_panel.default_path`, `action.default_popup`,
-  `options_ui.page`) is in the build, opens, and shows its title and text, so a build missing a
-  page fails. The side panel answers again after `chrome.offscreen.closeDocument()`.
+- **Pages:** each page the manifest names (`side_panel.default_path` and `options_ui.page`; there
+  is no toolbar popup) is in the build, opens, and shows its title and text, so a build missing a
+  page fails. The side panel shows its header and the Video tab's empty state.
 - **Content script:** on `hostile.html`, the test content script's surface shows `食べる` and
-  "The dictionary is ready."
+  "The dictionary is ready.", and answers again after `chrome.offscreen.closeDocument()`.
 - **Language data:** an extension page downloads `releases.json`, the fixture release's manifest,
   and `JLPTLevelPack.sqlite3` from the test build's data host, and each SHA-256 matches.
 - **Install:** the welcome page reaches ready, and the server was asked for `releases.json`, the
