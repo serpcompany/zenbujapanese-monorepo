@@ -74,6 +74,36 @@ describe('routes', () => {
     expect(await response.json()).toEqual(radicals)
   })
 
+  test("answers the pages of the words and kanji asked for, once each, which the website's account pages link to", async () => {
+    const taberu = '042e07f7052f611fed33ddddf37f55fd'
+    const answered = {
+      words: [{ languageReferenceID: taberu, entSeq: 1358280, slug: '食べる' }],
+      kanji: ['日']
+    }
+    const pages = vi.fn(async () => answered)
+    const response = await app(fakeService({ pages })).request(
+      get(`/v1/pages?words=${taberu.toUpperCase()},${taberu}&kanji=${encodeURIComponent('日,丢')}`)
+    )
+    expect(response.status).toBe(200)
+    expect(response.headers.get('x-dictionary-contract')).toBe(String(dictionaryContract))
+    expect(await response.json()).toEqual(answered)
+    expect(pages).toHaveBeenCalledWith({ words: [taberu], kanji: ['日', '丢'] })
+  })
+
+  test.each([
+    ['nothing', '/v1/pages'],
+    ['a word that is no Language Reference ID', '/v1/pages?words=taberu'],
+    ['a kanji of two characters', `/v1/pages?kanji=${encodeURIComponent('日本')}`],
+    [
+      '101 words',
+      `/v1/pages?words=${Array.from({ length: 101 }, (_, n) => n.toString(16).padStart(32, '0')).join(',')}`
+    ]
+  ])('400s pages asked for %s, without reading them', async (_, path) => {
+    const pages = vi.fn(fakeService().pages)
+    expect((await app(fakeService({ pages })).request(get(path))).status).toBe(400)
+    expect(pages).not.toHaveBeenCalled()
+  })
+
   test('404s a word or kanji the artifact lacks, and answers one it holds', async () => {
     expect((await app().request(get('/v1/words/9'))).status).toBe(404)
     expect((await app().request(get('/v1/words/1358280'))).status).toBe(200)

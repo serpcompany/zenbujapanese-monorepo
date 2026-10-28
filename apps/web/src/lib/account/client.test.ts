@@ -277,4 +277,20 @@ describe("the website's account service client", () => {
       await answering([{ id: 'i3', providerId: 'github', accountId: 'x' }]).api.identities()
     ).toMatchObject({ ok: false })
   })
+
+  test("asks a sync with no changes for the account's search key, and takes only 64 hex digits", async () => {
+    const searchKey = 'ab'.repeat(32)
+    const asked = answering({ results: [], changes: [], cursor: 'c', hasMore: false, searchKey })
+    expect(await asked.api.searchKey('access.jwt')).toEqual({ ok: true, value: searchKey })
+    expect(sent(asked.send)).toMatchObject({
+      url: `${apiUrl}/v1/sync`,
+      method: 'POST',
+      body: { limit: 1 }
+    })
+    expect(sent(asked.send).headers.authorization).toBe('Bearer access.jwt')
+    for (const wrong of [undefined, 'AB'.repeat(32), 'ab'.repeat(31)]) {
+      const answer = { results: [], changes: [], cursor: 'c', hasMore: false, searchKey: wrong }
+      expect(await answering(answer).api.searchKey('access.jwt')).toMatchObject({ ok: false })
+    }
+  })
 })

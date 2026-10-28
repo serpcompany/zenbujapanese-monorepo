@@ -173,6 +173,23 @@ describe('the radical panel', () => {
     expect(document.querySelector<HTMLInputElement>('input[name="q"]')?.value).toBe('日要')
     await untilClosed()
     expect(shownPanel()).toBeNull()
+    expect(window.sessionStorage.getItem('search.asked')).toBeNull()
+  })
+
+  test("a pick is a search the learner asked for, kept for a signed-in learner's Recent searches", async () => {
+    vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open')
+    vi.stubEnv('ZENBU_ACCOUNT_SERVICE', 'https://api.example.com')
+    window.localStorage.setItem('zenbu-signed-in', 'yes')
+    try {
+      await openPanel('en', '日')
+      await press(radical('女'))
+      await press(radical('西'))
+      await act(async () => candidates()[0]?.click())
+      expect(window.sessionStorage.getItem('search.asked')).toBe('日要')
+    } finally {
+      vi.unstubAllEnvs()
+      window.sessionStorage.clear()
+    }
   })
 
   test('opens fresh each time, without loading again, and keeps the stroke counts the learner closed', async () => {

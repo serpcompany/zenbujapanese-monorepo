@@ -297,8 +297,7 @@ Jiten's carries its share-alike notice there too, under a sentence on how Zenbu 
   list: `packages/dictionary-core/src/sources/credits.test.ts`.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
-has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
-the app.
+has no ✓ Known capsule or swipe or long-press to mark a word known; a word page's menu does.
 
 - Source: #462 (Recent list and camera button left out; learner actions open a get-the-app prompt).
 - Check: not applicable.
@@ -424,26 +423,23 @@ romaji with it (contract 7), so a page that loads more examples shows theirs too
 
 ## Word page
 
-**Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page has
-no title row above the header card. Share sends the headword, its reading, and the numbered
-meanings, as the app's does, through the browser's share sheet; without one it copies the link. The
-menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The learner
-actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer on
-phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving lists
-and known words on this website comes later, which holds whether or not the site's account pages are
-open ([Account pages](account.md)); it promises nothing for notes and photos, which stay on the
-device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#829). Copy Link copies
-the page URL and shows "Link copied". There is no back button; the breadcrumbs replace it.
+**Toolbar.** Share and a ••• menu end the breadcrumb row at every width, with no title row above the
+header card. Share sends the headword, its reading, and the numbered meanings, as the app's does,
+through the browser's share sheet, or copies the link. The menu lists Mark as Known, Add to List…,
+Add Note, Add Photo, Open in App, and Copy Link. Signed in, the first three open Known, Lists, and
+Notes; else they, Add Photo, and Open in App open the get-the-app prompt, a dialog, or a drawer on
+phones: lists, Known, and notes are in the Zenbu app and, with a subscription, on this website
+([account pages](account.md)); photos stay in the app. Open in App doesn't open the app yet (#829).
+Copy Link copies the URL and shows "Link copied". Breadcrumbs replace a back button.
 
-- Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
-  #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs
-  in place of the back button); #576 (no title row; the buttons moved to the breadcrumb row).
-- Check: the share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)"; the
-  buttons' place, at a desktop and a phone width: `apps/web/e2e/word.spec.ts`, "puts Share and More
-  actions at the end of the breadcrumb row"; the menu and the prompt, at a desktop and a phone
-  width: `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions" and
-  "copies the link from the More actions menu"; Share:
-  `src/components/dictionary/site-item-actions.interaction.test.tsx`, "sends the page it is on".
+- Source: App docs, Dictionary and kanji details; `SavedItemActions.swift`; #462 (menu, prompt,
+  `Sonner`); #484 (breadcrumbs); #576 (no title row); #934, the owner's decision on 2026-10-26.
+- Check: share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)"; at both
+  widths, `apps/web/e2e/word.spec.ts`, "puts Share and More actions at the end of the breadcrumb
+  row", "opens the More actions menu with the app's actions", and "copies the link from the More
+  actions menu"; Share: `src/components/dictionary/site-item-actions.interaction.test.tsx`, "sends
+  the page it is on"; the prompt: `src/components/dictionary/learner-dialog.interaction.test.tsx`
+  ("the get-the-app prompt") and `apps/web/e2e/learner-data.spec.ts`.
 
 **Header card.** The card shows the headword with furigana, the page's one `h1`. The heading's text
 is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
@@ -623,14 +619,24 @@ summary, and opens its word page when it has one.
 - Source: `RelationshipsSection` in `WordDetailSections.swift`.
 - Check: WD `relatedWords`; the conformance test checks that every related word links to its page.
 
-**Lists and Notes.** Each section shows a prompt, Add to List or Add Note, that opens the
-get-the-app prompt. The app's ✓ Known capsule and encounter photo aren't shown.
+**Lists and Notes.** Each section's Add to List or Add Note opens what the menu's item does. The
+app's ✓ Known capsule and encounter photo aren't shown. Signed in, Known, Lists, and Notes change a
+subscriber's word on their Zenbu account; the browser keeps no copy. The page draws as for anyone;
+the dialog (a drawer on phones) says "Loading…", reads only what's about the word, then draws once:
+Known, with Mark as Known or Mark as Unknown; every list in the app's order, checked where it holds
+the word and toggled at once, each linking to its list on `/account/lists/`, and New List, making a
+list last that holds the word; or each note, with Save and Delete (which asks first), and a new
+one. A list name or note the app's rules refuse isn't sent: the dialog says the rule. A change
+disables the controls while it runs; a refusal says why; one made elsewhere first shows the
+account's copy, and a note keeps the learner's text as a new note. Without a subscription it links
+`/account/#subscription`; signed out, it offers Sign in and forgets this browser was signed in.
 
-- Source: #462 (learner sections as get-the-app prompts until #468); #468 leaves them, since
-  signing in on the web doesn't make them work yet ([Account pages](account.md)).
+- Source: #462; #934 and the owner's decision on 2026-10-26; App docs, Dictionary.
 - Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "Lists and Notes each offer the action
-  the app has, as a prompt"; `apps/web/e2e/word.spec.ts`, "Lists and Notes each open the get-the-app
-  prompt", at a desktop and a phone width.
+  the app has"; `src/components/dictionary/learner-dialog.interaction.test.tsx` (Known, its states,
+  Try again) and the `synced-lists` and `synced-notes` tests; at both widths,
+  `apps/web/e2e/learner-data.spec.ts` and, signed out, `apps/web/e2e/word.spec.ts`, "Lists and Notes
+  each open the get-the-app prompt".
 
 **Examples.** A word lists the same examples, in the same order, as the app's Word Detail: its
 meanings' checked examples, then up to the app's 100 others. The page renders the first 25 and loads
@@ -706,22 +712,20 @@ is plain and its reading is under it, unless the two are the same. With Show Rom
 in romaji is under the headword, after each reading among the other forms, and under each related
 word. The examples, and each meaning's example, follow the Example Sentences section's aids, and
 with Show Word Meanings on, a short meaning in the accent colour is under each word linked to one
-entry, at most 6rem wide and cut with an ellipsis: the entry's first meaning shortened by the
-core's `shortGloss`, as in the app, and none under a particle, an auxiliary, or a
-symbol (`wordMeaning`, `examples/word-meaning.ts`). Every word counts as unknown: the website has no
-known words yet.
+entry, at most 6rem wide and cut with an ellipsis: the entry's first meaning shortened by the core's
+`shortGloss`, as in the app, and none under a particle, an auxiliary, or a symbol (`wordMeaning`,
+`examples/word-meaning.ts`). Every word counts as unknown: the page reads no Known marks.
 
 - Source: `WordHeadline.swift`, `WordDetailSections.swift` (other forms, related words),
   `LinkedJapaneseText.swift` (`meaning(for:)`), and the core's `shortGloss` (`detail/text.ts`).
 - Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "draws every Reading Aid, and the page
   lets the settings show or hide each" (the reading and romaji under the headword, and each
   example's romaji, translation, and short meanings, as the service sends them);
-  `packages/dictionary-core/src/detail/word.test.ts`, "要る: a linked word carries its short
-  meaning…" and `packages/dictionary-core/src/examples/word-meaning.test.ts`;
-  `apps/web/e2e/reading-aids.spec.ts`,
-  "Furigana off leaves the word page’s headword plain, with its reading under it", "Word Meanings
-  shows a short meaning under each word of the word page’s examples", and "Sentence Translations off
-  hides each example’s English".
+  `packages/dictionary-core/src/detail/word.test.ts`, "要る: a linked word carries its short meaning…"
+  and `packages/dictionary-core/src/examples/word-meaning.test.ts`;
+  `apps/web/e2e/reading-aids.spec.ts`, "Furigana off leaves the word page’s headword plain, with its
+  reading under it", "Word Meanings shows a short meaning under each word of the word page’s
+  examples", and "Sentence Translations off hides each example’s English".
 
 ## Conjugations section
 
@@ -830,30 +834,28 @@ modern list gives a level. The meanings follow on one line.
   lists … This settles #485's level scale."
 - Check: KD `strokeCount`, `grade`, `jlpt` (一, 日, 要, and 分), and `meanings`;
   `packages/dictionary-core/src/artifact/kanji-data.test.ts`, "a kanji’s JLPT level";
-  `packages/dictionary-core/src/detail/kanji.test.ts`, "要" and "a kanji without elements lists
-  its components; one stroke is singular"; `apps/web/e2e/kanji.spec.ts`, "the search page for 要
-  opens 要 to its stroke order, metrics, meanings, readings, and words", and the same on the word
-  page.
+  `packages/dictionary-core/src/detail/kanji.test.ts`, "要" and "a kanji without elements lists its
+  components; one stroke is singular"; `apps/web/e2e/kanji.spec.ts`, "the search page for 要 opens 要
+  to its stroke order, metrics, meanings, readings, and words", and the same on the word page.
 
 **Share and actions.** Beside the metrics, Share and a ••• menu, as the app's Kanji Detail has
 them. Share sends the kanji, its readings, and its meanings, as the app's does, with the link to
-the kanji's search page, the only URL a kanji has (ADR 0010). Without a share sheet it copies that
-link. The menu is a word page's: Mark as Known, Add to List…, Add Note, Add Photo, Open in App,
-and Copy Link, which copies the kanji's search page, not the page the details are on. The learner
-actions and Open in App open the get-the-app prompt. Each button is named for its kanji ("Share
-要", "More actions for 要"), since a word page can show several kanji's details.
+the kanji's search page, the only URL a kanji has (ADR 0010), or copies that link. The menu is a
+word page's; its Copy Link copies the kanji's search page, not the page the details are on, and the
+others work for the kanji itself (`kanji:要`, saved with its first reading, as the app saves it).
+Each button is named for its kanji ("Share 要", "More actions for 要").
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `KanjiDetailView.swift`
-  (`SharedPage(kanji:page:)`); `SavedItemActions.swift` (`SharedPage`, `ShareButton`); #462 (the
-  menu items and the get-the-app prompt).
+  (`SharedPage(kanji:page:)`); `SavedItemActions.swift` (`SharedPage`, `ShareButton`); #462; #934.
 - Check: the share text: `packages/dictionary-core/src/detail/kanji.test.ts`, "要"; Share:
-  `src/components/dictionary/site-item-actions.interaction.test.tsx` ("a kanji's Share"), "sends
-  the kanji, its share text, and its search page, not the page it is on" and "copies the kanji's
-  search page where the browser has no share sheet"; the buttons' names:
-  `src/components/dictionary/kanji-details.test.tsx`, "Share and More actions, named for the
-  kanji"; the menu, the prompt, and Copy Link at a desktop and a phone width:
-  `apps/web/e2e/kanji.spec.ts`, "…: 要's More actions offer the app's actions" (on the search and
-  word pages) and "Copy Link copies 要's search page, from the word page too".
+  `src/components/dictionary/site-item-actions.interaction.test.tsx` ("a kanji's Share"), "sends the
+  kanji, its share text, and its search page, not the page it is on" and "copies the kanji's search
+  page where the browser has no share sheet"; the buttons' names:
+  `src/components/dictionary/kanji-details.test.tsx`, "Share and More actions, named for the kanji";
+  the dialog's "a kanji is marked Known as itself, with the reading the app saves it with"; the
+  menu, prompt, and Copy Link at both widths: `apps/web/e2e/kanji.spec.ts`, "…: 要's More actions
+  offer the app's actions" (on the search and word pages) and "Copy Link copies 要's search page,
+  from the word page too".
 
 **Stroke order.** A kanji with a KanjiVG diagram has a stroke-order button under the glyph. It
 opens a dialog, or a drawer on phones, that draws the strokes on a dashed grid and plays, pauses,
@@ -878,10 +880,9 @@ as in the app.
 - Check: KD `readings`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists up to three
   words whose reading starts with the reading’s stem"; the rows:
   `packages/ui/src/dictionary/kanji-readings.test.tsx` ("the rendered kanji Readings rows match the
-  app"), which draws every KD case's readings through the component and reads back each row's
-  link, spoken label, and text. It reads the suite from the repository, so `pnpm test` runs it;
-  `apps/web/e2e/kanji.spec.ts`, "a reading row opens its first word, named as the app's row
-  is".
+  app"), which draws every KD case's readings through the component and reads back each row's link,
+  spoken label, and text. It reads the suite from the repository, so `pnpm test` runs it;
+  `apps/web/e2e/kanji.spec.ts`, "a reading row opens its first word, named as the app's row is".
 
 **Components and Elements.** Elements list each element with its role (Meaning / structure, Sound,
 or Sound pattern) and up to three meanings, or its linked on-readings when it has none. Components
@@ -896,15 +897,14 @@ screen; see [Required, not built yet](not-built-yet.md).
   components; one stroke is singular"; the links: `src/lib/dictionary/data.test.ts`, "kanji details
   read the service, and link each kanji to its search".
 
-**Lists and Notes.** After the elements and before the words, as in the app, the Lists and Notes
-prompts a word page has: Add to List and Add Note, each opening the get-the-app prompt.
+**Lists and Notes.** A word page's, for the kanji, between the elements and words, as in the app.
 
-- Source: `KanjiDetailView.swift` (the `LISTS` and `NOTES` sections); #462 (learner sections as
-  get-the-app prompts until #468).
+- Source: `KanjiDetailView.swift` (the `LISTS` and `NOTES` sections); #462; #934.
 - Check: `src/components/dictionary/kanji-details.test.tsx`, "Lists and Notes come after the
-  elements and before the words, in the app's order" and "Lists and Notes offer the app, as on a
-  word page"; `apps/web/e2e/kanji.spec.ts`, "Lists and Notes open the get-the-app prompt, as a word
-  page's do".
+  elements and before the words, in the app's order" and "Lists and Notes offer the app's actions,
+  as on a word page"; `src/components/dictionary/synced-notes.interaction.test.tsx`, "a kanji's
+  notes are on the kanji, from its More actions"; signed out, `apps/web/e2e/kanji.spec.ts`, "Lists
+  and Notes open the get-the-app prompt, as a word page's do".
 
 **Words.** The app's 24 words containing the kanji, in the app's order, each with furigana and its
 summary, opening its word page. A word keeps its headword on one line, and its summary wraps

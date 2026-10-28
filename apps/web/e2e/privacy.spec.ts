@@ -97,13 +97,14 @@ test.describe('privacy policy', () => {
       "The profile's email and whole Translate conversations don't sync",
       'only the sentences you bookmark leave your device',
       "Deleting your account deletes everything it synced, your photos' files included",
-      'subscribe and manage a subscription you bought here'
+      'subscribe and manage a subscription you bought here',
+      'adds the searches you make on this website to your recent searches'
     ])
   })
 
   test('names what the iPhone app syncs besides known words and lists', async ({ page }) => {
     await expect(tableRows(page, 'Why').filter({ hasText: /^Your study data/ })).toHaveText(
-      /your notes, the photos in your Media Library with the words they're on, your settings, .*the frequency dictionaries you chose, and your 50 most recent searches/
+      /your notes, the photos in your Media Library with the words they're on, your settings, .*the frequency dictionaries you chose, and your 50 most recent searches, in the app and, with a subscription, on this website/
     )
   })
 

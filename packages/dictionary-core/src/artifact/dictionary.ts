@@ -26,6 +26,7 @@ import { bundledFrequency } from './frequency'
 import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
 import { formLookup } from './lookup'
+import { type PagesAsked, type PagesResponse, readPages } from './pages'
 import { bundledFrequencyLists, readPopupCard } from './popup-card'
 import type { RetiredEntries } from './retired'
 import { primaryExamplesEntry, resultsExampleCount, resultsExamples } from './search-examples'
@@ -421,6 +422,10 @@ export class Dictionary {
 
   retired(): RetiredEntries {
     return this.retiredEntries
+  }
+
+  pages(asked: PagesAsked): PagesResponse {
+    return readPages(this.db, character => this.kanjiData.row(character) !== null, asked)
   }
 
   wordCards(languageReferenceIDs: readonly string[]): WordCard[] {

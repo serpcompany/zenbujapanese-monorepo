@@ -8,9 +8,10 @@ which lists features the website must have but doesn't yet, with the check each 
 The website is a public mirror of the app's dictionary. Its pages show what the app's Look Up tab
 shows for the same word or kanji, laid out as the #462 designs chose: stock shadcn components in
 one column, with sections in the app's order. The site has account pages ([Account
-pages](account.md)), open where an environment names an account service (staging and production),
-but it doesn't sync, so actions that keep learner data (lists, notes, known words,
-photos) still open a prompt to get the app (#468).
+pages](account.md)), open where an environment names an account service (staging and production).
+Signed in there, a subscriber marks words and kanji Known, adds them to lists, and writes notes on
+their Zenbu account from a word page or a kanji's details (#934); for anyone else those actions,
+and photos for everyone, open a prompt to get the app.
 
 ## Pages
 
@@ -43,10 +44,12 @@ the browse pages, [Products pages](products.md) the catalog and the product page
 Furigana](kanji-to-furigana.md) the furigana converter.
 
 The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
-learner in to their Zenbu account and manage it; [Account pages](account.md) describes them, and
+learner in to their Zenbu account and manage it; [Account pages](account.md) describes them,
 [The subscription](subscription.md) the account page's subscription: Stripe Checkout, the Customer
-Portal, and one bought in the App Store. They are `noindex` and in no sitemap, and where they're
-closed, in a build whose environment names no account service, nothing links to them.
+Portal, and one bought in the App Store, and [What an account syncs](synced-data.md) the pages
+under `/account/` where a subscriber sees and changes their known words, lists, notes, and the rest
+the apps sync. They are `noindex` and in no sitemap, and where they're closed, in a build whose
+environment names no account service, nothing links to them.
 
 Every page's title and description fit a search result, and a shared link shows the site's image;
 [Titles, descriptions, and sharing](snippets.md) says how each kind of page builds them.
@@ -102,7 +105,8 @@ its app source and planned check, and is then built with its check in the same P
 ## How behavior is verified
 
 Each behavior in [Dictionary](dictionary.md), [Site-wide](site-wide.md), [Account pages](account.md),
-[The subscription](subscription.md), [Languages](languages.md), [Privacy Policy](privacy.md), and
+[The subscription](subscription.md), [What an account syncs](synced-data.md),
+[Languages](languages.md), [Privacy Policy](privacy.md), and
 [Kanji to Furigana](kanji-to-furigana.md) names its automated check, or says "No
 automated check yet". The checks come in
 five kinds:

@@ -220,7 +220,12 @@ does this for it, with the order each kind is shown in from `account-views.ts`, 
   keeps the learner's text as the app does (Notes), as a new note under one ID however often the
   learner saves; a rejection changes nothing and says why. A change that applied says so even when
   the read after it fails (`unread`), so a retry never sends it twice.
-- **Known words** are shown as the iOS app shows them, which doesn't show Learning: a word is Known
-  only when the read says `known` (`isMarkedKnown`), so a Learning word is not, and the website
-  sends `mark` and `clear`. Only the learner's Mark as Known ends Learning; a clear of a word that
-  became Learning since the read applies and changes nothing (Known words, above).
+- **A search** the learner makes goes up at once, at version 0, with the ID from the `searchKey`
+  that a `POST /v1/sync` with no mutations answers (Recent searches). It conflicts only with a
+  removal the website never read, which came before it, so it's sent again at the removal's
+  version; the account then keeps it as the app's search, with the later time and the 50 latest.
+- **Known words** are shown as an app that shows only Known shows them, since the website doesn't
+  show Learning yet: a word is Known only when the read says `known` (`isMarkedKnown`), so a
+  Learning word is not, and the website sends `mark` and `clear`. Only the learner's Mark as Known
+  ends Learning; a clear of a word that became Learning since the read applies and changes nothing
+  (Known words, above).

@@ -1,7 +1,9 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { syncedTextIn } from '@/lib/account/learner-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
+import { kanji, word } from '@/test/learner-actions'
 import { SiteItemActions } from './site-item-actions'
 
 declare global {
@@ -43,8 +45,10 @@ function renderKanjiActions() {
         shareText={shareText}
         path="/dictionary/search/%E8%A6%81/"
         name="要"
+        item={kanji}
         locale="en"
         text={getDictionary('en').learner}
+        account={syncedTextIn('en')}
       />
     )
   )
@@ -89,8 +93,10 @@ describe("a page's Share", () => {
         <SiteItemActions
           title="要る"
           shareText="要る【いる】"
+          item={word}
           locale="en"
           text={getDictionary('en').learner}
+          account={syncedTextIn('en')}
         />
       )
     )

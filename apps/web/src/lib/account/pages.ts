@@ -2,7 +2,15 @@ export const accountPages = {
   signIn: { path: '/login/' },
   register: { path: '/register/' },
   forgotPassword: { path: '/forgot-password/' },
-  account: { path: '/account/' }
+  account: { path: '/account/' },
+  knownWords: { path: '/account/known-words/' },
+  lists: { path: '/account/lists/' },
+  notes: { path: '/account/notes/' },
+  mediaLibrary: { path: '/account/media-library/' },
+  recentVideos: { path: '/account/recent-videos/' },
+  bookmarks: { path: '/account/bookmarks/' },
+  recentSearches: { path: '/account/recent-searches/' },
+  settings: { path: '/account/settings/' }
 } as const
 
 export type AccountPage = keyof typeof accountPages

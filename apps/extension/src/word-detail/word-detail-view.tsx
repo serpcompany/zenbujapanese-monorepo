@@ -99,6 +99,7 @@ export function WordDetailView({
           />
         )}
         kanjiActions={noLearnerPrompt}
+        kanjiLearnerPrompt={() => noLearnerPrompt}
         learnerPrompt={noLearnerPrompt}
         conjugations={null}
         examples={
