@@ -4,10 +4,10 @@ How the browser extension ([`extension.md`](extension.md)) reports its errors: i
 project, what each part sends and scrubs, the setting that stops it, the source maps, and the
 check that one arrives.
 
-Every part but the YouTube content script reports its errors to Sentry's
-`zenbujapanese-extension` in `serpcompany`, the extension's own project, set up as the app's is
-([`ios-crash-reports.md`](ios-crash-reports.md)), with one difference below. The YouTube content
-script reports none of its errors yet (#1075). There are no usage analytics. The decision is ADR
+Every part reports its errors to Sentry's `zenbujapanese-extension` in `serpcompany`, the
+extension's own project, set up as the app's is ([`ios-crash-reports.md`](ios-crash-reports.md)),
+with one difference below. The YouTube content script reports only the errors thrown while the
+player caption draws; the follower and the watch-page code report none yet (#1075). There are no usage analytics. The decision is ADR
 0018's amendment for the extension ([`0018`](../adr/0018-report-the-apps-crashes-and-freezes-to-sentry.md)).
 
 - **Owner steps for the project.** Create it, set its DSN as `sentryDsn`, and in **Project

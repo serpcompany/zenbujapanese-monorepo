@@ -32,7 +32,7 @@ const versionFiles = [
   ['node-version-file', '.node-version'],
   ['python-version-file', '.python-version']
 ]
-const byCommit = /^[\w.-]+\/[\w.-]+(\/[\w.-]+)*@[0-9a-f]{40}$/
+const byCommit = /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/
 const pinsTable = readRepositoryFile('docs/agents/ci-pinned-actions.md').split('\n')
 
 describe('every workflow', () => {
