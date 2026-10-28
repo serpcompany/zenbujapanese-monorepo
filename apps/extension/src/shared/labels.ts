@@ -28,7 +28,8 @@ export const labels = {
     download: 'Download',
     downloading: (fraction: number) =>
       `Downloading Chrome's Japanese translation… ${Math.round(fraction * 100)}%`,
-    downloadFailed: "The download didn't finish. Try again."
+    downloadFailed: "The download didn't finish. Try again.",
+    chromeDownloading: 'Chrome is downloading its Japanese translation…'
   },
   everySite: {
     off: 'Zenbu underlines Japanese only on the sites you allow.',

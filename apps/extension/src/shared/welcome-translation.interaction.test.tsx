@@ -16,6 +16,7 @@ import {
 } from '../translation/translator'
 import type { ReadData } from './dictionary-progress'
 import { labels } from './labels'
+import { recheckMs } from './translation-model'
 import { Welcome } from './welcome'
 
 const rendered: Rendered[] = []
@@ -32,7 +33,13 @@ afterEach(() => {
   video = undefined
   document.body.replaceChildren()
   vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
+
+const later = (ms: number) =>
+  act(async () => {
+    await vi.advanceTimersByTimeAsync(ms)
+  })
 
 const dictionaryReady: ReadData = async () => ({
   type: 'state',
@@ -53,6 +60,7 @@ async function shown(node: Parameters<typeof render>[0]) {
 async function welcome() {
   const page = await shown(<Welcome read={dictionaryReady} />)
   return {
+    unmount: () => rendered.pop()?.unmount(),
     text: () => page.textContent ?? '',
     notice: () =>
       page.querySelector('[data-translation-model]')?.getAttribute('data-translation-model'),
@@ -80,16 +88,47 @@ describe('the welcome tab’s English translations', () => {
     expect(page.download()).toBeUndefined()
   })
 
-  it('offers it too while Chrome is already downloading, and follows that download from the click', async () => {
+  it('says Chrome is downloading, with no Download, and checks again every 2 seconds until Chrome has it', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
     const chrome = standInTranslator('downloading')
     const page = await welcome()
-    expect(page.text()).toContain(labels.welcome.translationOffer)
-    expect(chrome.Translator.create).not.toHaveBeenCalled()
-    await click(page.download())
-    expect(page.progress()).toBe(downloadedFraction)
-    await act(async () => chrome.finishDownload())
-    await settle()
+    expect(page.notice()).toBe('chrome-downloading')
+    expect(page.text()).toContain(labels.translation.chromeDownloading)
+    expect(page.text()).not.toContain(labels.welcome.translationOffer)
+    expect(page.download()).toBeUndefined()
+    const asked = chrome.Translator.availability.mock.calls.length
+    await later(recheckMs - 100)
+    expect(chrome.Translator.availability).toHaveBeenCalledTimes(asked)
+    await later(100)
+    expect(chrome.Translator.availability).toHaveBeenCalledTimes(asked + 1)
+    expect(page.notice()).toBe('chrome-downloading')
+    chrome.Translator.availability.mockResolvedValue('available')
+    await later(recheckMs)
+    expect(page.notice()).toBe('available')
     expect(page.text()).toContain(labels.welcome.translationReady)
+    await later(recheckMs * 3)
+    expect(chrome.Translator.availability).toHaveBeenCalledTimes(asked + 2)
+    expect(chrome.Translator.create).not.toHaveBeenCalled()
+  })
+
+  it('offers Download again when Chrome’s download stops', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const chrome = standInTranslator('downloading')
+    const page = await welcome()
+    chrome.Translator.availability.mockResolvedValue('downloadable')
+    await later(recheckMs)
+    expect(page.notice()).toBe('downloadable')
+    expect(page.download()).toBeDefined()
+  })
+
+  it('stops checking once the tab closes', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const chrome = standInTranslator('downloading')
+    const page = await welcome()
+    const asked = chrome.Translator.availability.mock.calls.length
+    page.unmount()
+    await later(recheckMs * 3)
+    expect(chrome.Translator.availability).toHaveBeenCalledTimes(asked)
   })
 
   it('says translations are ready, with no Download, when Chrome already has the model', async () => {
@@ -133,6 +172,26 @@ describe('the welcome tab’s English translations', () => {
   })
 })
 
+function watchForProgress(scope: Element) {
+  let seen = false
+  const observer = new MutationObserver(() => {
+    if (scope.querySelector('progress')) seen = true
+  })
+  observer.observe(scope, { subtree: true, childList: true })
+  return () => {
+    observer.disconnect()
+    return seen || scope.querySelector('progress') !== null
+  }
+}
+
+async function typeInto(scope: Element, value: string) {
+  const box = scope.querySelector('textarea') as HTMLTextAreaElement
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(box, value)
+    box.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
+
 function translateServices() {
   return {
     ...onDeviceServices,
@@ -146,10 +205,11 @@ function translateServices() {
 }
 
 describe('after the welcome tab’s download', () => {
-  it('the Video tab and Translate translate, and neither asks to download', async () => {
+  it('the Video tab and Translate translate both ways, and neither asks to download', async () => {
     const chrome = standInTranslator('downloadable', {
       ...lineEnglish,
-      トイレはどこですか: 'Where is the toilet?'
+      トイレはどこですか: 'Where is the toilet?',
+      'Where is the station?': '駅はどこ?'
     })
     const page = await welcome()
     await click(page.download())
@@ -176,10 +236,19 @@ describe('after the welcome tab’s download', () => {
 
     const services = translateServices()
     const translate = await shown(<TranslateTab services={services} />)
+    const progressShown = watchForProgress(translate)
     await click(buttonIn(translate, translateLabels.useSelection))
     await click(buttonIn(translate, translateLabels.translate))
     expect(translate.querySelector('[data-translation]')?.textContent).toBe('Where is the toilet?')
-    expect(translate.querySelector('progress')).toBeNull()
     expect(services.download).not.toHaveBeenCalled()
+
+    await typeInto(translate, 'Where is the station?')
+    await click(buttonIn(translate, translateLabels.translate))
+    expect(translate.querySelector('[data-translation]')?.textContent).toBe('駅はどこ?')
+    expect(services.download).toHaveBeenCalledOnce()
+    expect(chrome.created().filter(made => made === 'en-ja')).toHaveLength(2)
+    expect(progressShown()).toBe(false)
+    expect(translate.querySelector('[data-notice]')).toBeNull()
+    expect(buttonIn(translate, labels.translation.download)).toBeUndefined()
   })
 })

@@ -12,7 +12,7 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
 | Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). Its Video tab, a YouTube video's transcript: [`video-tab.md`](video-tab.md). Its Translate tab: [`translate.md`](translate.md). | The tests and Chrome checks there; `e2e/pages.spec.ts` |
-| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Under it, English translations: while Chrome's Japanese translation isn't on this computer, "English translations use Chrome's own Japanese download, made once for every site." and Download, whose click starts Chrome's download, with its progress; then "English translations are ready.", or "The download didn't finish. Try again." and Download. Where Chrome can't translate Japanese, nothing about it. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. Then "Zenbu underlines Japanese only on the sites you allow." and Turn On for Every Site, which asks Chrome for every site, or, once it has them, "Zenbu can underline Japanese on every site." | `src/shared/welcome.interaction.test.tsx`, `src/shared/welcome-translation.interaction.test.tsx`; in the headful agent Chrome |
+| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Under it, English translations: while Chrome's Japanese translation isn't on this computer, "English translations use Chrome's own Japanese download, made once for every site." and Download, whose click starts Chrome's download, with its progress; then "English translations are ready.", or "The download didn't finish. Try again." and Download. While Chrome reports its download already under way, "Chrome is downloading its Japanese translation…" with no Download, until a check every 2 seconds finds it in. Where Chrome can't translate Japanese, nothing about it. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. Then "Zenbu underlines Japanese only on the sites you allow." and Turn On for Every Site, which asks Chrome for every site, or, once it has them, "Zenbu can underline Japanese on every site." | `src/shared/welcome.interaction.test.tsx`, `src/shared/welcome-translation.interaction.test.tsx`; in the headful agent Chrome |
 | Settings | Reading Aids, Frequency Dictionaries, Dictionary Data, Sites, and Credits, in a tab of its own. | [`settings.md`](settings.md) |
 | Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from the word popup's Open Full Entry ([`word-popup.md`](word-popup.md)). | `src/word-detail/*.interaction.test.tsx` |
 
@@ -33,11 +33,15 @@ by itself. Chrome's Japanese translation, a download of Chrome's own apart from 
 starts from the welcome tab's Download, since Chrome starts it only from a click; one download
 holds both directions, Japanese to English and English to Japanese. Turn On for Every Site gives
 Zenbu every site. Once one is done on a computer, no tab asks for it again: the Video tab shows
-each line's English and Translate translates with no download, and the header has no Allow on
-This Site. A tab still asks for what is missing, such as for a learner who skipped the welcome
+each line's English, Translate translates both ways with no ask and no download line, and the
+header has no Allow on This Site. Chrome takes one click for one translator, so the welcome tab's
+Download makes Japanese to English's; Translate's first English to Japanese makes its own from
+that click on Translate, in about a tenth of a second from the same download. A tab opened while
+Chrome is downloading says "Chrome is downloading its Japanese translation…", with no Download,
+and checks again every 2 seconds until it is in. A tab still asks for what is missing, such as for a learner who skipped the welcome
 tab, or after Chrome removed its model
-(`src/shared/welcome-translation.interaction.test.tsx`, "the Video tab and Translate translate,
-and neither asks to download"). Nothing else needs a download: the extension uses no other
+(`src/shared/welcome-translation.interaction.test.tsx`, "the Video tab and Translate translate
+both ways, and neither asks to download", and "says Chrome is downloading, with no Download…"). Nothing else needs a download: the extension uses no other
 on-device model, and Speak's voices are the computer's own ([`translate.md`](translate.md)).
 
 ## Updates

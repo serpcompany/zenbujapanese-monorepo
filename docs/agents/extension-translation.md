@@ -38,16 +38,23 @@ translation library, holding both directions' models; the first Translator eithe
 it. A click makes one Translator: Chrome takes the click's activation with the first `create`,
 and a second `create` in the same click fails at once with `NotAllowedError` ("Requires a user
 gesture when availability is \"downloading\" or \"downloadable\""). Once the pack is in, the
-other direction still reports `downloadable` and needs a click of its own, but makes its
-Translator in about 0.1 seconds with no download. All measured on 2026-10-29 in Chrome 156, in
-the headful agent Chrome, on a fresh profile.
+other direction still reports `downloadable`, also 20 seconds later, and needs a click of its
+own, but makes its Translator in about 0.1 seconds with progress `[0, 1]` and no download. During
+a download, Chrome 156 reports `downloadable`, not `downloading`, both ways and to every page; a
+second page's `create` from its own click joins it, with the same progress, and both finish
+together. All measured in Chrome 156.0.8078.48, in the headful agent Chrome, on a fresh profile,
+from a real click handler (2026-10-28, #1131).
 
 So the welcome tab's Download makes the `ja` to `en` Translator, the one the Video tab and the
 caption on the player need, and that downloads the pack. `chromeModel`
 (`src/shared/translation-model.tsx`) is that direction's `translatorAvailability` and
 `downloadTranslator`; the Video tab asks the same direction through its services. After it,
-neither the Video tab nor Translate's Japanese asks; Translate's first English to Japanese makes
-its Translator from its own Translate click, with no download. Whether the model is in is never
+neither the Video tab nor Translate asks; Translate's first English to Japanese makes its
+Translator from its own Translate click, from the pack. Translate shows the download line only
+once a progress event reports `0 < loaded < 1`, so that `[0, 1]` stays "Translating…". The
+stand-in Translator (`src/test/translator-stand-in.ts`) holds one pack the same way. A page
+that finds `downloading` shows Chrome's download under way with no Download, and
+`useTranslationModel` checks `availability` again every 2 seconds (`recheckMs`) until it changes. Whether the model is in is never
 stored: Chrome's `availability` is the one record, so a model Chrome removes is asked for again.
 `translation-model.tsx` also holds what pages show of it: `useTranslationModel`, the state from
 the page's check to the end of a download, `ModelNotice`, the ask, its progress, and its failure,

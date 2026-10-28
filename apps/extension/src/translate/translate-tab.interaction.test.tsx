@@ -189,6 +189,33 @@ describe('the Translate tab', () => {
     expect(Translator.create).toHaveBeenCalledTimes(2)
   })
 
+  it('says Translating… until Chrome reports bytes still loading, and only then shows the download', async () => {
+    standInTranslator()
+    const services = servicesWith()
+    services.availability.mockResolvedValue('downloadable')
+    let progressed: (fraction: number) => void = () => {}
+    let finish: (state: TranslatorState) => void = () => {}
+    services.download.mockImplementation((_direction, onProgress) => {
+      progressed = onProgress
+      onProgress(0)
+      return new Promise(resolve => {
+        finish = resolve
+      })
+    })
+    const tab = await showTab(services)
+    await tab.type('トイレはどこですか')
+    await tab.click(translateLabels.translate)
+    expect(tab.progress()).toBeNull()
+    expect(document.querySelector('main')?.textContent).toContain(translateLabels.translating)
+    await act(async () => progressed(0.3))
+    expect(tab.progress()?.value).toBe(0.3)
+    await act(async () => progressed(1))
+    expect(tab.progress()?.value).toBe(1)
+    await act(async () => finish('available'))
+    expect(tab.progress()).toBeNull()
+    expect(tab.text('[data-translation]')).toBe('Where is the toilet?')
+  })
+
   it('says Translate isn’t available on this computer, and translates nothing', async () => {
     const { Translator } = standInTranslator('unavailable')
     const services = servicesWith()

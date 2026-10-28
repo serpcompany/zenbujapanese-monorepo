@@ -16,6 +16,7 @@ export function standInTranslator(
 ) {
   const states = new Map<string, TranslatorState>()
   const stateOf = (languages: Languages) => states.get(keyOf(languages)) ?? state
+  let packIn = false
   let finishDownload = () => {}
   const downloaded = new Promise<void>(resolve => {
     finishDownload = resolve
@@ -28,10 +29,16 @@ export function standInTranslator(
       if (current !== 'available') {
         const progress = new EventTarget()
         options.monitor?.(progress)
-        progress.dispatchEvent(
-          Object.assign(new Event('downloadprogress'), { loaded: downloadedFraction })
-        )
-        await downloaded
+        const report = (loaded: number) =>
+          progress.dispatchEvent(Object.assign(new Event('downloadprogress'), { loaded }))
+        report(0)
+        if (packIn) await new Promise(resolve => setTimeout(resolve, 0))
+        else {
+          report(downloadedFraction)
+          await downloaded
+          packIn = true
+        }
+        report(1)
         states.set(keyOf(options), 'available')
       }
       return { translate: async (text: string) => phrasebook[text] ?? '', destroy() {} }

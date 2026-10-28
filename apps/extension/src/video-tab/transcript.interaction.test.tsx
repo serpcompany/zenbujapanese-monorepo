@@ -4,6 +4,7 @@ import { japaneseLines } from '../captions/fixtures/youtube-stand-in'
 import { captionLabels } from '../captions/labels'
 import { labels } from '../shared/labels'
 import { writeSettings } from '../shared/settings'
+import { recheckMs } from '../shared/translation-model'
 import { click, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
 import { popupAnswer } from '../test/word-cards'
@@ -19,6 +20,7 @@ afterEach(() => {
   document.body.replaceChildren()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  vi.useRealTimers()
 })
 
 async function transcript(options?: Parameters<typeof watching>[0]) {
@@ -69,6 +71,28 @@ describe('the transcript’s English', () => {
       expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))
     )
     expect(shown.panel.querySelector('[data-translation-model]')).toBeNull()
+  })
+
+  it('while Chrome is already downloading, says so with no Download, and shows the English once a check finds the model', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const shown = await transcript({ translator: 'downloading' })
+    await vi.waitFor(() =>
+      expect(shown.text('[data-translation-model]')).toBe(labels.translation.chromeDownloading)
+    )
+    expect(shown.button(labels.translation.download)).toBeUndefined()
+    shown.services.availability.mockResolvedValue('available')
+    shown.services.translate.mockImplementation(async request => ({
+      type: 'translated',
+      texts: request.type === 'translate' ? request.texts.map(text => lineEnglish[text] ?? '') : []
+    }))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(recheckMs)
+    })
+    await vi.waitFor(() =>
+      expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))
+    )
+    expect(shown.panel.querySelector('[data-translation-model]')).toBeNull()
+    expect(shown.services.download).not.toHaveBeenCalled()
   })
 
   it('says so when the download fails, and Download starts it again', async () => {
