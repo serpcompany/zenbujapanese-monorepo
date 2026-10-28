@@ -623,10 +623,10 @@ summary, and opens its word page when it has one.
 app's ✓ Known capsule and encounter photo aren't shown. Signed in, Known, Lists, and Notes change a
 subscriber's word on their Zenbu account; the browser keeps no copy. The page draws as for anyone;
 the dialog (a drawer on phones) says "Loading…", reads only what's about the word, then draws once:
-Known, with Mark as Known or Mark as Unknown; every list in the app's order, checked where it holds
-the word and toggled at once, each linking to its list on `/account/lists/`, and New List, making a
-list last that holds the word; or each note, with Save and Delete (which asks first), and a new
-one. A list name or note the app's rules refuse isn't sent: the dialog says the rule. A change
+Known, with Mark as Known or Mark as Unknown; every own list in the app's order, checked where it
+holds the word and toggled at once, each linking to its list on `/account/lists/`, and New List,
+making a list last that holds the word; or each note, with Save and Delete (which asks first), and a
+new one. A list name or note the app's rules refuse isn't sent: the dialog says the rule. A change
 disables the controls while it runs; a refusal says why; one made elsewhere first shows the
 account's copy, and a note keeps the learner's text as a new note. Without a subscription it links
 `/account/#subscription`; signed out, it offers Sign in and forgets this browser was signed in.

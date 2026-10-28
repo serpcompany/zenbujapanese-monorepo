@@ -20,6 +20,7 @@ interface KnownWordData {
   reading: string
   state: WordState
   known: boolean
+  stateChangedAt: Date | null
 }
 
 interface WordListData {

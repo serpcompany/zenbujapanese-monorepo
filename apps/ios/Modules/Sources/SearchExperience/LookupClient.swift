@@ -254,7 +254,7 @@ actor LanguageReferenceData {
     try await coreAnswer(method, try DictionaryCore.argument(argument))
   }
 
-  private func preparedCore() throws -> DictionaryCore {
+  func preparedCore() throws -> DictionaryCore {
     if let core { return core }
     let prepared = try DictionaryCore(statements: try openStatements())
     core = prepared

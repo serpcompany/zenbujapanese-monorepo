@@ -21,6 +21,11 @@ export const ItemFields = z.object({
     .openapi({ description: 'Its reading, held as `headword` is. Empty when left out.' })
 })
 
+const stateChangedAt = z.iso.datetime({ offset: true }).optional().openapi({
+  description:
+    "When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time."
+})
+
 const WordStateFields = z.object({
   state: z.enum(wordStates).openapi({ description: 'The state the word moves to.' }),
   headword: ItemFields.shape.headword.optional().openapi({
@@ -30,8 +35,12 @@ const WordStateFields = z.object({
   reading: ItemFields.shape.reading.openapi({
     description:
       'Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.'
-  })
+  }),
+  stateChangedAt
 })
+
+const KnownWordFields = ItemFields.extend({ stateChangedAt })
+const KnownWordClearFields = z.object({ stateChangedAt })
 
 const ProfileFields = z.strictObject({
   name: z
@@ -106,6 +115,8 @@ export const studyFieldSchemas: readonly (readonly [string, z.ZodType])[] = [
   ['ProfileUpdateFields', ProfileFields],
   ['WordFields', ItemFields],
   ['WordStateFields', WordStateFields],
+  ['KnownWordFields', KnownWordFields],
+  ['KnownWordClearFields', KnownWordClearFields],
   ['ListCreateFields', ListFields],
   ['ListUpdateFields', ListUpdateFields],
   ['WatchFields', WatchFields],

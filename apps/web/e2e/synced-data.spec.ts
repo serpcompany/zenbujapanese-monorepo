@@ -1,4 +1,6 @@
 import type { Page } from '@playwright/test'
+import { dailyListId } from '@zenbu/account-rules/daily-lists'
+import { localDay } from '../src/lib/account/daily-lists'
 import { SyncedStandIn } from '../src/test/synced-stand-in'
 import { signedInService, signedOutService, standInForTheAccountService } from './account-stand-in'
 import { axeFailures } from './axe'
@@ -11,6 +13,14 @@ const hairu = 'e36e4bdfdf4b6535e82b863470af9499'
 const dropped = 'f'.repeat(32)
 const needed = { headword: '要る', reading: 'いる' }
 const entered = { headword: '入る', reading: 'いる' }
+
+function dailyList(daysAgo: number) {
+  const date = new Date()
+  date.setDate(date.getDate() - daysAgo)
+  return dailyListId(localDay(date)) ?? ''
+}
+const today = dailyList(0)
+const yesterday = dailyList(1)
 
 const anAccount = () =>
   new SyncedStandIn()
@@ -26,6 +36,24 @@ const anAccount = () =>
       itemId: hairu,
       ...entered,
       addedAt: '2026-10-02T12:00:00Z'
+    })
+    .holds('list', today, {
+      id: today,
+      name: '2026-10-28',
+      position: 1,
+      createdAt: '2026-10-01T12:00:00Z'
+    })
+    .holds('list', yesterday, {
+      id: yesterday,
+      name: '2026-10-27',
+      position: 2,
+      createdAt: '2026-10-01T12:00:00Z'
+    })
+    .holds('listWord', `${today}/${iru}`, {
+      listId: today,
+      itemId: iru,
+      ...needed,
+      addedAt: '2026-10-03T12:00:00Z'
     })
     .holds('knownWord', hairu, { itemId: hairu, ...entered, known: true })
     .holds('wordNote', 'n1', { id: 'n1', itemId: iru, text: 'Seen on a menu.', ...needed })
@@ -99,6 +127,32 @@ test.describe("an account's synced data", () => {
     expect(await sidewaysOverflow(page)).toBe(0)
   })
 
+  test('Lists keeps the daily lists apart, and Daily Lists opens them under This week, each to its words', async ({
+    page
+  }) => {
+    await signedInWith(page)
+    await page.goto('/account/lists/')
+    await expect(main(page).locator('[data-slot="item-title"]')).toHaveText(['Daily Lists', 'Food'])
+    await expect(main(page).getByText('2 lists')).toBeVisible()
+    await main(page).getByRole('link', { name: 'Daily Lists' }).click()
+    await expect(page).toHaveURL(/\/account\/lists\/\?view=daily$/)
+    const week = main(page).getByRole('region', { name: 'This week' })
+    await expect(week.locator('[data-slot="item-title"]')).toHaveText(['Today', 'Yesterday'])
+    await expect(week.getByText('1 word', { exact: true })).toBeVisible()
+    await week.getByRole('link', { name: 'Today' }).click()
+    await expect(page).toHaveURL(new RegExp(`\\?list=${today}$`))
+    const opened = main(page).getByRole('region', { name: 'Today' })
+    await expect(opened.getByRole('link', { name: '要る（いる）' })).toBeVisible()
+    await expect(opened.getByRole('button', { name: /Rename|Delete/ })).toHaveCount(0)
+    await expect(main(page)).not.toContainText('2026-10-2')
+    await opened.getByRole('link', { name: 'Daily Lists' }).click()
+    await expect(page).toHaveURL(/\/account\/lists\/\?view=daily$/)
+    await page.goto('/ja/account/lists/?view=daily')
+    const thisWeek = main(page).getByRole('region', { name: '今週' })
+    await expect(thisWeek.locator('[data-slot="item-title"]')).toHaveText(['今日', '昨日'])
+    expect(await sidewaysOverflow(page)).toBe(0)
+  })
+
   test('a word opens its own page, and a note on a word the dictionary dropped is listed without a word', async ({
     page
   }) => {
@@ -164,7 +218,11 @@ test.describe("an account's synced data", () => {
     })
 
     for (const colorScheme of ['light', 'dark'] as const) {
-      for (const path of [...syncedPaths, `/account/lists/?list=${food}`]) {
+      for (const path of [
+        ...syncedPaths,
+        `/account/lists/?list=${food}`,
+        '/account/lists/?view=daily'
+      ]) {
         test(`${path} fits a 360px phone, signed in, with its tap targets and contrast, in ${colorScheme}`, async ({
           page
         }) => {

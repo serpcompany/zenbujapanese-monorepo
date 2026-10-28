@@ -78,6 +78,13 @@
       "when": 1793132973293,
       "tag": "0010_kind_reads_index",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793160268727,
+      "tag": "0011_known_words_state_changed_at",
+      "breakpoints": true
     }
   ]
 }

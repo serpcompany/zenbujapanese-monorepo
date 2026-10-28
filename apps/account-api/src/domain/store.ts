@@ -41,6 +41,7 @@ export interface KnownWord {
   headword: string
   reading: string
   state: WordState
+  stateChangedAt: Date | null
   version: number
   updatedAt: Date
 }

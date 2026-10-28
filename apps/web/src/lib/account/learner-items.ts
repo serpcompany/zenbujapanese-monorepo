@@ -4,6 +4,7 @@ import { listName } from '@zenbu/account-rules/lists'
 import { noteText } from '@zenbu/account-rules/notes'
 import { accountPagesOpen, builtAccountService } from './availability'
 import type { Failure } from './client'
+import { ownLists } from './daily-lists'
 import { accountPages } from './pages'
 import type { SavedItem } from './saved-item'
 import { seemsSignedIn } from './signed-in'
@@ -60,7 +61,7 @@ export const listPage = (listId: string) =>
 export const subscriptionPage = `${accountPages.account.path}#subscription`
 
 export const listRows = (copy: SyncedCopy, item: SavedItem): ListRow[] =>
-  listsInOrder(copy.held('list')).map(list => ({
+  ownLists(listsInOrder(copy.held('list'))).map(list => ({
     id: list.entityId,
     name: String(list.data.name ?? ''),
     holds: listHolds(copy, list.entityId, item)
@@ -81,7 +82,7 @@ export async function newListHolding(
 ): Promise<Attempt> {
   const name = listName(typed)
   if (name === null) return notSent
-  const position = nextListPosition(copy.held('list'))
+  const position = nextListPosition(ownLists(copy.held('list')))
   const created = await copy.change('list', 'create', id, { name, position })
   const madeBefore = created.status === 'rejected' && created.code === 'already_exists'
   if (created.status !== 'applied' && !madeBefore) return created

@@ -11,7 +11,9 @@ import {
 import { renderAccountView } from '@/test/account-view'
 import {
   food,
+  list,
   miru,
+  onList,
   openArea,
   renderArea,
   subscriptionAnswering,
@@ -22,19 +24,6 @@ import {
 import { SyncedStandIn } from '@/test/synced-stand-in'
 
 afterEach(unmount)
-
-const list = (id: string, name: string, position: number) => ({
-  id,
-  name,
-  position,
-  createdAt: '2026-10-01T00:00:00.000Z'
-})
-const onList = (listId: string, itemId: string, text: object, addedAt: string) => ({
-  listId,
-  itemId,
-  ...text,
-  addedAt
-})
 
 const linkTexts = (page: HTMLElement, within: string) =>
   [...page.querySelectorAll(`${within} a`)].map(link => link.textContent)

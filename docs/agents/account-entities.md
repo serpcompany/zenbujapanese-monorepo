@@ -18,6 +18,13 @@ API reference's [Sync entities](../api/account-api.md#sync-entities).
   word has changes nothing. So a mark made before the learner cleared the word loses to the clear,
   and a mark made after seeing the clear wins, as #563's decision 4 says for Tomodachi. A clear
   that never saw a later mark conflicts, and the learner sees the word Known again.
+- **When the state began** (`stateChangedAt`, #1096), so an app set up again by signing in can
+  rebuild its progress from the account. Each change may send it, held as a watch's `watchedAt`
+  is, and without one it is the service's time when the change applies. A change that moves the
+  word keeps its time; one that leaves the state as it was, or conflicts, keeps the earlier one. A
+  word whose state began before the service kept the time (`known_words.state_changed_at`, added
+  empty) answers `null` until its state changes. While an older image still serves during a
+  rollback, a state change it makes keeps the earlier time, as that image doesn't write the column.
 - **Learning, to an app that doesn't show it,** is not known (`known: false` beside `state`). Its
   mark makes a Learning word Known, and its clear of one changes nothing, as clearing any word not
   known does: it can't end a state it can't see, and an app that shows Learning ends it with
