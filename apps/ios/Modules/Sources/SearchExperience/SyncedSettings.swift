@@ -92,6 +92,7 @@ final class SyncedSettings {
   private let defaults: UserDefaults
   private let settings: [SyncedSetting]
   private var known: [String: SyncFieldValue] = [:]
+  private var isApplying = false
   private var observer: NSObjectProtocol?
   var changeObserver: ((KeptLocalChange) -> Void)?
 
@@ -107,6 +108,7 @@ final class SyncedSettings {
   }
 
   func noticeChanges() {
+    guard !isApplying else { return }
     for setting in settings {
       let current = setting.read(defaults)
       let earlier = known[setting.name]
@@ -130,8 +132,10 @@ final class SyncedSettings {
 
   func applySynced(_ name: String, _ value: SyncFieldValue) {
     guard let setting = settings.first(where: { $0.name == name }) else { return }
-    known[name] = value
+    isApplying = true
     setting.write(defaults, value)
+    isApplying = false
+    known[name] = setting.read(defaults)
   }
 }
 

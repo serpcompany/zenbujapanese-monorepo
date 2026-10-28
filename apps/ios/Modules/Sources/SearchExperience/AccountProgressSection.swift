@@ -19,7 +19,7 @@ struct AccountProgressSection: View {
   var body: some View {
     Section {
       TodayProgressCard(stats: stats, goal: goal)
-        .task(id: StatsAsked(days: progressLog.days, goal: goal, today: progressLog.day(of: .now))) {
+        .task(id: StatsAsked(days: progressLog.days, goal: goal, today: progressLog.today)) {
           stats = await progressLog.stats()
         }
       Button {
@@ -158,13 +158,10 @@ struct TodayProgressCard: View {
 }
 
 private struct ProgressWeekStrip: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let stats: ProgressStats?
 
   var body: some View {
-    let columns = Array(
-      repeating: GridItem(.flexible(), spacing: 4), count: dynamicTypeSize.isAccessibilitySize ? 4 : 7)
-    LazyVGrid(columns: columns, spacing: 10) {
+    HStack(spacing: 4) {
       ForEach(ProgressWeek.days(endingWith: stats)) { day in
         VStack(spacing: 6) {
           Text(day.letter)
@@ -174,6 +171,7 @@ private struct ProgressWeekStrip: View {
             .font(.title2)
             .foregroundStyle(day.met || day.isToday ? AnyShapeStyle(.orange) : AnyShapeStyle(.tertiary))
         }
+        .frame(maxWidth: .infinity)
       }
     }
   }

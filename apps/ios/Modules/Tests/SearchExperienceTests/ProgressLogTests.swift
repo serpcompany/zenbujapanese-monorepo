@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import Testing
 
 @testable import SearchExperience
@@ -100,6 +101,28 @@ final class ProgressLogTests {
         ])
     #expect(reloaded.days["2026-10-28"]?.totals == ProgressTotals(known: 0, learning: 2))
     #expect(reloaded.days["2026-10-28"]?.goal == DailyGoal.standard)
+  }
+
+  @Test("the day turning while the app is open or suspended moves today, so Account asks for the new day's stats")
+  func dayTurns() async {
+    let center = NotificationCenter()
+    clock.now = october(27, 23, 59)
+    let log = ProgressLog(fileURL: logURL, defaults: defaults, timeZone: tokyo, center: center)
+    log.now = { [clock] in clock.now }
+    await log.flush()
+    let (changes, change) = AsyncStream.makeStream(of: Void.self)
+    let before = withObservationTracking { log.today } onChange: { change.yield() }
+
+    clock.now = october(28, 7, 0)
+    center.post(name: .NSCalendarDayChanged, object: nil)
+    await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
+    change.finish()
+    var heard = false
+    for await _ in changes { heard = true }
+
+    #expect(before == "2026-10-27")
+    #expect(heard)
+    #expect(log.today == "2026-10-28")
   }
 
   @Test("a share sheet change made at 23:59 and applied the next morning falls on its own day")

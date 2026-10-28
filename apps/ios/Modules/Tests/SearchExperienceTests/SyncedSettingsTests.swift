@@ -109,6 +109,20 @@ struct SyncedSettingsTests {
     #expect(settings.changedFromStandard == [KeptChanges.settingSet(DailyGoal.key, .number(30))])
   }
 
+  @Test("a synced goal the device rounds isn't sent back to the account")
+  func roundedGoalStaysUnsent() async throws {
+    let defaults = MemoryDefaults()
+    let settings = SyncedSettings(defaults: defaults)
+    var told: [KeptLocalChange] = []
+    settings.changeObserver = { told.append($0) }
+
+    settings.applySynced(DailyGoal.key, .decimal(12.6))
+    settings.noticeChanges()
+
+    #expect(DailyGoal.read(defaults) == 13)
+    #expect(told.isEmpty)
+  }
+
   @Test("a synced goal outside 1 to 200, or not a number, leaves the device's goal as it is")
   func dailyGoalOutOfRange() async throws {
     let defaults = MemoryDefaults()

@@ -93,6 +93,9 @@ default size to 63 at the largest, and show whole at each, the titles wrapping u
 the page's other rows do; so the clipped titles are allowed as text that scales. Known Words and
 Learning are two rows written out, not a `ForEach`: built by a `ForEach`, iOS 27's audit reported
 their clipped titles with no element, in every pass, and a finding with no element can't be allowed.
+The Today card's week strip stays one row of seven days at every size for the same reason: wrapped
+to four columns at the accessibility sizes, the sweep lost the three days that moved to a second
+row, three findings with no element, and reported the Daily Goal row under the card (#1085).
 With Learning added (#1037), the five rows alone put Translations under the tab bar at the largest
 size, where the sweep reported a clipped title with no element; so the rows are audited in three
 launches, `library`, `collections`, and `settings`, each short enough to sit clear of the bar.

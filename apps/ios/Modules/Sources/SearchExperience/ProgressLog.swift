@@ -100,6 +100,7 @@ final class ProgressLog: LocalFileStore {
   private(set) var isLoaded = false
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
   private(set) var days: [String: ProgressLogDay] = [:]
+  private var daysTurned = 0
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var now: () -> Date = Date.init
   @ObservationIgnored private let writer: ProgressLogWriter
@@ -107,13 +108,18 @@ final class ProgressLog: LocalFileStore {
   @ObservationIgnored private let calendar: Calendar
   @ObservationIgnored private var heardBeforeLoading: [WordKnowledgeEvent] = []
   @ObservationIgnored private var goalObserver: NSObjectProtocol?
+  @ObservationIgnored private var dayObserver: NSObjectProtocol?
   @ObservationIgnored private weak var knowledge: WordKnowledge?
   var canChange: Bool { isLoaded && readOnlyReason == nil }
   var goal: Int { DailyGoal.read(defaults) }
+  var today: String {
+    _ = daysTurned
+    return day(of: now())
+  }
 
   init(
     fileURL: URL = ProgressLog.defaultFileURL, defaults: UserDefaults = .standard,
-    timeZone: TimeZone = .autoupdatingCurrent
+    timeZone: TimeZone = .autoupdatingCurrent, center: NotificationCenter = .default
   ) {
     let writer = ProgressLogWriter(fileURL: fileURL)
     self.writer = writer
@@ -135,6 +141,10 @@ final class ProgressLog: LocalFileStore {
       forName: UserDefaults.didChangeNotification, object: defaults, queue: .main
     ) { [weak self] _ in
       MainActor.assumeIsolated { self?.keepTodaysGoal() }
+    }
+    dayObserver = center.addObserver(forName: .NSCalendarDayChanged, object: nil, queue: .main) {
+      [weak self] _ in
+      MainActor.assumeIsolated { self?.daysTurned += 1 }
     }
   }
 
