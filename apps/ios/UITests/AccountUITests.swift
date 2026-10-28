@@ -2,7 +2,8 @@ import XCTest
 
 final class AccountUITests: ZenbuUITestCase {
   static let rows = [
-    "account.profile", "account.sign-in", "account.media-library", "account.known-words",
+    "account.profile", "account.sign-in", "account.progress.today", "account.daily-goal",
+    "account.media-library", "account.known-words",
     "account.learning", "account.lists", "account.translations", "account.reading-aids",
     "account.frequency-dictionaries", "account.about", "account.support",
     "account.report-a-problem", "account.send-crash-reports", "account.privacy-policy",
@@ -23,6 +24,46 @@ final class AccountUITests: ZenbuUITestCase {
     for row in Self.rows {
       reveal(find(row, in: app), in: app)
     }
+  }
+
+  func testTheTodayCardCountsWordsMarkedLearningAgainstTheGoalTheSheetChooses() {
+    let app = launch()
+    open(.account, in: app)
+    let today = find("account.progress.today", in: app)
+    let goal = find("account.daily-goal", in: app)
+    waitUntil(today, "label == %@", "Today, 0 of 20 new words")
+    waitUntil(goal, mentions: "20 new words")
+    search("japan", in: app)
+    chooseLeadingAction("mark-learning", onRow: "result.japan", in: app)
+    open(.account, in: app)
+    waitUntil(today, "label == %@", "Today, 1 of 20 new words")
+    tap(goal)
+    waitForSheet("daily-goal.sheet", in: app)
+    waitUntil(find("daily-goal.choice.20", in: app), "selected == true")
+    tap(find("daily-goal.choice.5", in: app))
+    waitUntil(find("daily-goal.month", in: app), mentions: "150")
+    tap(find("daily-goal.done", in: app))
+    waitUntil(today, "label == %@", "Today, 1 of 5 new words")
+    waitUntil(goal, mentions: "5 new words")
+  }
+
+  func testTheTodayCardShowsAStreakAndAMetGoal() {
+    let app = launch(["ZENBU_PROGRESS_STREAK": "6", "ZENBU_DAILY_GOAL": "1"])
+    open(.account, in: app)
+    let today = find("account.progress.today", in: app)
+    waitUntil(today, "label == %@", "Today, 0 of 1 new word, 6-day streak")
+    search("japan", in: app)
+    chooseLeadingAction("mark-learning", onRow: "result.japan", in: app)
+    open(.account, in: app)
+    waitUntil(today, "label == %@", "Today, 1 of 1 new word, goal met, 7-day streak")
+    guard device != .mac else { return }
+    tap(find("account.daily-goal", in: app))
+    waitForSheet("daily-goal.sheet", in: app)
+    waitUntil(find("daily-goal.custom-goal", in: app), "label == %@", "1 new word a day")
+    tap(waitFor(app.steppers.firstMatch).buttons["Increment"])
+    waitUntil(find("daily-goal.custom-goal", in: app), "label == %@", "2 new words a day")
+    tap(find("daily-goal.done", in: app))
+    waitUntil(today, "label == %@", "Today, 1 of 2 new words, 6-day streak")
   }
 
   func testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites() {

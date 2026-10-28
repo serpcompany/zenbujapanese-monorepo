@@ -74,8 +74,8 @@ On a page scrolled down to a section, that sweep reflows everything above it and
 section's text under the bars, where the audit loses it and can't name the element. So the sections
 that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's readings, the
 Account page's about part (Help & Support, Report a Problem, the crash reports switch, and the links
-under them), and at the largest size the Account page's rows below the profile, in three launches
-(`library`, Media Library to Learning, `collections`, Lists to Notes Without a Word, and `settings`,
+under them), and at the largest size the Account page's sections below the profile, in four
+launches (`progress`, the Today card and Daily Goal, `library`, Media Library to Learning, `collections`, Lists to Notes Without a Word, and `settings`,
 Reading Aids and Frequency Dictionaries), get those two audits on their own. `ZENBU_ONLY_SECTION`, a
 Debug-only harness (`LaunchHarness.onlySections`), opens the page with only the sections it names
 (Word Detail's examples under its meanings are one, `meaning-example`, named with `meaning`, the

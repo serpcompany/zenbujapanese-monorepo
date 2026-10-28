@@ -58,11 +58,38 @@ enum DailyGoal {
   static let range = 1...200
 
   static func read(_ defaults: UserDefaults) -> Int {
-    guard let stored = defaults.object(forKey: key) as? Double, stored.isFinite else {
-      return standard
-    }
+    clamped(defaults.object(forKey: key) as? Double)
+  }
+
+  static func clamped(_ stored: Double?) -> Int {
+    guard let stored, stored.isFinite else { return standard }
     return Int(min(max(stored.rounded(), Double(range.lowerBound)), Double(range.upperBound)))
   }
+
+  static func write(_ goal: Int, to defaults: UserDefaults) {
+    defaults.set(Double(clamped(Double(goal))), forKey: key)
+  }
+
+  static func synced(_ value: SyncFieldValue) -> Int? {
+    let number: Double
+    switch value {
+    case .number(let whole): number = Double(whole)
+    case .decimal(let decimal): number = decimal
+    default: return nil
+    }
+    guard number >= Double(range.lowerBound), number <= Double(range.upperBound) else { return nil }
+    return clamped(number)
+  }
+
+  static let setting = SyncedSetting(
+    name: key, standard: .number(standard),
+    read: { defaults in
+      defaults.object(forKey: key) is Double ? .number(DailyGoal.read(defaults)) : nil
+    },
+    write: { defaults, value in
+      guard let goal = DailyGoal.synced(value) else { return }
+      DailyGoal.write(goal, to: defaults)
+    })
 }
 
 @MainActor
@@ -130,6 +157,10 @@ final class ProgressLog: LocalFileStore {
   }
 
   func day(of time: Date) -> String {
+    Self.day(of: time, in: calendar)
+  }
+
+  nonisolated static func day(of time: Date, in calendar: Calendar) -> String {
     let parts = calendar.dateComponents([.year, .month, .day], from: time)
     return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
   }

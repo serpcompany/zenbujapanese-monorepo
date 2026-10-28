@@ -62,6 +62,10 @@ struct AccountRootView: View {
         }
       }
 
+      if LaunchHarness.shows("progress", on: "account") {
+        AccountProgressSection()
+      }
+
       if ["library", "collections", "settings"].allSatisfy({ LaunchHarness.shows($0, on: "account") }) {
         Section {
           libraryRows

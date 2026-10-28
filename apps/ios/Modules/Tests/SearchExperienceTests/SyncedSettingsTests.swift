@@ -90,6 +90,39 @@ struct SyncedSettingsTests {
     #expect(told.contains(KeptChanges.settingSet("search.filter", .string("known"))))
   }
 
+  @Test("the daily goal follows a goal from the account, rounded, and the learner's change is told")
+  func dailyGoal() async throws {
+    let defaults = MemoryDefaults()
+    let settings = SyncedSettings(defaults: defaults)
+    var told: [KeptLocalChange] = []
+    settings.changeObserver = { told.append($0) }
+    #expect(settings.changedFromStandard.isEmpty)
+
+    settings.applySynced(DailyGoal.key, .number(5))
+    #expect(DailyGoal.read(defaults) == 5)
+    settings.applySynced(DailyGoal.key, .decimal(12.6))
+    #expect(DailyGoal.read(defaults) == 13)
+
+    DailyGoal.write(30, to: defaults)
+    settings.noticeChanges()
+    #expect(told.last == KeptChanges.settingSet(DailyGoal.key, .number(30)))
+    #expect(settings.changedFromStandard == [KeptChanges.settingSet(DailyGoal.key, .number(30))])
+  }
+
+  @Test("a synced goal outside 1 to 200, or not a number, leaves the device's goal as it is")
+  func dailyGoalOutOfRange() async throws {
+    let defaults = MemoryDefaults()
+    let settings = SyncedSettings(defaults: defaults)
+    DailyGoal.write(10, to: defaults)
+
+    for value: SyncFieldValue in [
+      .number(0), .number(201), .decimal(0.4), .decimal(200.5), .decimal(.nan), .string("20"), .null,
+    ] {
+      settings.applySynced(DailyGoal.key, value)
+      #expect(DailyGoal.read(defaults) == 10, "\(value)")
+    }
+  }
+
   @Test("another defaults store's change costs Synced settings nothing: it reads again only when its own store changes")
   func hearsOnlyItsOwnStore() async throws {
     let defaults = MemoryDefaults()

@@ -1,20 +1,21 @@
 # Zenbu account and sync
 
 A learner can sign in to their Zenbu account from Account, to keep their known words and lists the
-same on every device and Zenbu app they sign in to (#573), and the same on every device running
-this app (#867): Player's Recent videos and Translate's bookmarked sentences
+same on every device and Zenbu app they sign in to (#573), and the same on every device running this
+app (#867): Player's Recent videos and Translate's bookmarked sentences
 ([Player](player.md#opening-a-video), [Translate](translate.md#translations)), word notes, Notes
 Without a Word included, the Media Library's photos and the words each is on, settings, the
-frequency dictionaries chosen, and recent searches ([Saved data](saved-data.md)). The profile's
-name and username are the same as the account's page on the website shows, and its photo the same
-on every device running this app ([Account](index.md#account)). Zenbu works the same signed out and offline: everything stays on
-the phone, and the phone's copy is what the app shows.
+frequency dictionaries chosen, and recent searches ([Saved data](saved-data.md)). The profile's name
+and username are the same as the account's page on the website shows, and its photo the same on
+every device running this app ([Account](index.md#account)). Zenbu works the same signed out and
+offline: everything stays on the phone, and the phone's copy is what the app shows.
 
 Check: package `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
 `AccountSignedOutTests`, `AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`,
 `AccountSyncProfileTests`, `AccountSyncKeptTests`, `AccountSyncPhotoTests`, `AccountSyncNoteTests`,
-`AccountSyncFileTests`, and `AccountSyncRulesTests`, against a stand-in account service; `SyncedSettingsTests` and `FrequencyPackLifecycleTests` (a synced setting or
-choice reaching what shows it); UI `AccountUITests` (offline).
+`AccountSyncFileTests`, and `AccountSyncRulesTests`, against a stand-in account service;
+`SyncedSettingsTests` and `FrequencyPackLifecycleTests` (a synced setting or choice reaching what
+shows it); UI `AccountUITests` (offline).
 
 What stays on each device on purpose:
 
@@ -41,15 +42,18 @@ stood in: the nonce, PKCE, the token exchange, the account's answer, and the ses
 sheet; a refused token), `AccountSignInTests` (emailed codes, tokens, refused sign-ins), and
 `AccountRulesTests.signInCodes()` (what Sign In sends); UI
 `AccountUITests.testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached` and
-`AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad,
-with the account service and Apple's sheet stood in, and the session kept in the Keychain across a
-relaunch, which only the app can do: a package test process has no keychain access group). A real Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
+`AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad, with
+the account service and Apple's sheet stood in, and the session kept in the Keychain across a
+relaunch, which only the app can do: a package test process has no keychain access group). A real
+Apple or Google sign-in is by hand ([Account manual
+checks](../../../../docs/agents/ios.md#account-manual-checks)).
 
-**The first sync.** When this phone signs in to an account other than the one it last signed out
-of, the app sends the account everything on the phone: every word Known or Learning, every list,
-every list's words, Recent's videos, bookmarked sentences, notes, photos with their words (each
-photo's file first), the profile photo, each setting changed from its standard, and the frequency dictionaries
-chosen if they aren't the standard ones, then brings down everything the account already has.
+**The first sync.** When this phone signs in to an account other than the one it last signed out of,
+the app sends the account everything on the phone: every word Known or Learning, every list, every
+list's words, Recent's videos, bookmarked sentences, notes, photos with their words (each photo's
+file first), the profile photo, each setting changed from its standard, and the frequency
+dictionaries chosen if they aren't the standard ones, then brings down everything the account
+already has.
 Recent searches go up once the account's first answer brings the key their IDs are made with, and
 a search removed before then is removed from the account too. The first sync gathers all of it,
 so the sign-in sheet closes at once, and a phone that's closed or signed out before that sync
@@ -152,11 +156,12 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   the phone's, and signing in to a different account never gives it the last account's photo.
 - A setting changed on two devices takes the first to sync, and the other device shows it. Each
   setting is its own, so changing furigana on one device never undoes the speech speed set on
-  another. One the account refuses stays on the phone and goes again the next time the app
-  opens. A sort by a frequency dictionary this phone hasn't downloaded yet shows as Default and
-  keeps the choice. Frequency dictionaries chosen on another device download on their own, with
-  their progress in Frequency Dictionaries, never on cellular or in Low Data Mode, and are tried
-  again the next time the app opens if they couldn't.
+  another. One the account refuses stays on the phone and goes again the next time the app opens. A
+  sort by a frequency dictionary this phone hasn't downloaded yet shows as Default and keeps the
+  choice. Frequency dictionaries chosen on another device download on their own, with their progress
+  in Frequency Dictionaries, never on cellular or in Low Data Mode, and are tried again the next
+  time the app opens if they couldn't. The daily goal, `progress.dailyGoal`, rounds a fraction and
+  ignores one outside 1–200.
 - A search on two devices is one search, kept at its later time. A search removed on one device is
   removed everywhere, even from a device that searched it again without having heard of the
   removal; searching it after that brings it back. The account keeps the latest 50; two searches,

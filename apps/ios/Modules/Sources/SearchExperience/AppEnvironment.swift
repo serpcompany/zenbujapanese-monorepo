@@ -5,6 +5,7 @@ extension View {
     environment(readingAids)
       .environment(profile)
       .environment(WordKnowledge.shared)
+      .environment(ProgressLog.shared)
       .environment(WordLists.shared)
       .environment(NotesWithoutAWord.shared)
       .environment(LearnerNotes.shared)

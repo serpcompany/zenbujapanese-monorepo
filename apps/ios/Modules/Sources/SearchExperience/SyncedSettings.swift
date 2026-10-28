@@ -80,6 +80,7 @@ struct SyncedSetting: Sendable {
       plain(
         "imageSearch.textView", key: ImageTextViewMode.storageKey,
         standard: .string(ImageTextViewMode.both.rawValue)),
+      DailyGoal.setting,
     ]
   }()
 }
