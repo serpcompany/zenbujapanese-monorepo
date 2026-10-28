@@ -787,6 +787,7 @@ Fields ([`WordStateFields`](#wordstatefields)):
 - `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
 - `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
 - `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
 
 ```json
 {
@@ -798,17 +799,19 @@ Fields ([`WordStateFields`](#wordstatefields)):
   "fields": {
     "state": "learning",
     "headword": "食べる",
-    "reading": "たべる"
+    "reading": "たべる",
+    "stateChangedAt": "2026-10-27T09:30:00Z"
   }
 }
 ```
 
 **`mark`**, with `known:write` or `known:mark`; `baseVersion` required. Makes the word Known, from Unknown or Learning: the same change as `set` with `state: "known"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.
 
-Fields ([`WordFields`](#wordfields)):
+Fields ([`KnownWordFields`](#knownwordfields)):
 
 - `headword` (string, required, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters.
 - `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
 
 ```json
 {
@@ -826,6 +829,10 @@ Fields ([`WordFields`](#wordfields)):
 
 **`clear`**, with `known:write`; `baseVersion` required. Makes a known word Unknown. It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can't see Learning; `set` with `state: "unknown"` ends Learning.
 
+Fields ([`KnownWordClearFields`](#knownwordclearfields)):
+
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
+
 ```json
 {
   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
@@ -838,13 +845,13 @@ Fields ([`WordFields`](#wordfields)):
 
 ### Entity `list`
 
-A word list. An account holds at most 500, and a deleted list's ID can't be used again.
+A word list. An account holds at most 500 of the learner's own, and a deleted list's ID can't be used again. Daily lists don't count: a daily list's ID is `00000000-da11-4000-8000-0000yyyymmdd`, its day's digits (`dailyListId` in `packages/account-rules`), and it is left out of the count while its day is from 2026-10-01 to the day after the service's own date, in UTC. A list for any other day counts like the learner's own.
 
 - **ID** (`entityId`): Its UUID, in either case; answers name it in lowercase.
 - **Read with:** `lists:read`
 - **As it is now** (a `put`'s `data`): [`WordList`](#wordlist)
 
-**`create`**, with `lists:write`; `baseVersion` not read. Rejected `already_exists` if the account has or had a list with that ID, and `too_many_lists` past 500.
+**`create`**, with `lists:write`; `baseVersion` not read. Rejected `already_exists` if the account has or had a list with that ID, a deleted daily list too, and `too_many_lists` once it holds 500 lists that count, unless the new list is a daily list that doesn't.
 
 Fields ([`ListCreateFields`](#listcreatefields)), and no others:
 
@@ -1208,6 +1215,7 @@ One of the learner's settings, which follow the account rather than the device. 
 - `search.filter` (one of `all`, `known`, `unknown`, `learning`): Search results' filter.
 - `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.
 - `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.
+- `progress.dailyGoal` (a number from 1 to 200): Progress: how many new words the learner marks Learning each day.
 
 - **ID** (`entityId`): The setting's name, from the list above.
 - **Read with:** `settings:read`
@@ -1286,7 +1294,7 @@ A `rejected` result's `error.code`. A rejection is final for that mutation ID.
 | `mutation_id_reused` | The ID was used for a different mutation. Give each mutation its own. |
 | `already_exists` | The account has, or had, a list with that ID. |
 | `unknown_list` | The list word's list isn't in the account, or was deleted. |
-| `too_many_lists` | The account has 500 lists. |
+| `too_many_lists` | The account has 500 lists, not counting its daily lists. |
 | `list_full` | The list has 5,000 words. |
 | `too_many_bookmarks` | The account has 2,000 bookmarked sentences. |
 | `too_many_notes` | The account has 10,000 notes. Keep the note on the device, untouched. |
@@ -1381,6 +1389,17 @@ Every error. `code` is stable and machine-readable; `message` is for people and 
 - `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
 - `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
 - `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
+
+### KnownWordFields
+
+- `headword` (string, required, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
+
+### KnownWordClearFields
+
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
 
 ### ListCreateFields
 
@@ -1599,6 +1618,7 @@ One of:
 - `reading` (string, required)
 - `state` (`"unknown"`, `"learning"`, or `"known"`, optional): The learner's state for the word. Always sent by this service; a service from before Learning, during a deploy or after a rollback, sends none, so read `known` instead.
 - `known` (boolean, required): Whether `state` is `known`, for an app that reads only this: a Learning word is not known.
+- `stateChangedAt` (string (date-time) or null, optional): When the word moved to its current state, as the app said, or the service's time when the change carried none; a time after the service's is taken as the service's. `null` for a word that moved to its state before the service kept the time; a service from before it sends none.
 
 ### WordList
 

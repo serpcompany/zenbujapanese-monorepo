@@ -51,30 +51,36 @@ export const studyRules = {
         example: {
           entityId: learningItemId,
           baseVersion: 0,
-          fields: { state: 'learning', headword: '食べる', reading: 'たべる' }
+          fields: {
+            state: 'learning',
+            headword: '食べる',
+            reading: 'たべる',
+            stateChangedAt: '2026-10-27T09:30:00Z'
+          }
         }
       },
       mark: {
         baseVersion: true,
         rule: 'Makes the word Known, from Unknown or Learning: the same change as `set` with `state: "known"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.',
-        fields: 'WordFields',
+        fields: 'KnownWordFields',
         example: { entityId: itemId, baseVersion: 0, fields: word }
       },
       clear: {
         baseVersion: true,
         rule: 'Makes a known word Unknown. It applies only at the word\'s current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can\'t see Learning; `set` with `state: "unknown"` ends Learning.',
+        fields: 'KnownWordClearFields',
         example: { entityId: itemId, baseVersion: 1 }
       }
     }
   },
   list: {
-    rule: `A word list. An account holds at most ${count(listLimits.lists)}, and a deleted list's ID can't be used again.`,
+    rule: `A word list. An account holds at most ${count(listLimits.lists)} of the learner's own, and a deleted list's ID can't be used again. Daily lists don't count: a daily list's ID is \`00000000-da11-4000-8000-0000yyyymmdd\`, its day's digits (\`dailyListId\` in \`packages/account-rules\`), and it is left out of the count while its day is from 2026-10-01 to the day after the service's own date, in UTC. A list for any other day counts like the learner's own.`,
     entityId: 'Its UUID, in either case; answers name it in lowercase.',
     data: 'WordList',
     operations: {
       create: {
         baseVersion: false,
-        rule: `Rejected \`already_exists\` if the account has or had a list with that ID, and \`too_many_lists\` past ${count(listLimits.lists)}.`,
+        rule: `Rejected \`already_exists\` if the account has or had a list with that ID, a deleted daily list too, and \`too_many_lists\` once it holds ${count(listLimits.lists)} lists that count, unless the new list is a daily list that doesn't.`,
         fields: 'ListCreateFields',
         example: { entityId: listId, fields: { name: 'Food', position: 0 } }
       },

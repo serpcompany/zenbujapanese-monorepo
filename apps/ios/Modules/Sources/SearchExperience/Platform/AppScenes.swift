@@ -10,6 +10,7 @@ public struct ZenbuJapaneseScenes: Scene {
   public init() {
     LaunchHarness.prepare()
     AppLifecycle.applySharedChangesWhenPosted()
+    ProgressLog.shared.listen(to: .shared)
     _readingAids = State(initialValue: ReadingAidPreferences())
     _profile = State(initialValue: UserProfile.shared)
     _translate = State(initialValue: TranslateExperience.live())

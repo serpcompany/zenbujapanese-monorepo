@@ -404,14 +404,14 @@
   var longestRemembered = 24;
   var remembered = 8192;
   function remembering(convert) {
-    const known = /* @__PURE__ */ new Map();
+    const known2 = /* @__PURE__ */ new Map();
     return (value) => {
       if (value.length > longestRemembered) return convert(value);
-      let converted = known.get(value);
+      let converted = known2.get(value);
       if (converted === void 0) {
         converted = convert(value);
-        if (known.size >= remembered) known.clear();
-        known.set(value, converted);
+        if (known2.size >= remembered) known2.clear();
+        known2.set(value, converted);
       }
       return converted;
     };
@@ -707,6 +707,109 @@
       previous = attaches2;
     }
     return sentence;
+  }
+
+  // src/progress/stats.ts
+  var unknown = "unknown";
+  var learning = "learning";
+  var known = "known";
+  var kanjiPrefix = "kanji:";
+  var dayLength = 864e5;
+  var averagedDays = 7;
+  var shortWindow = 7;
+  var longWindow = 30;
+  var dayNumber = (day) => {
+    const [year, month, date] = day.split("-").map(Number);
+    return Math.round(Date.UTC(year ?? 1970, (month ?? 1) - 1, date ?? 1) / dayLength);
+  };
+  var dayName = (number) => new Date(number * dayLength).toISOString().slice(0, 10);
+  var isDay = (day) => /^\d{4}-\d{2}-\d{2}$/.test(day);
+  function addedToLearning(changes) {
+    const added = /* @__PURE__ */ new Map();
+    for (const change of changes) {
+      if (change.id.startsWith(kanjiPrefix)) continue;
+      if (change.before === unknown && change.after === learning) added.set(change.id, true);
+      else if (change.after === unknown && added.has(change.id)) added.set(change.id, false);
+    }
+    return [...added].filter(([, counts2]) => counts2).map(([id]) => id);
+  }
+  function markedKnown(changes) {
+    return [...new Set(changes.filter((change) => change.after === known).map((change) => change.id))];
+  }
+  var sum = (days, count) => days.reduce((total, day) => total + count(day), 0);
+  var extended = (run, day) => ({
+    length: (run?.length ?? 0) + 1,
+    first: run?.first ?? day,
+    last: day
+  });
+  function bestStreak(days) {
+    let best;
+    let run;
+    for (const day of days) {
+      run = day.met ? extended(run, day.day) : void 0;
+      if (run && run.length >= (best?.length ?? 1)) best = run;
+    }
+    return best ?? null;
+  }
+  function currentStreak(days) {
+    const ended = days.at(-1)?.met ? days : days.slice(0, -1);
+    let length2 = 0;
+    for (let index = ended.length - 1; index >= 0 && ended[index]?.met; index -= 1) length2 += 1;
+    return length2;
+  }
+  function loggedDays(request) {
+    const today = dayNumber(request.today);
+    const logged = Object.keys(request.days).filter((day) => isDay(day) && dayNumber(day) <= today).map(dayNumber);
+    const first = Math.min(today, ...logged);
+    return Array.from({ length: today - first + 1 }, (_, index) => dayName(first + index));
+  }
+  function progressStats(request) {
+    const range = loggedDays(request);
+    const firstGoal = range.map((day) => request.days[day]?.goal).find((goal2) => goal2 !== void 0);
+    let goal = firstGoal ?? request.goal;
+    let totals = { known: 0, learning: 0 };
+    const days = [];
+    const knownOverTime = [];
+    const words = [];
+    for (const day of range) {
+      const logged = request.days[day];
+      goal = day === request.today ? request.goal : logged?.goal ?? goal;
+      totals = logged ? { known: logged.known, learning: logged.learning } : totals;
+      const changes = logged?.changes ?? [];
+      const added = addedToLearning(changes);
+      const knownNow = markedKnown(changes);
+      days.push({
+        day,
+        added: added.length,
+        markedKnown: knownNow.length,
+        goal,
+        met: added.length >= goal
+      });
+      knownOverTime.push({ day, known: totals.known });
+      if (changes.length > 0) words.push({ day, addedToLearning: added, markedKnown: knownNow });
+    }
+    const today = days.at(-1);
+    const last7 = days.slice(-shortWindow);
+    const averaged = days.slice(0, -1).slice(-averagedDays);
+    return {
+      today,
+      days,
+      streak: currentStreak(days),
+      bestStreak: bestStreak(days),
+      last7,
+      last30: days.slice(-longWindow),
+      totals: {
+        ...totals,
+        markedKnownLast7: sum(last7, (day) => day.markedKnown),
+        addedLast7: sum(last7, (day) => day.added)
+      },
+      knownOverTime,
+      dailyAverage: {
+        average: averaged.length === 0 ? 0 : sum(averaged, (day) => day.added) / averaged.length,
+        days: averaged.length
+      },
+      words
+    };
   }
 
   // src/search/query.ts
@@ -1226,6 +1329,21 @@
     const strokes = slug.match(/^strokes-([1-9]\d?)$/u);
     if (strokes) return strokeList(Number(strokes[1]));
     return [...schoolLists, ...jlptKanjiLists].find((list) => list.slug === slug);
+  }
+
+  // src/artifact/browse-ranked.ts
+  var jlptWords = `FROM jlpt.level_evidence j JOIN entries e ON e.id = j.language_reference_id`;
+  var jlptBrowseOrder = "e.reading, e.source_record_id";
+  function jlptLevelWords(db) {
+    const levels = jlptLists.map(({ level }) => ({ level, ids: [] }));
+    const byLevel = new Map(levels.map((words) => [words.level, words.ids]));
+    for (const { level, id } of db.all(
+      `SELECT j.level AS level, lower(hex(e.id)) AS id ${jlptWords}
+     ORDER BY j.level DESC, ${jlptBrowseOrder}`
+    )) {
+      byLevel.get(level)?.push(id);
+    }
+    return levels;
   }
 
   // src/artifact/database.ts
@@ -2202,6 +2320,59 @@
     }
     const word = wordSegment(page);
     return word ? { kind: "word", ...word } : home;
+  }
+
+  // src/progress/jlpt-coverage.ts
+  var dayLength2 = 864e5;
+  var calendarDayPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+  var calendarDayOf = (time) => new Date(time).toISOString().slice(0, 10);
+  function dayNumber2(day) {
+    const parts = calendarDayPattern.exec(day);
+    const time = parts ? Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])) : Number.NaN;
+    if (Number.isNaN(time) || calendarDayOf(time) !== day) {
+      throw new Error(`${day} is not a calendar day written as YYYY-MM-DD`);
+    }
+    return time / dayLength2;
+  }
+  function wholeNumberFromOne(value, name3) {
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+      throw new Error(`The ${name3} must be a whole number from 1`);
+    }
+    return value;
+  }
+  function pace(notStarted, goal, today) {
+    if (notStarted === 0) return null;
+    const days = Math.ceil(notStarted / goal);
+    return { date: calendarDayOf((today + days) * dayLength2), days };
+  }
+  function jlptCoverage(levels, request) {
+    const goal = wholeNumberFromOne(request.goal, "goal");
+    const upNextCount = request.upNext === void 0 ? goal : wholeNumberFromOne(request.upNext, "Up next count");
+    const today = dayNumber2(request.today);
+    const known2 = new Set(request.known.map((id) => id.toLowerCase()));
+    const learning2 = new Set(request.learning.map((id) => id.toLowerCase()));
+    return levels.map(({ level, ids }) => {
+      let knownCount = 0;
+      let learningCount = 0;
+      const upNext = [];
+      for (const id of ids) {
+        if (known2.has(id)) knownCount++;
+        else if (learning2.has(id)) learningCount++;
+        else if (upNext.length < upNextCount) upNext.push(id);
+      }
+      const notStarted = ids.length - knownCount - learningCount;
+      return {
+        level,
+        name: `N${level}`,
+        words: ids.length,
+        known: knownCount,
+        learning: learningCount,
+        notStarted,
+        percentKnown: ids.length === 0 ? 0 : Math.floor(knownCount * 100 / ids.length),
+        upNext,
+        pace: pace(notStarted, goal, today)
+      };
+    });
   }
 
   // src/examples/retrieval.ts
@@ -3378,6 +3549,7 @@
   var EmbeddedLookup = class {
     db;
     searchDb;
+    jlptLevels;
     constructor(host) {
       this.db = hostDatabase(host);
       this.searchDb = withParametersTruncatedAtNul(searchDatabase(this.db));
@@ -3402,6 +3574,10 @@
     }
     entriesContainingKanji(character) {
       return kanjiWords(character, kanjiCandidateRows(this.db, character)).map((row) => row.id);
+    }
+    jlptCoverage(request) {
+      this.jlptLevels ??= jlptLevelWords(this.db);
+      return jlptCoverage(this.jlptLevels, request);
     }
     websiteRoute(link) {
       const page = websitePage(link.host, link.path);
@@ -3680,9 +3856,9 @@
         }))
       }));
     }
-    panel({ filter, known }) {
+    panel({ filter, known: known2 }) {
       const matches = matcher(filter);
-      const knownKanji = new Set(known.map((character) => character.normalize("NFKC")));
+      const knownKanji = new Set(known2.map((character) => character.normalize("NFKC")));
       const sections2 = this.lists.flatMap((list) => {
         const shown2 = matches ? list.kanji.filter(matches) : list.kanji;
         if (shown2.length === 0) return [];
@@ -4089,12 +4265,12 @@
   var knownVariants = /* @__PURE__ */ new WeakMap();
   var unread = [];
   function variants(readings) {
-    let known = knownVariants.get(readings);
-    if (!known) {
-      known = readingVariants(readings);
-      knownVariants.set(readings, known);
+    let known2 = knownVariants.get(readings);
+    if (!known2) {
+      known2 = readingVariants(readings);
+      knownVariants.set(readings, known2);
     }
-    return known;
+    return known2;
   }
   function readingVariants(readings) {
     const forms2 = /* @__PURE__ */ new Map();
@@ -4674,10 +4850,10 @@ ${sense.noteText}` : sense.meaning
   function learnerResultsScreen(rawQuery, results, exampleCount2, learner2, frequency, kanjiMeanings) {
     const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.pickedKanji, kanjiMeanings);
     if (layout.isEmpty) return { state: "noResults", query: layout.query, ...noMatches };
-    const known = new Set(learner2.known);
-    const learning = new Set(learner2.learning);
-    const isKnown = (id) => known.has(id);
-    const status = (id) => isKnown(id) ? "known" : learning.has(id) ? "learning" : "unknown";
+    const known2 = new Set(learner2.known);
+    const learning2 = new Set(learner2.learning);
+    const isKnown = (id) => known2.has(id);
+    const status = (id) => isKnown(id) ? "known" : learning2.has(id) ? "learning" : "unknown";
     const frequencyEntries = [...new Set(layout.presented.map((item) => item.id))];
     const lookups = evidenceLookups(frequency(frequencyEntries));
     const dictionaries = enabledDictionaries(frequencyEntries, lookups);
@@ -4853,7 +5029,7 @@ ${sense.noteText}` : sense.meaning
       );
     }
     wordRows(request) {
-      const known = new Set(request.known);
+      const known2 = new Set(request.known);
       return wordRows(
         request.entries.map(({ id, summary }) => ({
           id,
@@ -4861,7 +5037,7 @@ ${sense.noteText}` : sense.meaning
           matchedSummary: null
         })),
         evidenceLookups(this.frequency(request.entries.map(({ id }) => id))),
-        (id) => known.has(id),
+        (id) => known2.has(id),
         (index) => `Result ${index + 1} of ${request.entries.length}`
       );
     }
@@ -5661,12 +5837,12 @@ ${sense.noteText}` : sense.meaning
     );
   }
   function remembered2(compute) {
-    const known = /* @__PURE__ */ new WeakMap();
+    const known2 = /* @__PURE__ */ new WeakMap();
     return (key) => {
-      let value = known.get(key);
+      let value = known2.get(key);
       if (value === void 0) {
         value = compute(key);
-        known.set(key, value);
+        known2.set(key, value);
       }
       return value;
     };
@@ -6485,8 +6661,8 @@ ${sense.noteText}` : sense.meaning
       }
     }
     async sentencesUsing(form, analyze) {
-      const known = this.usingForm.get(form);
-      if (known) return known;
+      const known2 = this.usingForm.get(form);
+      if (known2) return known2;
       const found = this.search(form);
       if (typeof found === "string") return [];
       const sentences = [];
@@ -6531,8 +6707,8 @@ ${sense.noteText}` : sense.meaning
       const answers = /* @__PURE__ */ new Map();
       const unlinked = /* @__PURE__ */ new Map();
       for (const text2 of texts) {
-        const known = this.linked.get(key(text2));
-        if (known) answers.set(text2, known);
+        const known2 = this.linked.get(key(text2));
+        if (known2) answers.set(text2, known2);
         else if (!unlinked.has(text2)) unlinked.set(text2, await this.candidates(text2, analyze));
       }
       if (unlinked.size > 0) {
@@ -6621,6 +6797,7 @@ ${sense.noteText}` : sense.meaning
       entriesMatchingFirstForms: (alternatives) => lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
       entriesContainingKanji: (character) => lookup().entriesContainingKanji(character),
       websiteRoute: (link) => lookup().websiteRoute(JSON.parse(link)),
+      jlptCoverage: (request) => lookup().jlptCoverage(JSON.parse(request)),
       lookUp: (text3, analyze) => lookup().lookUp(text3, { analyze }),
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
@@ -6661,6 +6838,7 @@ ${sense.noteText}` : sense.meaning
         return phraseNote(phrase, entry);
       },
       sourceCredits: creditsShownBy,
+      progressStats: (request) => progressStats(JSON.parse(request)),
       youTubeVideo,
       youTubeCaptions,
       youTubeTranslatedCaptions: (request) => {

@@ -196,6 +196,10 @@ const KnownWordSchema = z
     known: z.boolean().openapi({
       description:
         'Whether `state` is `known`, for an app that reads only this: a Learning word is not known.'
+    }),
+    stateChangedAt: z.iso.datetime().nullable().optional().openapi({
+      description:
+        "When the word moved to its current state, as the app said, or the service's time when the change carried none; a time after the service's is taken as the service's. `null` for a word that moved to its state before the service kept the time; a service from before it sends none."
     })
   })
   .openapi('KnownWord')

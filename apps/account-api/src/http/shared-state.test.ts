@@ -43,7 +43,13 @@ describe('known words', () => {
           entity: 'knownWord',
           entityId: word(1),
           version: 1,
-          data: { itemId: word(1), ...text, state: 'known', known: true }
+          data: {
+            itemId: word(1),
+            ...text,
+            state: 'known',
+            known: true,
+            stateChangedAt: expect.any(String)
+          }
         })
       ])
     )

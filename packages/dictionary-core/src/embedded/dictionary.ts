@@ -3,6 +3,7 @@ import { youTubeCaptions, youTubeTranslatedCaptions, youTubeVideo } from '../cap
 import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter } from '../detail/text'
+import { progressStats } from '../progress/stats'
 import { notesInSearch } from '../results/notes'
 import { lookupSegments, type MorphologyAnalysis } from '../search/morphology'
 import {
@@ -51,6 +52,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
       lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
     entriesContainingKanji: character => lookup().entriesContainingKanji(character),
     websiteRoute: link => lookup().websiteRoute(JSON.parse(link)),
+    jlptCoverage: request => lookup().jlptCoverage(JSON.parse(request)),
     lookUp: (text, analyze) => lookup().lookUp(text, { analyze }),
     relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
     savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
@@ -91,6 +93,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
       return phraseNote(phrase, entry)
     },
     sourceCredits: creditsShownBy,
+    progressStats: request => progressStats(JSON.parse(request)),
     youTubeVideo,
     youTubeCaptions,
     youTubeTranslatedCaptions: request => {

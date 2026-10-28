@@ -24,6 +24,7 @@ The app asks `embedded/` for each of these; [The app's side](#the-apps-side) say
 | `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, a linked word's gloss, and a meaning's glosses, as the entry gives them, to speak and look up (`meaning-actions.ts`). Also romaji (`romaji.ts`), stroke points (`strokes.ts`), the one-kanji check, the website's links (`links.ts`), Image Search's notes (`phrase-note.ts`), and templates (`template.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
 | `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
+| `progress/` | The progress log's stats and JLPT coverage. | `ProgressLog`, `JLPTCoverageModel` |
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`), with `segmentationFurigana`. `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
 | `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them; the school lists Grade filters (`school-kanji.ts`). | `SchoolKanjiClient` |
 | `sources/` | The source credits every client shows (`docs/data-sources.md`). | `CreditsView` |
@@ -109,8 +110,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     the files hold them, or null. The two files parse to 16 MB of objects, which an engine that
     held them would walk on every collection, so the host keeps them and the core asks for the few
     a page reads, or for the school kanji lists, the reference file once (`kanjiReference()`).
-  - `radicals()` answers the radical file (`RadicalReferenceData.json`) whole, once, when the
-    radical panel is first asked for.
+  - `radicals()` answers `RadicalReferenceData.json` whole, the first time the radical panel opens.
   - `frequencyLists()` and `frequencyListRows(list, sql, parametersJSON)` answer the learner's
     frequency lists and one list's rows, as `all` does ([`frequency.md`](frequency.md)).
 - **Three parts, each built when first asked.** `EmbeddedLookup` (`lookup.ts`) searches and reads
@@ -128,6 +128,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `lookUp` | Text to look up | The one entry it names or deinflects to, else a search; or home |
   | `relatedWord`, `savedWord` | A related word (its target's ID, or how to search for it and how it is written and read); a saved word (its stored ID, writing, and reading) | The ID of the entry a related word opens, or null: with no target, the result written and read alike, else the first. What a saved word opens: its entry, else one written and read alike, else a search for its headword. |
   | `canonicalEntries` | Groups of equivalent IDs | Each group's smallest ID (`canonicalEntry`) |
+  | `jlptCoverage` | Known and Learning IDs, goal, today | Each JLPT level's counts, Up next, pace |
   | `normalizeQuery`, `searchedWords` | Typed text; an analysis | The query; the words searched |
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
   | `isKanji`, `writtenLanguage`, `japaneseTextRuns` | A string; — | One kanji or not; `ja`, `en` (an ASCII letter), or null; the scalar runs any client's own check counted as Japanese |
@@ -150,6 +151,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
   | `phraseNote` | A phrase with its entry's meanings and parts of speech | A set phrase's first three meanings, or null |
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
+  | `progressStats` | The log's days, the goal, and today | `ProgressStats` |
   | `youTubeVideo`, `youTubeCaptions`, `youTubeTranslatedCaptions` | A player response; timed text; captions, translated timed text | Its track and playability; captions; them paired; or null |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
@@ -196,8 +198,7 @@ time it tokenizes. Both clients run it (`apps/dictionary-api/src/tokenizer.ts` f
     the last word of the part before, which is off when that word is longer than one character;
   - a word's place counts characters, but a run of unknown characters outside the basic plane is
     measured in UTF-16 units, so the words after it are skipped;
-  - a high surrogate without its low surrogate, a NUL, and a character whose class lists no
-    words make it throw; and
+  - a lone high surrogate, a NUL, and a character whose class lists no words make it throw; and
   - a class's `max_length` is ignored: one unknown word spans the whole run of a grouped class.
 
   Fixing one changes every client's behavior at once: change it here, and record the suite again.
@@ -252,7 +253,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 
 | Swift | Asks | For |
 | --- | --- | --- |
-| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `lookUp`, `relatedWord`, `savedWord`, `canonicalEntries` | Search, a form's entries, a kanji's words, what a link, a look-up, a related or a saved word opens, which entry stands for equivalents (it reads entries) |
+| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `lookUp`, `relatedWord`, `savedWord`, `canonicalEntries`, `jlptCoverage` | Search, a form's entries, a kanji's words, what a link, a look-up, a related or a saved word opens, which entry stands for equivalents, JLPT coverage (`JLPTCoverage.swift`) (it reads entries) |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
 | `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTexts`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseWords`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
@@ -308,8 +309,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   kanji lists: one with no meanings or readings, such as U+FA45 for 海, borrows its ordinary form's
   (`ownOrOrdinary`), and Grade finds it by either form and marks it known when its twin is.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
-  -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
-  there, whatever the client binds.
+  -1), so SQLite stopped at a parameter's first NUL; `DictionarySearch` does too, whatever is bound.
 - **Romaji.** The app's romaji was Foundation's `applyingTransform(.toLatin)`, ICU's Any-Latin.
   `detail/romaji.ts` is that transform for kana, rule for rule, from ICU 78's rules and filters: the
   text is taken a run of one script at a time; a hiragana run is turned to katakana first, and only
@@ -474,7 +474,7 @@ ready and a page's first request prepares nothing:
   Jiten's lists count spellings (Jiten's with readings) without naming the entry, and the app's
   mapping (`FrequencyPackMappingV2.sql`) ranks a row only when it names one entry, so spellings
   several entries share, such as に and は, have no rank there. The JLPT lists are the level pack's
-  words at each level, in kana order.
+  words at each level, in kana order, which JLPT coverage reads too (`jlptLevelWords`).
 - **Common words** on the dictionary home (`summary().commonWords`) are the 24 most used common
   words that are content words (`browse/content-words.ts`): not ones whose first sense is a
   particle, auxiliary, conjunction, or copula, nor ones that are only a prefix or suffix.

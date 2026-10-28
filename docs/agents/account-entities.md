@@ -18,6 +18,13 @@ API reference's [Sync entities](../api/account-api.md#sync-entities).
   word has changes nothing. So a mark made before the learner cleared the word loses to the clear,
   and a mark made after seeing the clear wins, as #563's decision 4 says for Tomodachi. A clear
   that never saw a later mark conflicts, and the learner sees the word Known again.
+- **When the state began** (`stateChangedAt`, #1096), so an app set up again by signing in can
+  rebuild its progress from the account. Each change may send it, held as a watch's `watchedAt`
+  is, and without one it is the service's time when the change applies. A change that moves the
+  word keeps its time; one that leaves the state as it was, or conflicts, keeps the earlier one. A
+  word whose state began before the service kept the time (`known_words.state_changed_at`, added
+  empty) answers `null` until its state changes. While an older image still serves during a
+  rollback, a state change it makes keeps the earlier time, as that image doesn't write the column.
 - **Learning, to an app that doesn't show it,** is not known (`known: false` beside `state`). Its
   mark makes a Learning word Known, and its clear of one changes nothing, as clearing any word not
   known does: it can't end a state it can't see, and an app that shows Learning ends it with
@@ -41,7 +48,10 @@ API reference's [Sync entities](../api/account-api.md#sync-entities).
 - **List word** (`listWord`, `<list>/<item>`): `add` always applies, and `remove` applies only at
   the current version, so it removes only an add it saw: an add the remover never saw wins.
 - **Limits:** 500 lists an account and 5,000 words a list (`too_many_lists`, `list_full`); a
-  word added to a deleted or unknown list is rejected (`unknown_list`).
+  word added to a deleted or unknown list is rejected (`unknown_list`). Daily lists don't count
+  toward the 500 (`src/domain/word-lists.ts`): a list whose ID names a day (`dailyListDay`,
+  [`account-rules.md`](account-rules.md)) from 2026-10-01 to the day after the service's UTC date.
+  Any other day's counts, so an account gains at most one uncounted list a day.
 - **Each keeps its history** as its version and a row that stays (a cleared word, a deleted list,
   a removed list word), so a stale change finds the version it lost to. A deleted list's words are
   deleted with it, and its row keeps no name.

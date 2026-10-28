@@ -1,3 +1,4 @@
+import { type JlptLevelWords, jlptLevelWords } from '../artifact/browse-ranked'
 import { type ArtifactDatabase, searchDatabase } from '../artifact/database'
 import { kanjiCandidateRows } from '../artifact/kanji'
 import { jmdictSource } from '../artifact/words'
@@ -5,6 +6,11 @@ import { kanjiWords } from '../detail/kanji'
 import { type WebsitePage, websitePage } from '../detail/links'
 import { isKanjiCharacter } from '../detail/text'
 import type { LinkEntry } from '../examples/linking'
+import {
+  type JlptCoverageRequest,
+  type JlptLevelCoverage,
+  jlptCoverage
+} from '../progress/jlpt-coverage'
 import { type ListedItem, type ListedResults, listedResults, primaryItem } from '../results/results'
 import { leadingExactFormCount } from '../search/composition'
 import { type SearchDatabase, withParametersTruncatedAtNul } from '../search/database'
@@ -88,6 +94,7 @@ export async function entriesMatchingFirstForms(
 export class EmbeddedLookup {
   private readonly db: ArtifactDatabase
   private readonly searchDb: SearchDatabase
+  private jlptLevels?: JlptLevelWords[]
 
   constructor(host: EmbeddedHost) {
     this.db = hostDatabase(host)
@@ -118,6 +125,11 @@ export class EmbeddedLookup {
 
   entriesContainingKanji(character: string): string[] {
     return kanjiWords(character, kanjiCandidateRows(this.db, character)).map(row => row.id)
+  }
+
+  jlptCoverage(request: JlptCoverageRequest): JlptLevelCoverage[] {
+    this.jlptLevels ??= jlptLevelWords(this.db)
+    return jlptCoverage(this.jlptLevels, request)
   }
 
   websiteRoute(link: { host: string | null; path: string }): WebsiteRoute {

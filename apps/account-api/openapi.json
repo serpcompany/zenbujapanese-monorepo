@@ -113,11 +113,50 @@
             "type": "string",
             "maxLength": 200,
             "description": "Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has."
+          },
+          "stateChangedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time."
           }
         },
         "required": [
           "state"
         ]
+      },
+      "KnownWordFields": {
+        "type": "object",
+        "properties": {
+          "headword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters."
+          },
+          "reading": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Its reading, held as `headword` is. Empty when left out."
+          },
+          "stateChangedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time."
+          }
+        },
+        "required": [
+          "headword"
+        ]
+      },
+      "KnownWordClearFields": {
+        "type": "object",
+        "properties": {
+          "stateChangedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time."
+          }
+        }
       },
       "ListCreateFields": {
         "type": "object",
@@ -1145,6 +1184,14 @@
           "known": {
             "type": "boolean",
             "description": "Whether `state` is `known`, for an app that reads only this: a Learning word is not known."
+          },
+          "stateChangedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the word moved to its current state, as the app said, or the service's time when the change carried none; a time after the service's is taken as the service's. `null` for a word that moved to its state before the service kept the time; a service from before it sends none."
           }
         },
         "required": [
@@ -1582,7 +1629,8 @@
                   "fields": {
                     "state": "learning",
                     "headword": "食べる",
-                    "reading": "たべる"
+                    "reading": "たべる",
+                    "stateChangedAt": "2026-10-27T09:30:00Z"
                   }
                 }
               },
@@ -1594,7 +1642,7 @@
                 "baseVersion": true,
                 "description": "Makes the word Known, from Unknown or Learning: the same change as `set` with `state: \"known\"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.",
                 "fields": {
-                  "$ref": "#/components/schemas/WordFields"
+                  "$ref": "#/components/schemas/KnownWordFields"
                 },
                 "example": {
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
@@ -1614,6 +1662,9 @@
                 ],
                 "baseVersion": true,
                 "description": "Makes a known word Unknown. It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can't see Learning; `set` with `state: \"unknown\"` ends Learning.",
+                "fields": {
+                  "$ref": "#/components/schemas/KnownWordClearFields"
+                },
                 "example": {
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
                   "entity": "knownWord",
@@ -1625,7 +1676,7 @@
             }
           },
           "list": {
-            "description": "A word list. An account holds at most 500, and a deleted list's ID can't be used again.",
+            "description": "A word list. An account holds at most 500 of the learner's own, and a deleted list's ID can't be used again. Daily lists don't count: a daily list's ID is `00000000-da11-4000-8000-0000yyyymmdd`, its day's digits (`dailyListId` in `packages/account-rules`), and it is left out of the count while its day is from 2026-10-01 to the day after the service's own date, in UTC. A list for any other day counts like the learner's own.",
             "entityId": "Its UUID, in either case; answers name it in lowercase.",
             "read": "lists:read",
             "data": {
@@ -1637,7 +1688,7 @@
                   "lists:write"
                 ],
                 "baseVersion": false,
-                "description": "Rejected `already_exists` if the account has or had a list with that ID, and `too_many_lists` past 500.",
+                "description": "Rejected `already_exists` if the account has or had a list with that ID, a deleted daily list too, and `too_many_lists` once it holds 500 lists that count, unless the new list is a daily list that doesn't.",
                 "fields": {
                   "$ref": "#/components/schemas/ListCreateFields"
                 },
@@ -2003,7 +2054,7 @@
             }
           },
           "setting": {
-            "description": "One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:\n\n- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.\n- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.\n- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.\n- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.\n- `readingAids.translations` (`true` or `false`): Reading Aids: translations.\n- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.\n- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.\n- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.\n- `translate.furigana` (`true` or `false`): Translate's own furigana switch.\n- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.\n- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.\n- `search.filter` (one of `all`, `known`, `unknown`, `learning`): Search results' filter.\n- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.\n- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.",
+            "description": "One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:\n\n- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.\n- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.\n- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.\n- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.\n- `readingAids.translations` (`true` or `false`): Reading Aids: translations.\n- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.\n- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.\n- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.\n- `translate.furigana` (`true` or `false`): Translate's own furigana switch.\n- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.\n- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.\n- `search.filter` (one of `all`, `known`, `unknown`, `learning`): Search results' filter.\n- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.\n- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.\n- `progress.dailyGoal` (a number from 1 to 200): Progress: how many new words the learner marks Learning each day.",
             "entityId": "The setting's name, from the list above.",
             "read": "settings:read",
             "data": {
@@ -2086,7 +2137,7 @@
           "mutation_id_reused": "The ID was used for a different mutation. Give each mutation its own.",
           "already_exists": "The account has, or had, a list with that ID.",
           "unknown_list": "The list word's list isn't in the account, or was deleted.",
-          "too_many_lists": "The account has 500 lists.",
+          "too_many_lists": "The account has 500 lists, not counting its daily lists.",
           "list_full": "The list has 5,000 words.",
           "too_many_bookmarks": "The account has 2,000 bookmarked sentences.",
           "too_many_notes": "The account has 10,000 notes. Keep the note on the device, untouched.",

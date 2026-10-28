@@ -105,6 +105,9 @@ describe('settings', () => {
       set('readingAids.furigana', 0, 'yes'),
       set('translate.speechSpeed', 0, 2.5),
       set('translate.speechSpeed', 0, 0.4),
+      set('progress.dailyGoal', 0, 0),
+      set('progress.dailyGoal', 0, 201),
+      set('progress.dailyGoal', 0, '20'),
       set('search.filter', 0, 'starred'),
       set('search.sort', 0, 'frequency|Anime!'),
       set('readingAids.translationLanguage', 0, 'english language'),
@@ -115,7 +118,7 @@ describe('settings', () => {
     expect(outcomesOf(answer)).toEqual([
       'unknown_setting',
       'unknown_setting',
-      ...Array(8).fill('invalid_fields'),
+      ...Array(11).fill('invalid_fields'),
       'invalid_mutation'
     ])
   })
@@ -133,6 +136,7 @@ test('two devices converge on settings: the first change to sync wins, and the o
   mac.change('setting', 'set', 'imageSearch.textView', { value: 'photo' })
   phone.change('setting', 'set', 'imageSearch.textView', { value: 'translate' })
   phone.change('setting', 'set', 'translate.speechSpeed', { value: 0.7 })
+  phone.change('setting', 'set', 'progress.dailyGoal', { value: 20 })
   await mac.sync()
   await phone.sync()
   await mac.sync()
@@ -140,6 +144,7 @@ test('two devices converge on settings: the first change to sync wins, and the o
   expect(mac.state()).toEqual(phone.state())
   expect(phone.dataOf('setting', 'imageSearch.textView')).toMatchObject({ value: 'photo' })
   expect(mac.dataOf('setting', 'translate.speechSpeed')).toMatchObject({ value: 0.7 })
+  expect(mac.dataOf('setting', 'progress.dailyGoal')).toMatchObject({ value: 20 })
   const fresh = new SyncClient(accounts, learner.token)
   await fresh.sync()
   expect(fresh.state()).toEqual(phone.state())

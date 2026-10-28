@@ -1,3 +1,4 @@
+import { dailyListId } from '@zenbu/account-rules/daily-lists'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { submit } from '@/test/account-page'
@@ -116,6 +117,25 @@ describe('signed in with a subscription, Add to List', () => {
       ['Travel', 'true']
     ])
     expect(dialog().textContent).not.toContain(syncedText.lists.nameRule)
+  })
+
+  test('leaves daily lists out, and puts a new list after the own lists', async () => {
+    const daily = dailyListId('2026-10-28') ?? ''
+    const standIn = await openAddToList(
+      withTwoLists(standingIn())
+        .holds('list', daily, list(daily, '2026-10-28', 5))
+        .holds('listWord', `${daily}/${word.id}`, { listId: daily, itemId: word.id, ...labels })
+    )
+    expect(shownLists()).toEqual([
+      ['Verbs', 'true'],
+      ['Food', 'false']
+    ])
+    await press('button', syncedText.lists.newList)
+    await typeInto(named<HTMLInputElement>('input', syncedText.lists.name), 'Travel')
+    await submit(page(), syncedText.lists.create)
+    await vi.waitFor(() => expect(checkbox('Travel').getAttribute('aria-checked')).toBe('true'))
+    expect(standIn.sent[0]).toMatchObject({ entity: 'list', fields: { position: 2 } })
+    expect(shownLists().map(([name]) => name)).toEqual(['Verbs', 'Food', 'Travel'])
   })
 
   test('a refused change says why, and leaves the list as it was', async () => {

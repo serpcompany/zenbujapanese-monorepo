@@ -334,6 +334,15 @@
         "keepList": "Keep It",
         "none": "You have no lists yet.",
         "allLists": "All lists",
+        "dailyLists": "Daily Lists",
+        "dailyCount": {
+          "one": "{count} list",
+          "other": "{count} lists"
+        },
+        "thisWeek": "This week",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "noDailyLists": "You have no daily lists yet.",
         "empty": "This list has no words yet. Add them from a word’s page.",
         "search": "Search this list",
         "noMatch": "No word in this list matches that.",

@@ -89,6 +89,9 @@ export function shownDuration(seconds: number): string {
 export const listPath = (listId: string, locale: Locale) =>
   `${localizedPath(accountPages.lists.path, locale)}?list=${encodeURIComponent(listId)}`
 
+export const dailyListsPath = (locale: Locale) =>
+  `${localizedPath(accountPages.lists.path, locale)}?view=daily`
+
 export const youTubeVideo = (videoId: string) =>
   `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`
 
