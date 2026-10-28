@@ -1,4 +1,4 @@
-import { and, count, eq, sql } from 'drizzle-orm'
+import { and, count, eq, notInArray, sql } from 'drizzle-orm'
 import { listWordSeparator } from '../domain/entities'
 import type { EntityReader, KnownWord, ListWord, WordList } from '../domain/store'
 import { bookmarkReader, bookmarkWriter } from './bookmark-rows'
@@ -110,11 +110,17 @@ export function writerOn(db: Drizzle, userId: string) {
           set: { ...row, updatedAt: sql`now()` }
         })
     },
-    async wordListCount() {
+    async wordListCount(uncounted: readonly string[]) {
       const [row] = await db
         .select({ lists: count() })
         .from(wordLists)
-        .where(and(eq(wordLists.userId, userId), eq(wordLists.deleted, false)))
+        .where(
+          and(
+            eq(wordLists.userId, userId),
+            eq(wordLists.deleted, false),
+            notInArray(wordLists.id, [...uncounted])
+          )
+        )
       return row?.lists ?? 0
     },
     async saveWordList(list: Omit<WordList, 'createdAt' | 'updatedAt'>) {

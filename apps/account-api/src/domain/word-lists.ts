@@ -1,3 +1,4 @@
+import { dailyListId } from '@zenbu/account-rules/daily-lists'
 import { listLimits, listName } from '@zenbu/account-rules/lists'
 import {
   applied,
@@ -27,7 +28,10 @@ const badListWord = rejection(
   "A list word's entityId is the list's UUID, a slash, and the item: `<list>/<item>`."
 )
 const taken = rejection('already_exists', 'A list with that ID already exists, or did.')
-const tooMany = rejection('too_many_lists', `An account holds at most ${listLimits.lists} lists.`)
+const tooMany = rejection(
+  'too_many_lists',
+  `An account holds at most ${listLimits.lists} lists, not counting its daily lists.`
+)
 const full = rejection('list_full', `A list holds at most ${listLimits.wordsPerList} words.`)
 const noList = rejection('unknown_list', 'That list is not in this account, or was deleted.')
 const badFields = rejection(
@@ -36,6 +40,24 @@ const badFields = rejection(
 )
 
 const listIdOf = uuidOf
+
+const firstDailyList = Date.UTC(2026, 9, 1)
+const dayLength = 86_400_000
+
+function uncountedDailyLists(now: Date): string[] {
+  const ids: string[] = []
+  for (let day = firstDailyList; day <= now.getTime() + dayLength; day += dayLength) {
+    const id = dailyListId(new Date(day).toISOString().slice(0, 10))
+    if (id) ids.push(id)
+  }
+  return ids
+}
+
+async function holdsTooMany(account: LockedAccount, id: string) {
+  const uncounted = uncountedDailyLists(new Date())
+  if (uncounted.includes(id)) return false
+  return (await account.wordListCount(uncounted)) >= listLimits.lists
+}
 
 const nameOf = (raw: unknown) => (typeof raw === 'string' ? listName(raw) : null)
 
@@ -107,7 +129,7 @@ export const wordLists: Entity = {
         const id = listIdOf(mutation.entityId)
         if (!id) return rejected(badList)
         if (await account.wordList(id)) return rejected(taken)
-        if ((await account.wordListCount()) >= listLimits.lists) return rejected(tooMany)
+        if (await holdsTooMany(account, id)) return rejected(tooMany)
         const fields = mutation.fields ?? {}
         if (!('name' in fields && 'position' in fields)) return rejected(badFields)
         const checked = listFields(fields)

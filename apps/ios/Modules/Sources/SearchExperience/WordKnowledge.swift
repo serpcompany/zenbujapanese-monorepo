@@ -64,6 +64,8 @@ final class WordKnowledge: LocalFileStore {
   @ObservationIgnored private let writer: WordKnowledgeWriter
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
+  @ObservationIgnored var progressObserver: ((WordKnowledgeEvent) -> Void)?
+  @ObservationIgnored var now: () -> Date = Date.init
   var canChange: Bool { isLoaded && !isReadOnly }
 
   init(fileURL: URL = WordKnowledge.defaultFileURL, sharedCopy: URL? = nil) {
@@ -116,6 +118,10 @@ final class WordKnowledge: LocalFileStore {
 
   var knownRecords: [WordKnowledgeRecord] { marked(.known) }
 
+  var totals: ProgressTotals {
+    ProgressTotals(known: marked(.known).count, learning: marked(.learning).count)
+  }
+
   func setStatus(_ status: WordKnowledgeStatus, for entry: DictionaryEntry) {
     setStatus(status, id: entry.id, headword: entry.headword, reading: entry.reading)
   }
@@ -126,9 +132,10 @@ final class WordKnowledge: LocalFileStore {
   }
 
   func setStatus(
-    _ status: WordKnowledgeStatus, id: LanguageReferenceID, headword: String, reading: String
+    _ status: WordKnowledgeStatus, id: LanguageReferenceID, headword: String, reading: String,
+    at time: Date? = nil
   ) {
-    setStatus(status, storedID: id.rawValue, headword: headword, reading: reading)
+    setStatus(status, storedID: id.rawValue, headword: headword, reading: reading, at: time)
   }
 
   func setStatus(_ status: WordKnowledgeStatus, for item: SavedItem) {
@@ -136,18 +143,22 @@ final class WordKnowledge: LocalFileStore {
   }
 
   private func setStatus(
-    _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String
+    _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String,
+    at time: Date? = nil
   ) {
     let previous = records[storedID]?.status ?? .unknown
     guard store(status, storedID: storedID, headword: headword, reading: reading) else { return }
-    changeObserver?(
-      .known(
-        KnownWordChange(storedID: storedID, headword: headword, reading: reading, status: status),
-        previous: previous))
+    let change = KnownWordChange(
+      storedID: storedID, headword: headword, reading: reading, status: status,
+      changedAt: time ?? now())
+    progressObserver?(.changed(change, previous: previous, totals: totals))
+    changeObserver?(.known(change, previous: previous))
   }
 
   func applySynced(_ word: KnownWordChange) {
-    store(word.status, storedID: word.storedID, headword: word.headword, reading: word.reading)
+    guard store(word.status, storedID: word.storedID, headword: word.headword, reading: word.reading)
+    else { return }
+    progressObserver?(.synced(totals: totals))
   }
 
   @discardableResult
@@ -160,7 +171,7 @@ final class WordKnowledge: LocalFileStore {
       headword: headword,
       reading: reading,
       status: status,
-      updatedAt: Date()
+      updatedAt: now()
     )
     records[storedID] = record
     for shown in listed.keys { listed[shown]?.removeAll { $0.entryID == storedID } }
@@ -208,26 +219,10 @@ private actor WordKnowledgeWriter {
     records: [String: WordKnowledgeRecord], needsRewrite: Bool,
     readOnlyReason: LocalFileReadOnlyReason?
   ) {
-    let data: Data
-    switch await file.read() {
-    case .missing:
-      return ([:], false, nil)
-    case .unreadable:
-      return ([:], false, .couldNotRead)
-    case .newerVersion(let newer):
-      let records = (try? JSONDecoder.localStore.decode(LoadedFile.self, from: newer))?.records
-      return (Self.byEntryID(records?.compactMap(\.value) ?? []), false, .newerVersion)
-    case .current(let current):
-      data = current
+    await file.load(LoadedFile.self, empty: [String: WordKnowledgeRecord]()) { stored in
+      let records = stored.records.compactMap(\.value)
+      return (Self.byEntryID(records), records.count == stored.records.count)
     }
-    guard let stored = try? JSONDecoder.localStore.decode(LoadedFile.self, from: data) else {
-      return await file.keepUnreadableCopy() ? ([:], true, nil) : ([:], false, .couldNotKeepCopy)
-    }
-    let records = stored.records.compactMap(\.value)
-    let loaded = Self.byEntryID(records)
-    guard records.count != stored.records.count else { return (loaded, false, nil) }
-    return await file.keepUnreadableCopy()
-      ? (loaded, true, nil) : (loaded, false, .couldNotKeepCopy)
   }
 
   private static func byEntryID(_ records: [WordKnowledgeRecord]) -> [String: WordKnowledgeRecord] {

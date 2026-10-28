@@ -82,6 +82,8 @@ final class SharedChangesTests {
   func waitsForAStoreThatCantChange() async throws {
     let (sheetLists, sheetKnowledge) = await shareSheetStores()
     sheetLists.addWord(eki, headword: "駅", reading: "えき", to: WordLists.favoritesID)
+    let made = Date(timeIntervalSince1970: 1_793_000_000)
+    sheetKnowledge.now = { made }
     sheetKnowledge.setStatus(.known, id: eki, headword: "駅", reading: "えき")
     try Data(#"{"version":99,"records":[]}"#.utf8)
       .write(to: folder.appending(path: "app-knowledge.json"))
@@ -91,7 +93,8 @@ final class SharedChangesTests {
     await changes.apply(to: lists, knowledge)
     #expect(lists.contains(eki, in: WordLists.favoritesID))
     #expect(changes.pending().map(\.change) == [.known(
-      KnownWordChange(storedID: eki.rawValue, headword: "駅", reading: "えき", status: .known))])
+      KnownWordChange(
+        storedID: eki.rawValue, headword: "駅", reading: "えき", status: .known, changedAt: made))])
   }
 
   @Test("a change file that can't be read is dropped")

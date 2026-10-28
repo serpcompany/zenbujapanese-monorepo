@@ -28,7 +28,7 @@ export const rejectionMeanings: Readonly<Record<RejectionCode, string>> = {
   mutation_id_reused: 'The ID was used for a different mutation. Give each mutation its own.',
   already_exists: 'The account has, or had, a list with that ID.',
   unknown_list: "The list word's list isn't in the account, or was deleted.",
-  too_many_lists: `The account has ${count(listLimits.lists)} lists.`,
+  too_many_lists: `The account has ${count(listLimits.lists)} lists, not counting its daily lists.`,
   list_full: `The list has ${count(listLimits.wordsPerList)} words.`,
   too_many_bookmarks: `The account has ${count(bookmarkLimits.bookmarks)} bookmarked sentences.`,
   too_many_notes: `The account has ${count(noteLimits.notes)} notes. Keep the note on the device, untouched.`,
