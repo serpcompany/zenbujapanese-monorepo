@@ -107,6 +107,7 @@ final class ProgressLog: LocalFileStore {
   }
   @ObservationIgnored var askForDays: @Sendable (ProgressDaysRequest) async -> [String: ProgressLogDay]? =
     ProgressLog.filledDays
+  @ObservationIgnored var changeRecorded: ((KnownWordChange, WordKnowledgeStatus, String) -> Void)?
   @ObservationIgnored private var unfilled: [ProgressLogChange] = []
   @ObservationIgnored private let writer: ProgressLogWriter
   @ObservationIgnored private let defaults: UserDefaults
@@ -194,6 +195,7 @@ final class ProgressLog: LocalFileStore {
           ProgressLogChange(
             id: change.storedID, before: previous.stored, after: change.status.stored, at: time)
         ], totals: totals)
+      changeRecorded?(change, previous, min(day(of: time), day(of: now())))
     case .synced(let changes, let totals):
       add(changes, totals: totals)
     }

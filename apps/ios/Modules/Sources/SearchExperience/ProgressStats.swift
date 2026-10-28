@@ -50,7 +50,7 @@ struct ProgressStats: Decodable, Hashable, Sendable {
   let words: [Words]
 }
 
-private struct ProgressStatsRequest: Encodable, Sendable {
+struct ProgressStatsRequest: Encodable, Hashable, Sendable {
   let days: [String: ProgressLogDay]
   let goal: Int
   let today: String
@@ -62,7 +62,7 @@ extension ProgressLog {
     return await Self.answer(request, using: core)
   }
 
-  private nonisolated static func answer(
+  nonisolated static func answer(
     _ request: ProgressStatsRequest, using core: PresentationCore
   ) async -> ProgressStats? {
     guard let asked = try? JSONEncoder.localStore.encode(request) else { return nil }

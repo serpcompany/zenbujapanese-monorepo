@@ -27,7 +27,7 @@ extension AccountRootView {
     NavigationLink(value: AccountRoute.wordLists) {
       AccountCountRowLabel(
         "Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo,
-        count: wordLists.isLoaded ? wordLists.lists.count : nil)
+        count: wordLists.isLoaded ? wordLists.ownLists.count : nil)
     }
     .accessibilityIdentifier("account.lists")
 
