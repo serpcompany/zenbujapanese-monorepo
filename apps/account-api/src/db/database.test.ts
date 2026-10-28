@@ -46,6 +46,22 @@ async function migratedUpTo(nextTag: string) {
   return { client, db }
 }
 
+function wordsSyncedOn(db: Parameters<typeof accountStore>[0]) {
+  const accounts = createAccounts(accountStore(db), cursors(cursorKey('test')), searchKeys('test'))
+  let sent = 0
+  return async (mutations: Omit<ClientMutation, 'id'>[] = []) => {
+    const answer = await accounts.sync(
+      'u1',
+      { mutations: mutations.map(mutation => ({ id: `m-${sent++}`, ...mutation })) },
+      everyScope
+    )
+    if (answer.status !== 'synced') return expect.unreachable()
+    return answer.changes
+      .filter(change => change.entity === 'knownWord')
+      .map(({ version, data }) => ({ version, ...data }))
+  }
+}
+
 describe('the migrations', () => {
   test('list a SQL file for every entry in their journal', () => {
     const journal = journalOf(migrations)
@@ -116,23 +132,9 @@ describe('the migrations', () => {
       insert into sync_changes (user_id, entity_type, entity_id, entity_version, operation) values
         ('u1', 'knownWord', 'kanji:日', 1, 'mark'), ('u1', 'knownWord', 'kanji:月', 2, 'clear')`)
     await migrate(db, { migrationsFolder: migrations })
-    const accounts = createAccounts(
-      accountStore(db),
-      cursors(cursorKey('test')),
-      searchKeys('test')
-    )
-    let sent = 0
-    const words = async (mutations: Omit<ClientMutation, 'id'>[] = []) => {
-      const answer = await accounts.sync(
-        'u1',
-        { mutations: mutations.map(mutation => ({ id: `m-${sent++}`, ...mutation })) },
-        everyScope
-      )
-      if (answer.status !== 'synced') return expect.unreachable()
-      return answer.changes
-        .filter(change => change.entity === 'knownWord')
-        .map(({ version, data }) => ({ version, ...data }))
-    }
+    const synced = wordsSyncedOn(db)
+    const words = async (mutations?: Omit<ClientMutation, 'id'>[]) =>
+      (await synced(mutations)).map(word => ({ ...word, stateChangedAt: undefined }))
     const sun = { itemId: 'kanji:日', headword: '日', reading: 'にち' }
     const moon = { itemId: 'kanji:月', headword: '月', reading: 'つき' }
     expect(await words()).toEqual([
@@ -182,6 +184,55 @@ describe('the migrations', () => {
       known: false
     })
     expect(await columns()).toEqual([{ known: false, learning: true }])
+    await client.close()
+  })
+
+  test('keep each saved word when words gain the time their state began, answering null for it until the state changes', async () => {
+    const { client, db } = await migratedUpTo('_known_words_state_changed_at')
+    await client.exec(`
+      insert into users (id, name, email) values ('u1', '', 'u1@example.com');
+      insert into known_words (user_id, item_id, headword, reading, known, learning, version) values
+        ('u1', 'kanji:日', '日', 'にち', true, false, 1), ('u1', 'kanji:月', '月', 'つき', false, true, 2);
+      insert into sync_changes (user_id, entity_type, entity_id, entity_version, operation) values
+        ('u1', 'knownWord', 'kanji:日', 1, 'mark'), ('u1', 'knownWord', 'kanji:月', 2, 'set')`)
+    await migrate(db, { migrationsFolder: migrations })
+    const words = wordsSyncedOn(db)
+    const sun = { itemId: 'kanji:日', headword: '日', reading: 'にち', state: 'known', known: true }
+    const moon = { itemId: 'kanji:月', headword: '月', reading: 'つき' }
+    expect(await words()).toEqual([
+      { version: 1, ...sun, stateChangedAt: null },
+      { version: 2, ...moon, state: 'learning', known: false, stateChangedAt: null }
+    ])
+    const known = { state: 'known', headword: '月', reading: 'つき' }
+    const stateChangedAt = '2026-10-27T09:30:00.000Z'
+    expect(
+      await words([
+        {
+          entity: 'knownWord',
+          operation: 'set',
+          entityId: 'kanji:月',
+          baseVersion: 2,
+          fields: { ...known, stateChangedAt }
+        },
+        {
+          entity: 'knownWord',
+          operation: 'mark',
+          entityId: 'kanji:日',
+          baseVersion: 1,
+          fields: sun
+        }
+      ])
+    ).toEqual([
+      { version: 1, ...sun, stateChangedAt: null },
+      { version: 3, ...moon, state: 'known', known: true, stateChangedAt: new Date(stateChangedAt) }
+    ])
+    const rows = await client.query(
+      'select item_id, known, learning, version from known_words order by version'
+    )
+    expect(rows.rows).toEqual([
+      { item_id: 'kanji:日', known: true, learning: false, version: 1 },
+      { item_id: 'kanji:月', known: true, learning: false, version: 3 }
+    ])
     await client.close()
   })
 

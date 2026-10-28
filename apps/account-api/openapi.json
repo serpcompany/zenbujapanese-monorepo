@@ -113,11 +113,50 @@
             "type": "string",
             "maxLength": 200,
             "description": "Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has."
+          },
+          "stateChangedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time."
           }
         },
         "required": [
           "state"
         ]
+      },
+      "KnownWordFields": {
+        "type": "object",
+        "properties": {
+          "headword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters."
+          },
+          "reading": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Its reading, held as `headword` is. Empty when left out."
+          },
+          "stateChangedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time."
+          }
+        },
+        "required": [
+          "headword"
+        ]
+      },
+      "KnownWordClearFields": {
+        "type": "object",
+        "properties": {
+          "stateChangedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time."
+          }
+        }
       },
       "ListCreateFields": {
         "type": "object",
@@ -1145,6 +1184,14 @@
           "known": {
             "type": "boolean",
             "description": "Whether `state` is `known`, for an app that reads only this: a Learning word is not known."
+          },
+          "stateChangedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the word moved to its current state, as the app said, or the service's time when the change carried none; a time after the service's is taken as the service's. `null` for a word that moved to its state before the service kept the time; a service from before it sends none."
           }
         },
         "required": [
@@ -1594,7 +1641,7 @@
                 "baseVersion": true,
                 "description": "Makes the word Known, from Unknown or Learning: the same change as `set` with `state: \"known\"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.",
                 "fields": {
-                  "$ref": "#/components/schemas/WordFields"
+                  "$ref": "#/components/schemas/KnownWordFields"
                 },
                 "example": {
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
@@ -1614,6 +1661,9 @@
                 ],
                 "baseVersion": true,
                 "description": "Makes a known word Unknown. It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can't see Learning; `set` with `state: \"unknown\"` ends Learning.",
+                "fields": {
+                  "$ref": "#/components/schemas/KnownWordClearFields"
+                },
                 "example": {
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
                   "entity": "knownWord",
