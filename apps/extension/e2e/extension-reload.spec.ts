@@ -40,10 +40,6 @@ async function reloadExtension(extension: Extension) {
       return extensions.evaluate(() => chrome.runtime?.id).catch(() => undefined)
     })
     .toBe(extension.id)
-  const dynamicId = await extensions.evaluate(
-    () => (chrome.runtime as typeof chrome.runtime & { dynamicId: string }).dynamicId
-  )
-  extension.dynamicOrigin = `chrome-extension://${dynamicId}`
   await extensions.close()
 }
 
