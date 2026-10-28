@@ -118,6 +118,13 @@ describe('the check of a package', () => {
     ])
   })
 
+  it('fails a package missing an icon the manifest names', () => {
+    const { [iconFile(48)]: _icon, ...files } = built('staging')
+    expect(problemsOf(files, 'unpacked', 'staging')).toEqual([
+      'The package is missing icons/icon-48.png.'
+    ])
+  })
+
   it("fails a package that names the other environment's hosts", () => {
     const files = {
       ...built('staging'),
