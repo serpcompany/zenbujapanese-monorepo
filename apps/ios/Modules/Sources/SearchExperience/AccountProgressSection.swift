@@ -106,6 +106,7 @@ struct TodayProgressCard: View {
         }
       }
     }
+    .fixedSize(horizontal: false, vertical: true)
     .padding(.vertical, 6)
     .redacted(reason: stats == nil ? .placeholder : [])
     .accessibilityElement(children: .ignore)
@@ -158,6 +159,7 @@ struct TodayProgressCard: View {
 }
 
 private struct ProgressWeekStrip: View {
+  @ScaledMetric(relativeTo: .title2) private var circleSize = 28.0
   let stats: ProgressStats?
 
   var body: some View {
@@ -168,7 +170,9 @@ private struct ProgressWeekStrip: View {
             .font(.caption.weight(day.isToday ? .bold : .semibold))
             .foregroundStyle(.secondary)
           Image(systemName: day.met ? "checkmark.circle.fill" : "circle")
-            .font(.title2)
+            .resizable()
+            .scaledToFit()
+            .frame(maxWidth: circleSize)
             .foregroundStyle(day.met || day.isToday ? AnyShapeStyle(.orange) : AnyShapeStyle(.tertiary))
         }
         .frame(maxWidth: .infinity)
