@@ -12,7 +12,8 @@ subscription that unlocks sync is [`account-billing.md`](account-billing.md), Fo
 Every app stays local-first: everything works signed out and offline, the device's copy is what the
 app shows, and the account only carries changes between devices and apps (#374). The browser
 extension is the exception: it saves only with the subscription
-([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)).
+([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)), and it
+signs in as [`account-extension.md`](account-extension.md) says.
 
 ## The host
 
@@ -40,6 +41,7 @@ setting ([`account-api.md`](account-api.md), Settings).
 | Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write`, `notes:read`, `notes:write`, `photos:read`, `photos:write`, `settings:read`, `settings:write`, `searches:read`, `searches:write`, `subscription` |
 | zenbujapanese.com | `zenbu-web` | the same, without `watch:write`, `translations:write`, and `photos:write` |
 | Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
+| Zenbu Japanese for Chrome | `zenbu-extension` | `account:delete`, `subscription`, and `:read` and `:write` of `lists`, `known`, `watch`, `notes`, and `settings` |
 
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
   the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
@@ -68,14 +70,14 @@ Cloud ([`account-api.md`](account-api.md), Set up the server):
 
 1. **Its entry** in `apps/account-api/src/domain/clients.ts`: an `id` (lowercase, sent as
    `X-Zenbu-Client`), its `name`, the fewest `scopes` it needs, its Apple bundle IDs
-   (`appleBundleIds`), `signsInOnTheWeb: false`, and `requestsPerMinute` (30,000, as
-   the others), with a row in the table above. The service ships with the next `Account API
-   deploy`; until then a sign-in naming it is refused `unknown_client`.
-2. **Sign in with Apple:** its App ID, in the same Apple Developer team as the iOS app
-   (TSMC LLC's, `847HR8U8D9`), with Sign in with Apple on, grouped with
-   `com.zenbujapanese.dictionary` as its primary App ID, so the service's one key covers it and a learner's
-   Apple user ID is the same in every app. A Mac build with its own bundle ID needs that ID listed
-   and grouped too; one sharing the iOS build's bundle ID needs nothing more.
+   (`appleBundleIds`), a browser extension's store IDs (`extensionIds`), `signsInOnTheWeb: false`,
+   and `requestsPerMinute` (30,000, as the others), with a row in the table above. The service ships
+   with the next `Account API deploy`; until then a sign-in naming it is refused `unknown_client`.
+2. **Sign in with Apple:** its App ID, in the same Apple Developer team as the iOS app (TSMC LLC's,
+   `847HR8U8D9`), with Sign in with Apple on, grouped with `com.zenbujapanese.dictionary` as its
+   primary App ID, so the service's one key covers it and a learner's Apple user ID is the same in
+   every app. A Mac build with its own bundle ID needs that ID listed and grouped too; one sharing
+   the iOS build's bundle ID needs nothing more.
 3. **Google:** an OAuth client of type iOS for its bundle ID (a Mac build with the same bundle ID
    uses it too), whose client ID goes on the end of the service's `GOOGLE_CLIENT_IDS` in both
    environments. The ID isn't secret: the app ships it.
@@ -132,13 +134,8 @@ set-auth-token: <the signed session token>
 {
   "token": "<the session's bare token, which signs nothing in>",
   "user": {
-    "id": "<the account's ID>",
-    "name": "",
-    "email": "learner@example.com",
-    "emailVerified": true,
-    "image": null,
-    "createdAt": "2026-10-07T03:17:00.000Z",
-    "updatedAt": "2026-10-07T03:17:00.000Z"
+    "id": "<the account's ID>", "name": "", "email": "learner@example.com", "emailVerified": true,
+    "image": null, "createdAt": "2026-10-07T03:17:00.000Z", "updatedAt": "2026-10-07T03:17:00.000Z"
   }
 }
 ```
@@ -489,7 +486,9 @@ sign-in from one of those origins is the website's (`zenbu-web`) unless it names
 `set-auth-token`, so a page there keeps the cookie session, as the website does. So a new web app
 needs a change to the service first: its origin in that setting, its sign-ins naming it in
 `X-Zenbu-Client`, ID-token sign-ins only, and a decision about whether a cookie session suits it.
-Apps on a device aren't held to CORS.
+Apps on a device aren't held to CORS, nor is a browser extension's service worker: an extension's
+origin never goes in that setting, and an answer to it sets no cookie
+([`account-extension.md`](account-extension.md)).
 
 ## Deleting the account
 

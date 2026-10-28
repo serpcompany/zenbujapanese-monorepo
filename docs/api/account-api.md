@@ -8,10 +8,10 @@ Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is
 
 - **Errors.** Every error is `{ "error": { "code": "...", "message": "..." } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn't list here, such as one from a Better Auth upgrade: handle it by its status.
 - **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.
-- **Bodies** are JSON, at most 64 KB (`413 too_large`), but a photo's upload, which is the photo's file.
+- **Bodies** are JSON, at most 64 KB (`413 too_large`), but a photo's upload, which is the photo's file, and Apple's form to the extension's return route.
 - **Emails** are in the language a request names in `Content-Language`, `en` or `ja`, which needs no entry in `Access-Control-Allow-Headers`. Without one, they are in the language the account was made with, or English. An account made with one keeps it, through Google's web sign-in too.
 - **Rate limits** answer `429 too_many_requests` with `Retry-After`, in seconds (Better Auth's also with `X-Retry-After`).
-- **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`.
+- **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`. A browser extension the service lists signs in as an app, from its service worker, which needs no CORS: an answer to an extension's origin sets no cookie.
 
 ## Servers
 
@@ -58,6 +58,7 @@ Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is
 | [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session) | `sessionToken` with `account` | Sign one session out |
 | [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions) | `sessionToken` with `account` | Sign every session out, this one too |
 | [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) | `sessionToken` with `account` | Sign every other session out |
+| [`POST /v1/auth/apple/extension`](#post-v1authappleextension) | none | Sign in with Apple's return, for the browser extension |
 
 ### `GET /v1/health`
 
@@ -463,7 +464,7 @@ Makes the account on the first sign-in. A `name` is used only then, held to the 
 **Header parameters:**
 
 - `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
-- `x-zenbu-client` (`"zenbu-ios"`, `"zenbu-web"`, or `"tomodachi"`, optional): The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.
+- `x-zenbu-client` (`"zenbu-ios"`, `"zenbu-web"`, `"tomodachi"`, or `"zenbu-extension"`, optional): The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.
 
 **Body** (JSON, required):
 
@@ -513,7 +514,7 @@ With `idToken`, signs in with the token the device got, and makes the account on
 **Header parameters:**
 
 - `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
-- `x-zenbu-client` (`"zenbu-ios"`, `"zenbu-web"`, or `"tomodachi"`, optional): The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.
+- `x-zenbu-client` (`"zenbu-ios"`, `"zenbu-web"`, `"tomodachi"`, or `"zenbu-extension"`, optional): The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.
 
 **Body** (JSON, required):
 
@@ -739,6 +740,28 @@ An empty object, `{}`.
 - **401** `unauthorized`: No session, or one that has ended: sign in again.
 - **403** `insufficient_scope`: The session's app doesn't have `account`.
 - **429** `too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.
+
+### `POST /v1/auth/apple/extension`
+
+Sign in with Apple's return, for the browser extension.
+
+The Return URL a browser extension gives Apple, with `response_mode=form_post`. Apple posts its answer here as a form, and the service answers `303` to `https://<extension ID>.chromiumapp.org/apple`, with the fields Apple sent in the fragment, for an extension ID the service lists. It checks no origin and no token, sets no cookie, and stores nothing: the extension signs in with the ID token on POST /v1/auth/sign-in/social, as an app does.
+
+**Auth:** none.
+
+**Body** (`application/x-www-form-urlencoded`, required): Apple's form post, with the fields of [`AppleExtensionReturn`](#appleextensionreturn).
+
+**Answers:**
+
+- **303**: Sent on to the extension: `Location` is its chromiumapp.org URL, with each of `id_token`, `code`, `user`, `state` and `error` that Apple sent in the fragment, form-encoded.
+- **400** `bad_request`: The form isn't Apple's, or a field is too long. Nothing was sent on.
+- **400** `unknown_extension`: `state` doesn't name an extension the service lists. Nothing was sent on.
+- **413** `too_large`: The body is over 64 KB.
+- **415** `bad_request`: The body isn't a form. Nothing was sent on.
+
+**Headers:**
+
+- A 303 sends `location`: https://<extension ID>.chromiumapp.org/apple#<the fields>
 
 ## Sync entities
 
@@ -1317,7 +1340,8 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `apple_authorization_invalid` | 400 | [`DELETE /v1/me`](#delete-v1me) |
 | `apple_authorization_needed` | 400 | [`DELETE /v1/me`](#delete-v1me) |
 | `apple_unavailable` | 503 | [`DELETE /v1/me`](#delete-v1me) |
-| `bad_request` | 400 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/sync/{entity}`](#get-v1syncentity), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
+| `bad_request` | 400 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/sync/{entity}`](#get-v1syncentity), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid), [`POST /v1/auth/apple/extension`](#post-v1authappleextension) |
+| `bad_request` | 415 | [`POST /v1/auth/apple/extension`](#post-v1authappleextension) |
 | `billing_unavailable` | 503 | [`DELETE /v1/me`](#delete-v1me), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
 | `client_mismatch` | 403 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `email_not_verified` | 403 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
@@ -1349,13 +1373,14 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `sign_in_only` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) |
 | `subscription_belongs_to_another_account` | 409 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
 | `subscription_required` | 402 | [`POST /v1/sync`](#post-v1sync), [`GET /v1/sync/{entity}`](#get-v1syncentity), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
-| `too_large` | 413 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
+| `too_large` | 413 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`POST /v1/auth/apple/extension`](#post-v1authappleextension) |
 | `too_many_attempts` | 403 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) |
 | `too_many_photos` | 409 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
 | `too_many_requests` | 429 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/sync/{entity}`](#get-v1syncentity), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid), [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/nonce`](#post-v1authsign-innonce), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/jwks`](#get-v1authjwks), [`GET /v1/auth/get-session`](#get-v1authget-session), [`POST /v1/auth/sign-out`](#post-v1authsign-out), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
 | `try_again` | 503 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
 | `unauthorized` | 401 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/sync/{entity}`](#get-v1syncentity), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
 | `unknown_client` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
+| `unknown_extension` | 400 | [`POST /v1/auth/apple/extension`](#post-v1authappleextension) |
 | `unknown_price` | 400 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) |
 | `unknown_product` | 400 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
 | `unreadable_event` | 400 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe) |
@@ -1859,3 +1884,11 @@ Who signed in. GET /v1/me has the profile, with the username and version.
 - `userId` (string, required)
 - `createdAt` (string (date-time), required)
 - `updatedAt` (string (date-time), required)
+
+### AppleExtensionReturn
+
+- `state` (string, required, 1 to 512 characters): The extension's ID, as the extension sent it to Apple, alone or followed by `.` and a value of the extension's own. Sent on whole.
+- `id_token` (string, optional, at most 16,384 characters): Apple's ID token.
+- `code` (string, optional, at most 1,024 characters): Apple's authorization code: DELETE /v1/me takes it as `appleAuthorizationCode`.
+- `user` (string, optional, at most 4,096 characters): The learner's name and email as JSON. Apple sends it on the first sign-in only.
+- `error` (string, optional, at most 256 characters): Apple's error, such as `user_cancelled_authorize`, in place of the rest.
