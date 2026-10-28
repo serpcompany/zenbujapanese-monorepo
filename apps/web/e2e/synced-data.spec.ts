@@ -39,13 +39,13 @@ const anAccount = () =>
     })
     .holds('list', today, {
       id: today,
-      name: 'Today',
+      name: '2026-10-28',
       position: 1,
       createdAt: '2026-10-01T12:00:00Z'
     })
     .holds('list', yesterday, {
       id: yesterday,
-      name: 'Yesterday',
+      name: '2026-10-27',
       position: 2,
       createdAt: '2026-10-01T12:00:00Z'
     })
@@ -141,7 +141,12 @@ test.describe("an account's synced data", () => {
     await expect(week.getByText('1 word', { exact: true })).toBeVisible()
     await week.getByRole('link', { name: 'Today' }).click()
     await expect(page).toHaveURL(new RegExp(`\\?list=${today}$`))
-    await expect(main(page).getByRole('link', { name: '要る（いる）' })).toBeVisible()
+    const opened = main(page).getByRole('region', { name: 'Today' })
+    await expect(opened.getByRole('link', { name: '要る（いる）' })).toBeVisible()
+    await expect(opened.getByRole('button', { name: /Rename|Delete/ })).toHaveCount(0)
+    await expect(main(page)).not.toContainText('2026-10-2')
+    await opened.getByRole('link', { name: 'Daily Lists' }).click()
+    await expect(page).toHaveURL(/\/account\/lists\/\?view=daily$/)
     await page.goto('/ja/account/lists/?view=daily')
     const thisWeek = main(page).getByRole('region', { name: '今週' })
     await expect(thisWeek.locator('[data-slot="item-title"]')).toHaveText(['今日', '昨日'])

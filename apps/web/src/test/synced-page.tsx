@@ -1,7 +1,7 @@
 import { SyncedAreaView } from '@/components/account/synced/synced-area'
 import type { SyncedArea } from '@/lib/account/synced'
 import { getDictionary } from '@/lib/i18n/dictionary'
-import { answer, render, stubAccountService } from './account-page'
+import { answer, render, rerender, stubAccountService } from './account-page'
 import { profile, sessionAnswer, settings, signedIn } from './signed-in-account'
 import { withSynced } from './synced-service'
 import { SyncedStandIn } from './synced-stand-in'
@@ -26,17 +26,22 @@ export const onList = (listId: string, itemId: string, text: object, addedAt: st
   addedAt
 })
 
+const areaView = (area: SyncedArea, listId: string | null, dailyLists: boolean) => (
+  <SyncedAreaView
+    area={area}
+    locale="en"
+    text={getDictionary('en').account}
+    settings={settings()}
+    listId={listId}
+    dailyLists={dailyLists}
+  />
+)
+
 export const renderArea = (area: SyncedArea, listId: string | null = null, dailyLists = false) =>
-  render(
-    <SyncedAreaView
-      area={area}
-      locale="en"
-      text={getDictionary('en').account}
-      settings={settings()}
-      listId={listId}
-      dailyLists={dailyLists}
-    />
-  )
+  render(areaView(area, listId, dailyLists))
+
+export const moveTo = (area: SyncedArea, listId: string | null, dailyLists = false) =>
+  rerender(areaView(area, listId, dailyLists))
 
 export function openArea(
   area: SyncedArea,

@@ -123,25 +123,35 @@ no longer has says so.
 
 **Daily Lists.** The app makes a list a day (#1086), whose ID names its day; `dailyListDay`
 (`@zenbu/account-rules/daily-lists`) is the only thing that tells one, and the page never reads the
-ID itself. Lists shows only the learner's own lists, so Move up and Move down move a list among
-them only, and, when the account has a daily list, a Daily Lists row at the top with how many it
-has, which opens `?view=daily`. That page groups them as the app's index does: "This week" (today,
-in the browser's time zone, and the six days before it, and any day after today), then each month
-with its year ("October 2026"), newest first, and newest first within each. A row's title comes
-from its day, never the list's stored name: Today, Yesterday, or the weekday and date ("Monday, Oct
-26"), in the page's language, with how many words the list holds; it opens the list as any list
-opens (`?list=<its ID>`). With no daily list, it says so. The app's "goal met" and "now Known" are
-left out, since the website keeps no progress log.
+ID itself. Lists shows only the learner's own lists, so Move up and Move down move a list among them
+only, and, when the account has a daily list, a Daily Lists row at the top with how many it has,
+which opens `?view=daily`. That page groups them as the app's index does: "This week" (today, in the
+browser's time zone, and the six days before it, and any day after today), then each month with its
+year ("October 2026"), newest first, and newest first within each. A row's title comes from its day,
+never the list's stored name: Today, Yesterday, or the weekday and date ("Monday, Oct 26"), in the
+page's language, with how many words the list holds; it opens the one-list view any list opens
+(`?list=<its ID>`), which, for a daily list, takes the same title, offers no Rename or Delete (the
+service never lets a deleted list's ID be used again, so that day's list could never be made again),
+and links back to Daily Lists instead of All lists. The view keeps the page it was showing until the
+opened list's words are read, so a daily list never flashes the own Lists. A word page's Add to List
+leaves daily lists out (`dictionary.md`). With no daily list, it says so. The app's "goal met" and
+"now Known" are left out, since the website keeps no progress log.
 
-- Source: #1097, and the orchestrator's decisions on it of 2026-10-28 (grouping and titles,
-  shared with the app's #1086); the shared IDs in `packages/account-rules/cases/daily-list-id.json`.
+- Source: #1097, and the orchestrator's decisions on it of 2026-10-28 (grouping and titles, shared
+  with the app's #1086; no Rename, Delete, or Add to List entry for a daily list); the shared IDs in
+  `packages/account-rules/cases/daily-list-id.json`.
 - Check: Daily lists tests (`src/components/account/synced/daily-lists.interaction.test.tsx`),
   "Lists shows the three own lists, and Daily Lists with 2 at the top", "the Daily Lists page lists
   both under This week, newest first, and one opens its words", "says so when the account has no
-  daily list", and "moving an own list never moves a daily one"; `src/lib/account/daily-lists.test.ts`,
-  which replays the shared IDs and checks the groups, the titles in English and Japanese, and the
-  browser's own day; Synced spec, "Lists keeps the daily lists apart, and Daily Lists opens them
-  under This week, each to its words", and `?view=daily` among its 360px phone checks.
+  daily list", "moving an own list never moves a daily one", "a daily list opens titled by its day,
+  with no Rename or Delete, and back to Daily Lists", and "opening a daily list never shows the own
+  lists while its words load"; the word page's `synced-lists` tests, "leaves daily lists out, and
+  puts a new list after the own lists"; `src/lib/account/daily-lists.test.ts`, which replays the
+  shared IDs and checks the groups, the titles in English and Japanese, and today's day in a fixed
+  time zone east and west of UTC; Synced spec, "Lists keeps the daily lists apart, and Daily Lists
+  opens them under This week, each to its words" (seeded with stored names unlike the titles, it
+  also checks the opened daily list's title, its missing Rename and Delete, and its link back), and
+  `?view=daily` among its 360px phone checks.
 
 **Notes.** Every note on a word or kanji, newest change first, each with Edit, which saves a text
 by the account's rule (1 to 10,000 characters, never cut), and Delete, which asks first. Under

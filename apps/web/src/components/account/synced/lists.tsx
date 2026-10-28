@@ -99,10 +99,21 @@ export function ListRow({
   )
 }
 
-export function AllLists({ locale, words }: { locale: Locale; words: Words['lists'] }) {
+export function BackToLists({
+  locale,
+  words,
+  daily = false
+}: {
+  locale: Locale
+  words: Words['lists']
+  daily?: boolean
+}) {
   return (
-    <Link href={localizedPath(accountPages.lists.path, locale)} className="self-start text-sm">
-      {words.allLists}
+    <Link
+      href={daily ? dailyListsPath(locale) : localizedPath(accountPages.lists.path, locale)}
+      className="self-start text-sm"
+    >
+      {daily ? words.dailyLists : words.allLists}
     </Link>
   )
 }

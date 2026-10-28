@@ -4,7 +4,7 @@ import { listsInOrder, wordsOfList } from '@zenbu/account-rules/account-views'
 import { dailyListGroups, localDay } from '@/lib/account/daily-lists'
 import { listPath } from '@/lib/account/synced-views'
 import { countOf } from '@/lib/i18n/format'
-import { AllLists, ListRow } from './lists'
+import { BackToLists, ListRow } from './lists'
 import { type AreaProps, Rows } from './parts'
 
 export function DailyLists({ copy, locale, text }: AreaProps) {
@@ -18,7 +18,7 @@ export function DailyLists({ copy, locale, text }: AreaProps) {
   )
   return (
     <section className="flex flex-col gap-4" aria-labelledby="daily-lists">
-      <AllLists locale={locale} words={words} />
+      <BackToLists locale={locale} words={words} />
       <h2 id="daily-lists" className="text-lg font-medium">
         {words.dailyLists}
       </h2>

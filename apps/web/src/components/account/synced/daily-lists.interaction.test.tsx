@@ -1,8 +1,8 @@
 import { dailyListId } from '@zenbu/account-rules/daily-lists'
 import { afterEach, describe, expect, test } from 'vitest'
 import { localDay } from '@/lib/account/daily-lists'
-import { click, shows, unmount } from '@/test/account-page'
-import { food, list, miru, onList, openArea, taberu, verbs, word } from '@/test/synced-page'
+import { button, click, shows, unmount } from '@/test/account-page'
+import { food, list, miru, moveTo, onList, openArea, taberu, verbs, word } from '@/test/synced-page'
 import { SyncedStandIn } from '@/test/synced-stand-in'
 
 afterEach(unmount)
@@ -69,6 +69,30 @@ describe('daily lists on the Lists page', () => {
     const opened = openArea('lists', threeOwnAndTwoDaily(), { listId: today }).page
     await shows(opened, '食べる（たべる）')
     expect(opened.textContent).toContain('見る（みる）')
+  })
+
+  test('a daily list opens titled by its day, with no Rename or Delete, and back to Daily Lists', async () => {
+    const { page } = openArea('lists', threeOwnAndTwoDaily(), { listId: today })
+    await shows(page, '食べる（たべる）')
+    expect(page.querySelector('#list-name')?.textContent).toBe('Today')
+    expect(page.textContent).not.toContain('Stored name')
+    expect(page.textContent).not.toMatch(/Rename|Delete/)
+    const back = page.querySelector('a[href="/account/lists/?view=daily"]')
+    expect(back?.textContent).toBe('Daily Lists')
+    unmount()
+    const own = openArea('lists', threeOwnAndTwoDaily(), { listId: food }).page
+    await shows(own, 'Food')
+    expect(button(own, 'Delete Food')).toBeTruthy()
+    expect(own.querySelector('a[href="/account/lists/"]')?.textContent).toBe('All lists')
+  })
+
+  test('opening a daily list never shows the own lists while its words load', async () => {
+    const { page } = openArea('lists', threeOwnAndTwoDaily(), { dailyLists: true })
+    await shows(page, 'This week')
+    moveTo('lists', today)
+    expect(page.textContent).not.toContain('Food')
+    await shows(page, '食べる（たべる）')
+    expect(page.textContent).not.toContain('Food')
   })
 
   test('says so when the account has no daily list', async () => {

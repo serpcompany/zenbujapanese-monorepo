@@ -24,10 +24,17 @@ export const isDailyList = (entityId: string) => dailyListDay(entityId) !== null
 export const ownLists = <T extends { entityId: string }>(lists: readonly T[]): T[] =>
   lists.filter(list => !isDailyList(list.entityId))
 
-const twoDigits = (value: number) => String(value).padStart(2, '0')
-
-export const localDay = (now: Date) =>
-  `${now.getFullYear()}-${twoDigits(now.getMonth() + 1)}-${twoDigits(now.getDate())}`
+export function localDay(now: Date, timeZone?: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(now)
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find(each => each.type === type)?.value ?? ''
+  return `${part('year')}-${part('month')}-${part('day')}`
+}
 
 const dateOf = (day: string) => new Date(`${day}T00:00:00Z`)
 
@@ -44,6 +51,16 @@ function dayTitle(day: string, today: string, locale: Locale, words: DayWords): 
   if (day === today) return words.today
   if (day === daysBefore(today, 1)) return words.yesterday
   return formatted(day, locale, { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
+export function dailyListTitle(
+  entityId: string,
+  today: string,
+  locale: Locale,
+  words: DayWords
+): string | null {
+  const day = dailyListDay(entityId)
+  return day === null ? null : dayTitle(day, today, locale, words)
 }
 
 const newestFirst = (one: DailyList, other: DailyList) =>

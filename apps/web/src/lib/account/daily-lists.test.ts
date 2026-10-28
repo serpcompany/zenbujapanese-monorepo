@@ -2,7 +2,7 @@ import { dailyListId } from '@zenbu/account-rules/daily-lists'
 import { dailyListIdCases as cases } from '@zenbu/account-rules/test/cases'
 import { describe, expect, test } from 'vitest'
 import { getDictionary } from '../i18n/dictionary'
-import { dailyListGroups, isDailyList, localDay, ownLists } from './daily-lists'
+import { dailyListGroups, dailyListTitle, isDailyList, localDay, ownLists } from './daily-lists'
 
 const shown = (entityId: string) => ({ entityId, version: 1, data: { name: 'Stored name' } })
 const dayId = (day: string) => dailyListId(day) ?? ''
@@ -58,8 +58,18 @@ describe("the website's daily lists", () => {
     ])
   })
 
-  test("read today in the browser's own time zone", () => {
-    expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05')
+  test("read today in the browser's own time zone, not UTC's", () => {
+    const lateInUtc = new Date('2026-01-05T23:30:00Z')
+    expect(localDay(lateInUtc, 'UTC')).toBe('2026-01-05')
+    expect(localDay(lateInUtc, 'Asia/Tokyo')).toBe('2026-01-06')
+    const earlyInUtc = new Date('2026-01-01T02:00:00Z')
+    expect(localDay(earlyInUtc, 'America/Los_Angeles')).toBe('2025-12-31')
     expect(localDay(new Date(2026, 11, 31, 0, 0))).toBe('2026-12-31')
+  })
+
+  test('title a daily list by its day, and give an own list no day title', () => {
+    expect(dailyListTitle(dayId('2026-10-27'), '2026-10-28', 'en', words)).toBe('Yesterday')
+    expect(dailyListTitle(dayId('2026-10-20'), '2026-10-28', 'en', words)).toBe('Tuesday, Oct 20')
+    expect(dailyListTitle(crypto.randomUUID(), '2026-10-28', 'en', words)).toBeNull()
   })
 })
