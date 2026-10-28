@@ -12,7 +12,10 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 `Content`, which gets `open(page)`. A page is a kind in `PanelPage` (`route.ts`) and a line in
 `pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
 The Translate tab's `Content` is `TranslateTab` (`src/translate/translate-tab.tsx`,
-[`translate.md`](../../apps/extension/docs/product/translate.md)).
+[`translate.md`](../../apps/extension/docs/product/translate.md)). Word Detail and the kanji and
+form pages it opens are `src/word-detail/`'s, drawn with `@zenbu/ui`'s dictionary parts from the
+core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts`
+([`word-detail.md`](../../apps/extension/docs/product/word-detail.md)).
 
 - **The toolbar icon opens it.** The manifest's `action` has no popup, and the service worker
   calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` when it starts
