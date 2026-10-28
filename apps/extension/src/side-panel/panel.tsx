@@ -3,7 +3,6 @@ import { Toaster } from '@zenbu/ui/components/sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@zenbu/ui/components/tabs'
 import { ChevronLeft } from 'lucide-react'
 import { type ComponentType, useEffect, useRef } from 'react'
-import mark from '../../../../assets/brand/vector/zenbu-icon-flat-vector.svg'
 import type { DataState } from '../shared/data-state'
 import { DictionaryProgress } from '../shared/dictionary-progress'
 import { labels as sharedLabels } from '../shared/labels'
@@ -32,11 +31,8 @@ const isWaitingForData = (data: DataState | null): data is DataState =>
 
 function PanelHeader() {
   return (
-    <header className="flex items-center gap-2 border-b px-3 py-2">
-      <img src={mark} alt="" className="size-6 shrink-0" />
-      <h1 className="min-w-0 flex-1 truncate font-heading text-sm font-semibold">
-        {sharedLabels.name}
-      </h1>
+    <header className="flex items-center justify-end gap-2 border-b px-3 py-2">
+      <h1 className="sr-only">{sharedLabels.name}</h1>
       <HeaderControls />
     </header>
   )

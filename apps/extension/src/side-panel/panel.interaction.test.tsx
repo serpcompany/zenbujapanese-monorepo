@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DataState } from '../shared/data-state'
+import { labels as sharedLabels } from '../shared/labels'
 import { fakeChrome } from '../test/fake-chrome'
 import { translateLabels } from '../translate/labels'
 import { labels } from './labels'
@@ -14,7 +15,10 @@ declare global {
 }
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-vi.mock('./header-controls', () => ({ HeaderControls: () => null }))
+vi.mock('./header-controls', async () => {
+  const { createElement } = await import('react')
+  return { HeaderControls: () => createElement('div', { 'data-header-controls': '' }) }
+})
 
 let root: Root | undefined
 
@@ -82,6 +86,19 @@ const press = (element: HTMLElement, key: string) =>
   })
 
 describe('SidePanel', () => {
+  it("is named Zenbu Japanese for a screen reader, and its header draws only the site switch and menu, not the name and mark Chrome's own title shows", async () => {
+    await draw(fakeHost())
+    const header = document.querySelector('header') as HTMLElement
+    const heading = document.querySelector('h1')
+    expect(heading?.textContent).toBe(sharedLabels.name)
+    expect(heading?.className).toBe('sr-only')
+    expect(heading?.parentElement).toBe(header)
+    expect(header.querySelector('img')).toBeNull()
+    expect(header.querySelector('[data-header-controls]')).not.toBeNull()
+    const drawn = [...header.childNodes].filter(node => node !== heading)
+    expect(drawn.map(node => node.textContent).join('')).toBe('')
+  })
+
   it('shows five tabs, in order, Translate on its box and each other tab on its empty state', async () => {
     await draw(fakeHost())
     expect(tabs().map(each => each.textContent)).toEqual([
