@@ -13,7 +13,7 @@ describe('the account pages', () => {
       expect(accountMetadata(page, 'en').robots, page).toEqual({ index: false, follow: false })
       expect(accountMetadata(page, 'ja').robots, page).toEqual({ index: false, follow: false })
       expect(listed.has(accountPages[page].path), page).toBe(false)
-      expect(accountPages[page].path).toMatch(/^\/[a-z-]+\/$/)
+      expect(accountPages[page].path).toMatch(/^\/[a-z-]+\/([a-z-]+\/)?$/)
     }
   })
 

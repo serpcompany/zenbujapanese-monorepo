@@ -117,7 +117,8 @@ and profile picture link if the learner or the provider at sign-up gives one), h
 browser, with its IP address and user agent), study data (known words and lists, and from the
 iPhone app the 50 most recently watched Player videos, the bookmarked Translate sentences, notes,
 the Media Library's photos with the words they're on, settings such as Reading Aids and the chosen
-frequency dictionaries, and the 50 most recent searches), a subscription if the learner has one
+frequency dictionaries, and the 50 most recent searches, from the app and, with a subscription,
+the website), a subscription if the learner has one
 (where it was bought, its plan and status, when it renews or ends, and each payment, failed
 payment, refund, dispute, or card network's fraud warning with its amount and date, never card
 details), to unlock sync on every device and keep a record of what was paid, and a record of each
@@ -132,10 +133,12 @@ included.
 The account service emails only sign-in codes, a way to sign in added or removed, and a deletion's
 confirmation. Where the website offers sign-in, the account there changes the name and username,
 manages how the learner signs in, subscribes and manages a subscription bought there, signs out,
-and deletes the account, and doesn't read study data
-yet; signing in uses cookies only to sign in and stay signed in, and the website remembers the
-theme and that the learner is signed in. The page says it will change before an app or the website
-syncs anything else.
+and deletes the account, and, with a subscription, shows the study data the account syncs, which
+the browser reads from the account and keeps nowhere else, changes the known words, lists, notes,
+recent searches, and chosen frequency dictionaries, and adds the searches made on the website to
+the recent searches (#934, the owner's wording of 2026-10-27); signing in uses
+cookies only to sign in and stay signed in, and the website remembers the theme and that the
+learner is signed in.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Email, Profiles and
   sync); [`account-billing.md`](../../../../docs/agents/account-billing.md) (the subscription, the

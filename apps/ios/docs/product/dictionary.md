@@ -121,7 +121,7 @@ the shared core, offline.
   and counts them, as **1 of 80**, and the rest are hidden. Each change returns the list to the
   top, and clearing it restores every grade, open or closed as before.
 - **Known kanji.** A kanji marked known from its kanji detail's **•••** menu has a green outline,
-  the ✓ Known capsule's green, and each grade's header counts the known kanji it shows beside its
+  the ✓ Known tag's green, and each grade's header counts the known kanji it shows beside its
   total. Both forms of a compatibility kanji are known, and counted, together.
 
 Check: UI `GradeInputUITests` on iPhone only (iPad and Mac on hold, 2026-10-18):
@@ -182,7 +182,7 @@ orange. With Differentiate Without Color on, a star count such as 5★ replaces 
 
 Check: core `detail/frequency.test.ts` (the tiers); package `ResultsScreenTests` (their stars).
 
-A known word shows a green **✓ Known** capsule at the right of its headword, one being learned a
+A known word shows a green **✓ Known** tag at the right of its headword, one being learned a
 yellow **◐ Learning** one. A right swipe offers the other two states; a long-press opens **Status**.
 
 Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` and `LearningUITests` (by
@@ -326,7 +326,7 @@ link beside the text, on every device. With Zenbu it opens the word in Zenbu ([L
 zenbujapanese.com](#links-from-zenbujapanesecom)), else the website. Beside Share is a **•••** menu,
 starting with **Status** (Unknown, Learning, or Known, one checked) and **Add to List…**, then Add
 Note, Take Photo, Choose Photo, and the [**Show** switches](reading-aids.md#the-show-menus). The
-word's **✓ Known** or **◐ Learning** capsule shows under its headword. A word is Unknown until the
+word's **✓ Known** or **◐ Learning** tag shows under its headword. A word is Unknown until the
 learner marks it; its state persists on the device, keyed by the entry's stable identifier.
 
 Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
@@ -379,7 +379,7 @@ website opens with the kanji's details and Zenbu in Look Up. The website has no 
 shares a kanji at the same search; a compatibility kanji's is its normalized form's. Before the page
 has loaded, Share sends the kanji alone. The menu sets the kanji's **Status**, adds it to lists, and
 adds notes and photos, which work as they do for a word. Lists and Notes sections appear above the
-words containing the kanji, and the kanji shows its Known or Learning capsule. A kanji is saved as
+words containing the kanji, and the kanji shows its Known or Learning tag. A kanji is saved as
 itself, not as a dictionary word, so marking 最 known doesn't mark the word 最.
 
 Check: package `SavedKanjiTests`; `WordDetailShareTests` (the kanji's text and link, which

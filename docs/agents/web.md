@@ -506,15 +506,16 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `src/components/account/subscription-section.tsx`, with `src/lib/account/subscription.ts`.
   `src/lib/account/load.ts` reads `/v1/me/subscription` and its `plans` with the account;
   `client.ts` opens Checkout, which comes back with `?subscribed=1`, and the portal.
+- **What an account syncs** ([product doc](../../apps/web/docs/product/synced-data.md)):
+  `src/components/account/synced/`, reading and changing it through `src/lib/account/synced.ts`.
 - **Code:** the routes in `src/app/[locale]/` (`login/`, `register/`, `forgot-password/`, and
   `account/`); the components in `src/components/account/`; the hooks
   `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the
   browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads the
   local-storage notes behind the footer's Sign in or Account and the account button's initials
-  (`src/lib/account/signed-in.ts`; the account page writes the initials as it shows the account). A
-  confirmation through Google leaves the page, so `src/lib/account/confirming.ts` keeps the account
-  it left from in session storage, to sign its earlier session out on the way back; a failed load
-  keeps it for Try again, and coming back with Back drops it.
+  (`src/lib/account/signed-in.ts`; the account page writes the initials as it shows the account).
+  A Google confirmation leaves the page, so `src/lib/account/confirming.ts` keeps the account it
+  left from in session storage, to sign its earlier session out on return (Back drops it).
 
 To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
 `ACCOUNT_API_TRUSTED_ORIGINS` naming this checkout's `site` and `e2e` addresses (`pnpm -w ports`);
@@ -532,10 +533,9 @@ starts the service it checks and runs it ([`ci.md`](ci.md), Account API):
 ZENBU_ACCOUNT_API=1 pnpm test:e2e e2e/account-service.spec.ts --project desktop
 ```
 
-`ZENBU_ACCOUNT_API_URL` names a service elsewhere than `http://localhost:8789`, for reading its
-mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and the service sends at
-most five from one address in 10 minutes, so a second run within 10 minutes needs a new database, or
-`delete from rate_limits` in it.
+`ZENBU_ACCOUNT_API_URL` names a service elsewhere than `http://localhost:8789`, for its mailbox.
+A run sends three codes, and the service sends five at most from one address in 10 minutes, so a
+run within 10 minutes of another needs a new database, or `delete from rate_limits` in it.
 
 ## Environments and deploys
 

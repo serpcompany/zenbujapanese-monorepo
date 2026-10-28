@@ -72,7 +72,7 @@ against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictio
 | `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty runs without it. |
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
-| `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
+| `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release of the files, which the app routes name (the image copies it to `/service/language-data/release.json`). |
 | `LANGUAGE_DATA_RELEASES` | `language-data/releases` | The pins, beside it in the image. |
 | `LANGUAGE_DATA_DERIVED` | `language-data/derived` | Its `RetiredEntries.json`, in the image too. |
 | `ACCOUNT_API_URL` | none | The account service's public URL, such as `https://api.zenbujapanese.com`: an app token's `iss` and `aud` must be exactly this. Unset, the app routes answer 503. |
@@ -109,6 +109,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
+| `GET /v1/pages?words=&kanji=` | Of 100 word IDs and 100 kanji, those with pages; a word's slug. |
 | `GET /v1/radicals` | The radical file the website's radical panel reads (`checkedRadicalFile`). |
 | `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers and refuses (`isSegmentableText`), for Kanji to Furigana. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |

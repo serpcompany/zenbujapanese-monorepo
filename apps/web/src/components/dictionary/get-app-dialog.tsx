@@ -18,7 +18,7 @@ import {
 } from '@zenbu/ui/components/drawer'
 import { DialogCloseButton } from '@zenbu/ui/dictionary/dialog-close-button'
 import { useMediaQuery } from '@zenbu/ui/hooks/use-media-query'
-import { GetAppButton } from '@/components/site-actions'
+import { GetAppButton, LogInButton } from '@/components/site-actions'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 
@@ -26,19 +26,27 @@ export type AppAction = keyof Dictionary['learner']['inApp']
 
 export function GetAppDialog({
   action,
+  offerSignIn,
   locale,
   text,
   onOpenChange
 }: {
   action: AppAction | null
+  offerSignIn: boolean
   locale: Locale
   text: Dictionary['learner']
   onOpenChange: (open: boolean) => void
 }) {
   const wide = useMediaQuery('(min-width: 768px)')
   const title = action ? text.inApp[action] : ''
+  const close = () => onOpenChange(false)
   const getApp = (
-    <GetAppButton locale={locale} label={text.getTheApp} onClick={() => onOpenChange(false)} />
+    <>
+      {offerSignIn ? (
+        <LogInButton locale={locale} label={text.signIn} variant="outline" onClick={close} />
+      ) : null}
+      <GetAppButton locale={locale} label={text.getTheApp} onClick={close} />
+    </>
   )
   if (wide) {
     return (

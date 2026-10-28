@@ -1,8 +1,13 @@
 import type { Page, Route } from '@playwright/test'
+import type { SyncedStandIn } from '../src/test/synced-stand-in'
 
 type Answers = Record<string, unknown>
 
-export async function standInForTheAccountService(page: Page, answers: Answers) {
+export async function standInForTheAccountService(
+  page: Page,
+  answers: Answers,
+  synced?: SyncedStandIn
+) {
   await page.route('**/v1/**', async (route: Route) => {
     const request = route.request()
     const origin = (await request.headerValue('origin')) ?? '*'
@@ -13,7 +18,11 @@ export async function standInForTheAccountService(page: Page, answers: Answers) 
       'access-control-allow-methods': 'GET, POST, PATCH, DELETE'
     }
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors })
-    const key = `${request.method()} ${new URL(request.url()).pathname}`
+    const url = new URL(request.url())
+    const fromSync = synced?.answer(request.method(), url, request.postDataJSON())
+    if (fromSync)
+      return route.fulfill({ status: fromSync.status, headers: cors, json: fromSync.body })
+    const key = `${request.method()} ${url.pathname}`
     if (!(key in answers)) return route.abort()
     return route.fulfill({ status: 200, headers: cors, json: answers[key] })
   })

@@ -49,7 +49,8 @@ list of screens on the stage:
   tapped, its word sheet open, and the known-words line from the app docs' example, 73% 38 of 52
   words known), then each video in `appVideos` (`src/lib/videos.ts`), as the product page's click-to-load card:
   nothing from YouTube loads before it's played. There are no videos yet, so the drawing is alone.
-- Lists: the Favorites list from the App Store screenshot, with 美味しい and 大丈夫 known; the
+- Lists: the Favorites list from the App Store screenshot, with 美味しい and 大丈夫 known and 峠
+  learning, each with the app's tag (#932); the
   frequency packs, JLPT Levels and YouTube first, and 食べる's JLPT N5 and YouTube 165 chips; and
   弱肉強食, live: 肉 starts highlighted, and tapping another kanji moves the highlight to it and its
   part of the reading, as on a word page ([Dictionary](dictionary.md#word-page)).
@@ -135,16 +136,16 @@ Every claim on the page is one the app's product docs make:
 | Claim | App docs |
 | --- | --- |
 | Works offline; look up any word offline; the dictionary is on your iPhone | `dictionary.md`, opening (bundled data) |
-| Image Search: a photo, the library, or a file; text across or down the page, even with English around it; tap a word and the photo stays in view; Translate for the whole passage | `translate.md`, Image Search |
-| Handwriting reads the finished shape in any stroke order; radicals | `dictionary.md`, Search |
-| Search in Japanese, romaji, or English, conjugated forms included | `dictionary.md`, Search |
+| Image Search: a photo, up to 8 from the library, or one shared from another app; text across or down the page, even with English around it; tap a word and the photo stays in view; Translate for the whole passage | `translate.md`, The tab's home and Image Search; `share-sheet.md` |
+| Handwriting reads the finished shape in any stroke order; radicals; school grade | `dictionary.md`, Look Up |
+| Search in Japanese, romaji, or English, conjugated forms included | `dictionary.md`, Look Up |
 | Furigana, pitch accent, conjugations with meanings, kanji readings and stroke order, example sentences | `dictionary.md`, Dictionary and kanji details |
 | Translate: two people, either language in any order, shown as it's spoken, read aloud after a pause; Listening for a TV, a guide, or announcements; on the iPhone after a one-time download | `translate.md` |
 | Player: paste a link or search YouTube, captions under the video that follow it, tap a word to pause and open it, repeat a line, step line by line, 0.5× | `player.md` |
 | Lists, Known Words, and hiding furigana on known words in example sentences and captions | `index.md`, Account; `dictionary.md`, Dictionary and kanji details; `player.md`, Watching |
-| Frequency packs order equally good matches, in the order the learner chooses | `dictionary.md`, Search; `index.md`, Account (Frequency Dictionaries) |
+| Frequency packs order equally good matches, in the order the learner chooses | `dictionary.md`, Look Up; `index.md`, Account (Frequency Dictionaries) |
 | Tap a kanji to see which part of the reading belongs to it | `index.md`, Furigana kanji highlight |
-| Lists: keep the words you meet, saving words and kanji to your own lists, and mark the ones you know | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (Mark as Known, Add to List) |
+| Lists: keep the words you meet, saving words and kanji to your own lists, and mark them Learning or Known | `index.md`, Account (Lists, Known Words); `known-words.md`; `dictionary.md`, Dictionary and kanji details (Add to List) |
 | Pitch accent: hear how a word is said (the page end's collage) | `dictionary.md`, Dictionary and kanji details (the pitch capsule's speaker) |
 
 The page doesn't say the app needs no account, that anything stays on the iPhone, or that it's

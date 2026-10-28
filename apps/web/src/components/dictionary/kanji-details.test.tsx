@@ -1,9 +1,12 @@
 import { KanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
+import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import type { SavedItem } from '@/lib/account/saved-item'
+import { kanjiDetailsIn } from '@/lib/dictionary/screen-text'
 import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
 import { visibleText } from '@/test/rendered'
-import { kanjiDetailsProps } from './kanji-props'
+import { kanjiActionsIn, kanjiDetailsProps, kanjiLearnerPromptIn } from './kanji-props'
 
 const kaname = unlinkedKanjiDetails(fixtureKanji('要'))
 
@@ -20,12 +23,21 @@ describe("a kanji's details offer what the app's Kanji Detail has beside them", 
     expect(parts).toEqual(['Readings', 'Elements', 'Lists', 'Notes', 'Words'])
   })
 
-  test('Lists and Notes offer the app, as on a word page', () => {
+  test("Lists and Notes offer the app's actions, as on a word page", () => {
     const part = (title: string) =>
       visibleText(html.match(new RegExp(`<h3[^>]*>${title}</h3>([\\s\\S]*?)</section>`))?.[1] ?? '')
     expect(part('Lists')).toBe('Add to List Save it to your lists in the Zenbu app. Add to List')
     expect(part('Notes')).toBe('Add Note Write notes and attach photos in the Zenbu app. Add Note')
   })
+})
+
+test("a kanji's More actions, Lists, and Notes save to the kanji itself, on a word page too", () => {
+  const shown = kanjiDetailsIn(kaname, 'en')
+  const savedTo = (element: unknown) => (element as ReactElement<{ item: SavedItem }>).props.item
+  const kanji = { id: 'kanji:要', headword: '要', reading: 'ヨウ' }
+  expect(savedTo(kanjiActionsIn('en')(shown))).toEqual(kanji)
+  expect(savedTo(kanjiLearnerPromptIn('en')(shown)('lists'))).toEqual(kanji)
+  expect(savedTo(kanjiDetailsProps(kaname, 'en').learnerPrompt('notes'))).toEqual(kanji)
 })
 
 describe("a kanji's details on a Japanese page", () => {

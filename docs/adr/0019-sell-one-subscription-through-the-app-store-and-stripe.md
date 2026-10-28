@@ -37,8 +37,8 @@ notifications it missed.
 **Sandbox purchases in production.** App Review and TestFlight buy in Apple's sandbox, so
 production must take sandbox purchases or the reviewer's purchase unlocks nothing. Taken from
 everyone, any TestFlight tester syncs free in production, and their sandbox renewals notify
-staging; taken only from `APP_STORE_SANDBOX_ACCOUNTS` (App Review's demo account), testers don't.
-Which is the owner's to choose.
+staging; taken only from `APP_STORE_SANDBOX_ACCOUNTS`, testers don't, and neither does App Review, which
+has no demo account (#932). Which is the owner's to choose.
 
 **One subscription per store, one entitlement per account.** The service keeps each store's
 subscription in its own row and makes the account's entitlement from them, so one store's events

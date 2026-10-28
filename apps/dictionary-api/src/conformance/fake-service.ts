@@ -34,6 +34,7 @@ export function fakeService(overrides: Partial<DictionaryService> = {}): Diction
     wordSitemaps: async () => [],
     sitemapWords: async () => null,
     retired: async () => ({}),
+    pages: async () => ({ words: [], kanji: [] }),
     browseSummary: async () => ({}) as never,
     kanaIndex: async script => ({ script, total: 0, initials: [] }),
     kanaInitial: async () => null,

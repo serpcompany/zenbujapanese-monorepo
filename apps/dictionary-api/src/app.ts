@@ -4,6 +4,7 @@ import {
   dictionaryContractHeader
 } from '@zenbu/dictionary-core/artifact/contract'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
+import { maximumPagesAsked, pagesAsked } from '@zenbu/dictionary-core/artifact/pages'
 import { categoryOrders, isCategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import { isKanaScript, type KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
@@ -166,6 +167,16 @@ export function createApp({ service, token, ready, access = null }: AppOptions) 
   })
 
   app.get('/v1/retired', async context => context.json(await service.retired()))
+
+  app.get('/v1/pages', async context => {
+    const asked = pagesAsked(context.req.query('words'), context.req.query('kanji'))
+    if (!asked) {
+      throw new BadRequest(
+        `words (Language Reference IDs) and kanji (one character each) must name one at least, and at most ${maximumPagesAsked} of each`
+      )
+    }
+    return context.json(await service.pages(asked))
+  })
 
   app.get('/v1/radicals', async context => context.json(await service.radicals()))
 

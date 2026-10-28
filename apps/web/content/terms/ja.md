@@ -46,12 +46,14 @@ screens are in English; the Japanese pages say so where a reader would otherwise
 | frequency list | 頻出語リスト | |
 | JLPT vocabulary | JLPT単語 | |
 | kana chart | 五十音表 | |
+| Look Up (the app's tab) | 検索 | 検索タブ in running text |
 | Image Search (the app's tab) | 画像検索 | |
 | Translate (the app's tab) | 翻訳 | |
 | Player (the app's tab) | プレイヤー | |
 | Lists (the app's tab) | リスト | |
 | Account (the app's tab) | アカウント | アカウントタブ in running text |
 | Known (a learner's mark) | 覚えた | 覚えた単語 for Known Words |
+| Learning (a learner's mark) | 学習中 | 学習中の単語 for the words marked Learning |
 | handwriting | 手書き入力 | |
 | offline | オフライン | |
 | sign in, sign out | ログイン、ログアウト | |

@@ -188,6 +188,7 @@ export function createPool(start: StartWorker, size: number): Pool {
     wordSitemaps: () => call('wordSitemaps', []),
     sitemapWords: (number, after, limit) => call('sitemapWords', [number, after, limit]),
     retired: () => call('retired', []),
+    pages: asked => call('pages', [asked]),
     browseSummary: () => call('browseSummary', []),
     kanaIndex: script => call('kanaIndex', [script]),
     kanaInitial: (script, initial) => call('kanaInitial', [script, initial]),
