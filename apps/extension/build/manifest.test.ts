@@ -1,14 +1,36 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import packageJson from '../package.json' with { type: 'json' }
 import { extensionIdOf } from './key.ts'
 import {
   builtContentScripts,
   contentScriptFile,
+  iconFile,
+  iconSizes,
   manifest,
   minimumChromeVersion
 } from './manifest.ts'
 
 describe('manifest', () => {
+  it("declares Zenbu's logo as the extension's and the toolbar icon's at every size Chrome uses, in every build", () => {
+    const named = Object.fromEntries(iconSizes.map(size => [size, iconFile(size)]))
+    expect(iconSizes).toEqual([16, 32, 48, 128])
+    for (const variant of ['release', 'test'] as const) {
+      const built = manifest(variant)
+      expect(built.icons).toEqual(named)
+      expect(built.action.default_icon).toEqual(named)
+    }
+  })
+
+  it('draws each icon from the brand folder at the size it is named for', () => {
+    for (const size of iconSizes) {
+      const png = readFileSync(
+        new URL(`../../../assets/brand/extensions/icon-${size}.png`, import.meta.url)
+      )
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([size, size])
+    }
+  })
+
   const youTubeScript = {
     matches: ['https://www.youtube.com/*'],
     js: ['youtube.js'],
@@ -89,7 +111,7 @@ describe('manifest', () => {
   it('has no toolbar popup, so a click on the toolbar icon opens the side panel', () => {
     for (const variant of ['release', 'test'] as const) {
       const built = manifest(variant)
-      expect(built.action).toEqual({ default_title: 'Zenbu Japanese' })
+      expect(built.action).not.toHaveProperty('default_popup')
       expect(built.side_panel).toEqual({ default_path: 'pages/side-panel.html' })
     }
   })
