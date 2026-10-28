@@ -51,7 +51,8 @@ vi.mock('../shared/dictionary', () => ({
   lookUpWordExamples: (entSeq: number, from: number) => lookups.lookUpWordExamples(entSeq, from),
   lookUpKanji: (character: string) => lookups.lookUpKanji(character),
   lookUpFormExamples: (form: string, from: number) => lookups.lookUpFormExamples(form, from),
-  resolveWord: (headword: string, reading: string) => lookups.resolveWord(headword, reading)
+  resolveWord: (headword: string, reading: string) => lookups.resolveWord(headword, reading),
+  searchDictionary: vi.fn()
 }))
 
 const entry = (entSeq: number) => fixtureWordRows.find(rows => rows.entry.entSeq === entSeq) ?? null
@@ -412,9 +413,9 @@ describe('Word Detail', () => {
 describe('Word Detail in the side panel', () => {
   const host = (page: PanelPage): PanelHost => ({
     windowId: async () => 1,
-    readLastTab: async () => 'words',
+    readLastTab: async () => 'account',
     saveLastTab: () => undefined,
-    readRoute: async () => ({ tab: 'words', page }),
+    readRoute: async () => ({ tab: 'account', page }),
     clearRoute: () => undefined,
     watchRoutes: () => () => undefined
   })

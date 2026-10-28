@@ -1,12 +1,12 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { Button } from '@zenbu/ui/components/button'
-import { CaptionsOff, MonitorPlay } from 'lucide-react'
+import { CaptionsOff, History, MonitorPlay } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { captionLabels } from '../captions/labels'
 import type { CaptionsAnswer } from '../captions/messages'
 import type { Settings } from '../shared/settings'
 import { useSettings } from '../shared/use-settings'
-import { emptyTab } from '../side-panel/empty-tab'
+import { EmptyState, emptyTab, SignUpButton } from '../side-panel/empty-tab'
 import { labels as panelLabels } from '../side-panel/labels'
 import type { PanelTabProps } from '../side-panel/route'
 import { translateLabels } from '../translate/labels'
@@ -20,7 +20,19 @@ import { useCaptions, usePlayback } from './use-video'
 
 type Shared = { services: VideoTabServices; open: PanelTabProps['open'] }
 
-const NoVideo = emptyTab(MonitorPlay, panelLabels.empty.video)
+function NoVideo() {
+  return (
+    <div className="flex flex-col">
+      <EmptyState icon={MonitorPlay} text={panelLabels.empty.video} />
+      <section data-recent className="border-t">
+        <h2 className="px-4 pt-4 font-heading text-base font-medium">{panelLabels.recent}</h2>
+        <EmptyState icon={History} text={panelLabels.empty.recent}>
+          <SignUpButton />
+        </EmptyState>
+      </section>
+    </div>
+  )
+}
 
 const NoJapaneseCaptions = emptyTab(CaptionsOff, { title: captionLabels.noJapaneseCaptions })
 
@@ -160,8 +172,7 @@ function VideoCaptions({
 }: Shared & { video: WatchedVideo; shown: boolean }) {
   const { answer, tryAgain } = useCaptions(shared.services, video)
   const settings = useSettings()
-  if (answer && 'state' in answer && answer.state === 'no-video')
-    return <NoVideo open={shared.open} />
+  if (answer && 'state' in answer && answer.state === 'no-video') return <NoVideo />
   if (answer && 'state' in answer && answer.state === 'no-japanese-captions')
     return <NoJapaneseCaptions open={shared.open} />
   return (
@@ -199,7 +210,7 @@ export function VideoTab({
     else setOpened(current => (current === key ? current : null))
   }, [shown, key])
   if (video === undefined) return null
-  if (video === null) return <NoVideo open={open} />
+  if (video === null) return <NoVideo />
   if (key !== opened) return null
   return <VideoCaptions key={key} video={video} shown={shown} services={services} open={open} />
 }

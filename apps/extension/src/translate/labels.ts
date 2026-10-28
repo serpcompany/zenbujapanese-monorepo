@@ -8,6 +8,7 @@ export const translateLabels = {
   useSelection: 'Use Selection',
   clear: 'Clear',
   translate: 'Translate',
+  image: 'Image',
   translating: 'Translating…',
   onThisDevice: 'Translated on this device',
   copy: 'Copy',

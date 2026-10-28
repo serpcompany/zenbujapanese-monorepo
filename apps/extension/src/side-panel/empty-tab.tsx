@@ -8,7 +8,7 @@ import {
   EmptyTitle
 } from '@zenbu/ui/components/empty'
 import type { LucideIcon } from 'lucide-react'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { websiteOrigin } from '../shared/hosts'
 import { labels } from './labels'
 import type { PanelTabProps } from './route'
@@ -30,27 +30,33 @@ export function SignUpButton() {
   )
 }
 
-export function emptyTab(
-  Icon: LucideIcon,
-  text: EmptyText,
-  Action?: ComponentType
-): ComponentType<PanelTabProps> {
+export function EmptyState({
+  icon: Icon,
+  text,
+  className,
+  children
+}: {
+  icon: LucideIcon
+  text: EmptyText
+  className?: string
+  children?: ReactNode
+}) {
+  return (
+    <Empty className={className}>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon />
+        </EmptyMedia>
+        <EmptyTitle>{text.title}</EmptyTitle>
+        {text.description && <EmptyDescription>{text.description}</EmptyDescription>}
+      </EmptyHeader>
+      {children && <EmptyContent>{children}</EmptyContent>}
+    </Empty>
+  )
+}
+
+export function emptyTab(Icon: LucideIcon, text: EmptyText): ComponentType<PanelTabProps> {
   return function EmptyTab() {
-    return (
-      <Empty className="h-full">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Icon />
-          </EmptyMedia>
-          <EmptyTitle>{text.title}</EmptyTitle>
-          {text.description && <EmptyDescription>{text.description}</EmptyDescription>}
-        </EmptyHeader>
-        {Action && (
-          <EmptyContent>
-            <Action />
-          </EmptyContent>
-        )}
-      </Empty>
-    )
+    return <EmptyState icon={Icon} text={text} className="h-full" />
   }
 }
