@@ -6,7 +6,9 @@ export type ExtensionPage = {
   name: string
   path: string
   manifestKey: string
-  title?: string
+  documentTitle: string
+  heading: string
+  headingDrawn: boolean
   text: string
 }
 
@@ -15,13 +17,18 @@ export const extensionPages: ExtensionPage[] = [
     name: 'side-panel',
     path: 'pages/side-panel.html',
     manifestKey: 'side_panel.default_path',
+    documentTitle: labels.name,
+    heading: labels.name,
+    headingDrawn: false,
     text: sidePanelLabels.empty.video.title
   },
   {
     name: 'settings',
     path: 'pages/settings.html',
     manifestKey: 'options_ui.page',
-    title: settingsLabels.title,
+    documentTitle: `${settingsLabels.title} · ${labels.name}`,
+    heading: settingsLabels.title,
+    headingDrawn: true,
     text: settingsLabels.details['readingAids.wordMeanings']
   }
 ]
