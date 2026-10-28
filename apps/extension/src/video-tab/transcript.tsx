@@ -7,6 +7,7 @@ import type { Settings } from '../shared/settings'
 import type { PanelPage } from '../side-panel/route'
 import { lineGlosses, SourceLine } from '../translate/source-words'
 import { type Playback, playingLine } from '../video/follower'
+import { popupPause } from '../video/popup-pause'
 import { videoTabLabels } from './labels'
 import type { VideoTabServices } from './services'
 
@@ -97,24 +98,25 @@ const Row = memo(function Row({
 
 function usePopupPause(services: VideoTabServices, tabId: number, playing: () => boolean) {
   const open = useRef(new Map<number, () => void>())
-  const resume = useRef(false)
+  const pause = useMemo(
+    () =>
+      popupPause({
+        playing,
+        play: () => services.control(tabId, { type: 'play' }),
+        pause: () => services.control(tabId, { type: 'pause' })
+      }),
+    [services, tabId, playing]
+  )
   const popupChanged = useCallback<PopupChanged>(
     (id, opened, dismiss) => {
       const popups = open.current
-      if (!opened) {
-        popups.delete(id)
-        if (popups.size > 0 || !resume.current) return
-        resume.current = false
-        return services.control(tabId, { type: 'play' })
-      }
-      const first = popups.size === 0
-      for (const [other, close] of popups) if (other !== id) close()
-      popups.set(id, dismiss)
-      if (!first) return
-      resume.current = playing()
-      services.control(tabId, { type: 'pause' })
+      if (opened) {
+        for (const [other, close] of popups) if (other !== id) close()
+        popups.set(id, dismiss)
+      } else popups.delete(id)
+      pause.changed(popups.size > 0)
     },
-    [services, tabId, playing]
+    [pause]
   )
   const popupOpen = useCallback(() => open.current.size > 0, [])
   return { popupChanged, popupOpen }

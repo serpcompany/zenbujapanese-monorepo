@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { type BrowserContext, test as base, expect, type Page, type Worker } from '@playwright/test'
 import { contentScriptHost } from './expected.ts'
 import { type LocalServer, startLocalServer } from './local-server.ts'
+import { startYouTubeStandIn, type YouTubeStandIn } from './youtube-stand-in.ts'
 
 export { expect }
 
@@ -17,6 +18,7 @@ export type Extension = {
   serviceWorker: Worker
   server: LocalServer
   manifest: Record<string, unknown>
+  youTube: YouTubeStandIn | null
 }
 
 const extensionSchemes = new Set(['chrome-extension:', 'chrome:', 'data:', 'blob:', 'about:'])
@@ -28,22 +30,27 @@ function isAllowedRequest(url: string, server: LocalServer, extension: Extension
   }
   return (
     extensionSchemes.has(protocol) ||
-    [server.url, server.languageDataUrl, server.allowedSiteUrl].includes(origin)
+    [server.url, server.languageDataUrl, server.allowedSiteUrl, extension.youTube?.origin].includes(
+      origin
+    )
   )
 }
 
-function onlyTheLocalServer(server: LocalServer) {
-  return `--host-resolver-rules=${server.hostRule}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1`
+function onlyTheLocalServer(server: LocalServer, youTube: YouTubeStandIn | null) {
+  const rules = [server.hostRule, ...(youTube ? [youTube.hostRule] : [])].join(', ')
+  return `--host-resolver-rules=${rules}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1`
 }
 
 export const test = base.extend<
   { outsideRequests: string[] },
-  { extension: Extension; languageDataHeld: boolean }
+  { extension: Extension; languageDataHeld: boolean; youTubeStandIn: boolean }
 >({
   languageDataHeld: [false, { option: true, scope: 'worker' }],
+  youTubeStandIn: [false, { option: true, scope: 'worker' }],
   extension: [
-    async ({ playwright, languageDataHeld }, use) => {
+    async ({ playwright, languageDataHeld, youTubeStandIn }, use) => {
       const server = await startLocalServer(0, languageDataHeld)
+      const youTube = youTubeStandIn ? await startYouTubeStandIn() : null
       const profile = mkdtempSync(join(tmpdir(), 'zenbu-extension-'))
       const context = await playwright.chromium.launchPersistentContext(profile, {
         channel: 'chromium',
@@ -51,7 +58,8 @@ export const test = base.extend<
           `--disable-extensions-except=${extensionBuild}`,
           `--load-extension=${extensionBuild}`,
           '--disable-blink-features=WebShare',
-          onlyTheLocalServer(server)
+          onlyTheLocalServer(server, youTube),
+          ...(youTube ? [youTube.certificate] : [])
         ]
       })
       const serviceWorker =
@@ -63,9 +71,10 @@ export const test = base.extend<
       )
       const dynamicOrigin = `chrome-extension://${dynamicId}`
       const manifest = JSON.parse(readFileSync(join(extensionBuild, 'manifest.json'), 'utf8'))
-      await use({ context, id, origin, dynamicOrigin, serviceWorker, server, manifest })
+      await use({ context, id, origin, dynamicOrigin, serviceWorker, server, manifest, youTube })
       await context.close()
       await server.close()
+      youTube?.close()
       rmSync(profile, { recursive: true, force: true })
     },
     { scope: 'worker' }

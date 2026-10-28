@@ -1,5 +1,3 @@
-@reference "../styles/pages.css";
-
 [data-reading-aids][data-furigana="off"] rt,
 [data-reading-aids]:not([data-furigana="off"]) [data-aid="reading"],
 [data-reading-aids]:not([data-romaji="on"]) [data-aid="romaji"],

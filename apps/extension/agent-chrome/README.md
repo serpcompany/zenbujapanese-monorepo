@@ -93,7 +93,9 @@ the video listener with `Page.addScriptToEvaluateOnNewDocument`.
   host.
 - **The stand-in watch page.** Mapped as `www.youtube.com`, every page path, `/watch?v=<id>`
   included, is `site/index.html`: a YouTube-style title and a 20-second muted local video inside
-  `#movie_player`, where the extension's follower looks for it. `POST /youtubei/v1/player` answers
+  `#movie_player`, where the extension's follower looks for it, positioned as YouTube's is, with
+  a stand-in for YouTube's own caption (`.ytp-caption-window-container`). The browser tests serve
+  the same site (`e2e/youtube-stand-in.ts`). `POST /youtubei/v1/player` answers
   #984's player fixture (`src/captions/fixtures/player-japanese.json`) for the asked video, and
   `/api/timedtext` answers `stand-in-timedtext.xml`, three lines made of words in the fixture
   dictionary (要求, 要る, 要領, 要所), so each line's words link in a test build. Each answer is a

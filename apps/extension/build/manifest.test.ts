@@ -52,6 +52,16 @@ describe('manifest', () => {
     ])
   })
 
+  it('lets the caption on the YouTube player load the same fonts, in every build', () => {
+    for (const variant of ['release', 'test'] as const) {
+      const [fonts] = manifest(variant).web_accessible_resources
+      expect(manifest(variant).web_accessible_resources).toHaveLength(1)
+      expect(fonts.resources).toEqual(['assets/*.woff2'])
+      expect(fonts.matches).toContain('https://*/*')
+    }
+    expect(manifest('release').content_scripts[0].matches).toEqual(['https://www.youtube.com/*'])
+  })
+
   it('needs a Chrome with the Translator API, asks only for what the offline dictionary, scripting and YouTube need, and asks for other sites only when the learner allows one', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)

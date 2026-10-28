@@ -1,4 +1,3 @@
-import './reading-aids.css'
 import type { ReactNode } from 'react'
 import type { Settings } from '../shared/settings'
 

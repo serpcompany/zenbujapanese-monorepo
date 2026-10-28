@@ -11,7 +11,7 @@ import { askCaptions } from '../captions/messages'
 import { answerCaptions } from '../captions/serve-captions'
 import { watchedVideoId } from '../video/watch-page'
 import type { youTubeFollower } from '../video/youtube-follower'
-import { followYouTubePage } from '../video/youtube-page'
+import { followYouTubePage, type PlayerCaptions } from '../video/youtube-page'
 import { videoTabPortsStandIn } from './video-tab-ports'
 
 type ContentListener = (message: unknown) => false
@@ -21,13 +21,15 @@ type Options = {
   captionsOn?: boolean
   follow?: typeof youTubeFollower
   contentScript?: boolean
+  captions?: PlayerCaptions
 }
 
 export function watchedTab({
   tabId = 5,
   captionsOn = true,
   follow,
-  contentScript: injected = true
+  contentScript: injected = true,
+  captions
 }: Options = {}) {
   const youTube = youTubeStandIn()
   const contentScript = new Set<ContentListener>()
@@ -69,7 +71,8 @@ export function watchedTab({
         },
         onConnect: ports.onConnect(tabId)
       },
-      follow
+      follow,
+      captions
     })
   let stop = injected ? load() : () => undefined
   const fromPanel = { sendMessage: sendFrom({}) }

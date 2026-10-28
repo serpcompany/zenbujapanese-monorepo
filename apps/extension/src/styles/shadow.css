@@ -2,5 +2,6 @@
 @import "tailwindcss";
 @import "@zenbu/ui/styles/theme.css";
 @import "./font.css";
+@import "../word-detail/reading-aids.css";
 
 @source "../../../../packages/ui/src";
