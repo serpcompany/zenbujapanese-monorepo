@@ -107,7 +107,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     audit("Media Library, empty", in: app)
     goBack(in: app)
     markJapanKnownFromItsResult(in: app)
-    open(.account, in: app)
+    tap(tabItem(.account, in: app))
     openAccountRow("account.known-words", showing: find("result.japan", in: app), in: app)
     audit("Known Words", in: app)
     goBack(in: app)

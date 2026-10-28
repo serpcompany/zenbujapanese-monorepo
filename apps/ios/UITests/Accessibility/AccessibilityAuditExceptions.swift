@@ -201,6 +201,12 @@ private let textThatScales = [
       "Show Furigana", "Show Word Meanings", "Hide Furigana on Known Words",
     ]), on: ["Reading Aids"], because: Why.scales),
   allow(.dynamicType, .labels(["Learning", "Lists", "1", "Translations", "0"]), on: ["Account"], because: Why.scales),
+  allow(
+    .dynamicType,
+    .labels([
+      "TODAY", "0 of 20 new words", "20 more to reach today’s goal", "M", "T", "W", "F", "S", "Daily Goal",
+      "20 new words",
+    ]), on: ["Account"], because: Why.scales),
   allow(.dynamicType, .label("Send Crash Reports"), on: ["Account, its about rows"], because: Why.scales),
   allow(
     .textClipped, .label("Send Crash Reports"), on: ["Account, its about rows"], touch, [.standard],
@@ -218,7 +224,9 @@ private let textThatScales = [
       "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history, and bookmarked translations, on all your devices",
     ]),
     on: ["Account"], because: Why.scales),
-  allow(.textClipped, .labels(["Learning", "Lists"]), on: ["Account"], touch, [.standard], because: Why.scales),
+  allow(
+    .textClipped, .labels(["Learning", "Lists", "Daily Goal"]), on: ["Account"], touch, [.standard],
+    because: Why.scales),
   allow(
     .textClipped, .labels(["Media Library", "Known Words", "Learning"]), on: ["Account's library rows, alone"], [.phone],
     [.largest], because: Why.scales),

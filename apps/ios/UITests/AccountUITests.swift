@@ -126,7 +126,7 @@ final class AccountUITests: ZenbuUITestCase {
   func testReadingAidsAndFrequencyDictionariesOpen() {
     let app = launch()
     open(.account, in: app)
-    tap(reveal(find("account.reading-aids", in: app), in: app))
+    openReadingAids(showing: "show-furigana", in: app)
     for toggle in [
       "show-furigana", "show-romaji", "show-word-meanings", "show-kanji-meanings", "show-translations",
     ] {
@@ -234,8 +234,7 @@ final class AccountUITests: ZenbuUITestCase {
   func testTurningFuriganaOffShowsTheReadingUnderTheHeadword() {
     let app = launch()
     open(.account, in: app)
-    tap(reveal(find("account.reading-aids", in: app), in: app))
-    let furigana = waitFor(find("reading-aids.show-furigana", in: app))
+    let furigana = openReadingAids(showing: "show-furigana", in: app)
     flip(furigana)
     waitUntil(furigana, Self.switchedOff)
     search("japan", in: app)

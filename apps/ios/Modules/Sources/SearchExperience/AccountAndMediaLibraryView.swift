@@ -47,6 +47,7 @@ struct AccountRootView: View {
   @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @Environment(NotesWithoutAWord.self) var notesWithoutAWord
   let translationHistory: ConversationHistory
+  @State private var reportsProblem = false
 
   var body: some View {
     List {
@@ -94,7 +95,7 @@ struct AccountRootView: View {
           }
           .accessibilityIdentifier("account.support")
 
-          ReportAProblemButton()
+          ReportAProblemButton(reportsProblem: $reportsProblem)
 
           CrashReportsToggle()
         } footer: {
@@ -116,6 +117,7 @@ struct AccountRootView: View {
     }
     .compactSectionSpacing()
     .accessibilityIdentifier("account.list")
+    .modifier(ProblemReportSheet(isPresented: $reportsProblem))
     .navigationTitle("Account")
     .inlineNavigationTitle()
   }

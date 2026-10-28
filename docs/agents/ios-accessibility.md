@@ -96,6 +96,12 @@ their clipped titles with no element, in every pass, and a finding with no eleme
 The Today card's week strip stays one row of seven days at every size for the same reason: wrapped
 to four columns at the accessibility sizes, the sweep lost the three days that moved to a second
 row, three findings with no element, and reported the Daily Goal row under the card (#1085).
+On the whole page, under the profile, the sweep still reports the card's text and the Daily Goal
+row as not following the text size, and Daily Goal as clipped, in each of four runs; alone at the
+page's top at the largest size it reports none, and every line is a text style, so they are allowed
+as text that scales.
+Report a Problem's sheet is presented from the Account list, not from its row: with the card
+above it, the row left the list during the sweep, and the sheet closed with it (#1085).
 With Learning added (#1037), the five rows alone put Translations under the tab bar at the largest
 size, where the sweep reported a clipped title with no element; so the rows are audited in three
 launches, `library`, `collections`, and `settings`, each short enough to sit clear of the bar.
