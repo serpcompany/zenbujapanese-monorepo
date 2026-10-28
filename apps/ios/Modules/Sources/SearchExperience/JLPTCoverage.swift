@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 struct JLPTCoverage: Decodable, Equatable, Sendable {
   struct Pace: Decodable, Equatable, Sendable {
@@ -46,7 +47,9 @@ struct JLPTCoverageRequest: Encodable, Hashable, Sendable {
     let words = { (status: WordKnowledgeStatus) in
       knowledge.marked(status).filter { $0.kanji == nil }.map(\.entryID).sorted()
     }
-    let parts = calendar.dateComponents([.year, .month, .day], from: day)
+    var gregorian = Calendar(identifier: .gregorian)
+    gregorian.timeZone = calendar.timeZone
+    let parts = gregorian.dateComponents([.year, .month, .day], from: day)
     self.init(
       known: words(.known), learning: words(.learning), goal: goal,
       today: String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0))
@@ -67,6 +70,10 @@ final class JLPTCoverageModel {
   nonisolated static let live: Ask = { request in
     try await LanguageReferenceData.shared.jlptCoverage(request)
   }
+
+  private static let logger = Logger(
+    subsystem: Bundle.main.bundleIdentifier ?? "com.zenbujapanese.dictionary",
+    category: "JLPTCoverage")
 
   var goal: Int
   private(set) var coverage: JLPTCoverage?
@@ -117,8 +124,12 @@ final class JLPTCoverageModel {
   }
 
   private func answer(_ request: JLPTCoverageRequest) async {
-    guard request != answered, let found = try? await ask(request) else { return }
-    answered = request
-    coverage = found
+    guard request != answered else { return }
+    do {
+      coverage = try await ask(request)
+      answered = request
+    } catch {
+      Self.logger.error("Couldn't ask for JLPT coverage: \(error, privacy: .public)")
+    }
   }
 }

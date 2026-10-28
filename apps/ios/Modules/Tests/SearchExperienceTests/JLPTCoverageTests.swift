@@ -95,6 +95,17 @@ final class JLPTCoverageTests {
     #expect(inPack == [667, 630, 1_651, 1_738, 3_061])
   }
 
+  @Test(
+    "today is the Gregorian day in the device's time zone, whatever its calendar",
+    arguments: [Calendar.Identifier.japanese, .buddhist, .gregorian])
+  func todayIsGregorian(_ identifier: Calendar.Identifier) async {
+    var device = Calendar(identifier: identifier)
+    device.timeZone = calendar.timeZone
+    let request = JLPTCoverageRequest(
+      knowledge: await loadedKnowledge(), goal: 20, on: october28, in: device)
+    #expect(request.today == "2026-10-28")
+  }
+
   @Test("the model asks again after a word changes state and after the goal changes")
   func asksAgain() async throws {
     let knowledge = await loadedKnowledge()
