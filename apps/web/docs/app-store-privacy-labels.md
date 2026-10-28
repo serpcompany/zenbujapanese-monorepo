@@ -61,7 +61,8 @@ four for the crash reports and problem reports it sends to Sentry
 ([`crash-reports.md`](../../ios/docs/product/crash-reports.md),
 [`problem-reports.md`](../../ios/docs/product/problem-reports.md)). A problem report also sends an
 email for a reply, answered under Email Address: the account's, filled in when signed in, or one
-the learner types.
+the learner types. With 2.1.0 (#932), App Privacy adds Purchase History, Photos or Videos, and
+Search History, and answers settings as Product Interaction.
 
 | Apple's data type | What the account keeps | Purpose | Linked to the user | Used for tracking |
 | --- | --- | --- | --- | --- |
@@ -81,8 +82,9 @@ Crash data is linked because a problem report shares its install ID and can carr
 email ([ADR 0021](../../../docs/adr/0021-send-problem-reports-through-the-crash-reports-sentry-setup.md)).
 Crash reports are on until the learner turns off **Send Crash Reports**, a problem report goes
 only when the learner sends one, and Debug builds never send either. Its Other User Content is the
-known words and lists it syncs, the word notes the learner writes (each note's text and the word
-it's on; the account remembers the IDs of up to 1,000 deleted ones), and the Translate sentences
+known words and lists it syncs, with each word's state, Learning included (#1035), the word notes
+the learner writes (each note's text and the word it's on; the account remembers the IDs of up to
+1,000 deleted ones), and the Translate sentences
 the learner bookmarks: each one's text and translation, its language, and when it was bookmarked
 (or said, for one bookmarked before the app synced bookmarks), which may be what someone nearby
 said. It never sends a conversation, or a sentence the learner didn't bookmark, and it keeps no
@@ -95,7 +97,7 @@ metrics are off (`CrashReporterOptionsTests`), and a freeze is one report with i
 not a launch time or hang rate. Declare it if any of those is turned on.
 
 Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same fourteen types, and the
-listing's description, in `apps/ios/metadata/version/1.0/en-US.json`, says what syncs. Change them
+listing's description, in `apps/ios/metadata/version/2.1.0/en-US.json`, says what syncs. Change them
 with the labels:
 
 - **The privacy manifest**: one dictionary per type in the `NSPrivacyCollectedDataTypes` array. Each has the keys `NSPrivacyCollectedDataType` (the

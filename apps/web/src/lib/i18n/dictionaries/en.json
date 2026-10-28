@@ -1147,7 +1147,7 @@
         "pitch": "Every word, fully explained, with no connection needed.",
         "features": {
           "search": "Search in Japanese, romaji, or English, conjugated forms included",
-          "draw": "Draw a kanji in any stroke order, or find it by its radicals",
+          "draw": "Draw a kanji in any stroke order, or find it by its radicals or school grade",
           "details": "Furigana and pitch accent, with every conjugation and what it means",
           "kanji": "Each kanji’s readings and stroke order, plus real example sentences"
         },
@@ -1163,7 +1163,7 @@
         "name": "Image Search",
         "pitch": "Point at Japanese, then tap any word.",
         "features": {
-          "photo": "Take a photo, or choose one from your library or files",
+          "photo": "Take a photo, choose up to 8 from your library, or share one from another app",
           "reads": "Reads text across or down the page, even with English around it",
           "tap": "Tap a word to open it in the dictionary with the photo still in view",
           "translate": "Switch to Translate for the whole passage"
@@ -1202,15 +1202,15 @@
       },
       "lists": {
         "name": "Lists",
-        "pitch": "Keep the words you meet, and mark the ones you know.",
+        "pitch": "Keep the words you meet, and mark the ones you’re learning and the ones you know.",
         "features": {
-          "save": "Save words and kanji to your own lists",
+          "save": "Save words and kanji to your own lists, and mark them Learning or Known",
           "known": "Hide the furigana on words you’ve marked known, in example sentences and captions",
           "frequency": "Among equally good search matches, the frequency lists you choose set the order: JLPT, YouTube, anime, manga, novels, and more",
           "furigana": "Tap a kanji to see which part of the reading belongs to it"
         },
         "media": {
-          "list": "A list with known words",
+          "list": "A list with known and learning words",
           "frequency": "Frequency dictionaries",
           "furigana": "Tap a kanji"
         }
@@ -1679,9 +1679,9 @@
     },
     "demos": {
       "search": {
-        "label": "Search",
-        "title": "Search in any script",
-        "description": "Type Japanese, kana, romaji, or English. Among equally good matches, the most common words come first."
+        "label": "Look Up",
+        "title": "Look up in any script",
+        "description": "Type Japanese, kana, romaji, or English. Sort by a frequency list or JLPT level, and filter to the words you know or are learning."
       },
       "imageSearch": {
         "label": "Image Search",
@@ -1710,7 +1710,7 @@
       "next": "Next screenshots"
     },
     "captions": {
-      "searchResults": "Search in any script",
+      "searchResults": "Look up in any script",
       "wordDetail": "Pitch accent and meanings",
       "imageSearch": "Read Japanese from a photo",
       "handwriting": "Draw a kanji you can’t type",
@@ -1733,7 +1733,7 @@
       },
       "handwriting": {
         "title": "Handwriting",
-        "description": "Draw a kanji in any stroke order, or build it from its radicals."
+        "description": "Draw a kanji in any stroke order, build it from its radicals, or find it by school grade."
       },
       "translate": {
         "title": "Translate",
@@ -1744,8 +1744,8 @@
         "description": "YouTube with linked Japanese captions. Tap a word to look it up."
       },
       "lists": {
-        "title": "Lists and Known Words",
-        "description": "Save words to your own lists and hide furigana on words you know."
+        "title": "Lists, Learning, and Known Words",
+        "description": "Save words to your own lists, mark them Learning or Known, and hide furigana on words you know."
       },
       "frequency": {
         "title": "Frequency dictionaries",
@@ -1773,9 +1773,13 @@
         "question": "Which frequency lists does it use?",
         "answer": "JLPT levels and YouTube come built in. Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, and Video Games are optional downloads."
       },
+      "subscription": {
+        "question": "What does a subscription add?",
+        "answer": "Sync. A Zenbu subscription, monthly or yearly, keeps your known and learning words, lists, notes, photos, settings, and recent lookups the same on every device you sign in to. The dictionary, Image Search, Translate, and Player stay free."
+      },
       "web": {
         "question": "Is the web dictionary the same?",
-        "answer": "It has the same entries as the app’s Search tab, free in your browser. Image Search, handwriting, Translate, and Player are in the app.",
+        "answer": "It has the same entries as the app’s Look Up tab, free in your browser. Image Search, handwriting, Translate, and Player are in the app.",
         "link": "Search the dictionary"
       }
     },
@@ -1854,7 +1858,7 @@
         "handwriting": "Handwriting",
         "translate": "Translate",
         "player": "Player",
-        "lists": "Lists and Known Words"
+        "lists": "Lists, Learning, and Known Words"
       }
     },
     "facts": {
@@ -1915,12 +1919,12 @@
     "withPitch": "{pronounce}. {pitch}"
   },
   "screenshots": {
-    "searchResults": "Search results for taberu in the app: 食べる, to eat, then 食べるラー油",
-    "wordDetail": "The app’s word page for 大丈夫, with its pitch accent, meanings, and frequency",
+    "searchResults": "Look Up’s results for taberu in the app: 食べる, to eat, then 食べるラー油",
+    "wordDetail": "The app’s word page for 大丈夫, with its pitch accent and meanings, two of them with an example sentence",
     "imageSearchPhoto": "Image Search in the app reading a shop’s note to its customers, with every word underlined",
     "imageSearch": "Image Search reading a ramen menu in the app, with 醤油, soy sauce, open",
     "imageSearchTranslate": "The shop’s note translated in the app paragraph by paragraph, with the idiom 急がば回れ explained",
-    "handwriting": "The kanji 峠 drawn by hand in the app, with the kanji it could be above it",
+    "handwriting": "The kanji 峠 drawn by hand in the app, with the kanji it could be below it",
     "kanjiDetail": "The app’s kanji details for 峠, mountain pass, with its strokes, school grade, and JLPT level",
     "conjugations": "The app’s conjugation table for 頑張る, to persevere, with each ending highlighted",
     "translate": "A conversation in the app’s Translate tab, asking the way to Tokyo Station in English and Japanese"

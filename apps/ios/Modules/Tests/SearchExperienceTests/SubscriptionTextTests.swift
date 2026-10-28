@@ -79,7 +79,7 @@ struct SubscriptionTextTests {
     let appInfo = try JSONSerialization.jsonObject(
       with: Data(contentsOf: listing.appending(path: "app-info/en-US.json"))) as? [String: Any]
     let version = try JSONSerialization.jsonObject(
-      with: Data(contentsOf: listing.appending(path: "version/1.0/en-US.json"))) as? [String: Any]
+      with: Data(contentsOf: listing.appending(path: "version/2.1.0/en-US.json"))) as? [String: Any]
     #expect(appInfo?["privacyPolicyUrl"] as? String == ZenbuLinks.privacyPolicy.absoluteString)
     #expect(version?["supportUrl"] as? String == ZenbuLinks.support.absoluteString)
   }

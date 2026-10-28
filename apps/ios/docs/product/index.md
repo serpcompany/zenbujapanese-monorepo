@@ -362,7 +362,7 @@ made in another app, as [Zenbu account and sync](account-sync.md) says. Once a l
 signed in to the same Zenbu account in this app and in Tomodachi:
 
 - The first time a word reaches Tomo's "knows it" stage, Tomodachi marks it Known. After the app
-  syncs, it shows in Known Words, with the **✓ Known** capsule wherever the word appears.
+  syncs, it shows in Known Words, with the **✓ Known** tag wherever the word appears.
 - Tomodachi never un-marks a word; only the learner does.
 - Words Known in Zenbu aren't introduced to Tomo as new, though Tomo can still review them.
 - After the learner un-marks a word, Tomodachi marks it again only once the word climbs back to

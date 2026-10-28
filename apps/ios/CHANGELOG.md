@@ -4,15 +4,49 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ## Unreleased
 
+## Not released yet: iPad and the Mac
+
+- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
+  sign in to the same Zenbu account to keep your known words, lists, notes, photos, settings,
+  recent lookups, Recent videos, bookmarks, and profile photo the same everywhere. On iPad it
+  turns every way and runs beside other apps, with the tabs at the top, where they open into a
+  sidebar; on the Mac the tabs sit in a bar at the top of the window. On the Mac, Settings (⌘,)
+  holds your account and preferences, ⌘F goes to Look Up, ⌘⇧I opens Translate's **Image** to
+  search an image, and ⌘1 to ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of
+  taking a photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on
+  every device, drag images onto the window to open them there. Right-click a list, a known word, a
+  Recent video, or a frequency dictionary on the Mac for what a swipe does on the iPhone.
+- On the Mac, clicking a note, or **Add Note** under a word's notes, puts the cursor in the note so
+  you can type; the keyboard used to stay with the page.
+
+## [2.1.0]
+
 ### Added
 
-- Your notes, photos, settings, recent lookups, and profile photo sync too.
-- Syncing can need a Zenbu subscription, sold in the app; everything on your device stays free.
+- Signed in, more stays the same on all your devices: your notes, photos, settings, and latest 50
+  lookups, your profile's name, username, and photo, and the frequency dictionaries you chose,
+  which your other devices download on their own, never on cellular or in Low Data Mode. **Clear
+  Recent Lookups** asks first and, signed in, clears them on every device.
+- Syncing can need a Zenbu subscription, sold in the app; everything on your device stays free,
+  and so does syncing your name and username. **Zenbu Account → Subscription** shows yours, with
+  **Restore Purchases** and a way to manage it in the App Store.
+- Mark a word or kanji **Learning** from **Status** in its **•••** menu, a row's context menu, or a
+  right swipe: it gets a yellow tag and its own list in Account, keeps its furigana and meanings
+  in Reading Aids, and syncs.
 - Sort and filter search results from the **Sorted by** row: by a frequency dictionary, most common
   first (JLPT by level), or known words first, and to unknown, Learning, or known words. Your
   choices stay across launches and apply to Japanese, English, and romaji searches.
-- Mark a word or kanji **Learning** from **Status** in its **•••** menu or a result's swipe: it gets
-  a yellow tag and its own list in Account, and syncs.
+- The **•••** menus of a word, a kanji, Example Sentences, and Player end with **Show**:
+  **Furigana**, **Furigana on Known Words**, **Word Meanings**, and **Translations**, the same
+  switches as Reading Aids. The menu stays open while you flip them.
+- Look Up's cap button, beside the pencil and the grid, opens **Grade**: the kanji taught in each
+  school grade, in secondary school, and for names (Jinmeiyō), with a filter, a green outline on
+  the kanji you know, and how many you know in each. Each kanji shows its meaning under it unless
+  you turn off **Show Kanji Meanings** in Reading Aids.
+- Each meaning on a word's page shows the example sentence JMdict pairs with it, and the word's
+  **Examples** lists those first, even past 100.
+- Tap a meaning on a word's page to hear it in English, copy it, or look up one of its glosses,
+  each taken whole: 厚生労働省 offers "Ministry of Health, Labour and Welfare", not its pieces.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
   translated cards keep coming.
 - Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
@@ -25,12 +59,20 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   photo's translation and words, each opening its card. **Add to List** saves a word to your lists.
 - Look Up finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
-- Tap a meaning on a word's page to hear it in English, copy it, or look up one of its words.
+- **Report a Problem…** in Account sends the developers what happened, with your email for a reply
+  if you want one, and says what else goes with it.
 - Zenbu reports crashes and freezes, never what you type or say. **Send Crash Reports** stops it.
 
 ### Changed
 
 - **Search** is now **Look Up**, and **Clear Recent Searches** is now **Clear Recent Lookups**.
+- **Known Words** and **Learning** show Look Up's rows, with each word's meanings, ranks, and tag,
+  and kanji as Look Up's kanji rows, in place of dates. Swipe a row or press and hold it to change
+  its status.
+- A kanji in Look Up's results shows its own meanings, such as 日's "day, sun, Japan, counter for
+  days", where it used to show one word's meaning ("Sunday").
+- **Share** on a word's or a kanji's page sends its page on zenbujapanese.com with the text, which
+  opens it in Zenbu for anyone who has the app.
 - Image Search moved from Search's camera button to Translate's **Image** row: take a photo or
   pick one from your library, then tap any word to look it up.
 - Translate's home is laid out like Settings: a header, then **Spoken** (Conversation, Listen) and
@@ -42,10 +84,15 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Look Up has a pencil and a grid button, always one tap away, for Handwriting and Radicals. Both
   slide up as a sheet you can drag away, and add their pick to the end of what's in the field, so
   you can build a word from both; Handwriting shows bigger candidates with their meanings, and both
-  have the same **Undo** button for the last stroke or radical. Recent lookups no longer sit under a **Recent** heading.
+  have the same **Undo** button for the last stroke or radical. Radicals' sections open and close.
+  Recent lookups no longer sit under a **Recent** heading.
 - Player works out how many of a video's words you know more than twice as fast, so **Counting known
   words…** gives way to the percentage sooner on a long video, and a video you go back to while
   Zenbu stays open usually shows it at once. Translate counts a conversation's words the same way.
+- Many common compounds now show an estimated pitch accent, and some idioms and 〜的 words no
+  longer show one that was wrong.
+- Account has a small title at the top, like the other tabs.
+- **Licenses** includes Sentry's and ZIPFoundation's license texts.
 
 ### Removed
 
@@ -99,196 +146,29 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - After many sentences have been linked in one session, a caption card, an example sentence, a
   Translate line, or a line of Image Search's text no longer shows some of its words as plain
   text, with no meaning and nothing to tap.
+- A word's pitch accent is its own: 橋, 箸, and 端 now show 2, 1, and 0, where they used to look
+  alike. The accent line sits over the morae its reading counts, as in この間.
+- 2,526 meanings now carry a **Colloquial** note, and the YouTube list ranks 86 more words, such
+  as 家 (いえ).
+- Searches with accented letters, such as `café`, list their words, and Example Sentences lists
+  their English sentences.
+- Romaji searches find words as Zenbu writes them, such as `rāmen`, `kin'en`, and `tsudzuku`, and
+  without the macron too.
+- A number and its counter link as one word in captions and example sentences: 一人 (ひとり),
+  二人 (ふたり), and 十日 (とおか).
+- English example search finds a word's other forms: "startled you" finds "startle you".
+- Pausing a conversation in Translate mid-sentence no longer closes Zenbu.
+- **Sign In** takes a code with spaces around it, or in full-width digits, without using a try.
+  A note longer than 10,000 characters stays on your device, and Zenbu Account says so.
+- A note or a profile field you're typing in is kept when Zenbu closes. Captions, Image Search's
+  lines, Translate's lines, and typed translations appear with their words already linked, without
+  jumping.
+- VoiceOver skips a conversation's blank rows, reads Player's elapsed and total time, and says its
+  position once; the silence prompt and **Video Unavailable** scroll at every text size.
+- **No Dictionary Matches** shows only its title.
 
-## Not released yet: iPad and the Mac
+## Earlier releases
 
-- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
-  sign in to the same Zenbu account to keep your known words, lists, notes, photos, settings,
-  recent lookups, Recent videos, bookmarks, and profile photo the same everywhere. On iPad it
-  turns every way and runs beside other apps, with the tabs at the top, where they open into a
-  sidebar; on the Mac the tabs sit in a bar at the top of the window. On the Mac, Settings (⌘,)
-  holds your account and preferences, ⌘F goes to Look Up, ⌘⇧I opens Translate's **Image** to
-  search an image, and ⌘1 to ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of
-  taking a photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on
-  every device, drag images onto the window to open them there. Right-click a list, a known word, a
-  Recent video, or a frequency dictionary on the Mac for what a swipe does on the iPhone.
-- On the Mac, clicking a note, or **Add Note** under a word's notes, puts the cursor in the note so
-  you can type; the keyboard used to stay with the page.
-
-## [2.0.0] - 2026-10-09
-
-### Added
-
-- Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code sent
-  by email, to keep your known words and lists the same on all your devices and Zenbu apps. Zenbu
-  syncs after each change, when it opens, and when you tap **Sync Now**. Everything still works
-  signed out and offline, and signing out keeps everything on your iPhone; changes you make while
-  signed out sync when you sign back in to the same account. **Favorites** is one list on all your
-  devices. A new account made with Apple takes the name you share with Apple.
-- Signed in, Player's **Recent** videos are the same on all your devices: a video you watch on one
-  appears on the others with how far you got, and one you remove is removed everywhere.
-- Signed in, the sentences you bookmark in **Translations** are the same on all your devices, each
-  with its translation, even where its conversation isn't. Only bookmarked sentences sync;
-  conversations stay on the iPhone they were recorded on.
-- Delete your Zenbu account from **Account → Zenbu Account → Delete Account…**, after signing in
-  again. The account and everything it synced are deleted; your iPhone keeps its known words,
-  lists, notes, and media.
-- Links to zenbujapanese.com's words, searches, and kanji, such as Tomodachi's **Open in Zenbu**,
-  open in Zenbu: a word opens its page, a search searches, and a kanji opens its detail.
-- New **Translate** tab: a Japanese and English translator that runs entirely on the iPhone. Pick
-  **Conversation**, **Listening**, **Text**, or **Document Upload** and tap **Start**. In
-  **Conversation**, two people take turns speaking either language with no language button. Each
-  sentence appears as it's spoken with its translation under it, and the translation is spoken aloud
-  once the speaker pauses while the microphone keeps listening. **Listening** translates Japanese or
-  English from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
-  **Two Panes** (Japanese over English), with buttons to mute spoken translations, change their
-  speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app pauses
-  too. **Text** translates what you type or paste in whichever direction you wrote, and **Document
-  Upload** translates the text in a PDF, a photo, or a text file. Conversations are saved to
-  **Translations**, which shows how many of each one's words you know and has search, copy, share,
-  and delete; in a transcript each sentence can be replayed or bookmarked, and **Bookmarked** lists
-  them. **Account → Translations** opens it too. Every Japanese word opens the dictionary at half
-  height.
-- Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
-  with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),
-  and **Translate** (a natural translation, then context on what the text is and its idioms,
-  with their dictionary meanings). Tapping a word, on the image or in the text, opens it at
-  half height, as in the Player, and vertical text is marked with tinted word chips. Without
-  Apple Translation, Apple Intelligence translates on the device.
-- New **Player** tab: search YouTube or paste a link to watch the video with its Japanese captions
-  as cards below the player instead of over the video. The card being spoken is highlighted and
-  scrolls along as the video plays, tapping a card jumps to that line, and tapping a word pauses the
-  video and opens it in the dictionary at half height. English translations appear beneath each
-  line. Music-app controls add a scrubber, playback speed, and a repeat-line button; while paused,
-  the previous and next line buttons play one line and pause again. Player shows how much of a
-  video's vocabulary you know, such as **73%** 38 of 52 words known, and Recent lists watched
-  videos as cards with that percentage, their length, and how far you watched.
-- **Reading Aids** adds **Show Word Meanings**, a short meaning under each word you haven't marked
-  known; **Show Sentence Translations**, with a translation language and a choice of YouTube or
-  on-device Apple Translation for Player captions (with a button to download Apple's Japanese);
-  and **Hide Furigana on Known Words**.
-- Mark words as **Known**. Swipe a Search result or long-press it, or use the **•••** menu on a
-  word's page. Known words show a green **✓ Known** capsule in Search and on the word's page,
-  and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.
-  Known words are stored on your device.
-- Save words to your own **Lists**. Use **Add to List…** in the **•••** menu on a word's page to add
-  it to any list or a new one; the word's page lists them above Notes. **Account → Lists** starts
-  with **Favorites** and lets you create, rename (swipe, or tap a list in Edit), reorder, and delete
-  lists, and search a list, swipe a word out of it, or select several words to remove. Lists are
-  stored on your device.
-- Share a word from its page: the headword, reading, and meanings are shared as text.
-- New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):
-  **TV & Movies**, **Anime**, **Manga**, **Novels**, **Visual Novels**, and **Video Games**.
-  They match words by reading as well as spelling, so words written the same way, such as
-  方 (ほう, direction) and 方 (かた, person), get their own ranks.
-- Account has a profile at the top: add a photo, name, username, and email, all stored only on
-  your device.
-- JLPT Levels is a new included dictionary, enabled first by default, that marks words with an
-  estimated JLPT level (N5–N1) on Search and Word Detail, such as `JLPT N3`. Search puts
-  easier levels first and breaks ties with the next enabled dictionary. Existing installs get it
-  once at the top of their list. Levels come from Jonathan Waller's lists (CC BY-SA 4.0) and are
-  unofficial study estimates.
-
-### Fixed
-
-- About 1,260 more words now show a YouTube rank, including common ones whose spelling belongs to
-  more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生 (せんせい). About 100
-  words, such as 色 and 猫, now take a better YouTube rank from their usual spelling, not a rare one.
-- Tapping another word while a word's half-height sheet is open, in the Player or Image Search,
-  now shows it in the same half-height sheet instead of reopening the sheet at full height.
-- Image Search now recognizes vertical Japanese (縦書き), such as book pages and signs,
-  instead of reporting that no Japanese text was found. Columns are read right to left.
-- The Results and Discovered Words headings no longer stay pinned over results as you scroll.
-- Inflected Japanese searches such as `まけたら`, `食べなかった`, and `勉強した` now find
-  their dictionary forms (負ける, 食べる, 勉強) without downloading Japanese Text Analysis.
-- Word Detail shows the right part of speech for adverbs, pronouns, pre-noun adjectives, and
-  nouns that take する: もちろん is an adverb, これ a pronoun, この a pre-noun adjective, and 経験
-  a noun and する verb. Common adverbs such as そう and もう now also get a TUBELEX rank.
-
-### Changed
-
-- A kanji's **JLPT** level is now Jonathan Waller's estimate, N5 to N1, so 一 and 日 show N5
-  instead of the old four-level N4. A kanji his lists leave out, such as 分, shows no JLPT level.
-- Zenbu Japanese 2.0 is published by TSMC LLC as an update to 1.0, on the same App Store app
-  (`com.zenbujapanese.dictionary`).
-- Words you marked known no longer show an underline in linked Japanese.
-- The word sheet from Image Search and Player has a close button and **Open Full Entry** in its top
-  bar instead of Done and a bottom button, and no longer repeats the word as its title. Its
-  **Choose** list uses the same rows as Search results. Open Full Entry, and links out of the
-  sheet, stay in the tab the sheet came from.
-- Word Detail lists **Alternatives** after Frequency instead of above Meaning.
-- The app stays in portrait on iPhone.
-- A word's page has **Share** and **•••** buttons in place of **+**. Add Note, Take Photo, and
-  Choose Photo are in the **•••** menu.
-- The Video Games frequency chip is shortened to **Games**.
-- In Account, Help & Support sits with the Privacy Policy and Credits & Attributions below the
-  app's name and version.
-- The included TUBELEX dictionary is now called **YouTube**.
-- Optional frequency dictionaries now download from Zenbu's own servers instead of third-party
-  hosts. Dictionaries you already downloaded keep working.
-- **Credits & Attributions** now uses that name for its screen too, and is trimmed to each
-  source's author, license, and project link. License texts and Tatoeba contributors are on one
-  **Licenses** screen.
-- The You tab is now **Account**, laid out like Settings with colored icons. It adds Help &
-  Support, the Privacy Policy, and the app's version.
-- Account no longer has a Japanese Text Analysis screen. The analysis is included with the app
-  and had nothing to change; its sources and licenses remain under Credits & Attributions.
-- Recent searches sit under a **Recent** heading, and Clear Recent Searches moved to the **⋯**
-  menu at the top of Search.
-- The conjugation table is compact: the word, its meaning, and a one-line rule sit at the top,
-  and every form fits in one list with its changed ending highlighted. Tapping a form opens its
-  own screen, which explains it and lists the example sentences that use it.
-- Example sentences appear as separate cards, underline each word separately so you can see where
-  one word ends and the next begins, and highlight the word or form you're studying. Inflected words
-  such as 見なかった are one tappable word instead of 見 + なかっ + た, here and in Image Search.
-- Search now presents one Results list ordered by dictionary relevance first, then by the enabled
-  frequency dictionaries in priority order. English rows show the gloss that matched the query.
-- TUBELEX remains included and enabled by default. Japanese Wikipedia and nine domain-specific
-  frequency dictionaries can be downloaded and removed from You → Frequency Dictionaries.
-- Any number of frequency dictionaries, including none, can be switched on and reordered from a
-  simplified Frequency Dictionaries screen. Search rows and Word Detail show a rank chip for each
-  enabled dictionary, colored from green for very common words to gray for rare ones.
-- Image Text now divides recognized Japanese into individually selectable words and marks
-  each boundary with a separate underline instead of highlighting broad OCR regions.
-- Selecting a recognized word opens the existing Word Detail experience in a large sheet,
-  with candidate selection and a route to the normal full-screen entry when available.
-- Interactive Japanese text now uses the same Kuromoji parser family as the Zenbu browser
-  extension, with improved dictionary-form resolution and an explicit no-entry state.
-
-### Removed
-
-- The Netflix, TV Shows, Slice of Life, Shonen, Novels, Visual Novel, NHK, JP Dict, and Internet
-  frequency dictionaries are removed because their sources have no license. If you downloaded
-  any of them, they are deleted when you update. Download their replacements from
-  **Account → Frequency Dictionaries**: TV & Movies, Anime, Manga, Novels, and Visual Novels.
-  NHK, JP Dict, and Internet have no licensed replacement yet.
-
-## [1.0.0] - 2026-08-17
-
-### Added
-
-- Japanese, English, and romaji dictionary search with source-backed Japanese reading suggestions.
-- Detailed word entries with readings, meanings, parts of speech, conjugations, pronunciation, related words, and example sentences.
-- Kanji lookup with readings, meanings, components, classifications, related words, and animated stroke order.
-- Handwriting recognition for finding kanji that are difficult to type.
-- Image Text for recognizing selectable Japanese from the camera, photo library, or imported files, with on-device translation using Apple system features.
-- Multiple persistent, removable Encounter Media images for words opened from Image Text.
-- A lightweight Media Library for browsing retained images and their associated words.
-- Kanji-aligned furigana across Search, Word Detail, Kanji, Image Text, and example-sentence word links for mixed kanji/kana words such as `女らしい`.
-- Private word notes and recent-search history stored on the device.
-
-### Quality and privacy
-
-- Deterministic, app-owned dictionary and example-sentence ranking backed by bundled source data.
-- Bounded indexed search for ordinary and multi-word queries, with stale-request cancellation and repeat-query caching.
-- Literal query handling for punctuation and SQL wildcard characters.
-- No account, advertising, analytics SDK, or cloud sync.
-- Privacy and source-attribution disclosures included in the app and release bundle.
-
-### Release scope
-
-- iPhone only, requiring iOS 26.0 or later.
-- English (U.S.) App Store listing.
-- Free, with no in-app purchases or subscriptions.
-
-[1.0.0]: https://github.com/serpcompany/zenbujapanese-monorepo/releases/tag/v1.0.0
+Each has a page of its own: [2.0.0](docs/releases/2-0-0.md), released 2026-10-09, and
+[1.0.0](docs/releases/1-0-0.md), released 2026-08-17. When a version is released, the one before
+it moves to a page there, named for its version.

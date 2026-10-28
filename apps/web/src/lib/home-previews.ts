@@ -11,6 +11,7 @@ export const appScreenText = {
   wordsKnown: '{known} of {total} words known',
   words: '{count} words',
   known: 'Known',
+  learning: 'Learning',
   enabled: 'Enabled',
   available: 'Available: {names}'
 }
@@ -51,12 +52,12 @@ export const playerPreview = {
 export const listPreview = {
   name: 'Favorites',
   words: [
-    { ...word('美味しい', 'おいしい'), known: true },
-    { ...word('峠', 'とうげ'), known: false },
-    { ...word('急がば回れ', 'いそがばまわれ'), known: false },
-    { ...word('醤油', 'しょうゆ'), known: false },
-    { ...word('大丈夫', 'だいじょうぶ'), known: true },
-    { ...word('頑張る', 'がんばる'), known: false }
+    { ...word('美味しい', 'おいしい'), state: 'known' },
+    { ...word('峠', 'とうげ'), state: 'learning' },
+    { ...word('急がば回れ', 'いそがばまわれ'), state: null },
+    { ...word('醤油', 'しょうゆ'), state: null },
+    { ...word('大丈夫', 'だいじょうぶ'), state: 'known' },
+    { ...word('頑張る', 'がんばる'), state: null }
   ]
 }
 
