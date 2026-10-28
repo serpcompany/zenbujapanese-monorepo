@@ -38,12 +38,24 @@ async function pressEscape() {
   await settle()
 }
 
-async function closesAndPlaysAgain(shown: ReturnType<typeof watching>) {
-  await pressEscape()
-  expect(popup()).toBeNull()
+async function playsAgain(shown: ReturnType<typeof watching>) {
   await vi.waitFor(() =>
     expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
   )
+}
+
+async function closesAndPlaysAgain(shown: ReturnType<typeof watching>) {
+  await pressEscape()
+  expect(popup()).toBeNull()
+  await playsAgain(shown)
+}
+
+async function pausedForAWord() {
+  const shown = await transcript()
+  await shown.playsAt(12)
+  await click(document.querySelector(walkWord('散歩')))
+  await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+  return shown
 }
 
 describe('the transcript’s English', () => {
@@ -212,29 +224,19 @@ describe('the transcript’s words', () => {
   })
 
   it('closes the popup on a press outside it, and plays the video again', async () => {
-    const shown = await transcript()
-    await shown.playsAt(12)
-    await click(document.querySelector(walkWord('散歩')))
-    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    const shown = await pausedForAWord()
     await act(async () => {
       document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
     })
     await settle()
     expect(popup()).toBeNull()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await playsAgain(shown)
   })
 
   it('plays the video again when the transcript closes with a popup open', async () => {
-    const shown = await transcript()
-    await shown.playsAt(12)
-    await click(document.querySelector(walkWord('散歩')))
-    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    const shown = await pausedForAWord()
     shown.close()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await playsAgain(shown)
   })
 
   it('leaves a paused video paused when the popup closes', async () => {
