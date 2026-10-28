@@ -35,13 +35,23 @@ Zenbu runs on a site is `isZenbuOn(host, settings)`, from `sites.off`.
 
 ## Permissions
 
-Besides `offscreen` and `sidePanel`, the manifest asks for `storage`, for the settings, and
-`activeTab`, so a click on the toolbar icon shows the header the tab's address. Neither adds an
-install warning. It asks for no site at install: `http://*/*` and `https://*/*` are
-`optional_host_permissions`, and the header menu's Allow on This Site asks Chrome for one site
-with `chrome.permissions.request`, as Turn On for Every Site does for `http://*/*` and
-`https://*/*`, on the welcome tab and in Sites (`src/shared/every-site.tsx`). It never asks for
-`tabs`, which would warn that it reads the browsing history.
+The manifest's `permissions` are `offscreen`, for the offscreen document that holds the
+dictionary; `sidePanel`, for the side panel; `storage`, for the settings; `activeTab`, so a click
+on the toolbar icon shows the header the tab's address; `unlimitedStorage`, for the language data
+the extension keeps on the device; `alarms`, for the daily language-data update check;
+`scripting`, to register the page lookup script on the sites the user allows; and
+`declarativeNetRequestWithHostAccess`, for the rule that removes the `origin` header from the
+extension's own YouTube caption requests. Its `host_permissions` are the language data host
+(`https://data.zenbujapanese.com/*`, in the test build `http://language-data.localhost/*`) and
+`https://www.youtube.com/*`, for the YouTube content script and the caption requests; the test
+build adds `http://allowed.localhost/*`, which the tests use as an allowed site. Only the YouTube
+host adds an install warning, which names youtube.com; the other permissions add none. It asks
+for no other site at install: `http://*/*` and `https://*/*` are the only
+`optional_host_permissions`, the only access asked for later, and the header menu's Allow on This
+Site asks Chrome for one site with `chrome.permissions.request`, as Turn On for Every Site does
+for `http://*/*` and `https://*/*`, on the welcome tab and in Sites
+(`src/shared/every-site.tsx`). It never asks for `tabs`, which would warn that it reads the
+browsing history.
 
 ## Checks
 
