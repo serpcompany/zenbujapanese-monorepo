@@ -100,9 +100,11 @@ final class ProgressLog: LocalFileStore {
   private(set) var isLoaded = false
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
   private(set) var days: [String: ProgressLogDay] = [:]
-  private var daysTurned = 0
+  private var readDay: String
   @ObservationIgnored let writes = LocalFileWriteQueue()
-  @ObservationIgnored var now: () -> Date = Date.init
+  @ObservationIgnored var now: () -> Date = Date.init {
+    didSet { readDay = day(of: now()) }
+  }
   @ObservationIgnored var changeRecorded: ((KnownWordChange, String) -> Void)?
   @ObservationIgnored private let writer: ProgressLogWriter
   @ObservationIgnored private let defaults: UserDefaults
@@ -113,10 +115,7 @@ final class ProgressLog: LocalFileStore {
   @ObservationIgnored private weak var knowledge: WordKnowledge?
   var canChange: Bool { isLoaded && readOnlyReason == nil }
   var goal: Int { DailyGoal.read(defaults) }
-  var today: String {
-    _ = daysTurned
-    return day(of: now())
-  }
+  var today: String { readDay }
 
   init(
     fileURL: URL = ProgressLog.defaultFileURL, defaults: UserDefaults = .standard,
@@ -128,6 +127,7 @@ final class ProgressLog: LocalFileStore {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = timeZone
     self.calendar = calendar
+    readDay = Self.day(of: Date(), in: calendar)
     writes.load { [self] in
       let (loaded, needsRewrite, readOnlyReason) = await writer.load()
       days = loaded
@@ -145,7 +145,7 @@ final class ProgressLog: LocalFileStore {
     }
     dayObserver = center.addObserver(forName: .NSCalendarDayChanged, object: nil, queue: .main) {
       [weak self] _ in
-      MainActor.assumeIsolated { self?.daysTurned += 1 }
+      MainActor.assumeIsolated { self?.refreshDay() }
     }
   }
 
@@ -165,6 +165,11 @@ final class ProgressLog: LocalFileStore {
     guard canChange, days[today] == nil, let knowledge, knowledge.canChange else { return false }
     days[today] = ProgressLogDay(goal: goal, totals: knowledge.totals)
     return true
+  }
+
+  func refreshDay() {
+    let current = day(of: now())
+    if current != readDay { readDay = current }
   }
 
   func day(of time: Date) -> String {

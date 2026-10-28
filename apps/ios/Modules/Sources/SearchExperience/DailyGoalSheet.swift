@@ -106,6 +106,7 @@ struct DailyGoalSheet: View {
 
 private struct DailyGoalPace: View {
   @Environment(WordKnowledge.self) private var knowledge
+  @Environment(ProgressLog.self) private var progressLog
   @State private var model: JLPTCoverageModel?
   let goal: Int
 
@@ -118,7 +119,8 @@ private struct DailyGoalPace: View {
       Text("At \(goal) a day")
         .font(.headline)
         .task {
-          let model = JLPTCoverageModel(knowledge: knowledge, goal: goal)
+          let model = JLPTCoverageModel(
+            knowledge: knowledge, goal: goal, today: { [progressLog] in progressLog.today })
           self.model = model
           await model.follow()
         }
