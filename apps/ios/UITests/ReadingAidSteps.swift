@@ -29,9 +29,15 @@ extension ZenbuUITestCase {
 
   func assertReadingAidsAreOff(_ aids: [String], in app: XCUIApplication) {
     open(.account, in: app)
-    tap(reveal(find("account.reading-aids", in: app), in: app))
+    openReadingAids(showing: aids[0], in: app)
     for aid in aids {
       waitUntil(waitFor(find("reading-aids.\(aid)", in: app)), Self.switchedOff)
     }
+  }
+
+  @discardableResult
+  func openReadingAids(showing aid: String, in app: XCUIApplication) -> XCUIElement {
+    tapClearOfTheBars(
+      find("account.reading-aids", in: app), toShow: find("reading-aids.\(aid)", in: app), in: app)
   }
 }

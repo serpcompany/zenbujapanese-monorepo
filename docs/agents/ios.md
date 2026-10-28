@@ -210,6 +210,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
   (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
+- `ZENBU_PROGRESS_STREAK=<days>` seeds that many met days before today, for Account's streak, and
+  `ZENBU_DAILY_GOAL=<n>` sets the daily goal (`AccountUITests`).
 - `ZENBU_HOLD_LINKING=1` holds back the answers linking a page of examples', a caption's, or a
   line's words until the test posts `HeldAnswers.letGoNotice`, to see rows arrive linked;
   `ZENBU_FAIL_LINKING=<count>` fails that many, to see a screen read again (`ExampleRowsUITests`);
@@ -783,8 +785,7 @@ but the profile, in TypeScript, and the service's tests prove that model against
   set up: a service without Apple answers its sign-in `404 provider_not_found`.
   `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`;
   when it isn't empty, the sign-in sheet shows a note in place of the Apple button, and deleting an
-  Apple account says to use the App Store or TestFlight app. Google and emailed codes work in Zenbu
-  Dev.
+  Apple account points to the App Store or TestFlight. Google and emailed codes work in Zenbu Dev.
 - **Google** needs no SDK: `ASWebAuthenticationSession` opens Google's OAuth for iOS with PKCE, the
   nonce, and the reversed client ID as the redirect, which the session catches itself, so no URL
   type is registered. The app exchanges the code at Google's token endpoint for the ID token. The
@@ -1091,8 +1092,7 @@ failed writes, and backups. When changing known words, also check in the Simulat
   both screens, and the mark survives a relaunch.
 - **Account → Known Words** shows the count, lists the word, swipes it back to unknown, and
   opens it in Look Up.
-- Known words live in `Application Support/Zenbu Japanese/word-knowledge.json` in the app's
-  data container.
+- Known words are in the app container's `Application Support/Zenbu Japanese/word-knowledge.json`.
 
 ## Word lists manual checks
 

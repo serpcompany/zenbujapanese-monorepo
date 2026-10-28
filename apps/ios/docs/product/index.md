@@ -201,13 +201,14 @@ Check: the recorded `WordDetailConformanceTests` (each conjugation's headword sp
 
 Account is a supporting navigation area rather than a separate Product Experience. The tab holds
 on-device content and preferences, and signing in to a Zenbu account, which syncs what the learner
-keeps, from known words to settings and the profile ([Zenbu account and sync](account-sync.md)). Like the other tabs, it has a small **Account** title in the bar rather than a large one.
-It provides:
+keeps, from known words to settings and the profile ([Zenbu account and sync](account-sync.md)).
+Like the other tabs, it has a small **Account** title in the bar, not a large one. It provides:
 
 - a profile card with the learner's photo, name, and username;
 - the Zenbu account: **Sign In to Sync**, which names what syncs, or, signed in, **Zenbu Account**
   with the account's email ([Zenbu account and sync](account-sync.md)), against production's
   account service in TestFlight and App Store builds and staging's in Debug builds;
+- [progress](progress.md): the **Today** card and the **Daily Goal** row, above the rows below;
 - the [Media Library](saved-data.md#media-library);
 - Known Words and Learning, each with its count;
 - Lists;

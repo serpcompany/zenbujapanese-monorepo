@@ -71,6 +71,11 @@ struct SharedSettingsRulesTests {
         [TranslateExperience.speechSpeeds.lowerBound, TranslateExperience.speechSpeeds.upperBound]
           .map { .decimal($0) }
       ),
+      (
+        DailyGoal.key,
+        ([DailyGoal.range.lowerBound, DailyGoal.range.upperBound] + DailyGoalPreset.allCases.map(\.rawValue))
+          .map { .number($0) }
+      ),
     ]
     for (name, values) in written {
       let listed = try #require(settings[name], "\(name)")

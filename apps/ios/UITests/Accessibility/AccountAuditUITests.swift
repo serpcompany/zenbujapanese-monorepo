@@ -31,6 +31,11 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     let app = launch(pass)
     open(.account, in: app)
     audit("Account", in: app)
+    openAccountRow("account.daily-goal", showing: find("daily-goal.cancel", in: app), in: app)
+    waitUntilStill(waitForSheet("daily-goal.sheet", in: app))
+    audit("Daily Goal", in: app)
+    tap(find("daily-goal.cancel", in: app))
+    waitUntilGone(find("daily-goal.sheet", in: app))
     auditAtTheLargestSize(
       "Account, its rows", showing: find("account.translations", in: app), in: app, .allButTextSizes)
     openAccountRow("account.reading-aids", showing: find("reading-aids.show-furigana", in: app), in: app)
@@ -69,6 +74,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     reveal(find("account.credits", in: app), in: app)
     audit("Account, at its end", in: app, .allButTextSizes)
     if pass.size == .largest {
+      auditAlone("Account's progress section, alone", "progress", showing: "account.progress.today", pass)
       auditAlone("Account's library rows, alone", "library", showing: "account.learning", pass)
       auditAlone("Account's collection rows, alone", "collections", showing: "account.translations", pass)
       auditAlone("Account's settings rows, alone", "settings", showing: "account.frequency-dictionaries", pass)
@@ -101,7 +107,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     audit("Media Library, empty", in: app)
     goBack(in: app)
     markJapanKnownFromItsResult(in: app)
-    open(.account, in: app)
+    tap(tabItem(.account, in: app))
     openAccountRow("account.known-words", showing: find("result.japan", in: app), in: app)
     audit("Known Words", in: app)
     goBack(in: app)
