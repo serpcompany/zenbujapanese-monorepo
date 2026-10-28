@@ -62,8 +62,10 @@ Translator nothing.
 | Behavior | Check |
 | --- | --- |
 | Each row has its own English, asked for one line at a time. | Transcript: "gives each row its own English…" |
-| Before Japanese to English is downloaded: "Download Japanese for Translate to see each line in English." and Download. Only the click starts it; then its progress, then each line's English. | Transcript: "before the download, starts it only from a click on Download…" |
+| Once Chrome's Japanese translation is on this computer, from the welcome tab or anywhere else, no ask: each line's English. | `src/shared/welcome-translation.interaction.test.tsx`: "the Video tab and Translate translate both ways, and neither asks to download" |
+| Before it is: "To see each line in English, download Chrome's own Japanese translation. It's apart from Zenbu's dictionary." and Download. Only the click starts it, as on the welcome tab's Download; then "Downloading Chrome's Japanese translation… 42%" with a progress bar, then each line's English. | Transcript: "before the download, starts it only from a click on Download…" |
 | A download that fails says "The download didn't finish. Try again.", and Download starts it again. | Transcript: "says so when the download fails…" |
+| Where Chrome reports its download already under way (`downloading`), as when the welcome tab's is still going: "Chrome is downloading its Japanese translation…" with no Download, checked again every 2 seconds, then each line's English. Chrome 156 reports `downloadable` during a download, so there the tab shows Download, and its click joins the running download. | Transcript: "while Chrome is already downloading, says so with no Download…" |
 | On a computer that can't translate Japanese: "Translate isn't available on this computer." | Transcript: "says so when this computer can't translate Japanese" |
 | A line the Translator didn't answer for says "Translate didn't answer." under it, with Try again, which asks for that line again. | Transcript: "shows Try again on a line Translate didn't answer…" |
 | With Translations off, no English, and no request to the Translator. | Transcript: "hides the English with Translations off…" |

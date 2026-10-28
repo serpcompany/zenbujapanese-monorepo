@@ -5,6 +5,7 @@ import type { Failure } from '../shared/messages'
 import type { PanelTabProps } from '../side-panel/route'
 import { startExtension } from '../test/extension'
 import { click, find, settle } from '../test/render'
+import { standInTranslator as standInChrome } from '../test/translator-stand-in'
 import {
   notReady,
   openFullEntryButton,
@@ -34,31 +35,7 @@ const phrasebook: Record<string, string> = {
   [sentence]: 'A demand is needed.'
 }
 
-type CreateOptions = { monitor?(monitor: EventTarget): void }
-
-function standInTranslator(state: TranslatorState = 'available') {
-  let current = state
-  let finishDownload = () => {}
-  const downloaded = new Promise<void>(resolve => {
-    finishDownload = resolve
-  })
-  const Translator = {
-    availability: vi.fn(async () => current),
-    create: vi.fn(async ({ monitor }: CreateOptions) => {
-      if (current === 'unavailable') throw new Error('Unavailable.')
-      if (current !== 'available') {
-        const progress = new EventTarget()
-        monitor?.(progress)
-        progress.dispatchEvent(Object.assign(new Event('downloadprogress'), { loaded: 0.42 }))
-        await downloaded
-        current = 'available'
-      }
-      return { translate: async (text: string) => phrasebook[text] ?? '', destroy() {} }
-    })
-  }
-  vi.stubGlobal('Translator', Translator)
-  return { Translator, finishDownload: () => finishDownload() }
-}
+const standInTranslator = (state: TranslatorState = 'available') => standInChrome(state, phrasebook)
 
 function servicesWith(selection: string | null = '') {
   const translateOnDevice = onDeviceTranslation()
@@ -215,6 +192,33 @@ describe('the Translate tab', () => {
     expect(tab.text('[data-translation]')).toBe('Where is the toilet?')
     expect(services.translate).toHaveBeenCalledOnce()
     expect(Translator.create).toHaveBeenCalledTimes(2)
+  })
+
+  it('says Translating… until Chrome reports bytes still loading, and only then shows the download', async () => {
+    standInTranslator()
+    const services = servicesWith()
+    services.availability.mockResolvedValue('downloadable')
+    let progressed: (fraction: number) => void = () => {}
+    let finish: (state: TranslatorState) => void = () => {}
+    services.download.mockImplementation((_direction, onProgress) => {
+      progressed = onProgress
+      onProgress(0)
+      return new Promise(resolve => {
+        finish = resolve
+      })
+    })
+    const tab = await showTab(services)
+    await tab.type('トイレはどこですか')
+    await tab.click(translateLabels.translate)
+    expect(tab.progress()).toBeNull()
+    expect(document.querySelector('main')?.textContent).toContain(translateLabels.translating)
+    await act(async () => progressed(0.3))
+    expect(tab.progress()?.value).toBe(0.3)
+    await act(async () => progressed(1))
+    expect(tab.progress()?.value).toBe(1)
+    await act(async () => finish('available'))
+    expect(tab.progress()).toBeNull()
+    expect(tab.text('[data-translation]')).toBe('Where is the toilet?')
   })
 
   it('says Translate isn’t available on this computer, and translates nothing', async () => {
