@@ -8,6 +8,12 @@ export const minimumChromeVersion = '138'
 
 export const extensionVersion: string = packageJson.version
 
+export const iconSizes = [16, 32, 48, 128] as const
+
+export const iconFile = (size: number) => `icons/icon-${size}.png`
+
+const iconFiles = Object.fromEntries(iconSizes.map(size => [size, iconFile(size)]))
+
 export const testAllowedSite = 'http://allowed.localhost'
 
 const testPagesContentScript: ContentScript = {
@@ -61,7 +67,8 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
     key: storeKey,
     homepage_url: hosts[environment].website,
     minimum_chrome_version: minimumChromeVersion,
-    action: { default_title: 'Zenbu Japanese' },
+    icons: iconFiles,
+    action: { default_title: 'Zenbu Japanese', default_icon: iconFiles },
     side_panel: { default_path: 'pages/side-panel.html' },
     options_ui: { page: 'pages/settings.html', open_in_tab: true },
     background: { service_worker: 'service-worker.js', type: 'module' },

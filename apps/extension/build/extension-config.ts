@@ -1,9 +1,17 @@
+import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/postcss'
 import { build, type InlineConfig, type Plugin, type UserConfig } from 'vite'
 import { errorReportDefines } from './error-reports.ts'
 import { defaultEnvironment, type Environment, hostDefines, type Variant } from './hosts.ts'
-import { builtContentScripts, type ContentScript, extensionVersion, manifest } from './manifest.ts'
+import {
+  builtContentScripts,
+  type ContentScript,
+  extensionVersion,
+  iconFile,
+  iconSizes,
+  manifest
+} from './manifest.ts'
 import { shadowSafeCss } from './shadow-safe-css.ts'
 
 const packageFolder = fileURLToPath(new URL('..', import.meta.url))
@@ -88,6 +96,15 @@ function extensionFiles(variant: Variant, environment: Environment): Plugin {
         fileName: 'manifest.json',
         source: `${JSON.stringify(manifest(variant, environment), null, 2)}\n`
       })
+    },
+    async buildStart() {
+      for (const size of iconSizes) {
+        this.emitFile({
+          type: 'asset',
+          fileName: iconFile(size),
+          source: await readFile(fromPackage(`../../assets/brand/extensions/icon-${size}.png`))
+        })
+      }
     },
     async closeBundle() {
       for (const script of builtContentScripts(variant)) {

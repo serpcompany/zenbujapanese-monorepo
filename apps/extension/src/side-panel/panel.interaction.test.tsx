@@ -82,6 +82,14 @@ const press = (element: HTMLElement, key: string) =>
   })
 
 describe('SidePanel', () => {
+  it("draws Zenbu's mark in its header without repeating the name Chrome already shows in its own title", async () => {
+    await draw(fakeHost())
+    const header = document.querySelector('header')
+    expect(header?.querySelector('img')).not.toBeNull()
+    expect(header?.textContent).toBe('')
+    expect(document.querySelector('h1')).toBeNull()
+  })
+
   it('shows five tabs, in order, Translate on its box and each other tab on its empty state', async () => {
     await draw(fakeHost())
     expect(tabs().map(each => each.textContent)).toEqual([

@@ -9,7 +9,9 @@ for (const expected of extensionPages) {
     expect(manifestValue(extension.manifest, expected.manifestKey)).toBe(expected.path)
     const response = await page.goto(extensionUrl(extension, expected.path))
     expect(response?.ok()).toBe(true)
-    await expect(page.getByRole('heading', { name: expected.title })).toBeVisible()
+    if (expected.title) {
+      await expect(page.getByRole('heading', { name: expected.title })).toBeVisible()
+    }
     await expect(page.getByText(expected.text)).toBeVisible()
   })
 }

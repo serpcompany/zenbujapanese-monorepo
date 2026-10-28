@@ -6,7 +6,7 @@ export type ExtensionPage = {
   name: string
   path: string
   manifestKey: string
-  title: string
+  title?: string
   text: string
 }
 
@@ -15,7 +15,6 @@ export const extensionPages: ExtensionPage[] = [
     name: 'side-panel',
     path: 'pages/side-panel.html',
     manifestKey: 'side_panel.default_path',
-    title: labels.name,
     text: sidePanelLabels.empty.video.title
   },
   {

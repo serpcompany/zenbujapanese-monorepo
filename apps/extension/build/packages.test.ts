@@ -5,7 +5,14 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { builtPages } from './extension-config.ts'
 import { type Environment, hosts, testLanguageDataHost, type Variant } from './hosts.ts'
 import { extensionIdOf, storeKey } from './key.ts'
-import { builtContentScripts, contentScriptFile, extensionVersion, manifest } from './manifest.ts'
+import {
+  builtContentScripts,
+  contentScriptFile,
+  extensionVersion,
+  iconFile,
+  iconSizes,
+  manifest
+} from './manifest.ts'
 import { type PackageKind, packageFolder, packageProblems } from './packages.ts'
 import { unzipFiles, zipFiles } from './zip.ts'
 
@@ -21,6 +28,7 @@ function built(environment: Environment, variant: Variant = 'release', changes =
       builtContentScripts('release').map(script => [contentScriptFile(script), ''])
     ),
     'assets/popup.js': `open(${JSON.stringify(`${hosts[environment].website}/dictionary`)})`,
+    ...Object.fromEntries(iconSizes.map(size => [iconFile(size), ''])),
     ...Object.fromEntries(builtPages.map(page => [page, '<!doctype html>']))
   }
 }

@@ -1,7 +1,7 @@
 # Side panel header
 
-The side panel's header has, after the Zenbu mark and "Zenbu Japanese", the site switch and a
-menu button. Both follow the tab at the front: another tab coming to the front, the tab
+The side panel's header has the Zenbu mark, then the site switch and a
+menu button. It does not repeat "Zenbu Japanese": Chrome's own side panel title already shows it, and Chrome can't remove that title (`src/side-panel/panel.interaction.test.tsx`). Both follow the tab at the front: another tab coming to the front, the tab
 finishing a load, or a change to Zenbu's site access changes them. The header knows a tab's site
 only from its address, which Chrome shows Zenbu only where Zenbu has site access or after a click
 on the toolbar icon. The text is in `src/settings/labels.ts`, which Settings shares.
