@@ -38,6 +38,14 @@ async function pressEscape() {
   await settle()
 }
 
+async function closesAndPlaysAgain(shown: ReturnType<typeof watching>) {
+  await pressEscape()
+  expect(popup()).toBeNull()
+  await vi.waitFor(() =>
+    expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
+  )
+}
+
 describe('the transcript’s English', () => {
   it('gives each row its own English, a line at a time', async () => {
     const shown = await transcript()
@@ -200,11 +208,7 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('散歩')))
     expect(popup()).not.toBeNull()
     await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
-    await pressEscape()
-    expect(popup()).toBeNull()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await closesAndPlaysAgain(shown)
   })
 
   it('plays the video again when the transcript closes with a popup open', async () => {
@@ -233,11 +237,7 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('行きましょう')))
     expect(document.querySelectorAll('[data-word-popup]')).toHaveLength(1)
     expect(shown.video.controls).toEqual([{ type: 'pause' }])
-    await pressEscape()
-    expect(popup()).toBeNull()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await closesAndPlaysAgain(shown)
   })
 
   it('opens Word Detail from the popup’s Open Full Entry', async () => {

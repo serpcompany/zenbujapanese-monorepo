@@ -322,6 +322,13 @@ async function menuOverPopup(page: Page, popup: Locator, name: string) {
 
 const overPopup = { inPopup: true, onTop: true }
 
+async function menuThenPopupClosed(page: Page, popup: Locator) {
+  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape')
+  await expect(wordPopup(page)).toHaveCount(0)
+}
+
 test('opens the More menu over the popup, and one Escape closes the menu, the next the popup', async ({
   extension,
   page
@@ -339,10 +346,7 @@ test('opens the More menu over the popup, and one Escape closes the menu, the ne
   await expect(wordPopup(page)).toHaveCount(0)
 
   await clickWord(page, '#sentence', '要求')
-  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
-  await page.keyboard.press('Escape')
-  await page.keyboard.press('Escape')
-  await expect(wordPopup(page)).toHaveCount(0)
+  await menuThenPopupClosed(page, popup)
 })
 
 test('opens the More menu over a caption word’s popup on YouTube, in and out of fullscreen', async ({
@@ -357,10 +361,7 @@ test('opens the More menu over a caption word’s popup on YouTube, in and out o
   await expect(word).toBeVisible()
   await word.click()
   const popup = popupFor(page, '要求')
-  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
-  await page.keyboard.press('Escape')
-  await page.keyboard.press('Escape')
-  await expect(wordPopup(page)).toHaveCount(0)
+  await menuThenPopupClosed(page, popup)
 
   await page.evaluate(() => document.querySelector('#movie_player')?.requestFullscreen())
   await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
