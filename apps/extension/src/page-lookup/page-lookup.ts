@@ -4,7 +4,7 @@ import type { PopupHost, PopupSettings } from '../word-popup/popup-host'
 import type { Aids } from './annotate'
 import { type GlossLookUp, glossCache } from './glosses'
 import { anchorOf, type Found, pageRendering, type Rendering, wordIds } from './rendering'
-import { type ScanProblem, type Segment, scanner } from './scan'
+import { type ScanProblem, type Segment, scanner, type Wait } from './scan'
 import type { Underlines } from './underline'
 import { japaneseText, leftAloneIn, onScreenFirst } from './walker'
 
@@ -20,7 +20,7 @@ export type PageLookupBrowser = {
   underlines(): Underlines
   popup(settings: () => PopupSettings): PopupHost
   report(error: unknown): void
-  wait(milliseconds: number): Promise<void>
+  wait: Wait
 }
 
 export type PageLookup = { stop(): void }

@@ -11,6 +11,7 @@ type Segmented = Awaited<ReturnType<SourceServices['segment']>>
 
 const services = (answer: Segmented = sentenceAnswer) => ({
   segment: vi.fn<SourceServices['segment']>(async () => answer),
+  wait: vi.fn<SourceServices['wait']>(() => new Promise(() => {})),
   popupCard: vi.fn<SourceServices['popupCard']>(async id => popupAnswer(id))
 })
 
@@ -34,6 +35,9 @@ async function showSource(using: SourceServices, open = vi.fn()) {
 const texts = (scope: ParentNode, selector: string) =>
   [...scope.querySelectorAll(selector)].map(found => found.textContent)
 
+const words = (scope: ParentNode) =>
+  [...scope.querySelectorAll('[data-word]')].map(word => word.getAttribute('data-word'))
+
 const popup = () => document.querySelector('[data-word-popup]')
 
 const button = (scope: ParentNode, name: string) => {
@@ -47,9 +51,7 @@ const button = (scope: ParentNode, name: string) => {
 describe('the Japanese source of a translation', () => {
   it('shows each word as a button, with furigana in hiragana and the romaji line', async () => {
     const container = await showSource(services())
-    expect(
-      [...container.querySelectorAll('[data-word]')].map(word => word.getAttribute('data-word'))
-    ).toEqual(['要求', '要る'])
+    expect(words(container)).toEqual(['要求', '要る'])
     expect(texts(container, 'rt')).toEqual(['ようきゅう', 'い'])
     expect(find(container, '[data-reading-aids]').getAttribute('data-furigana')).toBe('on')
     expect(find(container, '[data-aid="romaji"]').textContent).toBe('youkyuu ga iru.')
@@ -98,9 +100,36 @@ describe('the Japanese source of a translation', () => {
     expect(document.activeElement).toBe(word)
   })
 
-  it('stays plain text while the dictionary isn’t ready', async () => {
-    const container = await showSource(services(notReady))
+  it('stays plain text while the dictionary isn’t ready, and links its words once it is', async () => {
+    const using = services(notReady)
+    const resumes: (() => void)[] = []
+    using.wait.mockImplementation(() => new Promise(go => resumes.push(go)))
+    const container = await showSource(using)
     expect(find(container, '[data-source]').textContent).toBe(sentence)
     expect(container.querySelector('[data-word]')).toBeNull()
+    expect(using.wait).toHaveBeenLastCalledWith(2000)
+
+    await act(async () => resumes.shift()?.())
+    await settle()
+    expect(using.wait).toHaveBeenLastCalledWith(4000)
+    expect(container.querySelector('[data-word]')).toBeNull()
+
+    using.segment.mockResolvedValue(sentenceAnswer)
+    await act(async () => resumes.shift()?.())
+    await settle()
+    expect(words(container)).toEqual(['要求', '要る'])
+  })
+
+  it('stops asking the dictionary once the card goes away', async () => {
+    const using = services(notReady)
+    let resume = () => {}
+    using.wait.mockImplementation(() => new Promise<void>(go => (resume = go)))
+    await showSource(using)
+    expect(using.segment).toHaveBeenCalledTimes(1)
+    shown?.unmount()
+    shown = undefined
+    resume()
+    await settle()
+    expect(using.segment).toHaveBeenCalledTimes(1)
   })
 })

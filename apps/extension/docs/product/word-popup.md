@@ -26,9 +26,9 @@ word isn't in the dictionary."; a lookup that fails: "The dictionary couldn't an
 ## Where it goes
 
 On a page, it opens beside the word, inside the window for a word at any edge, and follows the
-word as the page scrolls. Once the word scrolls wholly out of the window, it closes, unless its
-More menu is open. Escape, Close, and a click outside close it and give focus back to where it
-was.
+word as the page scrolls. Once the word scrolls wholly out of the window, it closes; with its
+More menu open, it waits and closes when the menu shuts, if the word is still out. Escape,
+Close, and a click outside close it and give focus back to where it was.
 
 In a page's fullscreen element, such as a video player, it opens inside that element, so it shows
 over the video, and moves back to the page when fullscreen ends. A bare `<video>` in fullscreen
@@ -59,6 +59,6 @@ scrolls until its word is gone", "closes on Escape,
 Close and a click outside…", "a word in a link opens the popup…", and "Share and Copy Link put
 the word's address on the clipboard…"; the first also checks the popup's font loads.
 DOM tests: `src/word-popup/word-popup.interaction.test.tsx`,
-`src/word-popup/popup-host.interaction.test.tsx` for the fullscreen element, the bare video, and
-the open and close events, and `src/word-popup/position.test.ts`; in Translate,
-`src/translate/source-words.interaction.test.tsx`.
+`src/word-popup/popup-host.interaction.test.tsx` for the fullscreen element, the bare video,
+the open and close events, and closing when the More menu shuts, and
+`src/word-popup/position.test.ts`; in Translate, `src/translate/source-words.interaction.test.tsx`.

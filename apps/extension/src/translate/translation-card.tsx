@@ -17,7 +17,7 @@ export type Translated = { source: string; translation: string; direction: Direc
 
 type CardServices = Pick<
   TranslateServices,
-  'copy' | 'speak' | 'localVoice' | 'watchVoices' | 'segment' | 'popupCard'
+  'copy' | 'speak' | 'localVoice' | 'watchVoices' | 'segment' | 'wait' | 'popupCard'
 >
 
 export function TranslationCard({

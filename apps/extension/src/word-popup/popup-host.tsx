@@ -38,12 +38,14 @@ function Placed({
   anchor,
   doc,
   view,
+  held,
   gone,
   children
 }: {
   anchor: () => DOMRect
   doc: Document
   view: Window
+  held: () => boolean
   gone: () => void
   children: ReactNode
 }) {
@@ -60,12 +62,20 @@ function Placed({
       element.style.top = `${placed.top}px`
       element.dataset.side = placed.side
     }
-    const moved = () => {
-      if (outOfWindow(anchor(), windowSize(doc, view))) gone()
-      else place()
-    }
     const later = () => {
       if (!frame) frame = view.requestAnimationFrame(moved)
+    }
+    const root = element.getRootNode()
+    const released = new MutationObserver(() => {
+      if (held()) return
+      released.disconnect()
+      later()
+    })
+    function moved() {
+      frame = 0
+      if (!outOfWindow(anchor(), windowSize(doc, view))) place()
+      else if (!held()) gone()
+      else released.observe(root, { childList: true, subtree: true })
     }
     place()
     const resized = new ResizeObserver(place)
@@ -75,10 +85,11 @@ function Placed({
     return () => {
       view.cancelAnimationFrame(frame)
       resized.disconnect()
+      released.disconnect()
       view.removeEventListener('scroll', later, { capture: true })
       view.removeEventListener('resize', later)
     }
-  }, [anchor, doc, view, gone])
+  }, [anchor, doc, view, held, gone])
   return (
     <div ref={box} style={{ position: 'fixed', left: 0, top: 0, zIndex: highest }}>
       {children}
@@ -113,9 +124,6 @@ export function wordPopupHost({
   const onPointer = (event: PointerEvent) => {
     if (!holds(event)) close()
   }
-  const wordGone = () => {
-    if (!menuOpen()) close()
-  }
   const onFullscreen = () => {
     if (shown) shownIn(doc).append(shown.mount.host)
   }
@@ -137,7 +145,7 @@ export function wordPopupHost({
     const returnTo = shown ? shown.returnTo : doc.activeElement
     shown?.mount.unmount()
     const mounted = mount(
-      <Placed anchor={target.anchor} doc={doc} view={view} gone={wordGone}>
+      <Placed anchor={target.anchor} doc={doc} view={view} held={menuOpen} gone={close}>
         <WordPopup {...settings()} text={target.text} ids={target.ids} close={close} />
       </Placed>,
       { document: doc, report }

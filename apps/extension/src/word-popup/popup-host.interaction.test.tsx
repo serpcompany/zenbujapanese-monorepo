@@ -1,5 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { act, type ReactNode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { hostElementName, type ShadowMount } from '../content/shadow-mount'
+import '../test/act-environment'
 import { popupAnswer } from '../test/word-cards'
 import { wordPopupEvents } from './popup-events'
 import { wordPopupHost } from './popup-host'
@@ -23,13 +26,26 @@ function fakeMount(): ShadowMount {
   return { host, shadowRoot, unmount: () => host.remove() }
 }
 
+function drawingMount(content: ReactNode): ShadowMount {
+  const mounted = fakeMount()
+  const root = createRoot(mounted.shadowRoot.appendChild(document.createElement('div')))
+  act(() => root.render(content))
+  return {
+    ...mounted,
+    unmount() {
+      act(() => root.unmount())
+      mounted.unmount()
+    }
+  }
+}
+
 const target = (text: string) => ({
   text,
   ids: ['youkyuu'],
   anchor: () => new DOMRect(0, 0, 10, 10)
 })
 
-function popupHost() {
+function popupHost(mount: (content: ReactNode) => ShadowMount = fakeMount) {
   const said: string[] = []
   const events = wordPopupEvents()
   const heard = (event: Event) => said.push(event.type)
@@ -42,7 +58,7 @@ function popupHost() {
       romaji: false,
       openFullEntry: () => {}
     }),
-    mount: fakeMount
+    mount
   })
   const shownIn = () => document.querySelector('[data-zenbu-word-popup]')?.parentElement
   const stop = () => {
@@ -91,6 +107,22 @@ describe('the word popup on a page', () => {
     host.open(target('要求'))
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     expect(said).toEqual(['open', 'close', 'open', 'close'])
+    stop()
+  })
+
+  it('closes once the More menu shuts, when its word scrolled out of the window while the menu was open', async () => {
+    let anchor = new DOMRect(0, 0, 10, 10)
+    const { host, said, stop } = popupHost(drawingMount)
+    host.open({ text: '要求', ids: ['youkyuu'], anchor: () => anchor })
+    const shadow = document.querySelector('[data-zenbu-word-popup]')?.shadowRoot as ShadowRoot
+    const menu = shadow.appendChild(document.createElement('div'))
+    menu.setAttribute('role', 'menu')
+    anchor = new DOMRect(0, -500, 10, 10)
+    window.dispatchEvent(new Event('scroll'))
+    await new Promise(done => requestAnimationFrame(() => setTimeout(done, 0)))
+    expect(said).toEqual(['open'])
+    menu.remove()
+    await vi.waitFor(() => expect(said).toEqual(['open', 'close']))
     stop()
   })
 })

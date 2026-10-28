@@ -2,6 +2,7 @@ import { contentScriptErrorReports } from '../error-reports/error-reports'
 import { toServiceWorker } from '../error-reports/forwarding'
 import { isReadPageSelection, isStopPageLookup } from '../page-lookup/messages'
 import { startPageLookup } from '../page-lookup/page-lookup'
+import { afterTimeout } from '../page-lookup/scan'
 import { selectedPageText } from '../page-lookup/selection'
 import { pageUnderlines } from '../page-lookup/underline'
 import { lookUpPopupCard, segmentText } from '../shared/dictionary'
@@ -30,7 +31,7 @@ if (!scope[started]) {
     underlines: () => pageUnderlines(document),
     popup: settings => wordPopupHost({ settings, report }),
     report,
-    wait: milliseconds => new Promise(done => setTimeout(done, milliseconds))
+    wait: afterTimeout
   })
   const onMessage = (
     message: unknown,

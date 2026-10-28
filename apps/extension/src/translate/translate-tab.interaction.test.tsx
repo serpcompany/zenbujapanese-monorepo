@@ -67,6 +67,7 @@ function servicesWith(selection: string | null = '') {
     watchVoices: vi.fn(() => () => {}),
     speak: vi.fn(),
     segment: vi.fn<TranslateServices['segment']>(async () => notReady),
+    wait: vi.fn<TranslateServices['wait']>(() => new Promise(() => {})),
     popupCard: vi.fn<TranslateServices['popupCard']>(async id => popupAnswer(id))
   } satisfies TranslateServices
 }

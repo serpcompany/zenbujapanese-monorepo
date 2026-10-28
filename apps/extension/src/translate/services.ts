@@ -1,3 +1,4 @@
+import { afterTimeout } from '../page-lookup/scan'
 import { lookUpPopupCard, segmentText } from '../shared/dictionary'
 import type { Failure } from '../shared/messages'
 import {
@@ -31,6 +32,7 @@ export const onDeviceServices: TranslateServices = {
   readSelection,
   copy: text => navigator.clipboard.writeText(text),
   segment: text => segmentText(text),
+  wait: afterTimeout,
   popupCard: (languageReferenceID, frequency) => lookUpPopupCard(languageReferenceID, frequency),
   ...onDeviceSpeech
 }

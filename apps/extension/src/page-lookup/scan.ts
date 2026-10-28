@@ -5,6 +5,11 @@ import { type PageToken, pageTokens } from './words'
 
 export type Segment = (text: string) => Lookup<SegmentAnswer>
 
+export type Wait = (milliseconds: number) => Promise<void>
+
+export const afterTimeout: Wait = milliseconds =>
+  new Promise(done => setTimeout(done, milliseconds))
+
 export type ScanProblem = 'segment-failed' | 'segment-mismatch'
 
 type Read =
@@ -52,7 +57,7 @@ type Options = {
   segment: Segment
   found(node: Text, found: Found): void
   problem(problem: ScanProblem): void
-  wait(milliseconds: number): Promise<void>
+  wait: Wait
   running?: number
 }
 
@@ -60,13 +65,27 @@ const firstWait = 2000
 
 const longestWait = 10000
 
+export function backoff(wait: Wait) {
+  let next = firstWait
+  return {
+    wait() {
+      const waited = next
+      next = Math.min(next * 2, longestWait)
+      return wait(waited)
+    },
+    reset() {
+      next = firstWait
+    }
+  }
+}
+
 export function scanner({ segment, found, problem, wait, running = 4 }: Options): Scanner {
   const queue: Text[] = []
   const queued = new Set<Text>()
   let busy = 0
   let paused = false
   let stopped = false
-  let backoff = firstWait
+  const delay = backoff(wait)
 
   const enqueue = (node: Text, front = false) => {
     if (queued.has(node)) return
@@ -78,9 +97,7 @@ export function scanner({ segment, found, problem, wait, running = 4 }: Options)
   const pause = () => {
     if (paused) return
     paused = true
-    const waited = backoff
-    backoff = Math.min(backoff * 2, longestWait)
-    wait(waited).then(() => {
+    delay.wait().then(() => {
       paused = false
       pump()
     })
@@ -92,7 +109,7 @@ export function scanner({ segment, found, problem, wait, running = 4 }: Options)
       pause()
       return
     }
-    backoff = firstWait
+    delay.reset()
     if (read.type === 'problem') problem(read.problem)
     else if (node.isConnected && node.data === text) found(node, read.found)
   }
