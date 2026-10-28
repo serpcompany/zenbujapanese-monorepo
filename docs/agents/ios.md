@@ -592,12 +592,11 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   are the input panels', which a tap asks for, not a redraw: Grade's first, about 75 ms to read
   the kanji file and build its lists, then 1 to 3 ms a filter; Radicals', 11 ms, then 2 ms a pick.
 - **One engine each, kept.** A context lives as long as its owner. Each call into it runs in an
-  autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
-  on a thread that never drains them, each pinning what it wraps. Don't release a context to
-  give memory back: in testing, a context dropped after a broad search kept its whole heap, and
-  memory climbed with every such search. Contexts are made one at a time (`contextCreation`): a
-  link that launched the app made the lookup's while the warm-up made another, and JavaScriptCore
-  crashed building both.
+  autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up on a
+  thread that never drains them, each pinning what it wraps. Don't release a context to give memory
+  back: in testing, a context dropped after a broad search kept its whole heap, and memory climbed
+  with each broad one. Contexts are made one at a time (`contextCreation`): a link that launched the
+  app made the lookup's while the warm-up made another, and JavaScriptCore crashed building both.
 - **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
   and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
   JavaScriptCore runs a promise's reactions only when the outermost call returns.
