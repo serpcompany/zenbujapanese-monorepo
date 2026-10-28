@@ -23,11 +23,12 @@ core's progress stats:
 A daily list holds Learning words only as they were marked: one marked Known since stays, counted as
 "now Known".
 
-Check: package `DailyListsTests` (each rule above, and a relaunch remembering a deleted day's list),
+Check: package `DailyListsTests` (each rule above, a relaunch remembering a deleted day's list, and
+a read-only progress log changing no list),
 `SharedAccountRulesTests.dailyListIDs()` (each day's list ID and the day an ID stands for, from the
 cases the account service and the website share), and `AccountSyncDailyListsTests` (a day's list
 syncs past the account's 500-list cap, one another device made first counts as made, and one deleted
-elsewhere isn't made again); UI
+elsewhere or refused by the account isn't made again); UI
 `DailyListsUITests.testTheDaysNewLearningWordsGoInTodaysListWhichCantBeRenamedOrDeleted`.
 
 ## Where they show

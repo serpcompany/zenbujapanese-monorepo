@@ -143,6 +143,26 @@ final class DailyListsTests {
     #expect(try words(on: "2026-10-28", in: stores) == [miru.rawValue, eki.rawValue])
   }
 
+  @Test("a word removed by hand isn't put back by moving it to Known and back to Learning the same day")
+  func removedByHandStaysOutThroughKnown() async throws {
+    let stores = await storesWithTwoWords()
+    stores.lists.remove(storedID: taberu.rawValue, from: try listID("2026-10-28"))
+    await mark(.known, taberu, "食べる", in: stores)
+    await mark(.learning, taberu, "食べる", in: stores)
+    #expect(try words(on: "2026-10-28", in: stores) == [miru.rawValue])
+  }
+
+  @Test("a progress log that opened read-only makes and changes no daily list")
+  func readOnlyLogLeavesDailyListsAlone() async throws {
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data(#"{"version":2,"days":{}}"#.utf8).write(to: folder.appending(path: "progress-log.json"))
+    clock.now = at("28T09:00")
+    let stores = await stores()
+    #expect(stores.log.readOnlyReason == .newerVersion)
+    await mark(.learning, taberu, "食べる", in: stores)
+    #expect(stores.lists.dailyLists.isEmpty)
+  }
+
   @Test("a deleted day's list isn't made again, here or after a relaunch, and one deleted elsewhere neither")
   func deletedListStaysDeleted() async throws {
     clock.now = at("28T09:00")

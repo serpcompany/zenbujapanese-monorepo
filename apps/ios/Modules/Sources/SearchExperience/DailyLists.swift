@@ -20,7 +20,7 @@ extension WordLists {
   }
 
   var ownLists: [WordList] {
-    lists.filter { Self.day(of: $0.id) == nil }
+    lists.filter { !Self.isDaily($0.id) }
   }
 
   var dailyLists: [DailyList] {
@@ -28,7 +28,7 @@ extension WordLists {
       .sorted { $0.day > $1.day }
   }
 
-  func isDaily(_ listID: UUID) -> Bool {
+  nonisolated static func isDaily(_ listID: UUID) -> Bool {
     Self.day(of: listID) != nil
   }
 }

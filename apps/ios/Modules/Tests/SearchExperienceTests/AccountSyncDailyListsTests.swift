@@ -34,10 +34,7 @@ final class AccountSyncDailyListsTests {
     return try #require(AccountRules.shared.dailyListID(day)).uuidString.lowercased()
   }
 
-  @Test("the day's list is made and synced even when the account has 500 lists of its own")
-  func dailyListsSkipTheCap() async throws {
-    let (service, phone, _) = await Fixture.twoPhones()
-    try await phone.signIn()
+  private func fillToTheCap(_ service: FakeAccountService) {
     for number in 1..<500 {
       service.change(
         for: Fixture.email,
@@ -46,6 +43,13 @@ final class AccountSyncDailyListsTests {
           entityId: UUID().uuidString.lowercased(), baseVersion: nil,
           fields: ["name": .string("List \(number)"), "position": .number(number)]))
     }
+  }
+
+  @Test("the day's list is made and synced even when the account has 500 lists of its own")
+  func dailyListsSkipTheCap() async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    try await phone.signIn()
+    fillToTheCap(service)
     let keeper = await keep(on: phone)
     await learn(Fixture.taberu, "食べる", on: phone, keeper: keeper)
     phone.wordLists.createList(named: "Anime")
@@ -56,6 +60,22 @@ final class AccountSyncDailyListsTests {
     #expect(service.liveKeys(for: Fixture.email, entity: "listWord") == ["listWord:\(listID)/\(Fixture.taberu)"])
     #expect(service.liveKeys(for: Fixture.email, entity: "list").count == 501)
     #expect(!phone.wordLists.lists.contains { $0.name == "Anime" })
+  }
+
+  @Test("a day's list the account refuses is taken off this device and never made again here")
+  func refusedDailyList() async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    service.now = { ISO8601DateFormatter().date(from: "2026-10-10T12:00:00Z") ?? .distantPast }
+    try await phone.signIn()
+    fillToTheCap(service)
+    let listID = try #require(AccountRules.shared.dailyListID("2026-10-20"))
+    #expect(phone.wordLists.createList(named: "Oct 20, 2026", id: listID) != nil)
+    try await phone.syncNow()
+
+    #expect(!phone.wordLists.hasList(listID))
+    #expect(phone.wordLists.deletedDailyListIDs.contains(listID))
+    #expect(phone.wordLists.createList(named: "Oct 20, 2026", id: listID) == nil)
+    #expect(service.data(of: "list:\(listID.uuidString.lowercased())", for: Fixture.email) == nil)
   }
 
   @Test("a day's list another device made first counts as made, and both devices' words go in it")

@@ -92,8 +92,8 @@ final class WordLists: LocalFileStore {
       let name = AccountRules.shared.listName(name)
     else { return nil }
     let now = Date()
-    let isDaily = Self.day(of: id) != nil
-    let sameKind = lists.filter { (Self.day(of: $0.id) != nil) == isDaily }
+    let daily = Self.isDaily(id)
+    let sameKind = lists.filter { Self.isDaily($0.id) == daily }
     let list = WordList(
       id: id, name: name, position: (sameKind.map(\.position).max() ?? -1) + 1,
       createdAt: now, updatedAt: now)
@@ -248,7 +248,7 @@ final class WordLists: LocalFileStore {
   }
 
   func applySyncedRemoval(ofList listID: UUID) {
-    let forgetsDaily = Self.day(of: listID) != nil && !deletedDailyListIDs.contains(listID)
+    let forgetsDaily = Self.isDaily(listID) && !deletedDailyListIDs.contains(listID)
     guard canChange, hasList(listID) || forgetsDaily else { return }
     lists.removeAll { $0.id == listID }
     membershipsByList[listID] = nil
@@ -257,7 +257,7 @@ final class WordLists: LocalFileStore {
   }
 
   private func rememberDeleted(_ listID: UUID) {
-    if Self.day(of: listID) != nil { deletedDailyListIDs.insert(listID) }
+    if Self.isDaily(listID) { deletedDailyListIDs.insert(listID) }
   }
 
   func applySynced(_ membership: WordListMembership) {

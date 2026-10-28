@@ -70,7 +70,7 @@ extension AccountSync {
     case (SyncEntity.knownWord, "set", unknownOperation):
       true
     case (SyncEntity.list, "create", "already_exists"):
-      UUID(uuidString: change.key.entityID).flatMap(WordLists.day(of:)) != nil
+      UUID(uuidString: change.key.entityID).map(WordLists.isDaily) ?? false
     default:
       false
     }
