@@ -35,7 +35,7 @@ Chrome harness's stand-in watch page under `www.youtube.com`, which asks YouTube
 | Behavior | Check |
 | --- | --- |
 | A click on a word opens its word popup over the player, also in fullscreen, and the video pauses, with "Paused while the popup is open" at the top right. | Caption: "underlines the line's words, and a word opens the word popup", "pauses, says so…"; `src/word-popup/popup-host.interaction.test.tsx`: "mounts inside the page's fullscreen element…"; Browser: "pauses the video while a word's popup is open…" |
-| Closing it, with Close, Escape, or a click outside, plays the video again only if it was playing when the popup opened; so does the caption going away with the popup open. | Caption: "pauses, says so, and plays again when the popup closes", "stays paused after the popup closes…", "stopping takes the caption away and closes the popup, playing again…", "stopping leaves a video paused…"; Browser: "pauses the video while a word's popup is open…" |
+| Closing it, with Escape or a click outside, plays the video again only if it was playing when the popup opened; so does the caption going away with the popup open. | Caption: "pauses, says so, and plays again when the popup closes", "stays paused after the popup closes…", "stopping takes the caption away and closes the popup, playing again…", "stopping leaves a video paused…"; Browser: "pauses the video while a word's popup is open…" |
 | In the fullscreen player, a click or Space on the popup's buttons doesn't reach YouTube's player, so the video stays paused. | Caption: "keeps a click and Space on its buttons from the player…" |
 | Moving from one word to another keeps the video paused. | Caption: "keeps the video paused while the learner moves from one word to another" |
 
