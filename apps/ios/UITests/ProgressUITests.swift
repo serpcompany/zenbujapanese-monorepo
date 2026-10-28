@@ -38,6 +38,15 @@ final class ProgressUITests: ZenbuUITestCase {
     waitUntil(day, "label == %@", yesterday)
   }
 
+  func testEachMonthBarReadsItsOwnDay() {
+    let app = launch(progressSeed)
+    openProgress(from: "account.progress", in: app)
+    let chart = reveal(find("progress.new-words.chart", in: app), in: app)
+    tap(app.segmentedControls["progress.span"].buttons["Month"])
+    let yesterday = Self.dayName(back: 1) + " · 15 words · goal met"
+    waitFor(chart.descendants(matching: .any).matching(NSPredicate(format: "label == %@", yesterday)).firstMatch)
+  }
+
   func testProgressBeforeAnyWordSaysThereIsNothingYet() {
     let app = launch()
     openProgress(from: "account.progress", in: app)

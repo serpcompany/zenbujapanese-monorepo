@@ -30,13 +30,15 @@ From the top:
   dates, "9 days" and "Oct 1 – Oct 9"; and **Daily average**, the words a day over the last 7 days
   before today, "11.4" and "last 7 days". With no streak or no day yet, a tile shows "—" with "No
   streak yet" or "No days yet".
-- **New words per day**: a bar a day, with a dashed line at the goal, for the **Week** (the default,
-  not remembered), over weekday letters, or the **Month**, over its first day and "Today"; days
-  before the log began are empty. Above the chart is today's
+- **New words per day**: a bar a day, with a dashed line that steps to each day's own goal, so a
+  bar over the line is a day that met its goal even after the goal changed, labelled with today's
+  goal, for the **Week** (the default, not remembered), over weekday letters, or the **Month**, over
+  its first day and "Today"; days before the log began are empty, at the first day's goal. Above the chart is today's
   line, "Tue, Oct 27 · 4 words · goal 10", and tapping a bar shows that day's instead,
   "Mon, Oct 26 · 15 words · goal met". Under it, "Goal met 6 of 6 days · 76 words", where today
-  counts only once its goal is met, or "0 words so far" before any. VoiceOver reads each bar as its
-  day's line.
+  counts only once its goal is met, or "0 words so far" before any. VoiceOver reads each bar, in the
+  Week and in the Month, as its day's line, and the goal as one element, "Goal, 10 new words",
+  today's.
 - **JLPT coverage**: a bar for each level from N5 to N1, its Known and Learning words in two bands,
   with "45% known · 298 / 667", from the same JLPT coverage as the Daily Goal sheet's pace.
 - **Known over time**: the Known words on each day of the log, with "+16 in 7 days" and the first
@@ -44,11 +46,11 @@ From the top:
 
 Check: UI `ProgressUITests` (in from the card and from the row, the totals and streaks of a log
 seeded from `Fixtures/Progress/dashboard.json` with `ZENBU_PROGRESS_SEED`, Week and Month, Week again
-after leaving, tapping a bar, and the screen before any word); `AccountUITests.testAccountListsEveryArea`
+after leaving, tapping a bar, a Month bar read as its day's line, and the screen before any word); `AccountUITests.testAccountListsEveryArea`
 (**See progress** and the row); `AccountAuditUITests` (Progress, its Week and Month, and its end, at
 the default and largest sizes and in dark); package `ProgressWordingTests` (Progress's words) and
 `ProgressLogTests.statsThroughTheBundle`; core `progress/stats.test.ts` (the last 7 and 30 days,
-the days that met the goal, and the totals).
+the days before the log at the first day's goal, the days that met the goal, and the totals).
 
 ## The daily goal
 

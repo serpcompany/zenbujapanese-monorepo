@@ -11,7 +11,7 @@ enum ProgressSpan: String, CaseIterable, Identifiable {
 struct ProgressNewWordsCard: View {
   @ScaledMetric private var chartHeight = 180.0
   @State private var span = ProgressSpan.week
-  @State private var touched: Date?
+  @State private var touched: String?
   @State private var selected: String?
   let stats: ProgressStats?
 
@@ -81,7 +81,7 @@ struct ProgressNewWordsCard: View {
     .padding(.vertical, 6)
     .redacted(reason: stats == nil ? .placeholder : [])
     .onChange(of: touched) {
-      if let touched { selected = ProgressLog.day(of: touched, in: calendar) }
+      if let touched { selected = touched }
     }
     .onChange(of: span) {
       if !days.contains(where: { $0.day == selected }) { selected = nil }
@@ -91,15 +91,21 @@ struct ProgressNewWordsCard: View {
   private var chart: some View {
     Chart {
       ForEach(bars) { bar in
-        BarMark(x: .value("Day", bar.date, unit: .day), y: .value("Words", bar.day.added))
+        BarMark(x: .value("Day", bar.id), y: .value("Words", bar.day.added))
           .foregroundStyle(.orange)
           .opacity(selected == nil || selected == bar.id ? 1 : 0.4)
           .accessibilityLabel(ProgressWording.dayLine(bar.day))
       }
-      if let goal = stats?.today.goal {
-        RuleMark(y: .value("Goal", goal))
+      ForEach(bars) { bar in
+        LineMark(x: .value("Day", bar.id), y: .value("Goal", bar.day.goal))
+          .interpolationMethod(.stepCenter)
           .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
           .foregroundStyle(Color.secondary)
+          .accessibilityHidden(true)
+      }
+      if let goal = stats?.today.goal {
+        RuleMark(y: .value("Goal", goal))
+          .foregroundStyle(.clear)
           .annotation(position: .top, alignment: .trailing) {
             Text("goal \(goal)")
               .font(.caption2)
@@ -115,8 +121,10 @@ struct ProgressNewWordsCard: View {
     }
     .chartYAxis(.hidden)
     .chartXAxis {
-      AxisMarks(values: .stride(by: .day)) {
-        AxisValueLabel(format: .dateTime.weekday(.narrow), centered: true)
+      AxisMarks { value in
+        AxisValueLabel {
+          Text(bars.first { $0.id == value.as(String.self) }?.date.formatted(.dateTime.weekday(.narrow)) ?? "")
+        }
       }
     }
     .chartXAxis(span == .week ? .visible : .hidden)
