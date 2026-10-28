@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs'
 import type { Page } from '@playwright/test'
 import { labels } from '../src/side-panel/labels.ts'
 import { videoTabLabels } from '../src/video-tab/labels.ts'
+import { textContrast } from './contrast.ts'
 import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
 import { changeSettings, tones } from './words-page.ts'
 
@@ -157,52 +158,14 @@ function meaningLayout(page: Page) {
   })
 }
 
-function meaningContrast(page: Page) {
-  return page.evaluate(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1
-    canvas.height = 1
-    const paint = canvas.getContext('2d', { willReadFrequently: true })
-    if (!paint) throw new Error('No canvas')
-    const rgba = (colour: string) => {
-      paint.clearRect(0, 0, 1, 1)
-      paint.fillStyle = colour
-      paint.fillRect(0, 0, 1, 1)
-      const [r, g, b, a] = paint.getImageData(0, 0, 1, 1).data
-      return { rgb: [r, g, b], alpha: a / 255 }
-    }
-    const behind = (element: Element) => {
-      const layers: Element[] = []
-      for (let at: Element | null = element; at; at = at.parentElement) layers.unshift(at)
-      return layers.reduce(
-        (under, layer) => {
-          const { rgb, alpha } = rgba(getComputedStyle(layer).backgroundColor)
-          return under.map((channel, index) => rgb[index] * alpha + channel * (1 - alpha))
-        },
-        [255, 255, 255]
-      )
-    }
-    const luminance = (rgb: number[]) => {
-      const [r, g, b] = rgb.map(channel => {
-        const value = channel / 255
-        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
-      })
-      return 0.2126 * r + 0.7152 * g + 0.0722 * b
-    }
-    const ratio = (one: number[], two: number[]) => {
-      const [light, dark] = [luminance(one), luminance(two)].sort((a, b) => b - a)
-      return (light + 0.05) / (dark + 0.05)
-    }
-    return [...document.querySelectorAll('[data-line]')].map(row => {
-      const meaning = row.querySelector('[data-aid="meaning"]')
-      if (!meaning) throw new Error('No meaning')
-      const background = behind(meaning)
-      const { rgb, alpha } = rgba(getComputedStyle(meaning).color)
-      const text = rgb.map((channel, index) => channel * alpha + background[index] * (1 - alpha))
-      const current = row.hasAttribute('data-current')
-      return { current, ratio: Math.round(ratio(text, background) * 100) / 100 }
-    })
-  })
+async function meaningContrast(page: Page) {
+  const rows = await page.locator('[data-line]').all()
+  return Promise.all(
+    rows.map(async row => ({
+      current: await row.evaluate(element => element.hasAttribute('data-current')),
+      ratio: await textContrast(row.locator('[data-aid="meaning"]').first())
+    }))
+  )
 }
 
 for (const width of panelWidths) {
