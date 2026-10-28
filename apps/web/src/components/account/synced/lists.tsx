@@ -19,9 +19,13 @@ import {
 } from '@zenbu/ui/components/item'
 import { Label } from '@zenbu/ui/components/label'
 import Link from 'next/link'
-import { type FormEvent, useRef, useState } from 'react'
-import { listPath, textIn } from '@/lib/account/synced-views'
+import { type FormEvent, type ReactNode, useRef, useState } from 'react'
+import { ownLists } from '@/lib/account/daily-lists'
+import { accountPages } from '@/lib/account/pages'
+import { dailyListsPath, listPath, textIn } from '@/lib/account/synced-views'
+import type { Locale } from '@/lib/i18n/config'
 import { countOf, fill } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 import { FormMessage } from '../form-message'
 import { type AreaProps, AskFirst, MoveButtons, Rows, useChanging, type Words } from './parts'
 
@@ -68,6 +72,38 @@ function NameForm({
         ) : null}
       </div>
     </form>
+  )
+}
+
+export function ListRow({
+  href,
+  title,
+  description,
+  children
+}: {
+  href: string
+  title: string
+  description: string
+  children?: ReactNode
+}) {
+  return (
+    <Item variant="outline">
+      <ItemContent>
+        <ItemTitle>
+          <Link href={href}>{title}</Link>
+        </ItemTitle>
+        <ItemDescription>{description}</ItemDescription>
+      </ItemContent>
+      {children ? <ItemActions>{children}</ItemActions> : null}
+    </Item>
+  )
+}
+
+export function AllLists({ locale, words }: { locale: Locale; words: Words['lists'] }) {
+  return (
+    <Link href={localizedPath(accountPages.lists.path, locale)} className="self-start text-sm">
+      {words.allLists}
+    </Link>
   )
 }
 
@@ -167,11 +203,13 @@ export function Lists(props: AreaProps) {
   const words = text.synced.lists
   const { busy, problem, setProblem, run } = useChanging()
   const creating = useRef<string | null>(null)
-  const lists = listsInOrder(copy.held('list'))
+  const everyList = listsInOrder(copy.held('list'))
+  const lists = ownLists(everyList)
+  const dailyCount = everyList.length - lists.length
   const create = async (name: string) => {
     const id = creating.current ?? crypto.randomUUID()
     creating.current = id
-    const position = nextListPosition(copy.held('list'))
+    const position = nextListPosition(ownLists(copy.held('list')))
     const made = await run(() => change('list', 'create', id, { name, position }))
     const held = Boolean(copy.heldOne('list', id)?.data)
     if (!made && !held) return false
@@ -193,6 +231,13 @@ export function Lists(props: AreaProps) {
     )
   return (
     <section className="flex flex-col gap-4" aria-label={text.pages.lists.title}>
+      {dailyCount > 0 ? (
+        <ListRow
+          href={dailyListsPath(locale)}
+          title={words.dailyLists}
+          description={countOf(words.dailyCount, dailyCount, locale)}
+        />
+      ) : null}
       <NameForm
         id="new-list"
         label={words.newList}
@@ -206,26 +251,23 @@ export function Lists(props: AreaProps) {
         {lists.map((list, index) => {
           const count = wordsOfList(listWords, list.entityId).length
           return (
-            <Item key={list.entityId} variant="outline">
-              <ItemContent>
-                <ItemTitle>
-                  <Link href={listPath(list.entityId, locale)}>{textIn(list.data, 'name')}</Link>
-                </ItemTitle>
-                <ItemDescription>{countOf(words.count, count, locale)}</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <ListActions
-                  list={list}
-                  wordCount={count}
-                  props={props}
-                  moves={{
-                    up: index > 0 ? move(index, index - 1) : null,
-                    down: index < lists.length - 1 ? move(index, index + 1) : null,
-                    busy
-                  }}
-                />
-              </ItemActions>
-            </Item>
+            <ListRow
+              key={list.entityId}
+              href={listPath(list.entityId, locale)}
+              title={textIn(list.data, 'name')}
+              description={countOf(words.count, count, locale)}
+            >
+              <ListActions
+                list={list}
+                wordCount={count}
+                props={props}
+                moves={{
+                  up: index > 0 ? move(index, index - 1) : null,
+                  down: index < lists.length - 1 ? move(index, index + 1) : null,
+                  busy
+                }}
+              />
+            </ListRow>
           )
         })}
       </Rows>

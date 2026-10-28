@@ -2,13 +2,10 @@
 
 import { isMarkedKnown, wordsOfList } from '@zenbu/account-rules/account-views'
 import { Badge } from '@zenbu/ui/components/badge'
-import Link from 'next/link'
 import { useState } from 'react'
-import { accountPages } from '@/lib/account/pages'
 import { matchesTyped, textIn } from '@/lib/account/synced-views'
 import { countOf } from '@/lib/i18n/format'
-import { localizedPath } from '@/lib/i18n/paths'
-import { ListActions } from './lists'
+import { AllLists, ListActions } from './lists'
 import { type AreaProps, useChanging, WordRows } from './parts'
 
 export function ListWords(props: AreaProps & { listId: string }) {
@@ -17,11 +14,7 @@ export function ListWords(props: AreaProps & { listId: string }) {
   const [typed, setTyped] = useState('')
   const { busy, problem, run } = useChanging()
   const list = copy.heldOne('list', listId)
-  const allLists = (
-    <Link href={localizedPath(accountPages.lists.path, locale)} className="self-start text-sm">
-      {words.allLists}
-    </Link>
-  )
+  const allLists = <AllLists locale={locale} words={words} />
   if (!list?.data) {
     return (
       <section className="flex flex-col gap-4" aria-label={text.pages.lists.title}>

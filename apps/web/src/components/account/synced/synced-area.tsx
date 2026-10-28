@@ -58,13 +58,15 @@ export function SyncedAreaView({
   locale,
   text,
   settings,
-  listId = null
+  listId = null,
+  dailyLists = false
 }: {
   area: Area
   locale: Locale
   text: AccountText
   settings: AccountSettings
   listId?: string | null
+  dailyLists?: boolean
 }) {
   const api = useMemo(() => accountApi(settings.apiUrl, locale), [settings.apiUrl, locale])
   const tokens = useMemo(() => accessTokens(api), [api])
@@ -134,6 +136,7 @@ export function SyncedAreaView({
     locale,
     text,
     listId: shown.listId,
+    dailyLists,
     pages: shown.pages,
     change: async (entity, operation, entityId, fields, base) =>
       settled([await shown.copy.change(entity, operation, entityId, fields, base)]),
