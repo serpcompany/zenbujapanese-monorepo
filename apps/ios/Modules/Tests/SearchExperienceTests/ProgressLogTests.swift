@@ -97,26 +97,52 @@ final class ProgressLogTests {
     #expect(reloaded.days["2026-10-28"]?.goal == DailyGoal.standard)
   }
 
-  @Test("the day turning while the app is open or suspended moves today, so Account asks for the new day's stats")
-  func dayTurns() async {
+  private func todayAfter(
+    from start: Date, to later: Date, _ turn: (ProgressLog, NotificationCenter) async -> Void
+  ) async -> (before: String, heard: Bool, after: String) {
     let center = NotificationCenter()
-    clock.now = october(27, 23, 59)
+    clock.now = start
     let log = ProgressLog(fileURL: logURL, defaults: defaults, timeZone: tokyo, center: center)
     log.now = { [clock] in clock.now }
     await log.flush()
     let (changes, change) = AsyncStream.makeStream(of: Void.self)
     let before = withObservationTracking { log.today } onChange: { change.yield() }
-
-    clock.now = october(28, 7, 0)
-    center.post(name: .NSCalendarDayChanged, object: nil)
-    await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
+    clock.now = later
+    await turn(log, center)
     change.finish()
     var heard = false
     for await _ in changes { heard = true }
+    return (before, heard, log.today)
+  }
 
-    #expect(before == "2026-10-27")
-    #expect(heard)
-    #expect(log.today == "2026-10-28")
+  @Test("the day turning while the app is open moves today, so Account asks for the new day's stats")
+  func dayTurns() async {
+    let turned = await todayAfter(from: october(27, 23, 59), to: october(28, 7, 0)) { _, center in
+      center.post(name: .NSCalendarDayChanged, object: nil)
+      await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
+    }
+    #expect(turned.before == "2026-10-27")
+    #expect(turned.heard)
+    #expect(turned.after == "2026-10-28")
+  }
+
+  @Test("the app becoming active on a new day moves today, with no day change posted")
+  func resumeOnANewDay() async {
+    let resumed = await todayAfter(from: october(27, 23, 59), to: october(28, 7, 0)) { log, _ in
+      log.refreshDay()
+    }
+    #expect(resumed.before == "2026-10-27")
+    #expect(resumed.heard)
+    #expect(resumed.after == "2026-10-28")
+  }
+
+  @Test("the app becoming active on the same day leaves today as it was")
+  func resumeOnTheSameDay() async {
+    let resumed = await todayAfter(from: october(27, 8, 0), to: october(27, 23, 0)) { log, _ in
+      log.refreshDay()
+    }
+    #expect(!resumed.heard)
+    #expect(resumed.after == "2026-10-27")
   }
 
   @Test("a share sheet change made at 23:59 and applied the next morning falls on its own day")
