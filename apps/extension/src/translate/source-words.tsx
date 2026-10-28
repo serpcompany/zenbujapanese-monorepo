@@ -9,7 +9,7 @@ import {
   useRef,
   useState
 } from 'react'
-import { type Glosses, glossOf } from '../page-lookup/annotate'
+import { type Gloss, type Glosses, glossOf } from '../page-lookup/annotate'
 import { type GlossCache, type GlossLookUp, glossCache } from '../page-lookup/glosses'
 import { type Found, wordIds } from '../page-lookup/rendering'
 import { backoff, readText, type Segment, type Wait } from '../page-lookup/scan'
@@ -88,7 +88,7 @@ function Words({
   pick
 }: {
   group: readonly PageToken[]
-  gloss: string | null
+  gloss: Gloss | null
   pick: PickWord
 }) {
   const words = group.map(token =>
@@ -113,8 +113,9 @@ function Words({
       {gloss ? (
         <>
           <span>{words}</span>
-          <span data-aid="meaning" lang={wordPopupLabels.lang}>
-            {gloss}
+          <span data-aid="meaning" lang={wordPopupLabels.lang} title={gloss.full}>
+            <span aria-hidden="true">{gloss.short}</span>
+            <span className="sr-only">{gloss.full}</span>
           </span>
         </>
       ) : (

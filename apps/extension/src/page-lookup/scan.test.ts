@@ -113,14 +113,14 @@ describe('scanner', () => {
 })
 
 describe('glossCache', () => {
-  it('keeps each word’s short meaning, asking once for a word however often it is wanted', async () => {
+  it('keeps each word’s short meaning and its full text, asking once for a word however often it is wanted', async () => {
     const lookUp = vi.fn(async (id: string) => popupAnswer(id))
     const cache = glossCache(lookUp)
     await Promise.all([cache.fetch(['youkyuu', 'iru']), cache.fetch(['youkyuu'])])
     await cache.fetch(['youkyuu', 'missing'])
     expect(Object.fromEntries(cache.known)).toEqual({
-      youkyuu: 'demand',
-      iru: 'be needed',
+      youkyuu: { short: 'demand', full: 'demand, request' },
+      iru: { short: 'be needed', full: 'to be needed' },
       missing: null
     })
     expect(lookUp.mock.calls.map(([id]) => id)).toEqual(['youkyuu', 'iru', 'missing'])
@@ -133,7 +133,7 @@ describe('glossCache', () => {
     expect(cache.known.has('iru')).toBe(false)
     answer = popupAnswer('iru')
     await cache.fetch(['iru'])
-    expect(cache.known.get('iru')).toBe('be needed')
+    expect(cache.known.get('iru')).toEqual({ short: 'be needed', full: 'to be needed' })
   })
 
   it('has at most its limit of lookups out at once', async () => {
