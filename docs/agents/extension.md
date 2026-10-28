@@ -146,7 +146,9 @@ root, and draws inside it:
   one of the test pages.
 - **Geist is the page's font, under its own name.** A shadow root can't declare `@font-face`, so
   `addGeist` adds both subsets to `document.fonts` as `Zenbu Geist`, which a page's own Geist
-  can't replace. The font files are web accessible to the pages the content script runs on.
+  can't replace. The fonts are inlined in the bundle and added from their bytes, so no page
+  loads an extension file and the manifest has no `web_accessible_resources`: on real YouTube,
+  Chrome refused the page's load of the fonts' web-accessible URL (#1070).
 - **Menus and dialogs open inside it.** The content goes inside `@zenbu/ui`'s `PortalContainer`,
   set to the surface, so a dialog or menu portals into the shadow root, where its styles are.
 - **`.dark` follows the system setting** on the surface, never on the page.

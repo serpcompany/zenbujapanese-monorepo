@@ -41,22 +41,9 @@ describe('manifest', () => {
     )
   })
 
-  it('lets every site the learner may allow load the fonts the shadow root draws with', () => {
-    expect(manifest('release').web_accessible_resources).toEqual([
-      {
-        resources: ['assets/*.woff2'],
-        matches: ['http://*/*', 'https://*/*'],
-        use_dynamic_url: true
-      }
-    ])
-  })
-
-  it('lets the caption on the YouTube player load the same fonts, in every build', () => {
+  it('makes no file web accessible, so no page loads or probes the extension’s files, in every build', () => {
     for (const variant of ['release', 'test'] as const) {
-      const [fonts] = manifest(variant).web_accessible_resources
-      expect(manifest(variant).web_accessible_resources).toHaveLength(1)
-      expect(fonts.resources).toEqual(['assets/*.woff2'])
-      expect(fonts.matches).toContain('https://*/*')
+      expect(manifest(variant)).not.toHaveProperty('web_accessible_resources')
     }
     expect(manifest('release').content_scripts[0].matches).toEqual(['https://www.youtube.com/*'])
   })

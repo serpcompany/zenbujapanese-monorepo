@@ -82,6 +82,21 @@ test('draws the line being heard inside the player, in place of the site’s cap
   expect(timedText()).toHaveLength(1)
 })
 
+test('draws the caption in Geist with no request from the page for the extension’s files', async ({
+  page
+}) => {
+  const extensionFiles: string[] = []
+  page.on('request', request => {
+    if (request.url().startsWith('chrome-extension:')) extensionFiles.push(request.url())
+  })
+  await openAt(page, 1)
+  const geist = await page.evaluate(() =>
+    [...document.fonts].filter(font => font.family.includes('Zenbu Geist')).map(font => font.status)
+  )
+  expect(geist).toEqual(['loaded', 'loaded'])
+  expect(extensionFiles).toEqual([])
+})
+
 test('opens the speed menu inside the player, in and out of fullscreen', async ({ page }) => {
   await openAt(page, 1)
   await chooseSpeed(page, 1, 0.75)

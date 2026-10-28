@@ -14,7 +14,6 @@ export type Extension = {
   context: BrowserContext
   id: string
   origin: string
-  dynamicOrigin: string
   serviceWorker: Worker
   server: LocalServer
   manifest: Record<string, unknown>
@@ -25,9 +24,7 @@ const extensionSchemes = new Set(['chrome-extension:', 'chrome:', 'data:', 'blob
 
 function isAllowedRequest(url: string, server: LocalServer, extension: Extension) {
   const { protocol, host, origin } = new URL(url)
-  if (protocol === 'chrome-extension:') {
-    return [extension.origin, extension.dynamicOrigin].includes(`${protocol}//${host}`)
-  }
+  if (protocol === 'chrome-extension:') return `${protocol}//${host}` === extension.origin
   return (
     extensionSchemes.has(protocol) ||
     [server.url, server.languageDataUrl, server.allowedSiteUrl, extension.youTube?.origin].includes(
@@ -66,12 +63,8 @@ export const test = base.extend<
         context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
       const id = new URL(serviceWorker.url()).host
       const origin = `chrome-extension://${id}`
-      const dynamicId = await serviceWorker.evaluate(
-        () => (chrome.runtime as typeof chrome.runtime & { dynamicId: string }).dynamicId
-      )
-      const dynamicOrigin = `chrome-extension://${dynamicId}`
       const manifest = JSON.parse(readFileSync(join(extensionBuild, 'manifest.json'), 'utf8'))
-      await use({ context, id, origin, dynamicOrigin, serviceWorker, server, manifest, youTube })
+      await use({ context, id, origin, serviceWorker, server, manifest, youTube })
       await context.close()
       await server.close()
       youTube?.close()

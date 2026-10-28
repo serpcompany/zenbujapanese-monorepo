@@ -48,10 +48,7 @@ function onPages(scripts: ContentScript[]) {
       matches: script.matches,
       js: [contentScriptFile(script)],
       run_at: 'document_idle'
-    })),
-    web_accessible_resources: [
-      { resources: ['assets/*.woff2'], matches: optionalSites, use_dynamic_url: true }
-    ]
+    }))
   }
 }
 

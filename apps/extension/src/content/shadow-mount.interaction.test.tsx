@@ -11,7 +11,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 class FakeFontFace {
   constructor(
     readonly family: string,
-    readonly source: string
+    readonly source: ArrayBuffer
   ) {}
 }
 
@@ -71,6 +71,12 @@ describe('mountInShadowRoot', () => {
   it('adds Geist to the page under its own family, so the page font of the same name is untouched', () => {
     mount()
     expect(fonts.map(font => font.family)).toEqual(['Zenbu Geist', 'Zenbu Geist'])
+  })
+
+  it('gives Geist its bytes, so the page never loads a file of the extension', () => {
+    mount()
+    const signatures = fonts.map(font => new TextDecoder().decode(font.source.slice(0, 4)))
+    expect(signatures).toEqual(['wOF2', 'wOF2'])
   })
 
   it('follows the system colour scheme on the surface, not on the page', () => {
