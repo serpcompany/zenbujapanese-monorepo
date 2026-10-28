@@ -838,13 +838,13 @@ Fields ([`WordFields`](#wordfields)):
 
 ### Entity `list`
 
-A word list. An account holds at most 500, and a deleted list's ID can't be used again.
+A word list. An account holds at most 500 of the learner's own, and a deleted list's ID can't be used again. Daily lists don't count: a daily list's ID is `00000000-da11-4000-8000-0000yyyymmdd`, its day's digits (`dailyListId` in `packages/account-rules`), and it is left out of the count while its day is from 2026-10-01 to the day after the service's own date, in UTC. A list for any other day counts like the learner's own.
 
 - **ID** (`entityId`): Its UUID, in either case; answers name it in lowercase.
 - **Read with:** `lists:read`
 - **As it is now** (a `put`'s `data`): [`WordList`](#wordlist)
 
-**`create`**, with `lists:write`; `baseVersion` not read. Rejected `already_exists` if the account has or had a list with that ID, and `too_many_lists` past 500.
+**`create`**, with `lists:write`; `baseVersion` not read. Rejected `already_exists` if the account has or had a list with that ID, a deleted daily list too, and `too_many_lists` once it holds 500 lists that count, unless the new list is a daily list that doesn't.
 
 Fields ([`ListCreateFields`](#listcreatefields)), and no others:
 
@@ -1287,7 +1287,7 @@ A `rejected` result's `error.code`. A rejection is final for that mutation ID.
 | `mutation_id_reused` | The ID was used for a different mutation. Give each mutation its own. |
 | `already_exists` | The account has, or had, a list with that ID. |
 | `unknown_list` | The list word's list isn't in the account, or was deleted. |
-| `too_many_lists` | The account has 500 lists. |
+| `too_many_lists` | The account has 500 lists, not counting its daily lists. |
 | `list_full` | The list has 5,000 words. |
 | `too_many_bookmarks` | The account has 2,000 bookmarked sentences. |
 | `too_many_notes` | The account has 10,000 notes. Keep the note on the device, untouched. |

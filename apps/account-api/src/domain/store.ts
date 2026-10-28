@@ -123,7 +123,7 @@ export interface LockedAccount extends EntityReader, KeptWriter {
   readonly profile: Profile
   saveProfile(next: EditableProfile, version: number): Promise<Profile | 'username_taken'>
   saveKnownWord(word: Omit<KnownWord, 'updatedAt'>): Promise<void>
-  wordListCount(): Promise<number>
+  wordListCount(uncounted: readonly string[]): Promise<number>
   saveWordList(list: Omit<WordList, 'createdAt' | 'updatedAt'>): Promise<void>
   listWordCount(listId: string): Promise<number>
   saveListWord(word: Omit<ListWord, 'addedAt' | 'updatedAt'>): Promise<void>
