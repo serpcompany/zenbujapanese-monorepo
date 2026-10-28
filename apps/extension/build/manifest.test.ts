@@ -29,7 +29,7 @@ describe('manifest', () => {
     expect(test.web_accessible_resources?.[0]?.resources).toEqual(['assets/*.woff2'])
   })
 
-  it('needs a Chrome with the Translator API, and asks only for what the offline dictionary, scripting and YouTube need', () => {
+  it('needs a Chrome with the Translator API, asks only for what the offline dictionary, scripting and YouTube need, and asks for other sites only when the learner allows one', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)
     expect(release.minimum_chrome_version).toBe(minimumChromeVersion)
@@ -37,11 +37,13 @@ describe('manifest', () => {
       'offscreen',
       'sidePanel',
       'storage',
+      'activeTab',
       'unlimitedStorage',
       'alarms',
       'scripting',
       'declarativeNetRequestWithHostAccess'
     ])
+    expect(release.optional_host_permissions).toEqual(['http://*/*', 'https://*/*'])
     expect(release.background).toEqual({ service_worker: 'service-worker.js', type: 'module' })
   })
 

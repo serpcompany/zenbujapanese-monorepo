@@ -1,6 +1,5 @@
 export const labels = {
   name: 'Zenbu Japanese',
-  settings: { title: 'Settings', body: 'Nothing to set yet.' },
   progress: {
     checking: 'Checking the dictionary…',
     downloading:

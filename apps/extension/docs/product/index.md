@@ -13,7 +13,7 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 | --- | --- | --- |
 | Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). Its Translate tab: [`translate.md`](translate.md). | The tests and Chrome checks there; `e2e/pages.spec.ts` |
 | Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
-| Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | `e2e/pages.spec.ts` |
+| Settings | Reading Aids, Frequency Dictionaries, Dictionary Data, Sites, and Credits, in a tab of its own. | [`settings.md`](settings.md) |
 | Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from a route; nothing opens one yet (#957). | `src/word-detail/*.interaction.test.tsx` |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
@@ -30,7 +30,7 @@ is in, the extension works offline (`src/worker/installer.test.ts`).
 
 ## Updates
 
-When the browser starts, once a day, and when a page asks (Settings' Check for Updates, #959),
+When the browser starts, once a day, and when a page asks (Settings' Check for Updates),
 the extension looks for a newer dictionary and downloads only what changed. The learner keeps
 looking words up from the dictionary they have until the new one is ready, and the dictionary's
 progress says it is ready while it checks and downloads; an update that fails leaves it in place
@@ -48,7 +48,8 @@ its reports (`src/error-reports/scrub.test.ts`,
 There are no usage analytics.
 
 Reports are on until the learner turns them off, as in the app: the setting is
-`crashReports.send`, and the switch for it comes with Settings (#959). Turning it off stops
+`crashReports.send`, and its switch is Settings' Send Crash Reports
+([`settings.md`](settings.md)). Turning it off stops
 reports at once, with no reload, and drops any not yet sent; turning it on starts them again
 (`src/error-reports/report-setting.test.ts`). Sentry keeps a report for the project's retention,
 set in Sentry.
@@ -64,4 +65,5 @@ set in Sentry.
 The dictionary answers lookups, but no surface asks it yet: the word popup on a page, underlining,
 Word Detail, and saving aren't built, nor the Video tab and the caption on the player that show a
 YouTube video's lines, so the side panel's tabs but Translate show only their empty states. The
-release build draws nothing on the pages a learner reads.
+reading aids and Zenbu Captions are stored but draw nothing yet, and the release build draws
+nothing on the pages a learner reads.

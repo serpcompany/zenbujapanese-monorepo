@@ -59,6 +59,7 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
       'offscreen',
       'sidePanel',
       'storage',
+      'activeTab',
       'unlimitedStorage',
       'alarms',
       'scripting',
@@ -68,6 +69,7 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
       `${hostsOf(variant, environment).languageData}/*`,
       'https://www.youtube.com/*'
     ],
+    optional_host_permissions: ['http://*/*', 'https://*/*'],
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     },

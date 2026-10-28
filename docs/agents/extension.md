@@ -78,8 +78,8 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | Folder | What it holds |
 | --- | --- |
 | `src/pages/` | The side panel, the Settings page (the manifest's `options_ui`, opened in a tab), and the welcome tab; there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`), opens the side panel on a route (`side-panel.ts`), and opens the welcome tab on install and asks for updates (`language-data-updates.ts`). |
-| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, #959's), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`), passes on the settings (`settings.ts`), opens the side panel on a route (`side-panel.ts`), and opens the welcome tab on install and asks for updates (`language-data-updates.ts`). |
+| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, `active-site.ts`), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
 | `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
@@ -88,11 +88,12 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
 | `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), and the content script's side on a watch page (`youtube-page.ts`). |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
-| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress (`dictionary-progress.tsx`), which every page that shows the download draws. Pages and content scripts look words up through `dictionary.ts`'s helpers, never with raw requests. |
+| `src/settings/` | Settings and its pages ([`extension-settings.md`](extension-settings.md)). |
+| `src/shared/` | The messages and their types, the settings, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress every page that shows the download draws (`dictionary-progress.tsx`). Pages and content scripts look words up with `dictionary.ts`'s helpers, never raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
-| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
+| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and shows each reading aid's state (`settings-follower.tsx`). |
 | `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local data server and its release (`local-server.ts`, `fixture-release.ts`). |
 | `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
@@ -120,16 +121,16 @@ is in [`extension-captions.md`](extension-captions.md).
 ### Translation
 
 Any surface translates with `translate(request)` (`src/translation/messages.ts`): it asks how
-available the translator is for a direction (`ja` to `en`, or `en` to `ja`), or translates lines
-of text. It sends `{ target: 'service-worker', translation }`, and the service worker opens the
-offscreen document as for the dictionary and passes it on as
-`{ target: 'offscreen', translation }`. The key is `translation`, not `request`, so the
-dictionary's listeners never answer it, nor the translation listeners a dictionary request. The offscreen document makes one Translator for
-each direction once Chrome says it is `available`, keeps it, and translates each line, leaving a
-blank one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes
-nothing then; a translation that fails, or doesn't answer within 30 seconds, comes back as
-`{ type: 'failed', reason }`, and the offscreen document drops that Translator, destroying it, so
-the next one makes a new one. A page's text never goes in an error's message.
+available the translator is for a direction (`ja` to `en`, or `en` to `ja`), or translates lines of
+text. It sends `{ target: 'service-worker', translation }`, and the service worker opens the
+offscreen document as for the dictionary and passes it on as `{ target: 'offscreen', translation }`.
+The key is `translation`, not `request`, so the dictionary's listeners never answer it, nor the
+translation listeners a dictionary request. The offscreen document makes one Translator for each
+direction once Chrome says it is `available`, keeps it, and translates each line, leaving a blank
+one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes nothing
+then; a translation that fails, or doesn't answer within 30 seconds, comes back as `{ type:
+'failed', reason }`, and the offscreen document drops that Translator, destroying it, so the next
+one makes a new one. A page's text never goes in an error's message.
 
 Chrome downloads a model only from a click, and the click's activation lasts a few seconds, so a
 page asks `translatorAvailability(direction)` itself in that click and, while the model is
@@ -137,11 +138,10 @@ page asks `translatorAvailability(direction)` itself in that click and, while th
 any message. It reports the download's progress from 0 to 1 and answers the state; a download with
 no progress for 60 seconds is stopped and answers Chrome's state then. The page then translates
 through the offscreen document, which makes its own Translator once the model is `available`. The
-offscreen document
-translates with no click once the model is `available`: checked on 2026-10-27 in Chrome 156, in
-the headful agent Chrome, by sending a translation from the test content script's world, with no
-user gesture, in a Chrome just started. Each direction has its own model. The model is Chrome's,
-on this computer, and nothing is sent anywhere to translate.
+offscreen document translates with no click once the model is `available`: checked on 2026-10-27 in
+Chrome 156, in the headful agent Chrome, by sending a translation from the test content script's
+world, with no user gesture, in a Chrome just started. Each direction has its own model. The model
+is Chrome's, on this computer, and nothing is sent anywhere to translate.
 
 ### Drawing on a page
 

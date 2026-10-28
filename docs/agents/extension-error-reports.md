@@ -43,9 +43,9 @@ with one difference below. There are no usage analytics.
   Since every report goes through the service worker, it is read there, before anything is sent:
   a report made before the read waits for it, and goes only if the setting is on. The service
   worker follows `chrome.storage.onChanged`, so turning it off stops the next report at once and
-  turning it on starts them again, with no reload; a setting it can't read counts as off. #959
-  draws the switch on the Settings page; until then, set the key from the service worker's
-  console. Sentry keeps an event for the project's retention, which is set in Sentry (see the
+  turning it on starts them again, with no reload; a setting it can't read counts as off. The
+  switch is on the Settings page; the key's default and how a stored value reads are
+  `settings.ts`'s. Sentry keeps an event for the project's retention, which is set in Sentry (see the
   owner steps).
 - **Handled failures.** When the service worker answers a dictionary or translation request with
   a failure, it reports it once with `reportFailure(code)`, a message holding only the code and

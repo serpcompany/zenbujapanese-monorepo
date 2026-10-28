@@ -1,10 +1,11 @@
 import type { BrowserClient } from '@sentry/browser'
+import { type SettingKey, settingFrom } from '../shared/settings'
 
 export type MakeTransport = NonNullable<ConstructorParameters<typeof BrowserClient>[0]['transport']>
 
 export type Transport = ReturnType<MakeTransport>
 
-export const sendSettingKey = 'crashReports.send'
+export const sendSettingKey = 'crashReports.send' satisfies SettingKey
 
 export type SettingStorage = {
   get(key: string): Promise<Record<string, unknown>>
@@ -19,7 +20,7 @@ export function sendSetting(storage: SettingStorage): () => Promise<boolean> {
     .then(() => storage.get(sendSettingKey))
     .then(
       items => {
-        sends ??= items[sendSettingKey] !== false
+        sends ??= settingFrom(sendSettingKey, items[sendSettingKey])
       },
       () => {
         sends ??= false
@@ -27,7 +28,7 @@ export function sendSetting(storage: SettingStorage): () => Promise<boolean> {
     )
   storage.onChanged.addListener(changes => {
     const change = changes[sendSettingKey]
-    if (change) sends = change.newValue !== false
+    if (change) sends = settingFrom(sendSettingKey, change.newValue)
   })
   return () => read.then(() => sends === true)
 }

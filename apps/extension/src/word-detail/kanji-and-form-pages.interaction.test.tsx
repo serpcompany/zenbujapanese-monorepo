@@ -17,6 +17,11 @@ import { wordDetailLabels } from './labels'
 import type { WordLookups } from './lookups'
 import { WordDetailPage } from './word-detail-page'
 
+vi.mock('../shared/use-settings', async () => {
+  const { settingDefaults } = await import('../shared/settings')
+  return { useSettings: () => settingDefaults }
+})
+
 vi.mock('../shared/dictionary-progress', async () => {
   const { fakeDictionaryProgress } = await import('../test/data-state')
   return fakeDictionaryProgress

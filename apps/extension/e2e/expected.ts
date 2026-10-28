@@ -1,3 +1,4 @@
+import { settingsLabels } from '../src/settings/labels.ts'
 import { labels } from '../src/shared/labels.ts'
 import { labels as sidePanelLabels } from '../src/side-panel/labels.ts'
 
@@ -21,8 +22,8 @@ export const extensionPages: ExtensionPage[] = [
     name: 'settings',
     path: 'pages/settings.html',
     manifestKey: 'options_ui.page',
-    title: labels.settings.title,
-    text: labels.settings.body
+    title: settingsLabels.title,
+    text: settingsLabels.details['readingAids.wordMeanings']
   }
 ]
 

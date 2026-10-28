@@ -13,6 +13,8 @@ declare global {
 }
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+vi.mock('./header-controls', () => ({ HeaderControls: () => null }))
+
 let root: Root | undefined
 
 afterEach(() => {

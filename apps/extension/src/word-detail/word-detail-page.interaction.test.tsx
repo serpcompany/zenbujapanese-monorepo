@@ -39,6 +39,8 @@ vi.mock('../shared/use-settings', async () => {
   }
 })
 
+vi.mock('../side-panel/header-controls', () => ({ HeaderControls: () => null }))
+
 vi.mock('../shared/dictionary-progress', async () => {
   const { fakeDictionaryProgress } = await import('../test/data-state')
   return fakeDictionaryProgress

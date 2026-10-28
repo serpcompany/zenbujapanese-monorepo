@@ -7,6 +7,7 @@ import {
 import { keepLanguageDataCurrent } from './language-data-updates'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
+import { startSettingsChannel } from './settings'
 import { startSidePanel } from './side-panel'
 import { routeTranslation } from './translation'
 
@@ -48,4 +49,5 @@ chrome.runtime.onMessage.addListener(
   routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
 )
 
+startSettingsChannel()
 startSidePanel(reportFailure)

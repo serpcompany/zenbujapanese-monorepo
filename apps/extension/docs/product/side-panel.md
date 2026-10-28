@@ -6,8 +6,8 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
 
 ## What a learner sees
 
-- **A header:** the Zenbu mark and "Zenbu Japanese". Its trailing side is for this site's switch
-  and a menu with the reading aids and Settings (#959); there is no gear.
+- **A header:** the Zenbu mark and "Zenbu Japanese", then this site's switch and a menu with the
+  reading aids and Settings: [`side-panel-header.md`](side-panel-header.md). There is no gear.
 - **A tab bar at the bottom,** always in view: Video, Translate, Images, Words, and Recent, in
   that order, each an icon over its name. A click chooses a tab. The arrow keys move along the
   bar and choose the tab they land on, wrapping at the ends (`panel.interaction.test.tsx`).
