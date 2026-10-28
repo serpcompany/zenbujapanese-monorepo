@@ -17,6 +17,7 @@ Run every command below from `packages/account-rules`, after `pnpm install` at t
 | A username | `src/profile.ts` | `cases/username.json` | NFKC, trimmed, lowercased, then 3 to 30 of `a`–`z`, digits, and `_`; a field left blank, as JavaScript trims, removes the username |
 | A sign-in code | `src/sign-in-code.ts` | `cases/sign-in-code.json` | Six ASCII digits once trimmed |
 | A list's name | `src/lists.ts` | `cases/list-name.json` | NFC, control characters made spaces, trimmed, 1 to 500 code points; the app cuts a longer one to fit, after trimming, and the service refuses one it's sent |
+| A daily list's ID | `src/daily-lists.ts` | `cases/daily-list-id.json` | `00000000-da11-4000-8000-0000yyyymmdd` for a day that exists (`dailyListId`), and the day back from one in either case (`dailyListDay`); any other ID, an impossible day's too, is no daily list. The service leaves a daily list out of the 500-list cap while its day is from 2026-10-01 to the day after its own UTC date |
 | A note's text | `src/notes.ts` | `cases/note-text.json` | Line breaks made `\n`, other control characters but tabs made spaces, NFC, trimmed, 1 to 10,000 code points, never cut |
 | A watch's title, channel, and numbers | `src/watch.ts` | `cases/watch-fields.json` | Text cut to 200 code points with control characters made spaces, a blank one left out; seconds 0 to 10,000,000, comprehension 0 to 1 |
 | A setting | `src/settings.ts` | `cases/settings.json` | Each setting the service syncs, its kind, and values it takes and refuses |
@@ -50,7 +51,8 @@ and the service's `website-copy.test.ts` against the service.
 
 - **The service** takes its profile, list, note, watch, and setting rules from the package
   (`apps/account-api/src/domain`), and Better Auth's code length from `signInCode`. Its tests
-  replay the name and username cases (`apps/account-api/src/domain/profile.test.ts`) and the
+  replay the name and username cases (`apps/account-api/src/domain/profile.test.ts`), the daily
+  list IDs against the list cap (`apps/account-api/src/http/daily-lists.test.ts`), and the
   order of tied videos (`apps/account-api/src/db/postgres.test.ts`, on PGlite and on a real
   Postgres in CI). The tie test fails under a linguistic collation such as `en_US.UTF-8`, the
   official `postgres` image's, unless the prune sorts IDs `collate "C"` (`inCodePointOrder`,
