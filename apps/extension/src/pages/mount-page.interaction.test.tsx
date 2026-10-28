@@ -20,7 +20,7 @@ describe('an extension page', () => {
     const { speaker, spoken, said } = speakerWithOnlyANetworkVoice()
     await act(async () => mountPage('Zenbu Japanese', speaker))
     act(() => document.querySelector<HTMLButtonElement>('button')?.click())
-    expect(said).toHaveBeenCalledExactlyOnceWith(cantPronounce)
+    expect(said).toHaveBeenCalledExactlyOnceWith(cantPronounce, expect.any(Function))
     expect(spoken).not.toHaveBeenCalled()
   })
 })

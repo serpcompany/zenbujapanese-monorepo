@@ -177,12 +177,17 @@ describe('pronouncing the word', () => {
     )
     vi.stubGlobal('speechSynthesis', {
       getVoices: () => listed,
+      addEventListener: () => {},
+      removeEventListener: () => {},
       cancel: () => {},
       speak: ({ text, lang, voice, rate }: Said) => said.push({ text, lang, voice, rate })
     })
   })
 
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
 
   test.each([
     ['the pitch capsule', capsule, 'en'],
@@ -196,10 +201,15 @@ describe('pronouncing the word', () => {
     expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP', voice: kyokoEnhanced, rate: 0.82 }])
   })
 
-  test('a computer with only a network Japanese voice still says the reading, in the browser’s own voice', async () => {
-    listed = [googleJapanese]
+  test.each([
+    ['a computer with only a network Japanese voice', [googleJapanese]],
+    ['a browser that lists no voices within a second', []]
+  ])('%s still says the reading, in the browser’s own voice', (_, voices) => {
+    vi.useFakeTimers()
+    listed = voices
     const speaker = renderHeader(capsule, 'en', <Toaster />)
-    await act(async () => speaker.click())
+    act(() => speaker.click())
+    act(() => vi.advanceTimersByTime(1000))
     expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP', voice: null, rate: 0.82 }])
     expect(document.body.textContent).not.toContain(getDictionary('en').pronounce.unsupported)
   })

@@ -34,6 +34,6 @@ export function voiceToSpeak<V extends Voice>(
   withoutLocalVoice: WithoutLocalVoice
 ): V | null | 'unsupported' {
   const voice = bestLocalVoice(voices, lang)
-  if (voice || voices.length === 0 || withoutLocalVoice === 'browser-voice') return voice
+  if (voice || withoutLocalVoice === 'browser-voice') return voice
   return 'unsupported'
 }

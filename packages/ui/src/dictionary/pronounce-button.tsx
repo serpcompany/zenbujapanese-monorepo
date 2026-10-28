@@ -5,7 +5,9 @@ import { createContext, useContext, useEffect } from 'react'
 import { Button } from '../components/button'
 import { bestLocalVoice, voiceToSpeak, type WithoutLocalVoice } from './voice'
 
-export type OnUnsupported = (message: string) => void
+export type ClearWhen = (clear: () => void) => void
+
+export type OnUnsupported = (message: string, clearWhen: ClearWhen) => void
 
 const appSpeechRate = 0.82
 const voicesLoadLimitMs = 1000
@@ -51,6 +53,27 @@ function withLoadedVoices(
   stopWaiting = stop
 }
 
+let stopWatching: (() => void) | undefined
+
+function whenLocalVoiceListed(synthesis: SpeechSynthesis, lang: string): ClearWhen {
+  return clear => {
+    stopWatching?.()
+    const stop = () => {
+      synthesis.removeEventListener('voiceschanged', changed)
+      stopWatching = undefined
+    }
+    const changed = () => {
+      if (!bestLocalVoice(synthesis.getVoices(), lang)) return
+      stop()
+      clear()
+    }
+    synthesis.addEventListener('voiceschanged', changed)
+    stopWatching = stop
+  }
+}
+
+const never: ClearWhen = () => undefined
+
 export function speak(
   text: string,
   lang: string,
@@ -59,14 +82,14 @@ export function speak(
   withoutLocalVoice: WithoutLocalVoice
 ) {
   if (!('speechSynthesis' in window)) {
-    onUnsupported(unsupported)
+    onUnsupported(unsupported, never)
     return
   }
   const synthesis = window.speechSynthesis
   withLoadedVoices(synthesis, lang, voices => {
     const voice = voiceToSpeak(voices, lang, withoutLocalVoice)
     if (voice === 'unsupported') {
-      onUnsupported(unsupported)
+      onUnsupported(unsupported, whenLocalVoiceListed(synthesis, lang))
       return
     }
     const utterance = new SpeechSynthesisUtterance(text)

@@ -1,7 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { PronounceButton, PronounceWithoutLocalVoice } from './pronounce-button'
+import { type OnUnsupported, PronounceButton, PronounceWithoutLocalVoice } from './pronounce-button'
 import type { Voice, WithoutLocalVoice } from './voice'
 
 declare global {
@@ -42,11 +42,18 @@ const [google, , otoyaEnhanced] = voices
 
 let speech: StandInSpeech
 let root: Root
-let onUnsupported: ReturnType<typeof vi.fn<(message: string) => void>>
+let onUnsupported: ReturnType<typeof vi.fn<OnUnsupported>>
+let notice: string | null
 
 beforeEach(() => {
   speech = new StandInSpeech()
-  onUnsupported = vi.fn()
+  notice = null
+  onUnsupported = vi.fn<OnUnsupported>((message, clearWhen) => {
+    notice = message
+    clearWhen(() => {
+      notice = null
+    })
+  })
   vi.stubGlobal('speechSynthesis', speech)
   vi.stubGlobal(
     'SpeechSynthesisUtterance',
@@ -120,7 +127,8 @@ describe('pronouncing Japanese', () => {
     act(() => table.click())
     expect(speech.speaking).toEqual([])
     expect(speech.cancel).not.toHaveBeenCalled()
-    expect(onUnsupported).toHaveBeenCalledExactlyOnceWith(unsupported)
+    expect(onUnsupported).toHaveBeenCalledOnce()
+    expect(notice).toBe(unsupported)
   })
 
   test('in the extension, still speaks in the best voice on this computer', () => {
@@ -184,19 +192,35 @@ describe('pronouncing Japanese', () => {
     expect(speech.speaking).toEqual([spoken('食べる', otoyaEnhanced)])
   })
 
-  test.each<WithoutLocalVoice>([
-    'browser-voice',
-    'unsupported'
-  ])('with %s, a click speaks in the browser’s own voice after a second when the voices never load, and only once', withoutLocalVoice => {
+  test('on the website, a click speaks in the browser’s own voice after a second when the voices never load, and only once', () => {
     vi.useFakeTimers()
-    const [table] = speakersWhere(withoutLocalVoice, 'テーブル')
+    const [table] = speakers('テーブル')
     act(() => table.click())
     act(() => vi.advanceTimersByTime(999))
     expect(speech.speaking).toEqual([])
     act(() => vi.advanceTimersByTime(1))
     expect(speech.speaking).toEqual([spoken('テーブル', null)])
+    expect(onUnsupported).not.toHaveBeenCalled()
     act(() => speech.load(voices))
     expect(speech.speaking).toHaveLength(1)
+  })
+
+  test('in the extension, a click speaks nothing and says it can’t pronounce Japanese when a second passes with no voices listed, until a voice on this computer is listed', () => {
+    vi.useFakeTimers()
+    const [table] = speakersWhere('unsupported', 'テーブル')
+    act(() => table.click())
+    act(() => vi.advanceTimersByTime(1000))
+    expect(speech.speaking).toEqual([])
+    expect(speech.cancel).not.toHaveBeenCalled()
+    expect(notice).toBe(unsupported)
+    act(() => speech.load([google]))
+    expect(notice).toBe(unsupported)
+    act(() => speech.load(voices))
+    expect(notice).toBeNull()
+    expect(speech.speaking).toEqual([])
+    act(() => table.click())
+    expect(speech.speaking).toEqual([spoken('テーブル', otoyaEnhanced)])
+    expect(onUnsupported).toHaveBeenCalledOnce()
   })
 
   test('in the extension, a click says it can’t pronounce Japanese when a second passes with only network voices', () => {
@@ -206,6 +230,7 @@ describe('pronouncing Japanese', () => {
     act(() => speech.load([google]))
     act(() => vi.advanceTimersByTime(1000))
     expect(speech.speaking).toEqual([])
-    expect(onUnsupported).toHaveBeenCalledExactlyOnceWith(unsupported)
+    expect(onUnsupported).toHaveBeenCalledOnce()
+    expect(notice).toBe(unsupported)
   })
 })

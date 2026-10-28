@@ -1,4 +1,6 @@
 import { fill } from '@zenbu/dictionary-core/detail/template'
+import { PronounceWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-button'
+import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { byText, click, find, openMenu, type Rendered, render, settle } from '../test/render'
 import { popupAnswer, youkyuu } from '../test/word-cards'
@@ -18,6 +20,8 @@ const shareButton = (popup: HTMLElement) =>
 afterEach(() => {
   shown?.unmount()
   shown = undefined
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 async function showPopup(
@@ -28,16 +32,18 @@ async function showPopup(
   const openFullEntry = vi.fn()
   const close = vi.fn()
   shown = render(
-    <WordPopup
-      text={text}
-      ids={ids}
-      lookUp={lookUp}
-      frequency={[]}
-      romaji={false}
-      openFullEntry={openFullEntry}
-      close={close}
-      sharing={sharing}
-    />
+    <PronounceWithoutLocalVoice value="unsupported">
+      <WordPopup
+        text={text}
+        ids={ids}
+        lookUp={lookUp}
+        frequency={[]}
+        romaji={false}
+        openFullEntry={openFullEntry}
+        close={close}
+        sharing={sharing}
+      />
+    </PronounceWithoutLocalVoice>
   )
   await settle()
   const popup = find(shown.container, '[data-word-popup]')
@@ -125,5 +131,36 @@ describe('the word popup', () => {
     const { popup } = await showPopup('要求', ['youkyuu'], { sharing: { writeText } })
     await click(shareButton(popup))
     expect(find(popup, '[data-notice]').textContent).toBe(labels.copyFailed)
+  })
+
+  it('says it can’t pronounce Japanese while the browser lists no voices, and speaks once a voice on this computer is listed', async () => {
+    const kyoko = { name: 'Kyoko', voiceURI: 'Kyoko', lang: 'ja-JP', localService: true }
+    let voices: (typeof kyoko)[] = []
+    const speech = Object.assign(new EventTarget(), {
+      getVoices: () => voices,
+      cancel: vi.fn(),
+      speak: vi.fn<(utterance: { text: string; voice: unknown }) => void>()
+    })
+    vi.stubGlobal('speechSynthesis', speech)
+    vi.stubGlobal(
+      'SpeechSynthesisUtterance',
+      class {
+        constructor(readonly text: string) {}
+      }
+    )
+    const { popup } = await showPopup('要求', ['youkyuu'])
+    const speaker = find(popup, 'button[aria-label="Pronounce ようきゅう"]')
+    vi.useFakeTimers()
+    act(() => speaker.click())
+    act(() => vi.advanceTimersByTime(1000))
+    expect(speech.speak).not.toHaveBeenCalled()
+    expect(find(popup, '[data-notice]').textContent).toBe(labels.pronounce.unsupported)
+
+    voices = [kyoko]
+    act(() => speech.dispatchEvent(new Event('voiceschanged')))
+    expect(popup.querySelector('[data-notice]')).toBeNull()
+    act(() => speaker.click())
+    expect(speech.speak).toHaveBeenCalledOnce()
+    expect(speech.speak.mock.calls[0]?.[0]).toMatchObject({ text: 'ようきゅう', voice: kyoko })
   })
 })

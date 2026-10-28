@@ -159,7 +159,7 @@ describe('speaking in a page’s shadow root', () => {
     })
     const button = mounted?.shadowRoot.querySelector<HTMLButtonElement>('button')
     act(() => button?.click())
-    expect(said).toHaveBeenCalledExactlyOnceWith(cantPronounce)
+    expect(said).toHaveBeenCalledExactlyOnceWith(cantPronounce, expect.any(Function))
     expect(spoken).not.toHaveBeenCalled()
   })
 })

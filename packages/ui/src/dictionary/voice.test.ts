@@ -82,8 +82,8 @@ describe('the voice to speak in', () => {
     expect(voiceToSpeak([googleJapanese], 'ja-JP', 'unsupported')).toBe('unsupported')
   })
 
-  test('with no voices listed at all, is the browser’s own under either rule', () => {
+  test('with no voices listed at all, is the browser’s own on the website and none in the extension', () => {
     expect(voiceToSpeak([], 'ja-JP', 'browser-voice')).toBeNull()
-    expect(voiceToSpeak([], 'ja-JP', 'unsupported')).toBeNull()
+    expect(voiceToSpeak([], 'ja-JP', 'unsupported')).toBe('unsupported')
   })
 })
