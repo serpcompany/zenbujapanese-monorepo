@@ -8,7 +8,7 @@ export interface JlptCoverageRequest {
   upNext?: number
 }
 
-export interface JlptPace {
+interface JlptPace {
   date: string
   days: number
 }
