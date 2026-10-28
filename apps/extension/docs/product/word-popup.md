@@ -41,7 +41,8 @@ can't hold other elements, so there it stays in the page's body, behind the vide
 player is an element that can hold it. It tells the page script's other parts once when it
 opens and once when it closes (`src/word-popup/popup-events.ts`), which pausing the video (#964)
 uses. In Translate, it opens under the text, and Escape and a press outside it, its menu, or
-the text's words close it and give focus back to the word.
+the text's words close it. Escape gives focus back to the word, without scrolling; a press leaves
+focus where it lands. While its menu is open, a press anywhere closes only the menu.
 
 ## Its actions
 
