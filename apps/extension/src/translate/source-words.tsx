@@ -197,7 +197,7 @@ function Linked({
       </p>
       <RomajiLine romaji={found.romaji} className="text-sm" />
       {picked ? (
-        <section className="pt-2">
+        <section className="pt-2 [&_[data-word-popup]]:w-full">
           <WordPopup
             key={picked.start}
             text={picked.text}
