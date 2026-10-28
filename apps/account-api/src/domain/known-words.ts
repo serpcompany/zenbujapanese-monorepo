@@ -9,6 +9,7 @@ import {
   itemIdOf,
   itemText,
   journaled,
+  momentOf,
   needsBaseVersion,
   type Outcome,
   rejected
@@ -29,7 +30,8 @@ const asChange = (word: KnownWord): Change => ({
     headword: word.headword,
     reading: word.reading,
     state: word.state,
-    known: word.state === 'known'
+    known: word.state === 'known',
+    stateChangedAt: word.stateChangedAt
   }
 })
 
@@ -40,6 +42,16 @@ const badState = rejection(
   'invalid_fields',
   `state is one of ${wordStates.map(state => `\`${state}\``).join(', ')}.`
 )
+
+const badTime = rejection(
+  'invalid_fields',
+  "stateChangedAt is an ISO 8601 time from 2000 on, or left out for the service's time."
+)
+
+function sentTime(fields: Record<string, unknown> | undefined): Date | Rejection {
+  if (fields?.stateChangedAt === undefined) return new Date()
+  return momentOf(fields.stateChangedAt) ?? badTime
+}
 
 const toKnown: Move = () => 'known'
 const outOfKnown: Move = current => (current === 'known' ? 'unknown' : current)
@@ -58,6 +70,8 @@ async function moved(
   if (!itemId) return rejected(badItem)
   if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
   if (isRejection(move)) return rejected(move)
+  const stateChangedAt = sentTime(mutation.fields)
+  if (isRejection(stateChangedAt)) return rejected(stateChangedAt)
   const current = await account.knownWord(itemId)
   const version = current?.version ?? 0
   const state = move(current?.state ?? 'unknown')
@@ -68,7 +82,7 @@ async function moved(
       ? { headword: current?.headword ?? '', reading: current?.reading ?? '' }
       : itemText(mutation.fields ?? {})
   if (isRejection(text)) return rejected(text)
-  const next = { itemId, ...text, state, version: version + 1 }
+  const next = { itemId, ...text, state, stateChangedAt, version: version + 1 }
   await account.saveKnownWord(next)
   return journaled(account, 'knownWord', itemId, next.version, mutation.operation)
 }

@@ -25,6 +25,7 @@ const knownWordColumns = {
   reading: knownWords.reading,
   known: knownWords.known,
   learning: knownWords.learning,
+  stateChangedAt: knownWords.stateChangedAt,
   version: knownWords.version,
   updatedAt: knownWords.updatedAt
 }

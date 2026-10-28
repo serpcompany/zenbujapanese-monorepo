@@ -51,18 +51,24 @@ export const studyRules = {
         example: {
           entityId: learningItemId,
           baseVersion: 0,
-          fields: { state: 'learning', headword: '食べる', reading: 'たべる' }
+          fields: {
+            state: 'learning',
+            headword: '食べる',
+            reading: 'たべる',
+            stateChangedAt: '2026-10-27T09:30:00Z'
+          }
         }
       },
       mark: {
         baseVersion: true,
         rule: 'Makes the word Known, from Unknown or Learning: the same change as `set` with `state: "known"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.',
-        fields: 'WordFields',
+        fields: 'KnownWordFields',
         example: { entityId: itemId, baseVersion: 0, fields: word }
       },
       clear: {
         baseVersion: true,
         rule: 'Makes a known word Unknown. It applies only at the word\'s current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can\'t see Learning; `set` with `state: "unknown"` ends Learning.',
+        fields: 'KnownWordClearFields',
         example: { entityId: itemId, baseVersion: 1 }
       }
     }

@@ -787,6 +787,7 @@ Fields ([`WordStateFields`](#wordstatefields)):
 - `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
 - `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
 - `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
 
 ```json
 {
@@ -798,17 +799,19 @@ Fields ([`WordStateFields`](#wordstatefields)):
   "fields": {
     "state": "learning",
     "headword": "食べる",
-    "reading": "たべる"
+    "reading": "たべる",
+    "stateChangedAt": "2026-10-27T09:30:00Z"
   }
 }
 ```
 
 **`mark`**, with `known:write` or `known:mark`; `baseVersion` required. Makes the word Known, from Unknown or Learning: the same change as `set` with `state: "known"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.
 
-Fields ([`WordFields`](#wordfields)):
+Fields ([`KnownWordFields`](#knownwordfields)):
 
 - `headword` (string, required, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters.
 - `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
 
 ```json
 {
@@ -825,6 +828,10 @@ Fields ([`WordFields`](#wordfields)):
 ```
 
 **`clear`**, with `known:write`; `baseVersion` required. Makes a known word Unknown. It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can't see Learning; `set` with `state: "unknown"` ends Learning.
+
+Fields ([`KnownWordClearFields`](#knownwordclearfields)):
+
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
 
 ```json
 {
@@ -1382,6 +1389,17 @@ Every error. `code` is stable and machine-readable; `message` is for people and 
 - `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
 - `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
 - `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
+
+### KnownWordFields
+
+- `headword` (string, required, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
+
+### KnownWordClearFields
+
+- `stateChangedAt` (string (date-time), optional): When the word moved to the state, by the device's clock: ISO 8601, from 2000 on; a time after the service's is taken as the service's. Left out, it is the service's time when the change applies. A change that leaves the state as it was keeps the earlier time.
 
 ### ListCreateFields
 
@@ -1600,6 +1618,7 @@ One of:
 - `reading` (string, required)
 - `state` (`"unknown"`, `"learning"`, or `"known"`, optional): The learner's state for the word. Always sent by this service; a service from before Learning, during a deploy or after a rollback, sends none, so read `known` instead.
 - `known` (boolean, required): Whether `state` is `known`, for an app that reads only this: a Learning word is not known.
+- `stateChangedAt` (string (date-time) or null, optional): When the word moved to its current state, as the app said, or the service's time when the change carried none; a time after the service's is taken as the service's. `null` for a word that moved to its state before the service kept the time; a service from before it sends none.
 
 ### WordList
 

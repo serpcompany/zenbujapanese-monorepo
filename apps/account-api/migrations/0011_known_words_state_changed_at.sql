@@ -1,0 +1,1 @@
+ALTER TABLE "known_words" ADD COLUMN "state_changed_at" timestamp with time zone;
