@@ -211,6 +211,21 @@ describe('the transcript’s words', () => {
     await closesAndPlaysAgain(shown)
   })
 
+  it('closes the popup on a press outside it, and plays the video again', async () => {
+    const shown = await transcript()
+    await shown.playsAt(12)
+    await click(document.querySelector(walkWord('散歩')))
+    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    await act(async () => {
+      document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    })
+    await settle()
+    expect(popup()).toBeNull()
+    await vi.waitFor(() =>
+      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
+    )
+  })
+
   it('plays the video again when the transcript closes with a popup open', async () => {
     const shown = await transcript()
     await shown.playsAt(12)
