@@ -36,8 +36,20 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   hash, so the YouTube content script runs on its watch page and the service worker's two
   requests reach it. On it: the line in the player in place of the site's captions, the words and
   reading aids, nothing added to the page's styles, one `timedtext` request whatever the controls
-  do, the speed menu in and out of fullscreen, and a word's popup pausing the video
-  (`player-captions.spec.ts`).
+  do, the speed menu in and out of fullscreen, a word's popup pausing the video, and a word
+  meaning's contrast against the caption's band over a white frame, the brightest a video can
+  show, written to the test's `contrast.json` (`player-captions.spec.ts`).
+- **The Player tab's word meanings:** `side-panel.html` at 380 and 360 pixels wide, in light and
+  dark. An init script on that page alone stands in for the active tab (a YouTube watch page),
+  its port (playback in the second line, so that row is the line being played), and the
+  `sendMessage` answers for the captions and the dictionary's segment and popup requests, since
+  the fixture dictionary has none of the lines' words; the build's layout, styles and colours are
+  real. It measures that no two meanings touch, each stays in its word's column, a line's first
+  word has no indent, and the page doesn't scroll sideways, and each row's meaning contrast over
+  its backgrounds (at least 4.5:1); a cut meaning's full text is its title and in the
+  accessibility tree. Each width's screenshots, light and dark, and `contrast.json` go to its
+  test's folder under `e2e/results/` (`transcript-meanings.spec.ts`). Both contrast checks use
+  `e2e/contrast.ts`.
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1` and maps
   the test build's data host, `language-data.localhost`, to the local server, and, with
   `youTubeStandIn`, `www.youtube.com` to the stand-in site; the `outsideRequests` fixture fails any

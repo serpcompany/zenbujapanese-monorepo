@@ -58,13 +58,23 @@ describe('the Japanese source of a translation', () => {
     expect(find(container, '[data-reading-aids]').getAttribute('data-romaji')).toBe('off')
   })
 
-  it('adds each word’s short meaning when Word Meanings is on', async () => {
+  it('adds each word’s short meaning when Word Meanings is on, with its full text as a tooltip', async () => {
     const using = services()
     const container = await showSource(using)
     expect(container.querySelector('[data-aid="meaning"]')).toBeNull()
     await act(() => writeSettings({ 'readingAids.wordMeanings': true }))
     await settle()
-    expect(texts(container, '[data-aid="meaning"]')).toEqual(['demand', 'be needed'])
+    expect(texts(container, '[data-aid="meaning"] [aria-hidden="true"]')).toEqual([
+      'demand',
+      'be needed'
+    ])
+    expect(texts(container, '[data-aid="meaning"] .sr-only')).toEqual([
+      'demand, request',
+      'to be needed'
+    ])
+    expect(
+      [...container.querySelectorAll<HTMLElement>('[data-aid="meaning"]')].map(found => found.title)
+    ).toEqual(['demand, request', 'to be needed'])
     expect(using.popupCard).toHaveBeenCalledWith('youkyuu', [])
   })
 

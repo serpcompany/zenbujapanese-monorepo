@@ -8,11 +8,16 @@ export type Piece = { node: Text; start: number; end: number; token: PageToken }
 
 export type Annotation = { inserted: Node[]; pieces: Piece[] }
 
-export type Glosses = ReadonlyMap<string, string | null>
+export type Gloss = { short: string; full: string }
+
+export type Glosses = ReadonlyMap<string, Gloss | null>
 
 const meaningStyle = (tone: Tone) =>
   'display: block; max-width: 8em; overflow: hidden; text-overflow: ellipsis; ' +
   `white-space: nowrap; font-size: 0.7em; line-height: 1.3; color: ${underlineColors[tone]};`
+
+const spokenStyle =
+  'position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;'
 
 const romajiStyle = 'display: block; font-size: 0.85em; opacity: 0.75;'
 
@@ -73,7 +78,14 @@ export function annotate(
     line.setAttribute('style', 'white-space: nowrap;')
     line.append(...written)
     const meaning = aid(doc, 'span', 'meaning', meaningStyle(tone))
-    meaning.textContent = gloss
+    meaning.title = gloss.full
+    const shown = doc.createElement('span')
+    shown.setAttribute('aria-hidden', 'true')
+    shown.textContent = gloss.short
+    const spoken = doc.createElement('span')
+    spoken.setAttribute('style', spokenStyle)
+    spoken.textContent = gloss.full
+    meaning.append(shown, spoken)
     word.append(line, meaning)
     return word
   })
