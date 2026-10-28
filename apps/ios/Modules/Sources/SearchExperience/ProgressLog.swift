@@ -192,29 +192,10 @@ private actor ProgressLogWriter {
   func load() async -> (
     days: [String: ProgressLogDay], needsRewrite: Bool, readOnlyReason: LocalFileReadOnlyReason?
   ) {
-    let data: Data
-    switch await file.read() {
-    case .missing:
-      return ([:], false, nil)
-    case .unreadable:
-      return ([:], false, .couldNotRead)
-    case .newerVersion(let newer):
-      return (Self.readable(try? JSONDecoder.localStore.decode(LoadedFile.self, from: newer)),
-        false, .newerVersion)
-    case .current(let current):
-      data = current
+    await file.load(LoadedFile.self, empty: [String: ProgressLogDay]()) { stored in
+      let days = stored.days.compactMapValues(\.value)
+      return (days, days.count == stored.days.count)
     }
-    guard let stored = try? JSONDecoder.localStore.decode(LoadedFile.self, from: data) else {
-      return await file.keepUnreadableCopy() ? ([:], true, nil) : ([:], false, .couldNotKeepCopy)
-    }
-    let days = Self.readable(stored)
-    guard days.count != stored.days.count else { return (days, false, nil) }
-    return await file.keepUnreadableCopy()
-      ? (days, true, nil) : (days, false, .couldNotKeepCopy)
-  }
-
-  private static func readable(_ file: LoadedFile?) -> [String: ProgressLogDay] {
-    (file?.days ?? [:]).compactMapValues(\.value)
   }
 
   func write(_ days: [String: ProgressLogDay]) async -> Bool {

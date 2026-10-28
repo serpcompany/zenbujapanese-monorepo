@@ -105,6 +105,30 @@ actor LocalJSONFile {
       return false
     }
   }
+
+  func load<Stored: Decodable, Value: Sendable>(
+    _ stored: Stored.Type, empty: Value,
+    reading: @Sendable (Stored) -> (value: Value, complete: Bool)
+  ) -> (Value, Bool, LocalFileReadOnlyReason?) {
+    let data: Data
+    switch read() {
+    case .missing:
+      return (empty, false, nil)
+    case .unreadable:
+      return (empty, false, .couldNotRead)
+    case .newerVersion(let newer):
+      let file = try? JSONDecoder.localStore.decode(Stored.self, from: newer)
+      return (file.map { reading($0).value } ?? empty, false, .newerVersion)
+    case .current(let current):
+      data = current
+    }
+    guard let file = try? JSONDecoder.localStore.decode(Stored.self, from: data) else {
+      return keepUnreadableCopy() ? (empty, true, nil) : (empty, false, .couldNotKeepCopy)
+    }
+    let (value, complete) = reading(file)
+    guard !complete else { return (value, false, nil) }
+    return keepUnreadableCopy() ? (value, true, nil) : (value, false, .couldNotKeepCopy)
+  }
 }
 
 @MainActor

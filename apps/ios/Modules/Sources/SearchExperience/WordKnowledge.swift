@@ -219,26 +219,10 @@ private actor WordKnowledgeWriter {
     records: [String: WordKnowledgeRecord], needsRewrite: Bool,
     readOnlyReason: LocalFileReadOnlyReason?
   ) {
-    let data: Data
-    switch await file.read() {
-    case .missing:
-      return ([:], false, nil)
-    case .unreadable:
-      return ([:], false, .couldNotRead)
-    case .newerVersion(let newer):
-      let records = (try? JSONDecoder.localStore.decode(LoadedFile.self, from: newer))?.records
-      return (Self.byEntryID(records?.compactMap(\.value) ?? []), false, .newerVersion)
-    case .current(let current):
-      data = current
+    await file.load(LoadedFile.self, empty: [String: WordKnowledgeRecord]()) { stored in
+      let records = stored.records.compactMap(\.value)
+      return (Self.byEntryID(records), records.count == stored.records.count)
     }
-    guard let stored = try? JSONDecoder.localStore.decode(LoadedFile.self, from: data) else {
-      return await file.keepUnreadableCopy() ? ([:], true, nil) : ([:], false, .couldNotKeepCopy)
-    }
-    let records = stored.records.compactMap(\.value)
-    let loaded = Self.byEntryID(records)
-    guard records.count != stored.records.count else { return (loaded, false, nil) }
-    return await file.keepUnreadableCopy()
-      ? (loaded, true, nil) : (loaded, false, .couldNotKeepCopy)
   }
 
   private static func byEntryID(_ records: [WordKnowledgeRecord]) -> [String: WordKnowledgeRecord] {
