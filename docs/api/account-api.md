@@ -1208,6 +1208,7 @@ One of the learner's settings, which follow the account rather than the device. 
 - `search.filter` (one of `all`, `known`, `unknown`, `learning`): Search results' filter.
 - `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.
 - `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.
+- `progress.dailyGoal` (a number from 1 to 200): Progress: how many new words the learner marks Learning each day.
 
 - **ID** (`entityId`): The setting's name, from the list above.
 - **Read with:** `settings:read`

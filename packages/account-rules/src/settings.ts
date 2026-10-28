@@ -59,6 +59,10 @@ export const settingRules: Readonly<Record<string, SettingRule>> = {
     value: { kind: 'text', pattern: new RegExp(`^(${packId}(,${packId}){0,49})?$`), most: 5_000 },
     means:
       'The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.'
+  },
+  'progress.dailyGoal': {
+    value: { kind: 'number', least: 1, most: 200 },
+    means: 'Progress: how many new words the learner marks Learning each day.'
   }
 }
 
