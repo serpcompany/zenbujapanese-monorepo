@@ -325,6 +325,8 @@ const overPopup = { inPopup: true, onTop: true }
 async function menuThenPopupClosed(page: Page, popup: Locator) {
   expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
   await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(popup).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(wordPopup(page)).toHaveCount(0)
 }
@@ -366,12 +368,12 @@ test('opens the More menu over a caption word’s popup on YouTube, in and out o
   await page.evaluate(() => document.querySelector('#movie_player')?.requestFullscreen())
   await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
   await word.click()
-  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
   expect(
     await popup.evaluate(element =>
       document.fullscreenElement?.contains((element.getRootNode() as ShadowRoot).host)
     )
   ).toBe(true)
-  await page.keyboard.press('Escape')
+  await menuThenPopupClosed(page, popup)
+  expect(await page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
   await page.evaluate(() => document.exitFullscreen())
 })
