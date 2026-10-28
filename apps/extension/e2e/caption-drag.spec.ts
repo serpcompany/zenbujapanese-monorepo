@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import { playerCaptionLabels as labels } from '../src/player-captions/labels.ts'
 import { expect, test } from './fixtures.ts'
-import { caption, openAt, overlay, videoState } from './watch-page.ts'
+import { caption, enterFullscreen, openAt, overlay, videoState } from './watch-page.ts'
 import { changeSettings, wordPopup } from './words-page.ts'
 import { standInWatchPage } from './youtube-stand-in.ts'
 
@@ -136,11 +136,12 @@ test('keeps the caption under the pointer when the line changes mid-drag', async
   await page.mouse.move(from.x + 40, from.y - 20, { steps: 4 })
   await page.evaluate(() => {
     const video = document.querySelector('video')
-    if (video) video.currentTime = 6
+    if (video) video.currentTime = 16
   })
-  await expect(caption(page).locator('[data-word="要領"]')).toBeVisible()
+  await expect(caption(page).locator('[data-word="要る"]')).toHaveCount(0)
+  await expect(caption(page).locator('[data-word="要求"]')).toBeVisible()
   const next = await boxOf(caption(page))
-  expect(Math.abs(next.width - start.width)).toBeGreaterThan(10)
+  expect(start.width - next.width).toBeGreaterThan(start.width / 4)
   await page.mouse.move(from.x + 80, from.y - 30, { steps: 4 })
   const moved = await boxOf(caption(page))
   await page.mouse.up()
@@ -163,8 +164,7 @@ test('keeps the caption’s place when the player resizes, in fullscreen, and fo
   })
   await expect.poll(() => boxOf(player(page)).then(box => box.width)).toBe(720)
   await expect.poll(() => awayFrom(page, kept)).toBeLessThan(0.01)
-  await page.evaluate(() => document.querySelector('#movie_player')?.requestFullscreen())
-  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
+  await enterFullscreen(page)
   await expect.poll(() => awayFrom(page, kept)).toBeLessThan(0.01)
   await page.evaluate(() => document.exitFullscreen())
   await openAt(page, 1, standInWatchPage.replace('zenbuJa0001', 'zenbuJa0002'))

@@ -22,3 +22,16 @@ export async function openAt(page: Page, time: number, url = standInWatchPage) {
   }, time)
   await expect(caption(page).locator('[data-word="要求"]')).toBeVisible()
 }
+
+export async function enterFullscreen(page: Page) {
+  const heading = page.locator('h1')
+  await heading.evaluate(element =>
+    element.addEventListener(
+      'click',
+      () => void document.querySelector('#movie_player')?.requestFullscreen(),
+      { once: true }
+    )
+  )
+  await heading.click()
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
+}

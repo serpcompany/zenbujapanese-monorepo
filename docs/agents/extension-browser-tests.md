@@ -38,7 +38,10 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   and the next video (`caption-drag.spec.ts`), which puts the place back after each test since
   the browser and its storage last the worker. Both open the page
   with `e2e/watch-page.ts`, and the stand-in's request log lasts the worker too, so a count of
-  requests starts from the log's length when the test began.
+  requests starts from the log's length when the test began. Both enter fullscreen through its
+  `enterFullscreen`, from a real click on the page's heading, since Chrome refuses
+  `requestFullscreen` without a fresh input. The line change goes to the track's short last line,
+  so the width changes whatever fonts the machine has.
 - **The Video tab's word meanings:** `side-panel.html` at 380 and 360 pixels wide, in light and
   dark. An init script on that page alone stands in for the active tab (a YouTube watch page),
   its port (playback in the second line, so that row is the line being played), and the

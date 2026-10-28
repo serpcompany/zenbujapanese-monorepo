@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import { playerCaptionLabels as labels } from '../src/player-captions/labels.ts'
 import { textContrast } from './contrast.ts'
 import { expect, test } from './fixtures.ts'
-import { caption, openAt, overlay, videoState } from './watch-page.ts'
+import { caption, enterFullscreen, openAt, overlay, videoState } from './watch-page.ts'
 import { changeSettings, tones, wordPopup } from './words-page.ts'
 
 test.use({ youTubeStandIn: true })
@@ -100,8 +100,7 @@ test('draws the caption in Geist with no request from the page for the extension
 test('opens the speed menu inside the player, in and out of fullscreen', async ({ page }) => {
   await openAt(page, 1)
   await chooseSpeed(page, 1, 0.75)
-  await page.evaluate(() => document.querySelector('#movie_player')?.requestFullscreen())
-  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
+  await enterFullscreen(page)
   await chooseSpeed(page, 0.75, 1.25)
   await overlay(page)
     .getByRole('button', { name: labels.speedMenu(1.25) })
