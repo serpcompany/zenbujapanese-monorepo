@@ -190,7 +190,7 @@ share (`ConversationWordsTests`), and the spoken translation's time limit
 
 ```sh
 TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<simulator-udid>' \
+  -destination 'platform=iOS Simulator,id=<simulator-udid>' -collect-test-diagnostics never \
   ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests -only-testing:SearchExperienceTests test
 ```
 

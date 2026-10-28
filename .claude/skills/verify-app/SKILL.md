@@ -58,14 +58,20 @@ The script does each part of a run:
   only what changed, and when nothing did it only checks. `** TEST BUILD SUCCEEDED **` in
   `build.log` is the ready signal, and a failed build stops the run. The app installs as
   `com.zenbujapanese.dictionary.uitests`, apart from any Zenbu a person installed.
-- **Drive.** `test-without-building`, with `-only-testing` for each test named.
+- **Drive.** `test-without-building`, with `-only-testing` for each test named, and
+  `-collect-test-diagnostics never`: without it, a run with a failing test kept `xcodebuild`
+  going up to 10 minutes after its results, while Xcode's `simctl diagnose` stalled
+  (`docs/agents/verification.md`, Waiting).
 - **Proof.** `run.xcresult` (each test's result, the device, and a failed test's screenshots and
   hierarchy), `test.log`, and `doctor.txt`. `--record` adds `run.mp4` (the screen for the whole
   run) and `shots/` (a screenshot every 3 seconds, the first 150): pass it for the run a pull
   request cites, not while working, since recording takes processor time from the tests.
-- **The end.** Without `--keep` it shuts the Simulator down, and says so; one that something
-  still uses 30 seconds after the tests it leaves up, and says that instead. Its last lines give
-  each test's result and how long the Simulator, the build, and the tests took.
+- **The end.** `xcodebuild` exits a few seconds after the result summary, `Test Suite 'Selected
+  tests' passed` or `failed`, whether a test failed or not: wait for the script's own last
+  lines, and never kill a run's `xcodebuild`, which leaves `run.xcresult` unfinished. Without
+  `--keep` it shuts the Simulator down, and says so; one that something still uses 30 seconds
+  after the tests it leaves up, and says that instead. Its last lines give each test's result
+  and how long the Simulator, the build, and the tests took.
 
 Its exit status is the tests', and a run in which no test ran fails: a name that matches nothing
 would otherwise leave proof of nothing. A test that fails once and passes the next time is a
