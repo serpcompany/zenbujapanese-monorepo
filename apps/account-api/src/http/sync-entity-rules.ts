@@ -51,7 +51,12 @@ export const studyRules = {
         example: {
           entityId: learningItemId,
           baseVersion: 0,
-          fields: { state: 'learning', headword: '食べる', reading: 'たべる' }
+          fields: {
+            state: 'learning',
+            headword: '食べる',
+            reading: 'たべる',
+            stateChangedAt: '2026-10-27T09:30:00Z'
+          }
         }
       },
       mark: {
