@@ -2,6 +2,7 @@ import Foundation
 
 enum ProgressWording {
   static let goalMet = "Goal met"
+  static let goalMetInLine = "goal met"
 
   static func newWords(_ count: Int) -> String {
     String(AttributedString(localized: "^[\(count) new word](inflect: true)").characters)
@@ -77,7 +78,7 @@ enum ProgressWording {
     let named = date.map {
       $0.formatted(Date.FormatStyle(timeZone: timeZone).weekday(.abbreviated).month(.abbreviated).day())
     }
-    return [named ?? day.day, words(day.added), day.met ? "goal met" : "goal \(day.goal)"]
+    return [named ?? day.day, words(day.added), day.met ? goalMetInLine : "goal \(day.goal)"]
       .joined(separator: " · ")
   }
 

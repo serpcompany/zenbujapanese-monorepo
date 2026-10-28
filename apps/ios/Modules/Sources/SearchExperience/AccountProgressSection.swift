@@ -112,6 +112,17 @@ extension ShowsTodaysProgress {
   var todaysGoal: Int { stats?.today.goal ?? goal }
   var met: Bool { stats?.today.met ?? false }
   var streak: Int { stats?.streak ?? 0 }
+
+  func spokenToday(sayingWhatsLeft: Bool) -> String {
+    var parts = ["Today", ProgressWording.ofGoal(added, todaysGoal)]
+    if met {
+      parts.append(ProgressWording.goalMetInLine)
+    } else if sayingWhatsLeft {
+      parts.append(ProgressWording.moreToGo(todaysGoal - added))
+    }
+    if streak > 0 { parts.append(ProgressWording.streak(streak)) }
+    return parts.joined(separator: ", ")
+  }
 }
 
 struct TodayProgressCard: View, ShowsTodaysProgress {
@@ -141,7 +152,7 @@ struct TodayProgressCard: View, ShowsTodaysProgress {
     .padding(.vertical, 6)
     .redacted(reason: stats == nil ? .placeholder : [])
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(spoken)
+    .accessibilityLabel(spokenToday(sayingWhatsLeft: false))
     .accessibilityIdentifier("account.progress.today")
     .overlay(alignment: dynamicTypeSize.isAccessibilitySize ? .bottomLeading : .bottomTrailing) {
       Button(Self.seeProgress) { openAccountRoute(.progress) }
@@ -176,13 +187,6 @@ struct TodayProgressCard: View, ShowsTodaysProgress {
         }
       }
     }
-  }
-
-  private var spoken: String {
-    var parts = ["Today", ProgressWording.ofGoal(added, todaysGoal)]
-    if met { parts.append("goal met") }
-    if streak > 0 { parts.append(ProgressWording.streak(streak)) }
-    return parts.joined(separator: ", ")
   }
 }
 

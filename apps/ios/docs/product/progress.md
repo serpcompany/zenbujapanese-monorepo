@@ -24,7 +24,8 @@ From the top:
 
 - **Today**: the card's ring, larger, with the count inside and "of 20 today" under it (under the
   ring at the largest text sizes), then "8 more to go" or **Goal met**, and the streak once there is
-  one. VoiceOver reads it as one element: "Today, 12 of 20 new words, 8 more to go, 6-day streak".
+  one. VoiceOver reads it as one element, in the Today card's words with what's left added: "Today,
+  12 of 20 new words, 8 more to go, 6-day streak", or "goal met" in its place.
 - Four tiles, two by two, or one column at the largest text sizes: **Known**, with "+16 in 7 days"
   marked Known; **Learning**, with "+76 in 7 days" marked Learning; **Best streak**, its length and
   dates, "9 days" and "Oct 1 – Oct 9"; and **Daily average**, the words a day over the last 7 days

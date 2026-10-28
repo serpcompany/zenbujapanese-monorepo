@@ -24,6 +24,15 @@ struct ProgressWordingTests {
     #expect(ProgressWording.paceDate(nil, today: today, timeZone: tokyo) == "Done")
   }
 
+  @Test func todaySpokenTheSameOnBothScreens() {
+    struct Today: ShowsTodaysProgress {
+      let stats: ProgressStats? = nil
+      let goal = 5
+    }
+    #expect(Today().spokenToday(sayingWhatsLeft: false) == "Today, 0 of 5 new words")
+    #expect(Today().spokenToday(sayingWhatsLeft: true) == "Today, 0 of 5 new words, 5 more to go")
+  }
+
   @Test func wordsAndMonths() {
     #expect(ProgressWording.newWords(1) == "1 new word")
     #expect(ProgressWording.newWords(20) == "20 new words")

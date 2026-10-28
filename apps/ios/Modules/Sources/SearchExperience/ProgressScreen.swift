@@ -74,7 +74,7 @@ private struct ProgressTodaySummary: View, ShowsTodaysProgress {
     .padding(.vertical, 12)
     .redacted(reason: stats == nil ? .placeholder : [])
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(spoken)
+    .accessibilityLabel(spokenToday(sayingWhatsLeft: true))
     .accessibilityIdentifier("progress.today")
   }
 
@@ -83,13 +83,6 @@ private struct ProgressTodaySummary: View, ShowsTodaysProgress {
       .font(.subheadline)
       .foregroundStyle(.secondary)
       .multilineTextAlignment(.center)
-  }
-
-  private var spoken: String {
-    var parts = ["Today", ProgressWording.ofGoal(added, todaysGoal)]
-    parts.append(met ? ProgressWording.goalMet : ProgressWording.moreToGo(todaysGoal - added))
-    if streak > 0 { parts.append(ProgressWording.streak(streak)) }
-    return parts.joined(separator: ", ")
   }
 }
 
