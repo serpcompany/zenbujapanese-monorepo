@@ -1,17 +1,17 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { type Ask, DictionaryStatus } from './dictionary-status'
+import type { DataState } from './data-state'
+import type { ReadData } from './dictionary-progress'
+import { DictionaryStatus } from './dictionary-status'
 import { labels } from './labels'
-import type { DictionaryAnswer, Failure } from './messages'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
 }
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-const pong: DictionaryAnswer = { type: 'pong', from: 'dictionary-worker' }
-const failed: Failure = { type: 'failed', reason: 'The dictionary worker failed.' }
+const ready: DataState = { state: 'ready', release: '2026.10.1', bytes: 521_000_000, checkedAt: 1 }
 
 let root: Root | undefined
 
@@ -21,65 +21,63 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-async function render(ask: Ask) {
+const answering = (data: DataState) => vi.fn<ReadData>(async () => ({ type: 'state', data }))
+
+async function render(read: ReadData, check: ReadData = read) {
   const container = document.body.appendChild(document.createElement('div'))
   await act(async () => {
     root = createRoot(container)
-    root.render(<DictionaryStatus ask={ask} />)
+    root.render(<DictionaryStatus read={read} check={check} />)
   })
   return {
-    status: () => container.querySelector('[data-dictionary-status]'),
+    status: () =>
+      container.querySelector('[data-dictionary-status]')?.getAttribute('data-dictionary-status'),
+    text: () => container.textContent ?? '',
     button: () => container.querySelector('button') as HTMLButtonElement
   }
 }
 
-function pending() {
-  let answer!: (value: DictionaryAnswer | Failure) => void
-  const ask = vi.fn<Ask>(() => new Promise(resolve => (answer = resolve)))
-  return { ask, answer: (value: DictionaryAnswer | Failure) => answer(value) }
-}
-
 describe('DictionaryStatus', () => {
   it('says it is checking, with Check again disabled, until the dictionary answers', async () => {
-    const { ask, answer } = pending()
-    const { status, button } = await render(ask)
-    expect(status()?.textContent).toBe(labels.dictionary.checking)
+    const { status, text, button } = await render(() => new Promise(() => {}))
+    expect(status()).toBe('checking')
+    expect(text()).toContain(labels.progress.checking)
     expect(button().disabled).toBe(true)
-    await act(async () => answer(pong))
-    expect(status()?.getAttribute('data-dictionary-status')).toBe('ready')
-    expect(status()?.textContent).toBe(labels.dictionary.ready)
+  })
+
+  it('shows the download, not ready, while the dictionary downloads', async () => {
+    const { status, text, button } = await render(
+      answering({ state: 'downloading', done: 118_500_000, total: 237_000_000 })
+    )
+    expect(status()).toBe('downloading')
+    expect(text()).toContain('50% · 119 of 237 MB')
+    expect(text()).not.toContain(labels.progress.ready)
+    expect(button().disabled).toBe(true)
+  })
+
+  it('says the dictionary is ready once the data is in', async () => {
+    const { status, text, button } = await render(answering(ready))
+    expect(status()).toBe('ready')
+    expect(text()).toContain(labels.progress.ready)
     expect(button().disabled).toBe(false)
   })
 
-  it('says the dictionary is not answering when the answer is a failure', async () => {
-    const { status } = await render(async () => failed)
-    expect(status()?.textContent).toBe(labels.dictionary.failed)
+  it('says the download failed, and why, when the data failed or the worker fails', async () => {
+    const failed = await render(answering({ state: 'failed', reason: 'Failed to fetch' }))
+    expect(failed.status()).toBe('failed')
+    expect(failed.text()).toContain(labels.progress.failed)
+    expect(failed.text()).toContain('Failed to fetch')
+    act(() => root?.unmount())
+    const failure = await render(async () => ({ type: 'failed', reason: 'The worker failed.' }))
+    expect(failure.text()).not.toContain(labels.progress.ready)
+    expect(failure.text()).toContain('The worker failed.')
   })
 
-  it('says the dictionary is not answering when asking rejects', async () => {
-    const { status, button } = await render(() => Promise.reject(new Error('Gone.')))
-    expect(status()?.textContent).toBe(labels.dictionary.failed)
-    expect(button().disabled).toBe(false)
-  })
-
-  it('says the dictionary is not answering when asking throws', async () => {
-    const { status } = await render(() => {
-      throw new Error('Extension context invalidated.')
-    })
-    expect(status()?.textContent).toBe(labels.dictionary.failed)
-  })
-
-  it('asks again on Check again, and is checking while it does', async () => {
-    const ask = vi.fn<Ask>().mockResolvedValueOnce(failed)
-    const { status, button } = await render(ask)
-    expect(status()?.textContent).toBe(labels.dictionary.failed)
-    const { ask: second, answer } = pending()
-    ask.mockImplementation(second)
+  it('checks again on Check again', async () => {
+    const check = answering({ ...ready, state: 'updating', done: 0, total: 0 })
+    const { status, button } = await render(answering(ready), check)
     await act(async () => button().click())
-    expect(ask).toHaveBeenCalledTimes(2)
-    expect(status()?.textContent).toBe(labels.dictionary.checking)
-    expect(button().disabled).toBe(true)
-    await act(async () => answer(pong))
-    expect(status()?.textContent).toBe(labels.dictionary.ready)
+    expect(check).toHaveBeenCalledOnce()
+    expect(status()).toBe('updating')
   })
 })

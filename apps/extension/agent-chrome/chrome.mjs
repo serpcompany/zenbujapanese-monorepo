@@ -13,6 +13,7 @@ export const launchOptions = {
   persistent: { type: 'boolean', default: false },
   online: { type: 'boolean', default: false },
   'map-host': { type: 'string', multiple: true, default: [] },
+  'host-rule': { type: 'string', multiple: true, default: [] },
   unmute: { type: 'boolean', default: false },
   pages: { type: 'string', default: 'runtime' }
 }
@@ -51,6 +52,7 @@ function daemonArgs(options) {
   if (options.online) args.push('--online')
   if (options.net) args.push('--net', options.net)
   for (const host of options.mapHost ?? []) args.push('--map-host', host)
+  for (const rule of options.hostRule ?? []) args.push('--host-rule', rule)
   for (const extension of options.ext ?? []) args.push('--ext', resolve(extension))
   return args
 }

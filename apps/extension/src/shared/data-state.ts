@@ -1,4 +1,4 @@
-type InstalledRelease = { release: string; bytes: number; checkedAt: number | null }
+export type InstalledRelease = { release: string; bytes: number; checkedAt: number | null }
 
 export type DataState =
   | { state: 'checking' }

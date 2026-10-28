@@ -23,11 +23,13 @@ const extensionSchemes = new Set(['chrome-extension:', 'data:', 'blob:', 'about:
 function isAllowedRequest(url: string, server: LocalServer, extensionOrigin: string) {
   const { protocol, host, origin } = new URL(url)
   if (protocol === 'chrome-extension:') return `${protocol}//${host}` === extensionOrigin
-  return extensionSchemes.has(protocol) || origin === server.url
+  return (
+    extensionSchemes.has(protocol) || origin === server.url || origin === server.languageDataUrl
+  )
 }
 
-function onlyTheLocalServer() {
-  return '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'
+function onlyTheLocalServer(server: LocalServer) {
+  return `--host-resolver-rules=${server.hostRule}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1`
 }
 
 export const test = base.extend<{ outsideRequests: string[] }, { extension: Extension }>({
@@ -40,7 +42,7 @@ export const test = base.extend<{ outsideRequests: string[] }, { extension: Exte
         args: [
           `--disable-extensions-except=${extensionBuild}`,
           `--load-extension=${extensionBuild}`,
-          onlyTheLocalServer()
+          onlyTheLocalServer(server)
         ]
       })
       const serviceWorker =

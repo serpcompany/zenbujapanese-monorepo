@@ -63,8 +63,8 @@ export async function startStandInSite({ hosts, root, folder, log }) {
   return { port, spki, close: () => server.close() }
 }
 
-export function hostRules({ mapHosts, port, offline }) {
-  const rules = mapHosts.map(host => `MAP ${host} 127.0.0.1:${port}`)
+export function hostRules({ mapHosts, port, offline, extraRules = [] }) {
+  const rules = [...extraRules, ...mapHosts.map(host => `MAP ${host} 127.0.0.1:${port}`)]
   if (offline) rules.push('MAP * ~NOTFOUND', 'EXCLUDE 127.0.0.1', 'EXCLUDE localhost')
   return rules.length ? [`--host-resolver-rules=${rules.join(', ')}`] : []
 }

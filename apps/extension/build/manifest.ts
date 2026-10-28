@@ -1,8 +1,6 @@
 import packageJson from '../package.json' with { type: 'json' }
-import { defaultEnvironment, type Environment, hosts } from './hosts.ts'
+import { defaultEnvironment, type Environment, hosts, hostsOf, type Variant } from './hosts.ts'
 import { storeKey } from './key.ts'
-
-export type Variant = 'release' | 'test'
 
 export type ContentScript = { name: string; entry: string; matches: string[] }
 
@@ -61,10 +59,18 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
       'offscreen',
       'sidePanel',
       'storage',
+      'unlimitedStorage',
+      'alarms',
       'scripting',
       'declarativeNetRequestWithHostAccess'
     ],
-    host_permissions: ['https://www.youtube.com/*'],
+    host_permissions: [
+      `${hostsOf(variant, environment).languageData}/*`,
+      'https://www.youtube.com/*'
+    ],
+    content_security_policy: {
+      extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    },
     ...onPages(contentScripts(variant))
   }
 }

@@ -72,15 +72,14 @@ with one difference below. There are no usage analytics.
 - **Source maps.** Both builds write hidden source maps (no `sourceMappingURL`) beside their
   scripts. `pnpm upload-source-maps [folder]` (`build/upload-source-maps.ts`, `dist` by default)
   installs a pinned `@sentry/cli` and adds debug IDs to the scripts and maps
-  (`sourcemaps inject`), both without the token, then looks for the token and uploads the maps
-  under the manifest's release with it, and then always deletes every `.map` from the folder, so
-  the store zip, made from the folder afterwards, holds none. The token is `SENTRY_AUTH_TOKEN` or
-  the login keychain's `zenbu-sentry-auth-token`, the app's
-  ([`ios-crash-reports.md`](ios-crash-reports.md), Debug symbols); the script never prints it.
-  No maps, no token, or a step that fails or stalls is a warning and exits 0. Without a token the
-  scripts still get their debug IDs, so the package can ship; build the same commit again and
-  upload its maps later (the debug IDs come from the files' contents, so they match). #986's
-  workflow runs it on each package.
+  (`sourcemaps inject`), both without the token, then uploads the maps under the manifest's
+  release with `SENTRY_AUTH_TOKEN`, and then always deletes every `.map` from the folder, so the
+  store zip, made from the folder afterwards, holds none. The token comes only from
+  `SENTRY_AUTH_TOKEN`, never the login keychain (the app's token there got a 400), and the script
+  never prints it. No maps, no token (then no upload is tried), or a step that fails or stalls is
+  a warning and exits 0. Without a token the scripts still get their debug IDs, so the package can
+  ship; build the same commit again and upload its maps later (the debug IDs come from the files'
+  contents, so they match). #986's workflow runs it on each package.
 - **Checking one arrives.** In the agent Chrome harness, load a build with the DSN, then throw
   from each context: `setTimeout(() => { throw new Error('Zenbu test error: <part>') })` evaluated
   in a page, the service worker, the offscreen document, and the dictionary worker, and Test

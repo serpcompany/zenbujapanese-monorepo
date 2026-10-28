@@ -4,6 +4,7 @@ import {
   reportFailure,
   startSendingErrorReports
 } from '../error-reports/error-reports'
+import { keepLanguageDataCurrent } from './language-data-updates'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
 import { startSidePanel } from './side-panel'
@@ -27,6 +28,19 @@ chrome.runtime.onMessage.addListener(
     reportFailure
   })
 )
+
+keepLanguageDataCurrent({
+  onInstalled: chrome.runtime.onInstalled,
+  onStartup: chrome.runtime.onStartup,
+  onAlarm: chrome.alarms.onAlarm,
+  createAlarm: (name, info) => chrome.alarms.create(name, info),
+  hasAlarm: async name => (await chrome.alarms.get(name)) !== undefined,
+  openTab: path => chrome.tabs.create({ url: chrome.runtime.getURL(path) }),
+  ask: async request => {
+    await offscreenDocument.ensureOpen()
+    return chrome.runtime.sendMessage({ target: 'offscreen', request })
+  }
+})
 
 serveCaptions()
 
