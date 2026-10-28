@@ -69,6 +69,19 @@ function popupHost(mount: (content: ReactNode) => ShadowMount = fakeMount) {
   return { host, said, shownIn, stop }
 }
 
+const menuIn = (shadow: ShadowRoot) => {
+  const menu = shadow.appendChild(document.createElement('div'))
+  menu.setAttribute('role', 'menu')
+  menu.setAttribute('data-open', '')
+  return menu
+}
+
+const popupShadow = () =>
+  document.querySelector('[data-zenbu-word-popup]')?.shadowRoot as ShadowRoot
+
+const pressEscape = () =>
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+
 const fullscreenChanges = (element: Element | null) => {
   fullscreen = element
   document.dispatchEvent(new Event('fullscreenchange'))
@@ -114,15 +127,38 @@ describe('the word popup on a page', () => {
     let anchor = new DOMRect(0, 0, 10, 10)
     const { host, said, stop } = popupHost(drawingMount)
     host.open({ text: '要求', ids: ['youkyuu'], anchor: () => anchor })
-    const shadow = document.querySelector('[data-zenbu-word-popup]')?.shadowRoot as ShadowRoot
-    const menu = shadow.appendChild(document.createElement('div'))
-    menu.setAttribute('role', 'menu')
+    const menu = menuIn(popupShadow())
     anchor = new DOMRect(0, -500, 10, 10)
     window.dispatchEvent(new Event('scroll'))
     await new Promise(done => requestAnimationFrame(() => setTimeout(done, 0)))
     expect(said).toEqual(['open'])
-    menu.remove()
+    menu.removeAttribute('data-open')
     await vi.waitFor(() => expect(said).toEqual(['open', 'close']))
+    stop()
+  })
+
+  it('leaves Escape to an open More menu, and closes on the next one while the menu shuts', () => {
+    const { host, said, stop } = popupHost()
+    host.open(target('要求'))
+    const menu = menuIn(popupShadow())
+    pressEscape()
+    expect(said).toEqual(['open'])
+    menu.removeAttribute('data-open')
+    menu.setAttribute('data-closed', '')
+    pressEscape()
+    expect(said).toEqual(['open', 'close'])
+    stop()
+  })
+
+  it('draws on a layer of its own over the page, so its menus stack over the popup', () => {
+    const { host, stop } = popupHost(drawingMount)
+    host.open(target('要求'))
+    const layer = document.querySelector<HTMLElement>('[data-zenbu-word-popup]')
+    expect(layer?.style.position).toBe('fixed')
+    expect(layer?.style.zIndex).toBe('2147483647')
+    const box = popupShadow().querySelector<HTMLElement>('[style]')
+    expect(box?.style.position).toBe('fixed')
+    expect(box?.style.zIndex).toBe('')
     stop()
   })
 })

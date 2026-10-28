@@ -14,7 +14,7 @@ type Props = {
 }
 
 const captionClass =
-  'pointer-events-auto max-w-[min(92%,48em)] rounded-lg bg-black/75 px-[0.6em] py-[0.3em] text-center text-[clamp(16px,2.4cqw,34px)] text-white [&_[data-aid=romaji]]:text-[0.6em] [&_[data-aid=romaji]]:text-white/80 [&_[data-source]]:text-white'
+  'pointer-events-auto max-w-[min(92%,48em)] rounded-lg bg-black/75 px-[0.6em] py-[0.3em] text-center text-[clamp(16px,2.4cqw,34px)] text-white [&_[data-aid=romaji]]:text-[0.6em] [&_[data-aid=romaji]]:text-white/80 [&_[data-aid=meaning]]:text-white/70 [&_[data-source]]:text-white'
 
 export function PlayerCaption({ lines, line, settings, services, english, pick }: Props) {
   const text = lines[line].text

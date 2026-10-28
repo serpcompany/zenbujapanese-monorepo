@@ -1,4 +1,5 @@
 import type { ShadowMount } from '../content/shadow-mount'
+import { hasOpenMenu } from '../word-popup/open-menu'
 
 const presses = [
   'click',
@@ -30,11 +31,13 @@ const typed = (event: KeyboardEvent) =>
   event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey
 
 export function keptInside({ host, shadowRoot }: Pick<ShadowMount, 'host' | 'shadowRoot'>) {
-  const menuOpen = () => shadowRoot.querySelector('[role="menu"]') !== null
   const keepPress = (event: Event) => event.stopPropagation()
   const keepKey = (event: Event) => {
     if (!(event instanceof KeyboardEvent) || event.key === 'Escape') return
-    if (controlKeys.has(event.key) || (menuOpen() && (menuKeys.has(event.key) || typed(event))))
+    if (
+      controlKeys.has(event.key) ||
+      (hasOpenMenu(shadowRoot) && (menuKeys.has(event.key) || typed(event)))
+    )
       event.stopPropagation()
   }
   for (const type of presses) host.addEventListener(type, keepPress)

@@ -1,9 +1,10 @@
+import { pronounceLabel } from '@zenbu/dictionary-core/detail/sections'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { PronounceWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-button'
 import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { byText, click, find, openMenu, type Rendered, render, settle } from '../test/render'
-import { popupAnswer, youkyuu } from '../test/word-cards'
+import { openFullEntryButton, popupAnswer, youkyuu } from '../test/word-cards'
 import type { Sharing } from './copy'
 import { wordPopupLabels as labels } from './labels'
 import { wordAddress } from './shown'
@@ -16,6 +17,11 @@ let shown: Rendered | undefined
 
 const shareButton = (popup: HTMLElement) =>
   find(popup, `button[aria-label="${fill(labels.share.share, { name: '要求' })}"]`)
+
+const buttonNames = (popup: HTMLElement) =>
+  [...popup.querySelectorAll('button')].map(
+    button => button.getAttribute('aria-label') ?? button.textContent?.trim()
+  )
 
 afterEach(() => {
   shown?.unmount()
@@ -30,7 +36,6 @@ async function showPopup(
   { lookUp = async id => popupAnswer(id), sharing }: { lookUp?: WordLookUp; sharing?: Sharing } = {}
 ) {
   const openFullEntry = vi.fn()
-  const close = vi.fn()
   shown = render(
     <PronounceWithoutLocalVoice value="unsupported">
       <WordPopup
@@ -40,26 +45,33 @@ async function showPopup(
         frequency={[]}
         romaji={false}
         openFullEntry={openFullEntry}
-        close={close}
         sharing={sharing}
       />
     </PronounceWithoutLocalVoice>
   )
   await settle()
   const popup = find(shown.container, '[data-word-popup]')
-  return { popup, openFullEntry, close, button: (name: string) => byText(popup, 'button', name) }
+  return { popup, openFullEntry, button: (name: string) => byText(popup, 'button', name) }
 }
 
 describe('the word popup', () => {
-  it('shows the word’s card, takes focus, and opens its Word Detail from Open Full Entry', async () => {
-    const { popup, openFullEntry, close, button } = await showPopup('要求', ['youkyuu'])
+  it('shows the word’s card, takes focus, and opens its Word Detail from the Open Full Entry icon', async () => {
+    const { popup, openFullEntry } = await showPopup('要求', ['youkyuu'])
     expect(popup.getAttribute('aria-label')).toBe(fill(labels.word, { name: '要求' }))
     expect(document.activeElement).toBe(popup)
     expect(find(popup, '[data-meaning]').textContent).toContain('demand')
-    await click(button(labels.openFullEntry))
+    expect(buttonNames(popup)).toEqual([
+      fill(labels.share.share, { name: '要求' }),
+      fill(labels.share.moreActions, { name: '要求' }),
+      labels.openFullEntry,
+      pronounceLabel('ようきゅう')
+    ])
+    const icon = openFullEntryButton(popup)
+    expect(icon.getAttribute('title')).toBe(labels.openFullEntry)
+    expect(icon.textContent).toBe('')
+    expect(icon.querySelector('svg')).not.toBeNull()
+    await click(icon)
     expect(openFullEntry).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
-    await click(button(labels.close))
-    expect(close).toHaveBeenCalledOnce()
   })
 
   it('asks which word is meant when the text has several, and offers them all to Open Full Entry', async () => {
@@ -75,7 +87,7 @@ describe('the word popup', () => {
 
     await click(choices[1])
     expect(popup.getAttribute('aria-label')).toBe(fill(labels.word, { name: '要' }))
-    await click(button(labels.openFullEntry))
+    await click(openFullEntryButton(popup))
     expect(openFullEntry).toHaveBeenCalledWith({
       page: 'word',
       entSeq: 2188720,
@@ -88,7 +100,7 @@ describe('the word popup', () => {
   it('says when the word isn’t in the dictionary, and when the dictionary didn’t answer', async () => {
     const missing = await showPopup('要', ['missing'])
     expect(missing.popup.textContent).toContain(labels.notFound)
-    expect(missing.popup.textContent).not.toContain(labels.openFullEntry)
+    expect(missing.popup.querySelector(`[aria-label="${labels.openFullEntry}"]`)).toBeNull()
     shown?.unmount()
 
     const failing = await showPopup('要', ['youkyuu'], {
@@ -112,6 +124,26 @@ describe('the word popup', () => {
       text: '要求【ようきゅう】\n1. demand, request\n2. requirement',
       url: address
     })
+    expect(popup.querySelector('[data-notice]')).toBeNull()
+  })
+
+  it('copies the word’s address and says so when the share sheet refuses, but not when it’s dismissed', async () => {
+    const writeText = vi.fn(async (_text: string) => {})
+    const refused = new DOMException('Not allowed here.', 'NotAllowedError')
+    const share = vi.fn(async (_data: ShareData) => Promise.reject(refused))
+    const { popup } = await showPopup('要求', ['youkyuu'], { sharing: { share, writeText } })
+    await click(shareButton(popup))
+    expect(writeText).toHaveBeenCalledExactlyOnceWith(address)
+    expect(find(popup, '[data-notice]').textContent).toBe(labels.share.linkCopied)
+    shown?.unmount()
+
+    const dismissed = new DOMException('Share canceled.', 'AbortError')
+    const closed = await showPopup('要求', ['youkyuu'], {
+      sharing: { share: async () => Promise.reject(dismissed), writeText }
+    })
+    await click(shareButton(closed.popup))
+    expect(writeText).toHaveBeenCalledOnce()
+    expect(closed.popup.querySelector('[data-notice]')).toBeNull()
   })
 
   it('copies the word’s address where there is no share sheet, and from Copy Link', async () => {

@@ -1,20 +1,31 @@
 import type { WordCard } from '@zenbu/dictionary-core/cards/card'
 import { pronounceLabel } from '@zenbu/dictionary-core/detail/sections'
 import { fill } from '@zenbu/dictionary-core/detail/template'
+import { Button } from '@zenbu/ui/components/button'
 import { FrequencyBadges } from '@zenbu/ui/dictionary/frequency'
 import { HeadwordRuby } from '@zenbu/ui/dictionary/headword-ruby'
 import { PitchAccent } from '@zenbu/ui/dictionary/pitch-accent'
 import { type OnUnsupported, PronounceButton } from '@zenbu/ui/dictionary/pronounce-button'
 import { RomajiLine } from '@zenbu/ui/dictionary/reading-aid-lines'
 import { SavedItemActions } from '@zenbu/ui/dictionary/saved-item-actions'
-import { LinkIcon } from 'lucide-react'
+import { LinkIcon, Maximize2Icon } from 'lucide-react'
 import { wordPopupLabels } from './labels'
 import { cardBadges, cardPitch, cardRuby } from './shown'
 
 export type CardActions = {
   share(card: WordCard): void
   copyLink(card: WordCard): void
+  openFullEntry(card: WordCard): void
   onUnsupported: OnUnsupported
+}
+
+function OpenFullEntry({ onSelect }: { onSelect(): void }) {
+  const label = wordPopupLabels.openFullEntry
+  return (
+    <Button variant="outline" size="icon" aria-label={label} title={label} onClick={onSelect}>
+      <Maximize2Icon />
+    </Button>
+  )
 }
 
 function Pronunciation({ card, onUnsupported }: { card: WordCard; onUnsupported: OnUnsupported }) {
@@ -68,23 +79,26 @@ export function WordCardView({
           </h2>
           <RomajiLine romaji={romaji} className="text-sm text-muted-foreground" />
         </div>
-        <SavedItemActions
-          share={{
-            label: fill(labels.share, { name: card.headword }),
-            onSelect: () => actions.share(card)
-          }}
-          moreActions={fill(labels.moreActions, { name: card.headword })}
-          groups={[
-            [
-              {
-                id: 'copyLink',
-                icon: LinkIcon,
-                label: labels.copyLink,
-                onSelect: () => actions.copyLink(card)
-              }
-            ]
-          ]}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          <SavedItemActions
+            share={{
+              label: fill(labels.share, { name: card.headword }),
+              onSelect: () => actions.share(card)
+            }}
+            moreActions={fill(labels.moreActions, { name: card.headword })}
+            groups={[
+              [
+                {
+                  id: 'copyLink',
+                  icon: LinkIcon,
+                  label: labels.copyLink,
+                  onSelect: () => actions.copyLink(card)
+                }
+              ]
+            ]}
+          />
+          <OpenFullEntry onSelect={() => actions.openFullEntry(card)} />
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-2" data-pronunciation>
         <Pronunciation card={card} onUnsupported={actions.onUnsupported} />

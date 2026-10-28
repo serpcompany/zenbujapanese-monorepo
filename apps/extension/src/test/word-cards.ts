@@ -1,6 +1,11 @@
 import type { WordCard } from '@zenbu/dictionary-core/cards/card'
 import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
 import type { NotReady, PopupAnswer, SegmentAnswer } from '../shared/answers'
+import { wordPopupLabels } from '../word-popup/labels'
+import { find } from './render'
+
+export const openFullEntryButton = (scope: ParentNode) =>
+  find(scope, `button[aria-label="${wordPopupLabels.openFullEntry}"]`)
 
 type Named = Pick<WordCard, 'entSeq' | 'headword' | 'reading'> & Partial<WordCard>
 

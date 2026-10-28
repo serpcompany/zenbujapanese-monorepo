@@ -11,7 +11,6 @@ export const wordPopupLabels = {
   loading: 'Looking up…',
   failed: 'The dictionary couldn’t answer. Try again.',
   notFound: 'This word isn’t in the dictionary.',
-  close: 'Close',
   back: 'Back',
   openFullEntry: 'Open Full Entry'
 }
