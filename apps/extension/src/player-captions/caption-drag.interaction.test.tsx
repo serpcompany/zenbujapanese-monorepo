@@ -17,14 +17,14 @@ function measured(player: PlayerOn) {
   return caption
 }
 
-const pointer = (type: string, target: Element, x: number, y: number) =>
+const pointer = (type: string, target: Element, x: number, y: number, button = 0) =>
   act(() => {
     target.dispatchEvent(
       new PointerEvent(type, {
         bubbles: true,
         composed: true,
         pointerId: 1,
-        button: 0,
+        button,
         clientX: x,
         clientY: y
       })
@@ -77,6 +77,29 @@ describe('dragging the caption', () => {
     expect(player.clock.seeks).toEqual([])
   })
 
+  it('keeps the box under the pointer when one line runs straight into the next mid-drag', async () => {
+    const player = await opened()
+    await player.playFrom(2.5)
+    const caption = measured(player)
+    expect(player.line()).toBe('おはようございます')
+    await pointer('pointerdown', caption, 300, 330)
+    await pointer('pointermove', caption, 400, 330)
+    expect(placed(player).left).toBe('75%')
+    await player.wait(1000)
+    expect(player.line()).toBe('今日はいい天気ですね')
+    expect(player.caption()).toBe(caption)
+    caption.getBoundingClientRect = () => DOMRect.fromRect({ ...box, width: 500 })
+    await pointer('pointermove', caption, 150, 330)
+    expect(placed(player).left).toBe(`${((150 - 84 - 16) / 100) * 100}%`)
+    await pointer('pointermove', caption, 120, 330)
+    expect(placed(player).left).toBe(`${((120 - 84 - 16) / 100) * 100}%`)
+    await pointer('pointerup', caption, 120, 330)
+    expect(player.services.keepCaptionPlace).toHaveBeenCalledExactlyOnceWith({
+      x: (120 - 84 - 16) / 100,
+      y: 300 / 340
+    })
+  })
+
   it('keeps the box wholly inside the player at every edge', async () => {
     const player = await opened()
     await player.playFrom(10.5)
@@ -104,7 +127,7 @@ describe('dragging the caption', () => {
     }
   })
 
-  it('moves nothing for a press that doesn’t move or a drag from a word, and a word still opens its popup after a drag', async () => {
+  it('moves nothing for a press that doesn’t move, a press with another button, or a drag from a word, and a word still opens its popup after a drag', async () => {
     const player = await opened()
     await player.playFrom(10.5)
     const caption = measured(player)
@@ -113,6 +136,12 @@ describe('dragging the caption', () => {
     await pointer('pointerdown', caption, 300, 330)
     await pointer('pointermove', caption, 301, 331)
     await pointer('pointerup', caption, 301, 331)
+    for (const button of [1, 2]) {
+      await pointer('pointerdown', caption, 300, 330, button)
+      await pointer('pointermove', caption, 400, 230, button)
+      await pointer('pointerup', caption, 400, 230, button)
+    }
+    expect(caption.hasAttribute('data-dragging')).toBe(false)
     await drag(word, { x: 100, y: -100 })
     expect(player.services.keepCaptionPlace).not.toHaveBeenCalled()
     expect(placed(player)).toEqual(defaultPlace)

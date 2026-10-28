@@ -127,6 +127,29 @@ test('keeps the caption wholly inside the player at every edge', async ({ page }
   }
 })
 
+test('keeps the caption under the pointer when the line changes mid-drag', async ({ page }) => {
+  await openAt(page, 1)
+  const start = await boxOf(caption(page))
+  const from = background(start)
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(from.x + 40, from.y - 20, { steps: 4 })
+  await page.evaluate(() => {
+    const video = document.querySelector('video')
+    if (video) video.currentTime = 6
+  })
+  await expect(caption(page).locator('[data-word="要領"]')).toBeVisible()
+  const next = await boxOf(caption(page))
+  expect(Math.abs(next.width - start.width)).toBeGreaterThan(10)
+  await page.mouse.move(from.x + 80, from.y - 30, { steps: 4 })
+  const moved = await boxOf(caption(page))
+  await page.mouse.up()
+  expect(Math.abs(moved.x - (start.x + 80))).toBeLessThan(1)
+  expect(Math.abs(moved.y - (start.y - 30))).toBeLessThan(1)
+  const dropped = await boxOf(caption(page))
+  expect(Math.abs(dropped.x - moved.x)).toBeLessThan(1)
+})
+
 test('keeps the caption’s place when the player resizes, in fullscreen, and for the next video, and a double-click puts it back', async ({
   page
 }) => {

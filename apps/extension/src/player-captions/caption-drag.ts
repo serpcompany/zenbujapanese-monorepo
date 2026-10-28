@@ -1,6 +1,6 @@
 import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
 import type { CaptionPlace } from '../shared/settings'
-import { type Box, dragSlop, placeOf, shifted } from './caption-place'
+import { type Box, dragSlop, followed, type Point, placeOf } from './caption-place'
 
 export type KeepPlace = (place: CaptionPlace | null) => void
 
@@ -8,8 +8,7 @@ type Press = {
   pointer: number
   x: number
   y: number
-  box: Box
-  room: Box
+  grip: Point
   place: CaptionPlace | null
 }
 
@@ -39,8 +38,10 @@ export function useCaptionDrag(keep: KeepPlace) {
     if (held?.pointer !== event.pointerId) return
     const x = event.clientX - held.x
     const y = event.clientY - held.y
-    if (!held.place && Math.hypot(x, y) < dragSlop) return
-    held.place = placeOf(shifted(held.box, x, y), held.room)
+    const room = event.currentTarget.parentElement
+    if (!room || (!held.place && Math.hypot(x, y) < dragSlop)) return
+    const pointer = { x: event.clientX, y: event.clientY }
+    held.place = placeOf(followed(boxOf(event.currentTarget), pointer, held.grip), boxOf(room))
     setMoving(held.place)
   }
 
@@ -55,14 +56,13 @@ export function useCaptionDrag(keep: KeepPlace) {
     moving,
     handlers: {
       onPointerDown(event: PointerEvent<HTMLElement>) {
-        const room = event.currentTarget.parentElement
-        if (event.button !== 0 || onWord(event.target) || !room) return
+        if (event.button !== 0 || onWord(event.target)) return
+        const box = boxOf(event.currentTarget)
         press.current = {
           pointer: event.pointerId,
           x: event.clientX,
           y: event.clientY,
-          box: boxOf(event.currentTarget),
-          room: boxOf(room),
+          grip: { x: event.clientX - box.left, y: event.clientY - box.top },
           place: null
         }
         event.currentTarget.setPointerCapture(event.pointerId)

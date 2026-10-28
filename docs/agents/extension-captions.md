@@ -114,8 +114,11 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
   the free room, the layer's size less the box's. It draws as `left: x%; top: y%; translate: -x%
   -y%`, so the box stays wholly inside at any player or box size with no measuring at draw time.
   `useCaptionDrag` takes a primary-button press on the box but not on a `[data-word]`, captures
-  the pointer, moves after 3 pixels, and on release, cancel, lost capture, or the caption
-  unmounting mid-drag keeps the place through `keepPlace`; a double-click on the background keeps
+  the pointer and where in the box it holds it (the grip), and after 3 pixels measures the box
+  and the layer on every move and places the box under the pointer by its grip
+  (`caption-place.ts`'s `followed`), so a line of another size that runs straight into the last
+  one mid-drag doesn't jump. On release, cancel, lost capture, or the caption unmounting
+  mid-drag, it keeps the place through `keepPlace`; a double-click on the background keeps
   `null`. `player-captions.tsx`'s `keepPlace` puts it in its settings at once and calls the
   services' `keepCaptionPlace`, which `youtube.ts` gives `writeSettings`; the echo comes back as
   `settingsChanged`. The host stops presses, so YouTube's player hears none, but `pointermove`

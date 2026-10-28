@@ -10,10 +10,12 @@ const centred = 0.5
 const shareOf = (offset: number, room: number) =>
   room > 0 ? Math.min(1, Math.max(0, offset / room)) : centred
 
-export const shifted = (box: Box, x: number, y: number): Box => ({
+export type Point = { x: number; y: number }
+
+export const followed = (box: Box, pointer: Point, grip: Point): Box => ({
   ...box,
-  left: box.left + x,
-  top: box.top + y
+  left: pointer.x - Math.min(grip.x, box.width),
+  top: pointer.y - Math.min(grip.y, box.height)
 })
 
 export const placeOf = (box: Box, room: Box): CaptionPlace => ({
