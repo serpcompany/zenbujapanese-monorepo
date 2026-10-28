@@ -19,6 +19,7 @@ import { useSettings } from '../shared/use-settings'
 import type { PanelPage } from '../side-panel/route'
 import { ReadingAids } from '../word-detail/reading-aids'
 import { wordPopupLabels } from '../word-popup/labels'
+import { hasOpenMenu } from '../word-popup/open-menu'
 import { WordPopup } from '../word-popup/word-popup'
 
 export type SourceServices = {
@@ -124,6 +125,8 @@ function Words({
   )
 }
 
+const keptPresses = '[data-word-popup], [role="menu"], [data-start]'
+
 function usePicked(source: RefObject<HTMLParagraphElement | null>) {
   const [picked, setPicked] = useState<PageToken | null>(null)
   const start = picked?.start
@@ -134,12 +137,19 @@ function usePicked(source: RefObject<HTMLParagraphElement | null>) {
   useEffect(() => {
     if (start === undefined) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !document.querySelector('[role="menu"]')) close()
+      if (event.key === 'Escape' && !hasOpenMenu(document)) close()
+    }
+    const onPress = (event: PointerEvent) => {
+      if (!(event.target instanceof Element && event.target.closest(keptPresses))) close()
     }
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    document.addEventListener('pointerdown', onPress)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('pointerdown', onPress)
+    }
   }, [start, close])
-  return [picked, setPicked, close] as const
+  return [picked, setPicked] as const
 }
 
 type PickWord = (token: PageToken, word: HTMLElement) => void
@@ -176,7 +186,7 @@ function Linked({
 }: LineProps & { found: Found }) {
   const glosses = useGlosses(found, settings['readingAids.wordMeanings'], services, shared)
   const source = useRef<HTMLParagraphElement>(null)
-  const [picked, setPicked, close] = usePicked(source)
+  const [picked, setPicked] = usePicked(source)
   useReportPopup(picked !== null, onPopup, setPicked)
   const frequency = settings['frequencyDictionaries.chosen']
   const lookUp = useCallback(
@@ -206,7 +216,6 @@ function Linked({
             frequency={frequency}
             romaji={settings['readingAids.romaji']}
             openFullEntry={page => open?.(page)}
-            close={close}
           />
         </section>
       ) : null}

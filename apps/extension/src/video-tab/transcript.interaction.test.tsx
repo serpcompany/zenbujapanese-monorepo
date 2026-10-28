@@ -5,9 +5,8 @@ import { captionLabels } from '../captions/labels'
 import { writeSettings } from '../shared/settings'
 import { click, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
-import { popupAnswer } from '../test/word-cards'
+import { openFullEntryButton, popupAnswer } from '../test/word-cards'
 import { translateLabels } from '../translate/labels'
-import { wordPopupLabels } from '../word-popup/labels'
 import { videoTabLabels } from './labels'
 
 let tab: ReturnType<typeof watching> | undefined
@@ -33,6 +32,11 @@ const englishOf = (shown: ReturnType<typeof watching>) =>
 const popup = () => document.querySelector('[data-word-popup]')
 
 const walkWord = (word: string) => `[data-line] [data-source] [data-word="${word}"]`
+
+async function pressEscape() {
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
+  await settle()
+}
 
 describe('the transcript’s English', () => {
   it('gives each row its own English, a line at a time', async () => {
@@ -196,7 +200,7 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('散歩')))
     expect(popup()).not.toBeNull()
     await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
-    await click(shown.button(wordPopupLabels.close))
+    await pressEscape()
     expect(popup()).toBeNull()
     await vi.waitFor(() =>
       expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
@@ -217,8 +221,7 @@ describe('the transcript’s words', () => {
   it('leaves a paused video paused when the popup closes', async () => {
     const shown = await transcript()
     await click(document.querySelector(walkWord('散歩')))
-    await click(shown.button(wordPopupLabels.close))
-    await settle()
+    await pressEscape()
     expect(shown.services.control).toHaveBeenCalledExactlyOnceWith(5, { type: 'pause' })
   })
 
@@ -230,8 +233,7 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('行きましょう')))
     expect(document.querySelectorAll('[data-word-popup]')).toHaveLength(1)
     expect(shown.video.controls).toEqual([{ type: 'pause' }])
-    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
-    await settle()
+    await pressEscape()
     expect(popup()).toBeNull()
     await vi.waitFor(() =>
       expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
@@ -242,7 +244,7 @@ describe('the transcript’s words', () => {
     const shown = await transcript()
     shown.services.popupCard.mockImplementation(async () => popupAnswer('youkyuu'))
     await click(document.querySelector(walkWord('散歩')))
-    await click(shown.button(wordPopupLabels.openFullEntry))
+    await click(openFullEntryButton(document))
     expect(shown.open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
   })
 })

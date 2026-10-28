@@ -2,9 +2,14 @@ import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { settingDefaults, writeSettings } from '../shared/settings'
 import { startExtension } from '../test/extension'
-import { click, find, type Rendered, render, settle } from '../test/render'
-import { notReady, popupAnswer, sentence, sentenceAnswer } from '../test/word-cards'
-import { wordPopupLabels as labels } from '../word-popup/labels'
+import { click, find, openMenu, type Rendered, render, settle } from '../test/render'
+import {
+  notReady,
+  openFullEntryButton,
+  popupAnswer,
+  sentence,
+  sentenceAnswer
+} from '../test/word-cards'
 import { type SourceServices, SourceWords } from './source-words'
 
 type Segmented = Awaited<ReturnType<SourceServices['segment']>>
@@ -40,12 +45,18 @@ const words = (scope: ParentNode) =>
 
 const popup = () => document.querySelector('[data-word-popup]')
 
-const button = (scope: ParentNode, name: string) => {
-  const found = [...scope.querySelectorAll('button')].find(
-    element => element.textContent?.trim() === name
-  )
-  if (!found) throw new Error(`No button says ${name}.`)
-  return found
+const press = async (target: Element) => {
+  act(() => {
+    target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+  })
+  await settle()
+}
+
+const escapeOn = async (target: Element | null) => {
+  act(() => {
+    target?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+  })
+  await settle()
 }
 
 describe('the Japanese source of a translation', () => {
@@ -79,23 +90,31 @@ describe('the Japanese source of a translation', () => {
       'youkyuu',
       settingDefaults['frequencyDictionaries.chosen']
     )
-    await click(button(document, labels.openFullEntry))
+    await click(openFullEntryButton(document))
     expect(open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
   })
 
-  it('puts the popup away on Close and on Escape, and gives focus back to the word', async () => {
+  it('puts the popup away on a press outside it and on Escape, leaves Escape to an open menu but not a closing one, and gives focus back to the word', async () => {
     const container = await showSource(services())
     const word = find(container, '[data-word="要る"]')
     await click(word)
-    await click(button(document, labels.close))
+    await press(find(document, '[data-meaning]'))
+    await press(await openMenu(document))
+    expect(popup()).not.toBeNull()
+    await press(document.body)
     expect(popup()).toBeNull()
     expect(document.activeElement).toBe(word)
 
     await click(word)
-    act(() => {
-      popup()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    })
-    await settle()
+    const menu = await openMenu(document)
+    await escapeOn(menu)
+    expect(popup()).not.toBeNull()
+    expect(document.querySelector('[role="menu"][data-open]')).toBeNull()
+    const closing = document.body.appendChild(document.createElement('div'))
+    closing.setAttribute('role', 'menu')
+    closing.setAttribute('data-closed', '')
+    await escapeOn(popup())
+    closing.remove()
     expect(popup()).toBeNull()
     expect(document.activeElement).toBe(word)
   })

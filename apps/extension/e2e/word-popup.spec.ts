@@ -14,6 +14,9 @@ import {
   wordPopup,
   wordUrl
 } from './words-page.ts'
+import { standInWatchPage } from './youtube-stand-in.ts'
+
+test.use({ youTubeStandIn: true })
 
 type Recorded = { opens: string[]; routes: unknown[] }
 
@@ -189,7 +192,7 @@ for (const { name, aids } of readingAidCases) {
       await expect(wordPopup(page)).toHaveCount(0)
     })
 
-    test('closes on Escape, Close and a click outside, and gives focus back', async ({
+    test('closes on Escape and a click outside, with no Close button, and gives focus back', async ({
       extension,
       page
     }) => {
@@ -201,11 +204,13 @@ for (const { name, aids } of readingAidCases) {
       await expect(page.locator('#word-link')).toBeFocused()
 
       await clickWord(page, '#sentence', '要求')
-      await popupFor(page, '要求').getByRole('button', { name: labels.close }).click()
-      await expect(wordPopup(page)).toHaveCount(0)
-
-      await clickWord(page, '#sentence', '要求')
-      await expect(popupFor(page, '要求')).toBeVisible()
+      const popup = popupFor(page, '要求')
+      await expect(popup.getByRole('button', { name: 'Close' })).toHaveCount(0)
+      await expect(popup.getByRole('button', { name: labels.openFullEntry })).toHaveAttribute(
+        'title',
+        labels.openFullEntry
+      )
+      await expect(popup.getByRole('button', { name: labels.openFullEntry })).toHaveText('')
       await page.locator('#outside').click()
       await expect(wordPopup(page)).toHaveCount(0)
     })
@@ -295,4 +300,77 @@ test('adds Geist to the page once, however many popups open', async ({ extension
     () => [...document.fonts].filter(font => font.family.includes('Zenbu Geist')).length
   )
   expect(geist).toBe(2)
+})
+
+const moreActionsFor = (popup: Locator, name: string) =>
+  popup.getByRole('button', { name: fill(labels.share.moreActions, { name }) })
+
+async function menuOverPopup(page: Page, popup: Locator, name: string) {
+  await moreActionsFor(popup, name).click()
+  const item = page.getByRole('menuitem').first()
+  await expect(item).toBeVisible()
+  return item.evaluate(element => {
+    const root = element.getRootNode() as ShadowRoot
+    const box = element.getBoundingClientRect()
+    const atPoint = root.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)
+    return {
+      inPopup: root.host?.hasAttribute('data-zenbu-word-popup') ?? false,
+      onTop: atPoint !== null && element.contains(atPoint)
+    }
+  })
+}
+
+const overPopup = { inPopup: true, onTop: true }
+
+test('opens the More menu over the popup, and one Escape closes the menu, the next the popup', async ({
+  extension,
+  page
+}) => {
+  await changeSettings(extension, defaultReadingAids)
+  await readyPage(page, extension)
+  await clickWord(page, '#sentence', '要求')
+  const popup = popupFor(page, '要求')
+  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(popup).toBeVisible()
+  await expect(moreActionsFor(popup, '要求')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(wordPopup(page)).toHaveCount(0)
+
+  await clickWord(page, '#sentence', '要求')
+  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape')
+  await expect(wordPopup(page)).toHaveCount(0)
+})
+
+test('opens the More menu over a caption word’s popup on YouTube, in and out of fullscreen', async ({
+  page
+}) => {
+  await page.goto(standInWatchPage)
+  const word = page.locator('[data-zenbu-player-captions] [data-word="要求"]')
+  await page.evaluate(() => {
+    const video = document.querySelector('video')
+    if (video) video.currentTime = 1
+  })
+  await expect(word).toBeVisible()
+  await word.click()
+  const popup = popupFor(page, '要求')
+  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape')
+  await expect(wordPopup(page)).toHaveCount(0)
+
+  await page.evaluate(() => document.querySelector('#movie_player')?.requestFullscreen())
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
+  await word.click()
+  expect(await menuOverPopup(page, popup, '要求')).toEqual(overPopup)
+  expect(
+    await popup.evaluate(element =>
+      document.fullscreenElement?.contains((element.getRootNode() as ShadowRoot).host)
+    )
+  ).toBe(true)
+  await page.keyboard.press('Escape')
+  await page.evaluate(() => document.exitFullscreen())
 })
