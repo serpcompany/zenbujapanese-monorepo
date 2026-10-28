@@ -325,8 +325,8 @@ has no Edit, and its lists are dragged into order. Names are trimmed, can't be e
 500 characters, cut to fit (control characters become spaces), and may repeat. A list shows its
 words most recently added first, with each word's Known or Learning tag; the learner can search it
 by headword or reading, swipe a word to remove it from that list, or open its word page. Its **•••**
-menu renames the list, deletes it, or selects words: while selecting, the top bar offers Select All,
-Remove, and Done. Deleting a list removes its words from that list only.
+menu renames the list, deletes it (asking if it has words), or selects words: while selecting, the
+top bar offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
 Check: package `WordListsTests`, `SharedAccountRulesTests.listNames()`, and `SavedKanjiTests`; UI
 `ListsUITests` (making, renaming, deleting, and dragging a list into order) and
