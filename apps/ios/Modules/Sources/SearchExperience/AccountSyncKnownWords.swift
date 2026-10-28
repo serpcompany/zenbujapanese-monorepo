@@ -5,16 +5,21 @@ struct KnownWordChange: Codable, Hashable, Sendable {
   let headword: String
   let reading: String
   let status: WordKnowledgeStatus
+  let changedAt: Date?
 
   private enum CodingKeys: String, CodingKey {
-    case storedID, headword, reading, status, known
+    case storedID, headword, reading, status, known, changedAt
   }
 
-  init(storedID: String, headword: String, reading: String, status: WordKnowledgeStatus) {
+  init(
+    storedID: String, headword: String, reading: String, status: WordKnowledgeStatus,
+    changedAt: Date? = nil
+  ) {
     self.storedID = storedID
     self.headword = headword
     self.reading = reading
     self.status = status
+    self.changedAt = changedAt
   }
 
   init(_ record: WordKnowledgeRecord) {
@@ -31,6 +36,7 @@ struct KnownWordChange: Codable, Hashable, Sendable {
     status =
       try container.decodeIfPresent(WordKnowledgeStatus.self, forKey: .status)
       ?? (try container.decode(Bool.self, forKey: .known) ? .known : .unknown)
+    changedAt = try container.decodeIfPresent(Date.self, forKey: .changedAt)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -40,6 +46,7 @@ struct KnownWordChange: Codable, Hashable, Sendable {
     try container.encode(reading, forKey: .reading)
     try container.encode(status, forKey: .status)
     try container.encode(status == .known, forKey: .known)
+    try container.encodeIfPresent(changedAt, forKey: .changedAt)
   }
 
   func with(_ status: WordKnowledgeStatus) -> KnownWordChange {

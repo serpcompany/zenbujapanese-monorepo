@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+  dailyListIdCases,
   listNameCases,
   nameCases,
   signInCodeCases,
@@ -25,6 +26,22 @@ describe('the answers the app asks for', () => {
     }
     for (const { covers, typed, code } of signInCodeCases.accepted) {
       expect(answer('signInCode', textOf(typed)), covers).toBe(code)
+    }
+  })
+
+  test("give a daily list's ID for its day, and its day for its ID, or none", () => {
+    for (const { covers, day, id } of dailyListIdCases.days) {
+      expect(answer('dailyListId', day), covers).toBe(id)
+      expect(answer('dailyListDay', id), covers).toBe(day)
+    }
+    for (const { covers, id, day } of dailyListIdCases.upperCase) {
+      expect(answer('dailyListDay', id), covers).toBe(day)
+    }
+    for (const { covers, day } of dailyListIdCases.notDays) {
+      expect(answer('dailyListId', day), covers).toBeNull()
+    }
+    for (const { covers, id } of dailyListIdCases.notDailyLists) {
+      expect(answer('dailyListDay', id), covers).toBeNull()
     }
   })
 

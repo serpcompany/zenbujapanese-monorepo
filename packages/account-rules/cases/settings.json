@@ -94,6 +94,14 @@
       "most": 5000,
       "accepted": ["", "zenbu.jiten.anime.ja.ordered-v2,zenbu.wikipedia.written.ja.unidic-3.1"],
       "refused": [",", "Zenbu.jlpt", "zenbu.jlpt,", 3]
+    },
+    {
+      "name": "progress.dailyGoal",
+      "kind": "number",
+      "least": 1,
+      "most": 200,
+      "accepted": [1, 20, 200],
+      "refused": [0, 201, "20"]
     }
   ]
 }

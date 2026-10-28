@@ -47,7 +47,10 @@ API reference's [Sync entities](../api/account-api.md#sync-entities).
 - **List word** (`listWord`, `<list>/<item>`): `add` always applies, and `remove` applies only at
   the current version, so it removes only an add it saw: an add the remover never saw wins.
 - **Limits:** 500 lists an account and 5,000 words a list (`too_many_lists`, `list_full`); a
-  word added to a deleted or unknown list is rejected (`unknown_list`).
+  word added to a deleted or unknown list is rejected (`unknown_list`). Daily lists don't count
+  toward the 500 (`src/domain/word-lists.ts`): a list whose ID names a day (`dailyListDay`,
+  [`account-rules.md`](account-rules.md)) from 2026-10-01 to the day after the service's UTC date.
+  Any other day's counts, so an account gains at most one uncounted list a day.
 - **Each keeps its history** as its version and a row that stays (a cleared word, a deleted list,
   a removed list word), so a stale change finds the version it lost to. A deleted list's words are
   deleted with it, and its row keeps no name.

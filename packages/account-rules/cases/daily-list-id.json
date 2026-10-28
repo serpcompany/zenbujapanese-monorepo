@@ -1,0 +1,57 @@
+{
+  "days": [
+    {
+      "covers": "the day the issue names",
+      "day": "2026-10-28",
+      "id": "00000000-da11-4000-8000-000020261028"
+    },
+    {
+      "covers": "the first day the service leaves out of the cap",
+      "day": "2026-10-01",
+      "id": "00000000-da11-4000-8000-000020261001"
+    },
+    {
+      "covers": "the last day of a year",
+      "day": "2026-12-31",
+      "id": "00000000-da11-4000-8000-000020261231"
+    },
+    {
+      "covers": "a leap day",
+      "day": "2028-02-29",
+      "id": "00000000-da11-4000-8000-000020280229"
+    },
+    {
+      "covers": "the leap day of a year divisible by 400",
+      "day": "2000-02-29",
+      "id": "00000000-da11-4000-8000-000020000229"
+    }
+  ],
+  "upperCase": [
+    {
+      "covers": "an ID a device sent in upper case",
+      "id": "00000000-DA11-4000-8000-000020261028",
+      "day": "2026-10-28"
+    }
+  ],
+  "notDays": [
+    { "covers": "a day that doesn't exist", "day": "2026-02-30" },
+    { "covers": "a leap day in a year that has none", "day": "2027-02-29" },
+    { "covers": "a leap day in a century that has none", "day": "2100-02-29" },
+    { "covers": "a thirteenth month", "day": "2026-13-01" },
+    { "covers": "a day zero", "day": "2026-10-00" },
+    { "covers": "a day without its leading zeros", "day": "2026-1-5" },
+    { "covers": "a day with a time", "day": "2026-10-28T00:00:00Z" },
+    { "covers": "nothing", "day": "" }
+  ],
+  "notDailyLists": [
+    { "covers": "a random UUID a device made", "id": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c" },
+    { "covers": "the form with an impossible day", "id": "00000000-da11-4000-8000-000020260230" },
+    { "covers": "the form with a thirteenth month", "id": "00000000-da11-4000-8000-000020261301" },
+    { "covers": "the form with a day zero", "id": "00000000-da11-4000-8000-000020261000" },
+    { "covers": "another variant", "id": "00000000-da11-4000-c000-000020261028" },
+    { "covers": "spaces around it", "id": " 00000000-da11-4000-8000-000020261028 " },
+    { "covers": "braces around it", "id": "{00000000-da11-4000-8000-000020261028}" },
+    { "covers": "a day where its digits go", "id": "00000000-da11-4000-8000-2026-10-28" },
+    { "covers": "nothing", "id": "" }
+  ]
+}

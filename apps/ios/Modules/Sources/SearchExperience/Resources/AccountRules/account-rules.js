@@ -1,5 +1,27 @@
 "use strict";
 (() => {
+  // src/daily-lists.ts
+  var dayPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+  var idPattern = /^00000000-da11-4000-8000-0000(\d{4})(\d{2})(\d{2})$/i;
+  function existingDay(year, month, date) {
+    const moment = /* @__PURE__ */ new Date(0);
+    moment.setUTCFullYear(Number(year), Number(month) - 1, Number(date));
+    const exists = moment.getUTCFullYear() === Number(year) && moment.getUTCMonth() === Number(month) - 1 && moment.getUTCDate() === Number(date);
+    return exists ? `${year}-${month}-${date}` : null;
+  }
+  function dailyListId(day) {
+    const parts = dayPattern.exec(day);
+    if (!parts) return null;
+    const [, year = "", month = "", date = ""] = parts;
+    return existingDay(year, month, date) ? `00000000-da11-4000-8000-0000${year}${month}${date}` : null;
+  }
+  function dailyListDay(id) {
+    const parts = idPattern.exec(id);
+    if (!parts) return null;
+    const [, year = "", month = "", date = ""] = parts;
+    return existingDay(year, month, date);
+  }
+
   // src/text.ts
   var unsafe = /[\p{Cc}\p{Cs}]/u;
   var everyUnsafe = /[\p{Cc}\p{Cs}]/gu;
@@ -119,6 +141,8 @@ ${JSON.stringify(replaced)}`;
     usernameToSave,
     signInCode: signInCodeOf,
     listName: listNameCutToFit,
+    dailyListId,
+    dailyListDay,
     keptNoteText,
     noteText,
     sentWatches: (watches) => sentWatchMarks(JSON.parse(watches))
