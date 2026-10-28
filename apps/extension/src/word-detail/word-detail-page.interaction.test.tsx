@@ -265,6 +265,13 @@ describe('Word Detail', () => {
     expect(speak.mock.calls[0]?.[0].text).toContain('need')
   })
 
+  test('a meaning’s Speak in a browser that can’t speak says so', async () => {
+    await show({ page: 'word', entSeq: iru })
+    await openMenu(wordDetailLabels.meaning.actions.replace('{number}', '1'))
+    await click(named('[data-slot="dropdown-menu-item"]', 'Speak', document))
+    await toasted(wordDetailLabels.meaning.unsupported)
+  })
+
   test('a meaning’s Copy writes the meaning to the clipboard', async () => {
     await show({ page: 'word', entSeq: iru })
     await openMenu(wordDetailLabels.meaning.actions.replace('{number}', '1'))
@@ -290,6 +297,17 @@ describe('Word Detail', () => {
     expect(link.startsWith(websiteOrigin)).toBe(true)
   })
 
+  test('Share without a share sheet copies the link', async () => {
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true })
+    await show({ page: 'word', entSeq: iru })
+    await click(container.querySelector('button[aria-label="Share 要る"]'))
+    expect(clipboard).toHaveBeenCalledExactlyOnceWith(
+      `${websiteOrigin}${encodeURI(wordPath(wordDetail(entry(iru) as WordRows)))}`
+    )
+    expect(share).not.toHaveBeenCalled()
+    await toasted(wordDetailLabels.share.linkCopied)
+  })
+
   test('Load More fetches the next page of examples', async () => {
     await show({ page: 'word', entSeq: iru })
     expect(all('li[data-example]').length).toBe(examplesPerPage)
@@ -298,11 +316,41 @@ describe('Word Detail', () => {
     expect(all('li[data-example]').length).toBe(entry(iru)?.examples.length)
   })
 
+  test('Load More that fails offers Try again, which loads the next page', async () => {
+    lookups.lookUpWordExamples.mockResolvedValueOnce({
+      type: 'failed',
+      reason: 'The worker stopped.'
+    })
+    await show({ page: 'word', entSeq: iru })
+    await click(named('button', wordDetailLabels.examples.more))
+    expect(all('li[data-example]').length).toBe(examplesPerPage)
+    expect(named('button', wordDetailLabels.examples.more)).toBeUndefined()
+    await click(named('button', wordDetailLabels.examples.retry))
+    expect(lookups.lookUpWordExamples.mock.calls).toEqual([
+      [iru, examplesPerPage],
+      [iru, examplesPerPage]
+    ])
+    expect(all('li[data-example]').length).toBe(entry(iru)?.examples.length)
+  })
+
   test('a word in an example sentence opens its Word Detail', async () => {
     await show({ page: 'word', entSeq: iru })
     await click(container.querySelector('li[data-example] button[data-opens="word:1323080"]'))
     expect(opened).toEqual([{ page: 'word', entSeq: 1323080 }])
     expect(lookups.lookUpWord).toHaveBeenLastCalledWith(1323080)
+  })
+
+  test('いる’s Alternative Kanji row 居 opens the kanji’s page', async () => {
+    await show({ page: 'word', entSeq: 1577980 })
+    const section = named('[data-slot="card-title"]', 'Alternative kanji')?.closest(
+      '[data-slot="card"]'
+    )
+    await click(section?.querySelector('button[data-opens="kanji:居"]'))
+    expect(opened).toEqual([{ page: 'kanji', character: '居' }])
+    expect(lookups.lookUpKanji).toHaveBeenCalledExactlyOnceWith('居')
+    expect(container.querySelector('[data-lookup="not-found"]')?.textContent).toBe(
+      wordDetailLabels.lookup.kanjiNotFound
+    )
   })
 
   test('いる’s related word 有る, outside the dictionary, shows not-found', async () => {
