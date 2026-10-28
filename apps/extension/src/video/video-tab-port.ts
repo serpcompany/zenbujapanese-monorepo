@@ -40,7 +40,8 @@ function isPlayback(value: unknown): value is Playback | null {
     typeof playback.time === 'number' &&
     typeof playback.playing === 'boolean' &&
     typeof playback.rate === 'number' &&
-    typeof playback.ad === 'boolean'
+    typeof playback.ad === 'boolean' &&
+    typeof playback.ended === 'boolean'
   )
 }
 

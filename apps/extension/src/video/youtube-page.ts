@@ -1,4 +1,3 @@
-import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import {
   askCaptions,
   type CaptionsAnswer,
@@ -6,8 +5,9 @@ import {
   type CaptionsState,
   isCaptionsChange
 } from '../captions/messages'
+import type { CaptionedVideo } from '../player-captions/line-controls'
 import type { ShowCaptions, ShownCaptions } from '../player-captions/player-captions'
-import type { Settings } from '../shared/settings'
+import { isZenbuOn, type Settings } from '../shared/settings'
 import { applyControl, isVideoControlMessage } from './controls'
 import type { VideoFollower } from './follower'
 import { type TabPort, videoTabPort, videoTabPorts } from './video-tab-port'
@@ -39,8 +39,6 @@ type Options = {
   captions?: PlayerCaptions
 }
 
-type VideoLines = { videoId: string; lines: readonly Caption[] }
-
 const unfollowed = () => undefined
 
 export function followYouTubePage(page: Document, options: Options = {}): () => void {
@@ -52,7 +50,7 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
   let retry: ReturnType<typeof setTimeout> | undefined
   let unsubscribe: () => void = unfollowed
   let settings: Settings | null = null
-  let lines: VideoLines | null = null
+  let lines: CaptionedVideo | null = null
   let shown: ShownCaptions | null = null
 
   const clearRetry = () => {
@@ -100,8 +98,9 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
     follower = null
   }
 
-  const captionsWanted = (): VideoLines | null => {
+  const captionsWanted = (): CaptionedVideo | null => {
     if (!options.captions || !settings?.['videos.zenbuCaptions']) return null
+    if (!isZenbuOn(page.location.hostname, settings)) return null
     return lines?.videoId === videoId && lines.lines.length > 0 ? lines : null
   }
 
@@ -111,7 +110,7 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
       const following = followed()
       if (!following) return
       following.showSiteCaptions(false)
-      shown = options.captions.show(following, wanted.lines, settings)
+      shown = options.captions.show(following, wanted, settings)
     } else if (!wanted && shown) {
       hideCaptions()
       if (!videoTabs.open) stopFollowing()

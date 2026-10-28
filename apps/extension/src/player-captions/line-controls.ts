@@ -3,6 +3,8 @@ import { currentLine, type Playback, type VideoFollower } from '../video/followe
 
 export const speeds = [0.5, 0.75, 1, 1.25, 1.5] as const
 
+export type CaptionedVideo = { videoId: string; lines: readonly Caption[] }
+
 export type LineView = {
   line: number | null
   playing: boolean
@@ -26,9 +28,13 @@ export type LineControls = {
 
 type Stretch = { line: number; started: boolean }
 
+type OwnSeek = { target: number; at: number; landed: boolean }
+
 const playingSlack = 0.5
 const pausedStep = 0.05
 const backStep = 0.05
+const seekGap = 700
+const landingReach = 1
 
 const idle: LineView = {
   line: null,
@@ -68,7 +74,7 @@ const jumped = (from: number, to: number, allowed: number) => {
 
 export function lineControls(
   follower: VideoFollower,
-  lines: readonly Caption[],
+  { videoId, lines }: CaptionedVideo,
   now: () => number = Date.now
 ): LineControls {
   const listeners = new Set<() => void>()
@@ -77,10 +83,15 @@ export function lineControls(
   let repeat: number | null = null
   let stretch: Stretch | null = null
   let held: number | null = null
-  let expected: number | null = null
+  let ownSeek: OwnSeek | null = null
   let shown: LineView = idle
 
   const clamp = (index: number) => Math.min(Math.max(index, 0), lines.length - 1)
+
+  const followable = (at: Playback) => !at.ad && at.videoId === videoId && lines.length > 0
+
+  const reachedEnd = (index: number, at: Playback) =>
+    at.time >= lines[index].end || (at.ended && index === lines.length - 1)
 
   const shownLine = (at: Playback): number | null =>
     stretch?.line ?? held ?? repeat ?? currentLine(lines, at.time)
@@ -88,12 +99,12 @@ export function lineControls(
   const publish = () => {
     const next: LineView = playback
       ? {
-          line: playback.ad ? null : shownLine(playback),
+          line: followable(playback) ? shownLine(playback) : null,
           playing: playback.playing,
           repeating: repeat !== null,
           rate: playback.rate,
           ad: playback.ad,
-          ready: lines.length > 0
+          ready: lines.length > 0 && playback.videoId === videoId
         }
       : idle
     if (sameView(shown, next)) return
@@ -102,27 +113,48 @@ export function lineControls(
   }
 
   const seekTo = (time: number) => {
-    expected = time
+    ownSeek = { target: time, at: now(), landed: false }
     follower.seek(time)
   }
 
-  const usable = (): Playback | null =>
-    playback && !playback.ad && lines.length > 0 ? playback : null
+  const seekedLately = () => ownSeek !== null && now() - ownSeek.at < seekGap
+
+  const seekBack = (time: number): boolean => {
+    if (seekedLately()) return false
+    seekTo(time)
+    return true
+  }
+
+  const landing = (at: Playback): boolean => {
+    if (!ownSeek) return false
+    if (!ownSeek.landed) {
+      ownSeek.landed = true
+      return true
+    }
+    return seekedLately() && Math.abs(at.time - ownSeek.target) <= landingReach
+  }
+
+  const usable = (): Playback | null => (playback && followable(playback) ? playback : null)
+
+  const repeatFrom = (time: number): number => {
+    const index = clamp(lastStarted(lines, time))
+    const line = lines[index]
+    repeat = index
+    return time < line.start || time >= line.end ? line.start : time
+  }
 
   const moved = (time: number) => {
     stretch = null
     held = null
     if (repeat === null) return
-    repeat = clamp(lastStarted(lines, time))
-    const line = lines[repeat]
-    if (time < line.start || time >= line.end) seekTo(line.start)
+    const target = repeatFrom(time)
+    if (target !== time) seekBack(target)
   }
 
-  const followed = (before: number, at: Playback, wasPlaying: boolean) => {
+  const followed = (at: Playback, wasPlaying: boolean) => {
     if (stretch) {
-      const line = lines[stretch.line]
       if (at.playing) stretch.started = true
-      if (at.time >= line.end) {
+      if (reachedEnd(stretch.line, at)) {
         held = stretch.line
         stretch = null
         follower.pause()
@@ -130,11 +162,8 @@ export function lineControls(
       return
     }
     if (held !== null && at.playing) held = null
-    if (repeat === null) return
-    const line = lines[repeat]
-    if (before >= line.end || at.time < line.end) return
-    seekTo(line.start)
-    if (wasPlaying && !at.playing) follower.play()
+    if (repeat === null || !reachedEnd(repeat, at)) return
+    if (seekBack(lines[repeat].start) && wasPlaying && !at.playing) follower.play()
   }
 
   const heard = (next: Playback | null) => {
@@ -143,26 +172,26 @@ export function lineControls(
       repeat = null
       stretch = null
       held = null
-      expected = null
+      ownSeek = null
       publish()
       return
     }
-    if (next.ad || lines.length === 0) {
+    if (!followable(next)) {
       playback = next
       heardAt = now()
       publish()
       return
     }
-    const before = expected ?? playback?.time ?? next.time
-    const wasPlaying = playback?.playing === true && !playback.ad
+    const before = playback?.time ?? next.time
+    const wasPlaying = playback?.playing === true && followable(playback)
     const elapsed = (now() - heardAt) / 1000
     const allowed =
       wasPlaying || next.playing ? elapsed * Math.max(next.rate, 1) + playingSlack : pausedStep
-    expected = null
+    const ours = landing(next)
     playback = next
     heardAt = now()
-    if (jumped(before, next.time, allowed)) moved(next.time)
-    else followed(before, next, wasPlaying)
+    if (!ours && jumped(before, next.time, allowed)) moved(next.time)
+    else followed(next, wasPlaying)
     publish()
   }
 
@@ -222,9 +251,10 @@ export function lineControls(
       if (usable()) follower.setRate(rate)
     },
     seek(time) {
-      if (!playback || playback.ad) return
-      seekTo(time)
-      moved(time)
+      if (!usable()) return
+      stretch = null
+      held = null
+      seekTo(repeat === null ? time : repeatFrom(time))
       publish()
     },
     stop() {

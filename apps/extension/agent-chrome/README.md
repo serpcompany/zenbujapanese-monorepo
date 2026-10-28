@@ -124,6 +124,10 @@ daemon, and point the harness at a temporary state folder and free ports
 - **Headless:** extensions, logs, playback, and Widevine work; the Translator reported
   `downloadable` again in headless after a headful window had downloaded it. Use headful
   (`--persistent`, no `--headless`) for the Translator and Netflix; its window is muted.
+- **Fullscreen screenshots, headless:** after `requestFullscreen()` a screenshot crops to
+  800 × 600 and can miss what sits low in the player, such as the caption. Emulate the viewport
+  again once in fullscreen (CDP `Emulation.setDeviceMetricsOverride`, or Puppeteer's
+  `page.setViewport`) before the screenshot (#964).
 - **Netflix:** the persistent profile is signed out. Agents never type a password here.
 - **chrome-devtools MCP:** `chrome-devtools-mcp@1.10.1 --browserUrl http://127.0.0.1:9339
   --categoryExtensions` attaches to a running agent Chrome; the repository's `.mcp.json` server is

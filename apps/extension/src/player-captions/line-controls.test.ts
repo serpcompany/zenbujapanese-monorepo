@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type ClockFollower, clockFollower, clockLines } from '../test/clock-follower'
+import { type ClockFollower, clockFollower, clockLines, clockVideo } from '../test/clock-follower'
 import { type LineControls, lineControls } from './line-controls'
 
 let clock: ClockFollower
@@ -19,8 +19,15 @@ beforeEach(() => {
     toFake: ['setInterval', 'clearInterval', 'setTimeout', 'clearTimeout', 'Date']
   })
   clock = clockFollower()
-  controls = lineControls(clock.follower, clockLines)
+  controls = lineControls(clock.follower, clockVideo)
 })
+
+function restart(options: Parameters<typeof clockFollower>[0]) {
+  controls.stop()
+  clock.follower.stop()
+  clock = clockFollower(options)
+  controls = lineControls(clock.follower, clockVideo)
+}
 
 afterEach(() => {
   controls.stop()
@@ -151,16 +158,93 @@ describe('Repeat line', () => {
     expect(controls.view()).toMatchObject({ line: 2, repeating: false })
   })
 
+  for (const landing of [-0.2, 0.2])
+    for (const rate of [0.5, 1, 1.5])
+      it(`seeks once per line end at ${rate}x when a seek lands ${landing * 1000} ms off`, async () => {
+        restart({ landing })
+        await playingAt(3.2)
+        controls.setRate(rate)
+        controls.toggleRepeat()
+        await seconds(0)
+        const startedAt = Date.now()
+        await seconds(30)
+        const line = clockLines[1]
+        const length = ((line.end - line.start - landing) / rate) * 1000
+        const times = clock.seeks.map(seek => seek.at - startedAt)
+        expect(seekTargets().every(target => target === line.start)).toBe(true)
+        expect(times[0]).toBeCloseTo(((line.end - 3.2) / rate) * 1000, -2)
+        for (let index = 1; index < times.length; index += 1) {
+          expect(times[index] - times[index - 1]).toBeGreaterThan(700)
+          expect(Math.abs(times[index] - times[index - 1] - length)).toBeLessThan(100)
+        }
+        expect(30_000 - (times.at(-1) ?? 0)).toBeLessThan(length + 100)
+        expect(controls.view()).toMatchObject({ line: 1, repeating: true, playing: true })
+      })
+
   it('loops the line that ends the video', async () => {
-    controls.stop()
-    clock.follower.stop()
-    clock = clockFollower({ duration: 13 })
-    controls = lineControls(clock.follower, clockLines)
+    restart({ duration: 13 })
     await playingAt(11)
     controls.toggleRepeat()
     await seconds(4)
     expect(seekTargets()).toEqual([10])
     expect(controls.view()).toMatchObject({ line: 3, playing: true })
+  })
+
+  it('loops a last line that ends after the video does, from the ended video', async () => {
+    restart({ duration: 12.8 })
+    await playingAt(11)
+    controls.toggleRepeat()
+    await seconds(5.5)
+    expect(seekTargets()).toEqual([10, 10])
+    expect(controls.view()).toMatchObject({ line: 3, repeating: true, playing: true })
+  })
+})
+
+describe('a seek that lands off its target', () => {
+  for (const landing of [-0.2, 0.2])
+    it(`still plays just the line and pauses at its end when it lands ${landing * 1000} ms off`, async () => {
+      restart({ landing })
+      for (const line of [0, 1, 2]) {
+        const before = clock.seeks.length
+        controls.next()
+        await seconds(0.5)
+        expect(controls.view()).toMatchObject({ line, playing: true })
+        await seconds(5)
+        expect(clock.seeks.length - before).toBe(1)
+        expect(controls.view()).toMatchObject({ line, playing: false })
+        expect(clock.time()).toBeCloseTo(clockLines[line].end, 1)
+      }
+    })
+})
+
+describe('the last line of a video that ends before it', () => {
+  it('a paused Next plays it and stops where the video ends', async () => {
+    restart({ duration: 12.8 })
+    clock.learnerSeeks(9)
+    await seconds(0)
+    controls.next()
+    await seconds(4)
+    expect(seekTargets()).toEqual([10])
+    expect(controls.view()).toMatchObject({ line: 3, playing: false })
+    expect(clock.time()).toBe(12.8)
+  })
+})
+
+describe('another video in the element', () => {
+  it('shows nothing, and Repeat and the controls leave it alone', async () => {
+    await playingAt(4)
+    controls.toggleRepeat()
+    clock.videoChanges('zenbuJa0002')
+    clock.learnerPlays()
+    await seconds(8)
+    expect(controls.view()).toMatchObject({ line: null, ready: false })
+    controls.next()
+    controls.previous()
+    controls.toggleRepeat()
+    controls.seek(3)
+    await seconds(1)
+    expect(clock.seeks).toEqual([])
+    expect(clock.time()).toBeCloseTo(9, 1)
   })
 })
 

@@ -9,6 +9,7 @@ const playing = (time: number, changes: Partial<Playback> = {}): Playback => ({
   playing: true,
   rate: 1,
   ad: false,
+  ended: false,
   ...changes
 })
 

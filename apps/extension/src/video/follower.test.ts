@@ -40,7 +40,8 @@ describe('playingLine', () => {
     time: 5.4,
     playing: true,
     rate: 1,
-    ad: false
+    ad: false,
+    ended: false
   }
 
   it('gives the line playing in a playback, and none while an ad shows or nothing is followed', () => {

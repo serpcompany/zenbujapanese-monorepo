@@ -9,7 +9,7 @@ import {
 } from '../player-captions/player-captions'
 import { type Settings, settingDefaults } from '../shared/settings'
 import type { TranslatorState } from '../translation/messages'
-import { clockFollower, clockLines } from './clock-follower'
+import { clockFollower, clockVideo } from './clock-follower'
 import { lineText } from './video-tab-harness'
 import { popupAnswer } from './word-cards'
 
@@ -83,7 +83,7 @@ async function playerOn({ settings = {}, translator, duration }: Options = {}) {
   const show = playerCaptions({ services })
   let shown: ShownCaptions | undefined
   await act(async () => {
-    shown = show(clock.follower, clockLines, current)
+    shown = show(clock.follower, clockVideo, current)
   })
   const root = () =>
     player.querySelector<HTMLElement>(`[${playerCaptionsAttribute}]`)?.shadowRoot ?? null

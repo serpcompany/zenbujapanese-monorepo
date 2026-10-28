@@ -8,6 +8,7 @@ type Options = {
   duration?: number
   frame?: number
   host?: HTMLElement | null
+  landing?: number
 }
 
 export const clockLines: Caption[] = [
@@ -17,16 +18,20 @@ export const clockLines: Caption[] = [
   { id: 3, start: 10, end: 13, text: '要求が要る。', translation: null }
 ]
 
+export const clockVideo = { videoId: 'zenbuJa0001', lines: clockLines }
+
 export function clockFollower({
-  videoId = 'zenbuJa0001',
+  videoId = clockVideo.videoId,
   duration = 60,
   frame = 20,
-  host = null
+  host = null,
+  landing = 0
 }: Options = {}) {
   const listeners = new Set<Listener>()
   const seeks: { to: number; at: number }[] = []
   const rates: number[] = []
   const siteCaptions: boolean[] = []
+  let shownVideo = videoId
   let time = 0
   let playing = false
   let rate = 1
@@ -35,7 +40,16 @@ export function clockFollower({
   let ticking: ReturnType<typeof setInterval> | undefined
 
   const snapshot = (): Playback | null =>
-    stopped ? null : { videoId, time, playing: playing && !ad, rate, ad }
+    stopped
+      ? null
+      : {
+          videoId: shownVideo,
+          time,
+          playing: playing && !ad,
+          rate,
+          ad,
+          ended: !ad && time >= duration
+        }
 
   const tell = () => {
     const playback = snapshot()
@@ -69,10 +83,11 @@ export function clockFollower({
     seek: to =>
       control(() => {
         seeks.push({ to, at: Date.now() })
-        time = to
+        time = Math.min(Math.max(to + landing, 0), duration)
       }),
     play: () =>
       control(() => {
+        if (time >= duration) time = 0
         playing = true
       }),
     pause: () =>
@@ -119,6 +134,11 @@ export function clockFollower({
     },
     adEnds() {
       ad = false
+      later()
+    },
+    videoChanges(to: string) {
+      shownVideo = to
+      time = 0
       later()
     }
   }

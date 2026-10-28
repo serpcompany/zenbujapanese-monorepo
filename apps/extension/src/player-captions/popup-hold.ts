@@ -77,6 +77,10 @@ export function holdForPopups(
       view.removeEventListener('pointerdown', pressStarted, true)
       for (const type of pressEnds) view.removeEventListener(type, pressEnded, true)
       listeners.clear()
+      if (!open) return
+      open = false
+      closing = false
+      pause.changed(false)
     }
   }
 }

@@ -205,7 +205,14 @@ describe('the playback it sends a Video tab', () => {
     await vi.waitFor(() => expect(heard).toHaveLength(1))
     expect(heard[0]).toEqual({
       target: 'video-tab',
-      playback: { videoId: japaneseVideo, time: 0, playing: false, rate: 1, ad: false }
+      playback: {
+        videoId: japaneseVideo,
+        time: 0,
+        playing: false,
+        rate: 1,
+        ad: false,
+        ended: false
+      }
     })
     tab.control({ type: 'seek', time: 5.4 })
     video().dispatchEvent(new Event('seeked'))

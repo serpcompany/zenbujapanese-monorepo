@@ -32,7 +32,14 @@ export function youTubeFollower(
     if (!video) return null
     if (!ad) heldTime = video.currentTime
     const playing = !ad && !video.paused && !video.ended
-    return { videoId, time: heldTime, playing, rate: learnerRate ?? video.playbackRate, ad }
+    return {
+      videoId,
+      time: heldTime,
+      playing,
+      rate: learnerRate ?? video.playbackRate,
+      ad,
+      ended: !ad && video.ended
+    }
   }
 
   const notify = () => {

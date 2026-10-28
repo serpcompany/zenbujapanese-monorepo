@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { hostElementName } from '../content/shadow-mount'
 import { settingDefaults } from '../shared/settings'
 import '../test/act-environment'
-import { clockFollower, clockLines } from '../test/clock-follower'
+import { clockFollower, clockVideo } from '../test/clock-follower'
 import {
   captionServices,
   type PlayerOn,
@@ -161,8 +161,35 @@ describe('the video while the word popup is open', () => {
   })
 })
 
+describe('the word popup in the fullscreen player', () => {
+  it('keeps a click and Space on its buttons from the player, so the video stays paused', async () => {
+    let fullscreen: Element | null = null
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      get: () => fullscreen
+    })
+    const player = await opened()
+    fullscreen = player.player
+    await player.playFrom(10.5)
+    await clickWord(player, '要求')
+    expect(wordPopup()?.parentElement).toBe(player.player)
+    const toggle = vi.fn(() => player.clock.learnerPlays())
+    player.player.addEventListener('click', toggle)
+    player.player.addEventListener('keydown', toggle)
+    const button = wordPopup()?.shadowRoot?.querySelector<HTMLElement>('button')
+    if (!button) throw new Error('The popup has no button.')
+    await pointer('pointerdown', button)
+    await act(async () => button.click())
+    await press(' ', button)
+    await player.wait(100)
+    Reflect.deleteProperty(document, 'fullscreenElement')
+    expect(toggle).not.toHaveBeenCalled()
+    expect(player.clock.playing()).toBe(false)
+  })
+})
+
 describe('during an ad', () => {
-  it('shows no caption and no controls, and both come back after it', async () => {
+  it('shows no caption and no controls but the site’s captions, and puts both back after it', async () => {
     const player = await opened()
     await player.playFrom(1.2)
     expect(player.toolbar()).not.toBeNull()
@@ -170,15 +197,29 @@ describe('during an ad', () => {
     await player.wait(0)
     expect(player.caption()).toBeNull()
     expect(player.toolbar()).toBeNull()
+    expect(player.clock.siteCaptions).toEqual([true])
     player.clock.adEnds()
     await player.wait(0)
     expect(player.line()).toBe('おはようございます')
     expect(player.toolbar()).not.toBeNull()
+    expect(player.clock.siteCaptions).toEqual([true, false])
+  })
+})
+
+describe('another video in the player before the page says so', () => {
+  it('draws nothing over it', async () => {
+    const player = await opened()
+    await player.playFrom(1.2)
+    player.clock.videoChanges('zenbuJa0002')
+    player.clock.learnerPlays()
+    await player.wait(1500)
+    expect(player.caption()).toBeNull()
+    expect(player.toolbar()).toBeNull()
   })
 })
 
 describe('the page around the player', () => {
-  it('keeps clicks and keys on the caption and controls from the player, but lets Escape through', async () => {
+  it('keeps clicks, and the keys a control acts on, from the player, but lets Escape through', async () => {
     const player = await opened()
     const clicks = vi.fn()
     const keys = vi.fn()
@@ -189,12 +230,46 @@ describe('the page around the player', () => {
     if (!next) throw new Error('No Next line control.')
     await pointer('pointerdown', next)
     await act(async () => next.click())
-    await press('k', next)
+    await press(' ', next)
+    await press('Enter', next)
     expect(clicks).not.toHaveBeenCalled()
     expect(keys).not.toHaveBeenCalled()
     await press('Escape', next)
     expect(keys).toHaveBeenCalledOnce()
     document.removeEventListener('keydown', keys)
+  })
+
+  it('lets YouTube’s own shortcuts reach the page after a mouse click on a control', async () => {
+    const player = await opened()
+    const keys: string[] = []
+    const heard = (event: KeyboardEvent) => void keys.push(event.key)
+    document.addEventListener('keydown', heard)
+    const next = player.button(labels.nextLine)
+    if (!next) throw new Error('No Next line control.')
+    await pointer('pointerdown', next)
+    await act(async () => next.click())
+    await press('f', next)
+    await press('ArrowRight', next)
+    await press('k', next)
+    document.removeEventListener('keydown', heard)
+    expect(keys).toEqual(['f', 'ArrowRight', 'k'])
+  })
+
+  it('keeps the speed menu’s own keys inside while it is open', async () => {
+    const player = await opened()
+    const keys: string[] = []
+    const heard = (event: KeyboardEvent) => void keys.push(event.key)
+    document.addEventListener('keydown', heard)
+    const trigger = player.root()?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
+    await act(async () => trigger?.click())
+    await player.wait(0)
+    const menu = player.root()?.querySelector<HTMLElement>('[role="menu"]')
+    if (!menu) throw new Error('The speed menu didn’t open.')
+    await press('ArrowDown', menu)
+    await press('End', menu)
+    await press('m', menu)
+    document.removeEventListener('keydown', heard)
+    expect(keys).toEqual([])
   })
 
   it('waits for the follower’s caption host, then moves into it', async () => {
@@ -203,7 +278,7 @@ describe('the page around the player', () => {
     const show = playerCaptions({ services: captionServices().services })
     let stop = () => {}
     await act(async () => {
-      stop = show(clock.follower, clockLines, settingDefaults).stop
+      stop = show(clock.follower, clockVideo, settingDefaults).stop
     })
     expect(document.querySelector(hostElementName)).toBeNull()
     const player = document.body.appendChild(document.createElement('div'))
@@ -217,13 +292,26 @@ describe('the page around the player', () => {
     expect(player.querySelector(`[${playerCaptionsAttribute}]`)).toBeNull()
   })
 
-  it('stopping takes the caption away and closes the popup, leaving the video paused', async () => {
+  it('stopping takes the caption away and closes the popup, playing again the video it paused', async () => {
     const player = await opened()
     await player.playFrom(10.5)
     await clickWord(player, '要求')
+    expect(player.clock.playing()).toBe(false)
     await player.stop()
     expect(player.root()).toBeNull()
     expect(wordPopup()).toBeNull()
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100)
+    })
+    expect(player.clock.playing()).toBe(true)
+  })
+
+  it('stopping leaves a video paused that was paused when the popup opened', async () => {
+    const player = await opened()
+    player.clock.learnerSeeks(10.5)
+    await player.wait(0)
+    await clickWord(player, '要求')
+    await player.stop()
     await act(async () => {
       await vi.advanceTimersByTimeAsync(100)
     })

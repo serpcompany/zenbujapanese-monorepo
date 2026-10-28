@@ -25,7 +25,7 @@ const tabId = 5
 const happyDOM = (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM
 
 type Shown = {
-  videoId: string | undefined
+  videoId: string
   lines: readonly Caption[]
   settings: Settings
   changes: Settings[]
@@ -35,10 +35,10 @@ type Shown = {
 
 function recordedCaptions() {
   const shows: Shown[] = []
-  const show: ShowCaptions = (follower, lines, settings) => {
+  const show: ShowCaptions = (_follower, video, settings) => {
     const shown: Shown = {
-      videoId: follower.playback?.videoId,
-      lines,
+      videoId: video.videoId,
+      lines: video.lines,
       settings,
       changes: [],
       seeks: [],
@@ -172,6 +172,20 @@ describe('Zenbu’s caption on a YouTube watch page', () => {
     expect(watched.youTube.timedTextRequests()).toBe(1)
   })
 
+  it('takes the caption away when Zenbu turns off for the site, giving YouTube its captions back', async () => {
+    const watched = await opened()
+    act(() => watched.page.change({ 'sites.off': ['www.youtube.com'] }))
+    expect(watched.shows[0].stopped).toBe(true)
+    expect(watched.clocks[0].siteCaptions).toEqual([false, true])
+    act(() => watched.page.change({ 'sites.off': [] }))
+    expect(watched.shows).toHaveLength(2)
+  })
+
+  it('shows none on a watch page of a site Zenbu is off for', async () => {
+    const watched = await opened({ settings: { 'sites.off': ['www.youtube.com'] } })
+    expect(watched.shows).toEqual([])
+  })
+
   it('passes each settings change to the caption', async () => {
     const watched = await opened()
     act(() => watched.page.change({ 'readingAids.romaji': true }))
@@ -208,6 +222,29 @@ describe('Zenbu’s caption on a YouTube watch page', () => {
     expect(watched.shows).toHaveLength(2)
     expect(watched.shows[1].videoId).toBe(secondJapaneseVideo)
     expect(watched.youTube.timedTextRequests()).toBe(2)
+  })
+
+  it('draws nothing over the next video before the page says it opened, and leaves it alone', async () => {
+    standInFonts()
+    const watched = await opened({
+      show: playerCaptions({ services: captionServices().services })
+    })
+    const [clock] = watched.clocks
+    const caption = () =>
+      watched.player
+        .querySelector(`[${playerCaptionsAttribute}]`)
+        ?.shadowRoot?.querySelector('[data-player-caption]') ?? null
+    clock.learnerSeeks(0.6)
+    clock.learnerPlays()
+    await settled()
+    expect(caption()).not.toBeNull()
+    clock.videoChanges(secondJapaneseVideo)
+    clock.learnerSeeks(0.6)
+    await settled()
+    expect(caption()).toBeNull()
+    watched.control({ type: 'seek', time: 2 })
+    await settled()
+    expect(clock.seeks).toEqual([])
   })
 
   it('shows nothing for a video without Japanese captions', async () => {
