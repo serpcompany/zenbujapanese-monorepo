@@ -128,6 +128,15 @@ export function wordPopup(page: Page) {
   return page.locator('[data-zenbu-word-popup]').locator('[data-word-popup]')
 }
 
+export const addedWords = { ...pageWords, added: ['要項'] }
+
+export function addWordLater(page: Page) {
+  return page.evaluate(() => {
+    const later = document.querySelector('#later')
+    later?.append(Object.assign(document.createElement('p'), { id: 'added', textContent: '要項' }))
+  })
+}
+
 export async function openWordsPage(page: Page, extension: Extension, tone: Tone, colour = '') {
   await page.goto(wordsPageUrl(extension, tone, colour))
 }

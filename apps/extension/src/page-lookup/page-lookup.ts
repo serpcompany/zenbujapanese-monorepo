@@ -134,7 +134,10 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
       if (removed) {
         for (const node of rendering.nodes()) if (!node.isConnected) rendering.forget(node, false)
       }
-      scan.add(found.filter(node => !rendering.has(node)))
+      scan.add(
+        found.filter(node => !rendering.has(node)),
+        'first'
+      )
     }
     const observer = new MutationObserver(changed)
     observe()
@@ -197,9 +200,9 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
 
   return {
     stop() {
-      stopListening()
       running?.stop()
       running = null
+      stopListening()
     }
   }
 }

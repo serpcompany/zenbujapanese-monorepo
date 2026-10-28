@@ -53,6 +53,11 @@ chrome.runtime.onMessage.addListener(
 startSettingsChannel()
 startSidePanel(reportFailure)
 keepPageScriptRegistered(
-  { permissions: chrome.permissions, scripting: chrome.scripting, tabs: chrome.tabs },
+  {
+    runtime: chrome.runtime,
+    permissions: chrome.permissions,
+    scripting: chrome.scripting,
+    tabs: chrome.tabs
+  },
   reportFailure
 )

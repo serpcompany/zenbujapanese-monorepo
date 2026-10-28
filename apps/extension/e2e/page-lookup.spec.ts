@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test'
 import { type Extension, expect, test } from './fixtures.ts'
 import {
+  addedWords,
+  addWordLater,
   allowedHost,
   changeSettings,
   clickWord,
@@ -120,11 +122,35 @@ test('underlines nothing and opens no popup on a site turned off, and starts whe
 test('underlines words added to the page later', async ({ extension, page }) => {
   await openWordsPage(page, extension, 'light')
   await expect.poll(() => underlinesIn(page)).toEqual(pageWords)
+  await addWordLater(page)
+  await expect.poll(() => underlinesIn(page)).toEqual(addedWords)
+})
+
+test('underlines words added to a long page before the rest of its first scan', async ({
+  extension,
+  page
+}) => {
+  await changeSettings(extension, noReadingAids)
+  const line = '<a href="#">要求</a>は要る。<b>要所</b>と要領と要項。'.repeat(3)
+  const lines = Array.from({ length: 3000 }, () => `<p>${line}</p>`).join('')
+  const longPage = `<!doctype html><html lang="ja"><body><main id="long">${lines}</main></body></html>`
+  await page.route('**/test-pages/long.html', route =>
+    route.fulfill({ body: longPage, contentType: 'text/html; charset=utf-8' })
+  )
+  const underlined = () =>
+    page.evaluate(name => {
+      const ranges = [...(CSS.highlights.get(name) ?? [])] as Range[]
+      const added = ranges.filter(range => range.startContainer.parentElement?.id === 'added')
+      return { all: ranges.length, added: added.map(range => range.toString()) }
+    }, highlightNames.light)
+  await page.goto(`${extension.server.allowedSiteUrl}/test-pages/long.html`)
+  await expect.poll(async () => (await underlined()).all).toBeGreaterThan(0)
   await page.evaluate(() => {
-    const later = document.querySelector('#later')
-    later?.append(Object.assign(document.createElement('p'), { id: 'added', textContent: '要項' }))
+    const added = Object.assign(document.createElement('p'), { id: 'added', textContent: '要項' })
+    document.querySelector('#long')?.prepend(added)
   })
-  await expect.poll(() => underlinesIn(page)).toEqual({ ...pageWords, added: ['要項'] })
+  await expect.poll(async () => (await underlined()).added, { timeout: 10_000 }).toEqual(['要項'])
+  expect((await underlined()).all).toBeLessThan(3000 * 15)
 })
 
 async function siteAccess(page: Page, extensionId: string, method: string) {

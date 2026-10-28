@@ -1,5 +1,5 @@
 import { Button } from '@zenbu/ui/components/button'
-import logo from '../assets/zenbu-icon.svg'
+import logo from '../../../../assets/brand/vector/zenbu-icon-flat-vector.svg'
 import type { DataState } from './data-state'
 import { DictionaryProgress, type ReadData, useDataState } from './dictionary-progress'
 import { EverySite } from './every-site'

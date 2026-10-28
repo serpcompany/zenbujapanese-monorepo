@@ -1,5 +1,6 @@
 import { contentScriptErrorReports } from '../error-reports/error-reports'
 import { toServiceWorker } from '../error-reports/forwarding'
+import { startUnlessRunning } from '../page-lookup/hand-over'
 import { isReadPageSelection, isStopPageLookup } from '../page-lookup/messages'
 import { startPageLookup } from '../page-lookup/page-lookup'
 import { afterTimeout } from '../page-lookup/scan'
@@ -10,14 +11,9 @@ import { askSettings, onSettingsChanged } from '../shared/settings'
 import { openPanel } from '../side-panel/route'
 import { wordPopupHost } from '../word-popup/popup-host'
 
-const started = Symbol.for('zenbujapanese.page-lookup')
+const alive = () => chrome.runtime?.id !== undefined
 
-type Scope = { [started]?: true }
-
-const scope = globalThis as Scope
-
-if (!scope[started]) {
-  scope[started] = true
+const started = startUnlessRunning(document, alive, () => {
   const { report } = contentScriptErrorReports(toServiceWorker(chrome.runtime))
   const lookup = startPageLookup({
     doc: document,
@@ -42,11 +38,14 @@ if (!scope[started]) {
       answer({ selection: selectedPageText(getSelection()) })
       return false
     }
-    if (!isStopPageLookup(message)) return false
-    lookup.stop()
-    chrome.runtime.onMessage.removeListener(onMessage)
-    delete scope[started]
+    if (isStopPageLookup(message)) started?.stop()
     return false
   }
   chrome.runtime.onMessage.addListener(onMessage)
-}
+  return {
+    stop() {
+      lookup.stop()
+      if (alive()) chrome.runtime.onMessage.removeListener(onMessage)
+    }
+  }
+})

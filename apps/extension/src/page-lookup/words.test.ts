@@ -22,6 +22,21 @@ describe('pageTokens', () => {
     expect(placed?.[0].ids).toEqual(['kaname', 'you'])
   })
 
+  it('offers the word the sentence links first, then the others written the same way', () => {
+    const placed = pageTokens(
+      [{ text: '要', reading: 'よう', languageReferenceID: 'you', writtenAlike: ['kaname'] }],
+      '要'
+    )
+    expect(placed?.map(({ ids, linked }) => ({ ids, linked }))).toEqual([
+      { ids: ['you', 'kaname'], linked: 'you' }
+    ])
+  })
+
+  it('links no one word when the sentence leaves several candidates', () => {
+    const placed = pageTokens([{ text: '要', candidates: ['kaname', 'you'] }], '要')
+    expect(placed?.[0].linked).toBeNull()
+  })
+
   it('keeps a reading that isn’t kana off the word', () => {
     const placed = pageTokens([{ text: '要', reading: '*', languageReferenceID: 'you' }], '要')
     expect(placed?.[0].ruby).toEqual([{ text: '要' }])

@@ -11,6 +11,7 @@ function fakeBrowser({ granted = [] as string[], tabs = [] as Tab[], failing = f
   const site = { granted, registered: [] as { id: string; matches: string[] }[] }
   const added = new Set<Listener>()
   const removed = new Set<Listener>()
+  const installed = new Set<(details: { reason: string }) => void>()
   const injected: number[] = []
   const stopped: number[] = []
   const covers = (patterns: readonly string[], tab: Tab) =>
@@ -18,6 +19,7 @@ function fakeBrowser({ granted = [] as string[], tabs = [] as Tab[], failing = f
     (patterns.includes(everyHttpsSite) && tab.url.startsWith('https://'))
   const shows = (tab: Tab) => covers(site.granted, tab) || ownHosts.includes(tab.hostPattern)
   const browser: PageScriptBrowser = {
+    runtime: { onInstalled: { addListener: listener => void installed.add(listener) } },
     permissions: {
       getAll: () =>
         failing ? Promise.reject(new Error('down')) : Promise.resolve({ origins: site.granted }),
@@ -68,7 +70,11 @@ function fakeBrowser({ granted = [] as string[], tabs = [] as Tab[], failing = f
     for (const listener of removed) listener({ origins })
     await settle()
   }
-  return { browser, site, injected, stopped, grant, revoke }
+  const install = async (reason: string) => {
+    for (const listener of installed) listener({ reason })
+    await settle()
+  }
+  return { browser, site, injected, stopped, grant, revoke, install }
 }
 
 const everyHttpsSite = 'https://*/*'
@@ -113,6 +119,31 @@ describe('page script registration', () => {
     await fake.grant([example])
     expect(fake.site.registered.map(script => script.matches)).toEqual([[example]])
     expect(fake.injected).toEqual([7])
+  })
+
+  it.each([
+    'install',
+    'update'
+  ])('puts the page script back into the open tabs of the allowed sites on %s', async reason => {
+    const video: Tab = { id: 9, url: 'https://www.youtube.com/watch?v=a', hostPattern: youtube }
+    const other: Tab = {
+      id: 8,
+      url: 'https://news.example/',
+      hostPattern: 'https://news.example/*'
+    }
+    const fake = fakeBrowser({ granted: [youtube, example], tabs: [exampleTab, other, video] })
+    await keepPageScriptRegistered(fake.browser, () => undefined)
+    expect(fake.injected).toEqual([])
+    await fake.install(reason)
+    expect(fake.site.registered.map(script => script.matches)).toEqual([[example]])
+    expect(fake.injected).toEqual([7])
+  })
+
+  it('leaves open tabs alone when Chrome itself updates', async () => {
+    const fake = fakeBrowser({ granted: [example], tabs: [exampleTab] })
+    await keepPageScriptRegistered(fake.browser, () => undefined)
+    await fake.install('chrome_update')
+    expect(fake.injected).toEqual([])
   })
 
   it('updates the sites when one more is allowed', async () => {

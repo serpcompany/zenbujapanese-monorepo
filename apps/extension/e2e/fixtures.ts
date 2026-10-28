@@ -40,9 +40,10 @@ function onlyTheLocalServer(server: LocalServer, youTube: YouTubeStandIn | null)
 
 export const test = base.extend<
   { outsideRequests: string[] },
-  { extension: Extension; languageDataHeld: boolean; youTubeStandIn: boolean }
+  { extension: Extension; languageDataHeld: boolean; youTubeStandIn: boolean; reloads: boolean }
 >({
   languageDataHeld: [false, { option: true, scope: 'worker' }],
+  reloads: [false, { option: true, scope: 'worker' }],
   youTubeStandIn: [false, { option: true, scope: 'worker' }],
   extension: [
     async ({ playwright, languageDataHeld, youTubeStandIn }, use) => {

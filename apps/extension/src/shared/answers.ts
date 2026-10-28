@@ -1,5 +1,5 @@
 import type { PopupCard } from '@zenbu/dictionary-core/cards/popup-card'
-import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
+import type { PageSegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
 import type {
   FormExampleRows,
   KanjiRows,
@@ -10,7 +10,7 @@ import type { DataState } from './data-state'
 
 export type NotReady = { type: 'not-ready'; data: DataState }
 export type StateAnswer = { type: 'state'; data: DataState }
-export type SegmentAnswer = { type: 'segment'; tokens: SegmentedToken[]; romaji: string | null }
+export type SegmentAnswer = { type: 'segment'; tokens: PageSegmentedToken[]; romaji: string | null }
 export type PopupAnswer = { type: 'popup'; card: PopupCard | null }
 export type WordAnswer = { type: 'word'; rows: WordRows | null }
 export type KanjiAnswer = {
