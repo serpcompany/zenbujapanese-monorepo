@@ -105,7 +105,6 @@ struct DailyGoalSheet: View {
 }
 
 private struct DailyGoalPace: View {
-  @Environment(WordKnowledge.self) private var knowledge
   @State private var model: JLPTCoverageModel?
   let goal: Int
 
@@ -117,12 +116,7 @@ private struct DailyGoalPace: View {
     Section {
       Text("At \(goal) a day")
         .font(.headline)
-        .task {
-          let model = JLPTCoverageModel(knowledge: knowledge, goal: goal)
-          self.model = model
-          await model.follow()
-        }
-        .onChange(of: goal) { model?.goal = goal }
+        .followsJLPTCoverage(goal: goal, into: $model)
       LabeledContent("New words a month", value: "≈ \(ProgressWording.perMonth(goal).formatted())")
         .accessibilityIdentifier("daily-goal.month")
       ForEach(levels) { level in
@@ -132,5 +126,27 @@ private struct DailyGoalPace: View {
     } footer: {
       Text("Dates are when every word of the level is in Learning, from what you know today.")
     }
+  }
+}
+
+private struct JLPTCoverageFollower: ViewModifier {
+  @Environment(WordKnowledge.self) private var knowledge
+  @Binding var model: JLPTCoverageModel?
+  let goal: Int
+
+  func body(content: Content) -> some View {
+    content
+      .task {
+        let model = JLPTCoverageModel(knowledge: knowledge, goal: goal)
+        self.model = model
+        await model.follow()
+      }
+      .onChange(of: goal) { model?.goal = goal }
+  }
+}
+
+extension View {
+  func followsJLPTCoverage(goal: Int, into model: Binding<JLPTCoverageModel?>) -> some View {
+    modifier(JLPTCoverageFollower(model: model, goal: goal))
   }
 }

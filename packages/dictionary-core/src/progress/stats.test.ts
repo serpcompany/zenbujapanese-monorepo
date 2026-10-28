@@ -149,7 +149,13 @@ describe('totals', () => {
       { day: '2026-10-27', known: 4 },
       { day: '2026-10-28', known: 4 }
     ])
-    expect(result.totals).toEqual({ known: 4, learning: 1, markedKnownLast7: 1, addedLast7: 0 })
+    expect(result.totals).toEqual({
+      known: 4,
+      learning: 1,
+      markedKnownLast7: 1,
+      addedLast7: 0,
+      addedLast30: 0
+    })
   })
 
   test('the last 7 and 30 days each give the day’s count and goal', () => {
@@ -167,6 +173,47 @@ describe('totals', () => {
     expect(result.last30[0]?.day).toBe('2026-09-29')
     expect(result.today).toMatchObject({ added: 2, goal: 1, met: true })
     expect(result.totals.addedLast7).toBe(2)
+    expect(result.totals.addedLast30).toBe(2)
+  })
+
+  test('days before the log began are empty days in the last 7 and 30, with the first goal', () => {
+    const result = stats({
+      '2026-10-27': day([change(taberu, 'unknown', 'learning')], { goal: 3 })
+    })
+    expect(result.last7).toHaveLength(7)
+    expect(result.last7[0]).toEqual({
+      day: '2026-10-22',
+      added: 0,
+      markedKnown: 0,
+      goal: 3,
+      met: false
+    })
+    expect(result.last7.slice(-2).map(day => day.added)).toEqual([1, 0])
+    expect(result.last30).toHaveLength(30)
+    expect(result.last30[0]?.day).toBe('2026-09-29')
+    expect(result.days).toHaveLength(2)
+  })
+})
+
+describe('days the goal was met', () => {
+  const met = (...days: string[]) =>
+    Object.fromEntries(days.map(on => [on, learned(taberu)])) as Record<string, ProgressDay>
+
+  test('counts the logged days in the last 7 and 30 and the days among them met', () => {
+    const result = stats({
+      ...met('2026-09-01', '2026-10-20', '2026-10-23', '2026-10-24'),
+      '2026-10-25': day([])
+    })
+    expect(result.goalMet).toEqual({
+      last7: { met: 2, days: 6 },
+      last30: { met: 3, days: 29 }
+    })
+  })
+
+  test('today counts once its goal is met', () => {
+    expect(stats(met('2026-10-26', '2026-10-27')).goalMet.last7).toEqual({ met: 2, days: 2 })
+    expect(stats(met('2026-10-27', '2026-10-28')).goalMet.last7).toEqual({ met: 2, days: 2 })
+    expect(stats({}).goalMet).toEqual({ last7: { met: 0, days: 0 }, last30: { met: 0, days: 0 } })
   })
 })
 

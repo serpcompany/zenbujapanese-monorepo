@@ -2,7 +2,8 @@ import XCTest
 
 final class AccountUITests: ZenbuUITestCase {
   static let rows = [
-    "account.profile", "account.sign-in", "account.progress.today", "account.daily-goal",
+    "account.profile", "account.sign-in", "account.progress.today", "account.progress.see",
+    "account.progress", "account.daily-goal",
     "account.media-library", "account.known-words",
     "account.learning", "account.lists", "account.translations", "account.reading-aids",
     "account.frequency-dictionaries", "account.about", "account.support",

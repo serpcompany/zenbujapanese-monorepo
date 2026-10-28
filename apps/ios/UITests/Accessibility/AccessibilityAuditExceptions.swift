@@ -200,7 +200,10 @@ private let textThatScales = [
       "Apple Translation", "Translate Player Captions With", "Translation Language", "English", "YouTube",
       "Show Furigana", "Show Word Meanings", "Hide Furigana on Known Words",
     ]), on: ["Reading Aids"], because: Why.scales),
-  allow(.dynamicType, .labels(["Learning", "Lists", "1", "Translations", "0"]), on: ["Account"], because: Why.scales),
+  allow(
+    .dynamicType, .labels(["Learning", "Lists", "1", "Translations", "0", "Progress"]), on: ["Account"],
+    because: Why.scales),
+  allow(.dynamicType, .identifier("account.progress.see"), on: ["Account"], because: Why.scales),
   allow(
     .dynamicType,
     .labels([
@@ -225,7 +228,7 @@ private let textThatScales = [
     ]),
     on: ["Account"], because: Why.scales),
   allow(
-    .textClipped, .labels(["Learning", "Lists", "Daily Goal"]), on: ["Account"], touch, [.standard],
+    .textClipped, .labels(["Learning", "Lists", "Daily Goal", "Progress"]), on: ["Account"], touch, [.standard],
     because: Why.scales),
   allow(
     .textClipped, .labels(["Media Library", "Known Words", "Learning"]), on: ["Account's library rows, alone"], [.phone],

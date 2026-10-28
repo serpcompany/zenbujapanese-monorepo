@@ -208,7 +208,7 @@ Like the other tabs, it has a small **Account** title in the bar, not a large on
 - the Zenbu account: **Sign In to Sync**, which names what syncs, or, signed in, **Zenbu Account**
   with the account's email ([Zenbu account and sync](account-sync.md)), against production's
   account service in TestFlight and App Store builds and staging's in Debug builds;
-- [progress](progress.md): the **Today** card and the **Daily Goal** row, above the rows below;
+- [progress](progress.md): the **Today** card and the **Progress** and **Daily Goal** rows;
 - the [Media Library](saved-data.md#media-library);
 - Known Words and Learning, each with its count;
 - Lists;

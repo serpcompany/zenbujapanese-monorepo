@@ -45,6 +45,7 @@ enum SystemColor {
   #if os(macOS)
     static let background = Color(nsColor: .windowBackgroundColor)
     static let secondaryBackground = Color(nsColor: .controlBackgroundColor)
+    static let groupedRow = Color(nsColor: .controlBackgroundColor)
     static let secondaryFill = Color(nsColor: .secondarySystemFill)
     static let tertiaryFill = Color(nsColor: .tertiarySystemFill)
     static let panel = Color(nsColor: .windowBackgroundColor)
@@ -53,6 +54,7 @@ enum SystemColor {
   #else
     static let background = Color(uiColor: .systemBackground)
     static let secondaryBackground = Color(uiColor: .secondarySystemBackground)
+    static let groupedRow = Color(uiColor: .secondarySystemGroupedBackground)
     static let secondaryFill = Color(uiColor: .secondarySystemFill)
     static let tertiaryFill = Color(uiColor: .tertiarySystemFill)
     static let panel = Color(uiColor: .systemGray5)

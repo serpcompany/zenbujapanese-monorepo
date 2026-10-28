@@ -321,6 +321,7 @@ struct SearchExperienceRootView: View {
         lookupClient: lookupClient,
         openItem: openSavedItem
       )
+      .environment(\.openAccountRoute) { accountPath.append($0) }
       .navigationDestination(for: SearchExperienceRoute.self) {
         dictionaryDestination($0, in: .account)
       }

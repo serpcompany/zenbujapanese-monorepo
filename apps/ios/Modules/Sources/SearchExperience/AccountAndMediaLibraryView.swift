@@ -35,6 +35,8 @@ struct AccountTabRoot: View {
           FrequencyDictionariesView(client: .live)
         case .credits:
           CreditsView()
+        case .progress:
+          ProgressScreen()
         }
       }
       .modifier(TranslateDestinations(experience: translate, words: words))
@@ -190,6 +192,10 @@ private enum AppBundleInfo {
   }
 }
 
+extension EnvironmentValues {
+  @Entry var openAccountRoute: (AccountRoute) -> Void = { _ in }
+}
+
 enum AccountRoute: Hashable {
   case profile
   case zenbuAccount
@@ -201,6 +207,7 @@ enum AccountRoute: Hashable {
   case wordList(UUID)
   case frequencyDictionaries
   case credits
+  case progress
 }
 
 struct ReadingAidSettingsView: View {

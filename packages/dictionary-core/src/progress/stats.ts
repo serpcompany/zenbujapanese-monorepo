@@ -38,6 +38,19 @@ interface Streak {
   last: string
 }
 
+interface GoalMet {
+  met: number
+  days: number
+}
+
+interface Totals {
+  known: number
+  learning: number
+  markedKnownLast7: number
+  addedLast7: number
+  addedLast30: number
+}
+
 interface ProgressStats {
   today: DayProgress
   days: DayProgress[]
@@ -45,7 +58,8 @@ interface ProgressStats {
   bestStreak: Streak | null
   last7: DayProgress[]
   last30: DayProgress[]
-  totals: { known: number; learning: number; markedKnownLast7: number; addedLast7: number }
+  goalMet: { last7: GoalMet; last30: GoalMet }
+  totals: Totals
   knownOverTime: { day: string; known: number }[]
   dailyAverage: { average: number; days: number }
   words: DayWords[]
@@ -118,6 +132,24 @@ function loggedDays(request: ProgressRequest): string[] {
   return Array.from({ length: today - first + 1 }, (_, index) => dayName(first + index))
 }
 
+function lastDays(days: readonly DayProgress[], length: number, goal: number): DayProgress[] {
+  const first = dayNumber(days[0]?.day ?? '')
+  const before = Array.from({ length: Math.max(0, length - days.length) }, (_, index) => ({
+    day: dayName(first - length + days.length + index),
+    added: 0,
+    markedKnown: 0,
+    goal,
+    met: false
+  }))
+  return [...before, ...days.slice(-length)]
+}
+
+function goalMet(days: readonly DayProgress[], length: number): GoalMet {
+  const today = days.at(-1)
+  const counted = days.slice(-length).filter(day => day !== today || day.met)
+  return { met: counted.filter(day => day.met).length, days: counted.length }
+}
+
 export function progressStats(request: ProgressRequest): ProgressStats {
   const range = loggedDays(request)
   const firstGoal = range.map(day => request.days[day]?.goal).find(goal => goal !== undefined)
@@ -144,7 +176,8 @@ export function progressStats(request: ProgressRequest): ProgressStats {
     if (changes.length > 0) words.push({ day, addedToLearning: added, markedKnown: knownNow })
   }
   const today = days.at(-1) as DayProgress
-  const last7 = days.slice(-shortWindow)
+  const last7 = lastDays(days, shortWindow, firstGoal ?? request.goal)
+  const last30 = lastDays(days, longWindow, firstGoal ?? request.goal)
   const averaged = days.slice(0, -1).slice(-averagedDays)
   return {
     today,
@@ -152,11 +185,13 @@ export function progressStats(request: ProgressRequest): ProgressStats {
     streak: currentStreak(days),
     bestStreak: bestStreak(days),
     last7,
-    last30: days.slice(-longWindow),
+    last30,
+    goalMet: { last7: goalMet(days, shortWindow), last30: goalMet(days, longWindow) },
     totals: {
       ...totals,
       markedKnownLast7: sum(last7, day => day.markedKnown),
-      addedLast7: sum(last7, day => day.added)
+      addedLast7: sum(last7, day => day.added),
+      addedLast30: sum(last30, day => day.added)
     },
     knownOverTime,
     dailyAverage: {

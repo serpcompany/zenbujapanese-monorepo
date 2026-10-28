@@ -763,6 +763,22 @@
     const first = Math.min(today, ...logged);
     return Array.from({ length: today - first + 1 }, (_, index) => dayName(first + index));
   }
+  function lastDays(days, length2, goal) {
+    const first = dayNumber(days[0]?.day ?? "");
+    const before = Array.from({ length: Math.max(0, length2 - days.length) }, (_, index) => ({
+      day: dayName(first - length2 + days.length + index),
+      added: 0,
+      markedKnown: 0,
+      goal,
+      met: false
+    }));
+    return [...before, ...days.slice(-length2)];
+  }
+  function goalMet(days, length2) {
+    const today = days.at(-1);
+    const counted2 = days.slice(-length2).filter((day) => day !== today || day.met);
+    return { met: counted2.filter((day) => day.met).length, days: counted2.length };
+  }
   function progressStats(request) {
     const range = loggedDays(request);
     const firstGoal = range.map((day) => request.days[day]?.goal).find((goal2) => goal2 !== void 0);
@@ -789,7 +805,8 @@
       if (changes.length > 0) words.push({ day, addedToLearning: added, markedKnown: knownNow });
     }
     const today = days.at(-1);
-    const last7 = days.slice(-shortWindow);
+    const last7 = lastDays(days, shortWindow, firstGoal ?? request.goal);
+    const last30 = lastDays(days, longWindow, firstGoal ?? request.goal);
     const averaged = days.slice(0, -1).slice(-averagedDays);
     return {
       today,
@@ -797,11 +814,13 @@
       streak: currentStreak(days),
       bestStreak: bestStreak(days),
       last7,
-      last30: days.slice(-longWindow),
+      last30,
+      goalMet: { last7: goalMet(days, shortWindow), last30: goalMet(days, longWindow) },
       totals: {
         ...totals,
         markedKnownLast7: sum(last7, (day) => day.markedKnown),
-        addedLast7: sum(last7, (day) => day.added)
+        addedLast7: sum(last7, (day) => day.added),
+        addedLast30: sum(last30, (day) => day.added)
       },
       knownOverTime,
       dailyAverage: {
