@@ -91,6 +91,13 @@ the video listener with `Page.addScriptToEvaluateOnNewDocument`.
   `--host-resolver-rules`, and trusts only its self-signed certificate, made with `openssl` for the
   run, by its SPKI hash (`--ignore-certificate-errors-spki-list`). No request reaches the real
   host.
+- **The stand-in watch page.** Mapped as `www.youtube.com`, every page path, `/watch?v=<id>`
+  included, is `site/index.html`: a YouTube-style title and a 20-second muted local video inside
+  `#movie_player`, where the extension's follower looks for it. `POST /youtubei/v1/player` answers
+  #984's player fixture (`src/captions/fixtures/player-japanese.json`) for the asked video, and
+  `/api/timedtext` answers `stand-in-timedtext.xml`, three lines made of words in the fixture
+  dictionary (要求, 要る, 要領, 要所), so each line's words link in a test build. Each answer is a
+  `[site]` line. Nothing reaches YouTube.
 - **`--host-rule <rule>`** adds a `--host-resolver-rules` rule ahead of the others. `verify` maps
   the test build's language data host, `language-data.localhost`, to the local server's port.
 

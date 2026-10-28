@@ -28,6 +28,9 @@ const video = document.createElement('video')
 video.controls = true
 video.width = 480
 video.muted = true
-document.body.append(video)
-video.src = URL.createObjectURL(silentWav(4))
+const player = document.createElement('div')
+player.id = 'movie_player'
+player.append(video)
+document.body.append(player)
+video.src = URL.createObjectURL(silentWav(20))
 console.log('[stand-in] watch page ready')

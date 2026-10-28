@@ -43,8 +43,8 @@ captions }`, to the extension's pages and to that tab. For this the manifest ask
   it lacks. The content script never reads settings.
 
 A page drives the video with `{ target: 'video', control }` sent to the tab (`controls.ts`): seek,
-play, pause, or a speed. The content script starts the `VideoFollower` on the first one and stops
-it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
+play, pause, or a speed. The content script starts the `VideoFollower` on the first one, or when
+a Video tab opens, and stops it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
 `<video>`: it reports the time frame by frame only while the video plays and someone subscribes,
 holds the time and ignores the controls while the player has `ad-showing`, then puts the
 learner's speed back, and hides YouTube's own captions with an attribute on the player and one
@@ -52,3 +52,32 @@ style rule. `currentLine` (`follower.ts`) finds the line playing at a time, and 
 line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. Every
 consumer of a follower uses `playingLine`. Netflix's follower
 (#966) implements the same interface.
+
+## The Video tab's port
+
+The side panel's Video tab follows a tab's playback on a port (`video-tab-port.ts`), straight to
+the tab's content script, with no service worker between:
+
+- **It opens** with `chrome.tabs.connect(tabId, { name: 'video-tab', frameId: 0 })` when the
+  tab is shown on a watch page, and **closes** with `port.disconnect()` when it is hidden, moves to
+  another tab or video, or the panel closes. The connect and the disconnect are the two messages:
+  the content script answers no port with another name.
+- **The content script sends** `{ target: 'video-tab', playback }` on each open port, a
+  `Playback` (`{ videoId, time, playing, rate, ad }`) or `null` when the page has no video: once
+  on connecting, then on each change while at least one port is open. It subscribes to the
+  follower only then, so nothing is sent, and no frame is read, while no Video tab is open, and
+  stops the follower when the last port closes.
+- **The throttle:** steady play, the same video at the same speed with no ad, is sent at most
+  every 100 ms; a jump of a second or more, a pause, a speed change, an ad, or `null` goes at once.
+- **Reconnecting:** a port the page drops, or one no page answers, such as a tab whose content
+  script hasn't started, is tried again after 2 seconds, doubling up to 10, and the wait starts
+  over on the next message. The panel reads `chrome.runtime.lastError` on each disconnect. A port
+  that disconnects with a `lastError` before any message, which is what a tab without the content
+  script gives, is reported to the Video tab as `unreachable()` (`Following` in
+  `video-tab-port.ts`), and the tab offers Reload (`chrome.tabs.reload`); any message after that
+  clears it.
+
+A port, rather than two messages through the service worker, makes the close certain: Chrome
+disconnects it when the panel closes or the page goes, which a sent "closed" can't promise. The
+Video tab still asks for captions through the service worker (`captions`, `try-again`), with
+Zenbu Captions on or off, and seeks with a `video` control.

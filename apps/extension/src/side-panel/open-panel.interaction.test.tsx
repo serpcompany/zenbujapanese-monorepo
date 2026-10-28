@@ -15,6 +15,8 @@ vi.mock('./header-controls', () => ({ HeaderControls: () => null }))
 
 type Listener = (message: unknown, sender: object, respond: (answer: unknown) => void) => boolean
 
+const noEvent = { addListener: () => undefined, removeListener: () => undefined }
+
 const noGesture = '`sidePanel.open()` may only be called in response to a user gesture.'
 
 const onTestPage: PanelRoute = { page: { page: 'test', text: '猫' } }
@@ -61,6 +63,7 @@ function fakeBrowser(windowId = 7) {
       },
       sendMessage: (message: unknown) => deliver(message, {})
     },
+    tabs: { query: async () => [], onActivated: noEvent, onUpdated: noEvent },
     windows: {
       WINDOW_ID_CURRENT: -2,
       WINDOW_ID_NONE: -1,

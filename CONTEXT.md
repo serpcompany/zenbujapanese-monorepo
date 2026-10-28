@@ -78,6 +78,12 @@ panel's Video tab and as a caption on the player; also the switch that fetches t
 video opens. YouTube's own captions are the site's, which the extension can hide.
 _Avoid_: subtitles, YouTube captions (for the extension's), Live Captions (heard speech, not built)
 
+**Transcript**:
+The side panel's Video tab in the browser extension: a YouTube video's Zenbu Captions, one row
+for each line with the time it starts, the line playing highlighted, and a row's click moving the
+video to it. The caption on the player shows one line at a time instead.
+_Avoid_: subtitles, captions (the lines themselves, or the player's caption)
+
 **Video follower**:
 The browser extension's view of the video on a page: its time, whether it plays, its speed, and
 whether an ad shows, with seek, play, pause, and speed. YouTube has one; Netflix's is to come.
@@ -85,7 +91,7 @@ _Avoid_: player (the site's own, or the app's Player tab)
 
 **Translation module**:
 The browser extension's one way to translate (`apps/extension/src/translation/`), on Chrome's
-on-device Translator, which its Translate tab uses and its other surfaces will. The app's
+on-device Translator, which its Translate and Video tabs use and its other surfaces will. The app's
 Translate uses Apple Translation instead.
 _Avoid_: translator (Chrome's Translator is the API under it), Translate (the tab)
 

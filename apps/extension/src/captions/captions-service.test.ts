@@ -112,7 +112,7 @@ describe('captions service', () => {
     expect(page.youTube.sent).toEqual([])
   })
 
-  it('with Zenbu Captions off, asks for nothing until the Video tab asks, then once', async () => {
+  it('with Zenbu Captions off, asks for nothing until the Video tab asks, and asks again for each next video', async () => {
     const page = harness({ captionsOn: false })
     expect(await page.open(1, japaneseVideo)).toEqual({ state: 'loading', videoId: japaneseVideo })
     await page.open(2, englishVideo)
@@ -121,7 +121,13 @@ describe('captions service', () => {
     await page.captions(1)
     expect(lines(await page.settled(1))).toEqual(japaneseLines)
     expect(page.youTube.timedTextRequests()).toBe(1)
-    await page.open(1, secondJapaneseVideo)
+    expect(await page.open(1, secondJapaneseVideo)).toEqual({
+      state: 'loading',
+      videoId: secondJapaneseVideo
+    })
+    await new Promise(resolve => setTimeout(resolve, 5))
+    expect(page.youTube.timedTextRequests()).toBe(1)
+    await page.captions(1)
     expect(await page.settled(1)).toMatchObject({ state: 'lines', videoId: secondJapaneseVideo })
     expect(page.youTube.timedTextRequests()).toBe(2)
     expect(page.latest(2)).toBeUndefined()

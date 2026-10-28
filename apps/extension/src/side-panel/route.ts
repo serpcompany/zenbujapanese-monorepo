@@ -14,7 +14,7 @@ export type OpenPanel = { target: 'service-worker'; openPanel: PanelRoute }
 
 export type MovePanel = { target: 'side-panel'; windowId: number; route: PanelRoute }
 
-export type PanelTabProps = { open(page: PanelPage): void }
+export type PanelTabProps = { open(page: PanelPage): void; shown?: boolean }
 
 export type PanelPageProps<P extends PanelPage = PanelPage> = {
   page: P

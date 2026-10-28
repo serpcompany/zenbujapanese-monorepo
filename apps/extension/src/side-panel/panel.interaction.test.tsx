@@ -1,7 +1,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DataState } from '../shared/data-state'
+import { fakeChrome } from '../test/fake-chrome'
 import { translateLabels } from '../translate/labels'
 import { labels } from './labels'
 import { SidePanel } from './panel'
@@ -17,10 +18,15 @@ vi.mock('./header-controls', () => ({ HeaderControls: () => null }))
 
 let root: Root | undefined
 
+beforeEach(() => {
+  vi.stubGlobal('chrome', fakeChrome().chrome)
+})
+
 afterEach(() => {
   act(() => root?.unmount())
   root = undefined
   document.body.replaceChildren()
+  vi.unstubAllGlobals()
 })
 
 function fakeHost(lastTab: PanelTab = 'video', pending: PanelRoute | null = null) {

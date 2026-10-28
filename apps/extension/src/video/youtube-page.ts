@@ -6,6 +6,7 @@ import {
 } from '../captions/messages'
 import { applyControl, isVideoControlMessage } from './controls'
 import type { VideoFollower } from './follower'
+import { type TabPort, videoTabPort, videoTabPorts } from './video-tab-port'
 import { watchedVideoId } from './watch-page'
 import { youTubeFollower } from './youtube-follower'
 
@@ -13,9 +14,12 @@ const retryMargin = 1_000
 
 type Listener = (message: unknown) => false
 
+type Connected = (port: TabPort) => void
+
 type PageRuntime = {
   sendMessage(message: CaptionsEnvelope): Promise<CaptionsAnswer>
   onMessage: { addListener(listener: Listener): void; removeListener(listener: Listener): void }
+  onConnect: { addListener(listener: Connected): void; removeListener(listener: Connected): void }
 }
 
 type Options = {
@@ -23,12 +27,16 @@ type Options = {
   follow?: typeof youTubeFollower
 }
 
+const unfollowed = () => undefined
+
 export function followYouTubePage(page: Document, options: Options = {}): () => void {
   const runtime = options.runtime ?? chrome.runtime
   const follow = options.follow ?? youTubeFollower
+  const videoTabs = videoTabPorts()
   let videoId: string | null = null
   let follower: VideoFollower | null = null
   let retry: ReturnType<typeof setTimeout> | undefined
+  let unsubscribe: () => void = unfollowed
 
   const clearRetry = () => {
     clearTimeout(retry)
@@ -47,26 +55,60 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
     askCaptions({ type: 'video-opened', videoId }, runtime).then(settle)
   }
 
+  const followed = (): VideoFollower | null => {
+    if (videoId === null) return null
+    follower ??= follow(page, videoId)
+    return follower
+  }
+
+  const followForVideoTabs = () => {
+    unsubscribe()
+    unsubscribe = unfollowed
+    if (!videoTabs.open) return
+    const following = followed()
+    if (following) unsubscribe = following.subscribe(videoTabs.send)
+  }
+
+  const stopFollowing = () => {
+    follower?.stop()
+    follower = null
+  }
+
   const navigated = () => {
     const next = watchedVideoId(page.location.href)
     if (next === videoId) return
     clearRetry()
-    follower?.stop()
-    follower = null
+    stopFollowing()
     videoId = next
     open()
+    followForVideoTabs()
+    if (videoTabs.open) videoTabs.send(followed()?.playback ?? null)
   }
 
   const onMessage: Listener = message => {
     if (isCaptionsChange(message)) settle(message.captions)
-    else if (videoId !== null && isVideoControlMessage(message)) {
-      follower ??= follow(page, videoId)
-      applyControl(follower, message.control)
+    else if (isVideoControlMessage(message)) {
+      const following = followed()
+      if (following) applyControl(following, message.control)
     }
     return false
   }
 
+  const onConnect: Connected = port => {
+    if (port.name !== videoTabPort) return
+    const first = !videoTabs.open
+    videoTabs.add(port, followed()?.playback ?? null)
+    if (first) followForVideoTabs()
+    port.onDisconnect.addListener(() => {
+      videoTabs.remove(port)
+      if (videoTabs.open) return
+      followForVideoTabs()
+      stopFollowing()
+    })
+  }
+
   runtime.onMessage.addListener(onMessage)
+  runtime.onConnect.addListener(onConnect)
   page.addEventListener('yt-navigate-finish', navigated)
   page.defaultView?.addEventListener('popstate', navigated)
   navigated()
@@ -75,9 +117,11 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
     page.removeEventListener('yt-navigate-finish', navigated)
     page.defaultView?.removeEventListener('popstate', navigated)
     runtime.onMessage.removeListener(onMessage)
+    runtime.onConnect.removeListener(onConnect)
     clearRetry()
-    follower?.stop()
-    follower = null
+    unsubscribe()
+    videoTabs.close()
+    stopFollowing()
     videoId = null
   }
 }

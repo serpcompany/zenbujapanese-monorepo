@@ -25,4 +25,12 @@ export const devtoolsPort = Number(process.env.AGENT_CHROME_DEVTOOLS_PORT ?? 933
 export const controlPort = Number(process.env.AGENT_CHROME_CONTROL_PORT ?? 9340)
 export const selftestExtension = join(here, 'selftest-extension')
 export const standInSite = join(here, 'site')
+export const standInPlayer = join(
+  extensionRoot,
+  'src',
+  'captions',
+  'fixtures',
+  'player-japanese.json'
+)
+export const standInTimedText = join(here, 'stand-in-timedtext.xml')
 export const verifyRoot = join(checkout, 'tmp', 'agent', 'verify')

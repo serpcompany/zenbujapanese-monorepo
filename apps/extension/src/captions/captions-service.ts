@@ -131,7 +131,7 @@ export function captionsService(dependencies: CaptionsDependencies) {
       const tab: TabCaptions =
         stored?.videoId === videoId
           ? { ...stored, asked: stored.asked || asked }
-          : { videoId, asked: (stored?.asked ?? false) || asked, captions: null }
+          : { videoId, asked, captions: null }
       if (!tab.asked && !(await dependencies.captionsOn())) {
         const kept = tab.captions?.state === 'rate-limited' ? null : tab.captions
         await store.setTab(tabId, { ...tab, captions: kept })

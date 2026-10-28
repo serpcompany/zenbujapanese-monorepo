@@ -75,6 +75,25 @@ that should keep working becomes a Playwright test in `apps/extension/e2e/`.
 - Go online without a reason. `start --online` is the only way to reach a real site; offline is
   the default for `start`, `verify`, and `selftest`.
 
+## YouTube
+
+Check a YouTube feature on the stand-in watch page, offline, never on youtube.com. Start
+`pnpm --silent language-data` in the background; it prints its `hostRule`. Then:
+
+```sh
+pnpm --silent agent-chrome start --ext dist-test --map-host www.youtube.com --host-rule '<hostRule>'
+pnpm --silent agent-chrome open 'https://www.youtube.com/watch?v=zenbuJa0001'
+```
+
+The page is the harness's (`apps/extension/agent-chrome/README.md`, The stand-in watch page): a
+muted local video in `#movie_player`, the player and `timedtext` answers from the fixtures, with
+lines whose words are in the fixture dictionary that the language-data server gives. `[site]` lines in `console.log` count the player and `timedtext` requests. The
+side panel docks only from a user gesture: send `{ target: 'service-worker', openPanel: { tab:
+'video' } }` with `chrome.runtime.sendMessage` from the content script's isolated world, by CDP
+`Runtime.evaluate` with `userGesture: true`. Set `video.muted = true` before playing. Chrome's own
+Translator model download needs its hosts let through (`--host-rule`), or English shows its
+download failure.
+
 ## YouTube's request budget
 
 An online Chrome counts each request to `youtube.com`, `youtube-nocookie.com`, and `youtu.be` in

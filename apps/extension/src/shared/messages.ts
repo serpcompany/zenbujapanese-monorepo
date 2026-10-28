@@ -36,6 +36,11 @@ export type DictionaryAnswer =
 
 export type Failure = { type: 'failed'; reason: string }
 
+type Fields = Partial<Record<string, unknown>>
+
+export const fields = (value: unknown): Fields | undefined =>
+  typeof value === 'object' && value !== null ? (value as Fields) : undefined
+
 export type Target = 'service-worker' | 'offscreen'
 
 export type Envelope = { target: Target; request: DictionaryRequest }

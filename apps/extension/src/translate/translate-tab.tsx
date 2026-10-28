@@ -15,7 +15,7 @@ function NoticeText({ notice }: { notice: Notice }) {
   )
 }
 
-function DownloadProgress({ fraction }: { fraction: number }) {
+export function DownloadProgress({ fraction }: { fraction: number }) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm text-muted-foreground">{translateLabels.downloading(fraction)}</p>
