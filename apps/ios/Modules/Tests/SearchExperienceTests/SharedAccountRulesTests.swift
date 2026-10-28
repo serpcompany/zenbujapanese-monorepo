@@ -38,6 +38,25 @@ struct SharedAccountRulesTests {
     let searches: Searches
   }
 
+  private struct DailyListCases: Decodable {
+    struct Day: Decodable {
+      let covers: String
+      let day: String
+      let id: String
+    }
+
+    struct Covered: Decodable {
+      let covers: String
+      let day: String?
+      let id: String?
+    }
+
+    let days: [Day]
+    let upperCase: [Day]
+    let notDays: [Covered]
+    let notDailyLists: [Covered]
+  }
+
   @MainActor
   private func loadedLists() async -> WordLists {
     let lists = WordLists(
@@ -103,6 +122,24 @@ struct SharedAccountRulesTests {
     let kept = try #require(lists.createList(named: "Anime"))
     lists.renameList(kept.id, to: "\u{FEFF}")
     #expect(lists.lists.first { $0.id == kept.id }?.name == "Anime")
+  }
+
+  @Test("a day's list ID, and the day a list ID stands for, come from the shared cases")
+  func dailyListIDs() throws {
+    let cases = try SharedAccountCases.load("daily-list-id", as: DailyListCases.self)
+    for each in cases.days {
+      #expect(AccountRules.shared.dailyListID(each.day) == UUID(uuidString: each.id), "\(each.covers)")
+    }
+    for each in cases.days + cases.upperCase {
+      let id = try #require(UUID(uuidString: each.id), "\(each.covers)")
+      #expect(WordLists.day(of: id) == each.day, "\(each.covers)")
+    }
+    for each in cases.notDays {
+      #expect(AccountRules.shared.dailyListID(each.day ?? "") == nil, "\(each.covers)")
+    }
+    for each in cases.notDailyLists {
+      #expect(UUID(uuidString: each.id ?? "").flatMap(WordLists.day(of:)) == nil, "\(each.covers)")
+    }
   }
 
   @Test("a note is compared as the account keeps it, by the shared cases")

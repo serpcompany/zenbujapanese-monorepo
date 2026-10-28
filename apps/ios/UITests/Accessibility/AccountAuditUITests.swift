@@ -18,6 +18,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     auditTheAccountAndItsSettings(pass)
     auditReportingAProblem(pass)
     auditTheLearnersWords(pass)
+    auditTheDailyLists(pass)
     auditSigningIn(pass)
     guard device != .mac else { return auditTheSettingsWindow(pass) }
     auditTheZenbuAccount(pass)
@@ -126,6 +127,21 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     waitFor(labeled("A username is 3 to 30 letters a to z, digits, or underscores.", in: app))
     waitUntilGone(app.keyboards.firstMatch)
     audit("Profile", in: app)
+  }
+
+  private func auditTheDailyLists(_ pass: AuditPass) {
+    let app = launch(pass, DailyListsUITests.seededDays)
+    open(.account, in: app)
+    let row = find("word-lists.daily-lists", in: app)
+    openAccountRow("account.lists", showing: row, in: app)
+    audit("Lists, with daily lists", in: app)
+    let yesterday = firstElement(identifiedBy: "daily-lists.list.", in: app)
+    tap(row)
+    waitFor(yesterday)
+    audit("Daily Lists", in: app)
+    tap(yesterday)
+    waitFor(firstElement(identifiedBy: "word-list.item.", in: app))
+    audit("A daily list", in: app)
   }
 
   private func auditSigningIn(_ pass: AuditPass) {

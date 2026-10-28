@@ -367,13 +367,16 @@ enum LaunchHarness {
       if let streak = environment[progressStreakKey].flatMap(Int.init) {
         seedProgress(metDays: streak)
       }
+      if let days = environment[dailyListsKey].flatMap(Int.init) {
+        seedDailyLists(days: days)
+      }
     #endif
   }()
 }
 
 #if DEBUG
   extension LaunchHarness {
-    private struct SeededProgress: Encodable {
+    struct SeededProgress: Encodable {
       let version = 1
       let days: [String: ProgressLogDay]
     }
@@ -390,11 +393,7 @@ enum LaunchHarness {
         days[ProgressLog.day(of: day, in: calendar)] = ProgressLogDay(
           changes: [change], goal: 1, totals: ProgressTotals(known: 0, learning: 1))
       }
-      guard let data = try? JSONEncoder.localStore.encode(SeededProgress(days: days)) else { return }
-      let file = ProgressLog.defaultFileURL
-      try? FileManager.default.createDirectory(
-        at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-      try? data.write(to: file, options: .atomic)
+      write(SeededProgress(days: days), to: ProgressLog.defaultFileURL)
     }
   }
 #endif

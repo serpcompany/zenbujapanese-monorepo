@@ -29,6 +29,8 @@ struct AccountTabRoot: View {
           }
         case .wordLists:
           WordListsView()
+        case .dailyLists:
+          DailyListsView()
         case .wordList(let listID):
           WordListView(openedListID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
         case .frequencyDictionaries:
@@ -198,6 +200,7 @@ enum AccountRoute: Hashable {
   case notesWithoutAWord
   case marked(WordKnowledgeStatus)
   case wordLists
+  case dailyLists
   case wordList(UUID)
   case frequencyDictionaries
   case credits

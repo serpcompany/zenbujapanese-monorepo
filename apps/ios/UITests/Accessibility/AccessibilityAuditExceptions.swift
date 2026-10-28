@@ -233,6 +233,7 @@ private let textThatScales = [
   allow(
     .textClipped, .labels(["Lists", "Translations"]), on: ["Account's collection rows, alone"], [.phone], [.largest],
     because: Why.scales),
+  allow(.textClipped, .label("Daily Lists"), on: ["Lists, with daily lists"], [.phone], because: Why.scales),
   allow(
     .textClipped, .labels(["Reading Aids", "Frequency Dictionaries"]), on: ["Account's settings rows, alone"], [.phone],
     [.largest], because: Why.scales),
