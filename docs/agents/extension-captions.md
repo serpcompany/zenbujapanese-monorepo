@@ -40,17 +40,19 @@ captions }`, to the extension's pages and to that tab. For this the manifest ask
   `captions.rateLimit` still holds for when the captions are asked for. From then on the tab's next videos are
   fetched too. The service worker reads the setting through `settings.ts`, and when Settings
   change with it on, opens each tab's video again (`openVideosAgain`), which asks only for what
-  it lacks. The content script never reads settings.
+  it lacks. The content script reads the settings only for the caption on the player (below).
 
 A page drives the video with `{ target: 'video', control }` sent to the tab (`controls.ts`): seek,
-play, pause, or a speed. The content script starts the `VideoFollower` on the first one, or when
-a Video tab opens, and stops it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
+play, pause, or a speed. The content script starts the `VideoFollower` on the first one, when
+a Video tab opens, or when the caption on the player shows, and stops it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
 `<video>`: it reports the time frame by frame only while the video plays and someone subscribes,
 holds the time and ignores the controls while the player has `ad-showing`, then puts the
 learner's speed back, and hides YouTube's own captions with an attribute on the player and one
 style rule. `currentLine` (`follower.ts`) finds the line playing at a time, and `playingLine` the
 line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. Every
-consumer of a follower uses `playingLine`. Netflix's follower
+consumer of a follower uses `playingLine`. `ended` is the `<video>` element's `ended` (false
+during an ad); #964 added it (PR #1108, amending the interface) because the core leaves the last
+line's end unclamped, so a last line can end after the video does. Netflix's follower
 (#966) implements the same interface.
 
 ## The Video tab's port
@@ -63,7 +65,7 @@ the tab's content script, with no service worker between:
   another tab or video, or the panel closes. The connect and the disconnect are the two messages:
   the content script answers no port with another name.
 - **The content script sends** `{ target: 'video-tab', playback }` on each open port, a
-  `Playback` (`{ videoId, time, playing, rate, ad }`) or `null` when the page has no video: once
+  `Playback` (`{ videoId, time, playing, rate, ad, ended }`) or `null` when the page has no video: once
   on connecting, then on each change while at least one port is open. It subscribes to the
   follower only then, so nothing is sent, and no frame is read, while no Video tab is open, and
   stops the follower when the last port closes.
@@ -81,3 +83,75 @@ A port, rather than two messages through the service worker, makes the close cer
 disconnects it when the panel closes or the page goes, which a sent "closed" can't promise. The
 Video tab still asks for captions through the service worker (`captions`, `try-again`), with
 Zenbu Captions on or off, and seeks with a `video` control.
+
+## The caption on the player
+
+`src/content/youtube.ts` gives `followYouTubePage` a `captions` option: the settings (`askSettings`
+until it answers, asked again on the next video if it failed, then `onSettingsChanged`) and
+`playerCaptions(...)`, which shows a video's lines.
+
+- **When it shows** (`youtube-page.ts`): the page keeps the first `lines` state the captions
+  changes give for the video, so it asks for nothing more, and shows the caption while
+  `videos.zenbuCaptions` is on, Zenbu is on for the page's host (`isZenbuOn`), and the video has
+  lines: it hides the site's captions (`showSiteCaptions(false)`), then calls
+  `show(follower, { videoId, lines }, settings)`. Turning either off stops it and shows the site's captions again, and stops the follower unless a Video tab is
+  open; a Video tab closing leaves the follower running while the caption shows. A Video tab's
+  seek goes through the caption's `seek`, so Repeat moves with it.
+- **Where it draws** (`player-captions.tsx`): one host element, `data-zenbu-player-captions`, in
+  `follower.captionHost()` once the follower has one, absolutely over the whole player with
+  `pointer-events: none`, holding `mountInShadowRoot`. It knows no site's selectors, so Netflix's
+  follower (#966) can give it a host. The speed menu portals into the surface inside it, so it
+  opens inside a fullscreen player. The host (`kept-inside.ts`) stops clicks and pointer and
+  mouse presses from reaching the page, and of the keys only Space and Enter, which a focused
+  control acts on, and while the speed menu is open its arrow, Home, End, Page, and typed keys.
+  Every other key reaches YouTube, so its shortcuts work after a click on a control, and Escape
+  always does. The word popup's host gets the same (`wordPopupHost`'s `prepare`), since in
+  fullscreen it sits inside the player. While an ad shows it gives the site's captions back
+  (`showSiteCaptions(!ad)`).
+- **The line controls** (`line-controls.ts`) are the one module for Previous, Next, Repeat, Play,
+  and the speed, on a `VideoFollower` only. The first playback after one of its own seeks is that
+  seek's landing, however far from the target it lands, as is any within 700 ms and 1 s of the
+  target; any other jump is the learner's and moves Repeat to that line. It never seeks back on
+  its own (Repeat, or a seek into a gap) within 700 ms of its last seek, so Repeat seeks once per
+  line end; Previous and Next always seek. An ended video on the last line is that line's end.
+  While `playback.videoId` isn't the lines' video, as when the element holds the next video
+  before `yt-navigate-finish`, it draws nothing and the controls do nothing. YouTube's follower
+  reports the video it was started for, so there that holds only for a follower that reports the
+  new one. The tests drive it with a stand-in clock (`src/test/clock-follower.ts`),
+  whose `landing` option lands each seek early or late by a set offset.
+- **The word popup** is the page lookup's (`wordPopupHost`, with `popupSettings` from
+  `src/word-popup/popup-settings.ts`), and the words are Translate's `SourceLine` with a `pick`
+  that opens it. `holdForPopups` (`popup-hold.ts`) hears `wordPopupEvents()` and pauses through
+  `popupPause` (`src/video/popup-pause.ts`), which the Video tab's transcript uses too: it plays
+  again on close, or when the caption stops with the popup open, only if the video was playing, and a close during a pointer press waits for the
+  press to end, so moving from word to word doesn't play it.
+- **English** (`line-english.ts`) asks `translate` for the line and the next one and keeps each
+  answer; `not-available` shows none. The content script never calls `downloadTranslator`.
+- **When the controls show** (`presence.ts`): the pointer moving over the player, with a 3-second
+  rest, the pointer over the controls, focus from the keyboard (a key down before it, so a click
+  doesn't pin them open), a pause, the open menu, and the open popup.
+- **No CSS import in a content script.** Vite builds each content script as one IIFE, which adds
+  an imported stylesheet to the page's `<head>`. So the reading aids' rules
+  (`src/word-detail/reading-aids.css`) come in through `src/styles/shadow.css` and `pages.css`,
+  and `e2e/player-captions.spec.ts` checks the watch page's `<head>` gets only the follower's one
+  rule.
+
+## Checks
+
+The unit tests never reach the network: YouTube's answers come from `src/captions/fixtures/`
+through a stand-in `fetch`.
+
+- **The requests:** the two requests and the core's rules, No Japanese Captions, each failure, and
+  a track on another host refused (`youtube-requests.test.ts`).
+- **The service:** one request per video, kept for the session, the waits after a 429 on a fake
+  clock, Try again, and Zenbu Captions off (`captions-service.test.ts`).
+- **The watch page,** in happy-dom: asking once per video and nothing for seeking, line moves,
+  Repeat, or speed, asking again only once the wait is over, and sending playback only to an open
+  Video tab (`youtube-page.interaction.test.tsx`, `video-tab-port.test.ts`); the follower's
+  controls, ads, the learner's speed, and hiding YouTube's captions
+  (`youtube-follower.interaction.test.tsx`).
+- **The caption on the player,** on a stand-in clock for the video: the line controls
+  (`line-controls.test.ts`), the caption, its popup's pause, ads, and the controls' showing
+  (`src/player-captions/*.interaction.test.tsx`), and when the watch page shows it
+  (`youtube-page-captions.interaction.test.tsx`). In the browser, `e2e/player-captions.spec.ts`
+  on the stand-in watch page ([`extension-browser-tests.md`](extension-browser-tests.md)).

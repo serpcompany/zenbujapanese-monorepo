@@ -93,6 +93,8 @@ side panel docks only from a user gesture: send `{ target: 'service-worker', ope
 `Runtime.evaluate` with `userGesture: true`. Set `video.muted = true` before playing. Chrome's own
 Translator model download needs its hosts let through (`--host-rule`), or English shows its
 download failure.
+For a fullscreen screenshot in headless Chrome, emulate the viewport again after
+`requestFullscreen()` (CDP `Emulation.setDeviceMetricsOverride`); otherwise it crops to 800 × 600.
 
 ## YouTube's request budget
 

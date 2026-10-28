@@ -89,7 +89,7 @@ function Words({
 }: {
   group: readonly PageToken[]
   gloss: string | null
-  pick(token: PageToken): void
+  pick: PickWord
 }) {
   const words = group.map(token =>
     token.ids.length === 0 ? (
@@ -101,7 +101,7 @@ function Words({
         data-word={token.text}
         data-start={token.start}
         className={wordClass}
-        onClick={() => pick(token)}
+        onClick={event => pick(token, event.currentTarget)}
       >
         <RubyText segments={token.ruby} />
       </button>
@@ -142,12 +142,15 @@ function usePicked(source: RefObject<HTMLParagraphElement | null>) {
   return [picked, setPicked, close] as const
 }
 
+type PickWord = (token: PageToken, word: HTMLElement) => void
+
 type LineProps = {
   settings: Settings
   services: SourceServices
   open?(page: PanelPage): void
   onPopup?(open: boolean, dismiss: () => void): void
   glosses?: GlossCache
+  pick?: PickWord
 }
 
 function useReportPopup(
@@ -168,7 +171,8 @@ function Linked({
   services,
   open,
   onPopup,
-  glosses: shared
+  glosses: shared,
+  pick
 }: LineProps & { found: Found }) {
   const glosses = useGlosses(found, settings['readingAids.wordMeanings'], services, shared)
   const source = useRef<HTMLParagraphElement>(null)
@@ -187,7 +191,7 @@ function Linked({
             key={group[0].start}
             group={group}
             gloss={glossOf(group, glosses)}
-            pick={setPicked}
+            pick={pick ?? setPicked}
           />
         ))}
       </p>

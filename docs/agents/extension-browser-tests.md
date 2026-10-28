@@ -26,10 +26,17 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
+- **The caption on the player:** the `youTubeStandIn` option serves the agent Chrome harness's
+  stand-in site (`agent-chrome/site.mjs`) over HTTPS as `www.youtube.com`, trusted by its SPKI
+  hash, so the YouTube content script runs on its watch page and the service worker's two
+  requests reach it. On it: the line in the player in place of the site's captions, the words and
+  reading aids, nothing added to the page's styles, one `timedtext` request whatever the controls
+  do, the speed menu in and out of fullscreen, and a word's popup pausing the video
+  (`player-captions.spec.ts`).
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1` and maps
-  the test build's data host, `language-data.localhost`, to the local server; the
-  `outsideRequests` fixture fails any test whose context asks anything but the local server and
-  this extension. `outside-requests.spec.ts` asks `example.com` from the service worker, waits
+  the test build's data host, `language-data.localhost`, to the local server, and, with
+  `youTubeStandIn`, `www.youtube.com` to the stand-in site; the `outsideRequests` fixture fails any
+  test whose context asks anything but those and this extension. `outside-requests.spec.ts` asks `example.com` from the service worker, waits
   for the guard to record it, then clears it, so it passes only while the guard catches it. A
   page that logs an error, or throws, fails its test too.
 

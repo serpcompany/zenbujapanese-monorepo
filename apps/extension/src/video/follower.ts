@@ -6,6 +6,7 @@ export type Playback = {
   playing: boolean
   rate: number
   ad: boolean
+  ended: boolean
 }
 
 export interface VideoFollower {

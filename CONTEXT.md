@@ -75,7 +75,8 @@ _Avoid_: word card (the Word card is the entry the popup draws, not the popup), 
 **Zenbu Captions**:
 The Japanese lines the browser extension gets for a YouTube video and shows itself, in the side
 panel's Video tab and as a caption on the player; also the switch that fetches them as soon as a
-video opens. YouTube's own captions are the site's, which the extension can hide.
+video opens and draws them on the player in place of the site's. YouTube's own captions are the
+site's, which the extension hides while it draws its own.
 _Avoid_: subtitles, YouTube captions (for the extension's), Live Captions (heard speech, not built)
 
 **Transcript**:
@@ -83,6 +84,12 @@ The side panel's Video tab in the browser extension: a YouTube video's Zenbu Cap
 for each line with the time it starts, the line playing highlighted, and a row's click moving the
 video to it. The caption on the player shows one line at a time instead.
 _Avoid_: subtitles, captions (the lines themselves, or the player's caption)
+
+**Caption on the player**:
+The line being heard that the browser extension draws on a site's video player, with its words,
+English, and popup, and the line controls beside it: previous, play or pause, next, Repeat line,
+and the speed. One line at a time, as the Transcript shows them all.
+_Avoid_: overlay, subtitles, the player's captions (the site's own)
 
 **Video follower**:
 The browser extension's view of the video on a page: its time, whether it plays, its speed, and

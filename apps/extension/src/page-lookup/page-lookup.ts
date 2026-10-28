@@ -1,6 +1,7 @@
 import { isZenbuOn, type Settings } from '../shared/settings'
 import type { PanelRoute } from '../side-panel/route'
 import type { PopupHost, PopupSettings } from '../word-popup/popup-host'
+import { popupSettings } from '../word-popup/popup-settings'
 import type { Aids } from './annotate'
 import { type GlossLookUp, glossCache } from './glosses'
 import { anchorOf, type Found, pageRendering, type Rendering, wordIds } from './rendering'
@@ -58,19 +59,7 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
   let heard = false
   const reported = new Set<ScanProblem>()
   const glosses = glossCache(id => browser.popupCard(id, []))
-  const popup = browser.popup(() => {
-    const shown = settings as Settings
-    const frequency = shown['frequencyDictionaries.chosen']
-    return {
-      lookUp: id => browser.popupCard(id, frequency),
-      frequency,
-      romaji: shown['readingAids.romaji'],
-      openFullEntry(page) {
-        browser.openPanel({ page })
-        popup.close()
-      }
-    }
-  })
+  const popup = browser.popup(() => popupSettings(settings as Settings, browser, popup.close))
 
   const problem = (found: ScanProblem) => {
     if (reported.has(found)) return

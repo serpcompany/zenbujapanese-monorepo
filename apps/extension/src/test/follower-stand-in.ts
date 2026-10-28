@@ -24,7 +24,7 @@ export function followerStandIn() {
   }
 
   const follow = (_page: Document, videoId: string): VideoFollower => {
-    playback = { videoId, time: 0, playing: false, rate: 1, ad: false }
+    playback = { videoId, time: 0, playing: false, rate: 1, ad: false, ended: false }
     return {
       get playback() {
         return playback

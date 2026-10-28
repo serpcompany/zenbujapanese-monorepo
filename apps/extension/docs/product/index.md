@@ -63,9 +63,12 @@ set in Sentry.
 - [YouTube captions and playback](youtube-captions.md): on a YouTube watch page, the video's
   Japanese captions, what happens when YouTube refuses them, and following the video. The side
   panel's Video tab shows them ([`video-tab.md`](video-tab.md)).
+- [The caption on the player](player-captions.md): on a YouTube watch page, the line being heard
+  on the player in place of YouTube's captions, its words, English, and popup, and the line
+  controls: previous, play or pause, next, Repeat line, and the speed.
 
 ## Not built yet
 
-Saving isn't built, nor the caption on the player that shows a YouTube video's lines (#964), so
-the side panel's Images, Words, and Recent tabs show only their empty states. Hide Furigana on
-Known Words, Sentence Translations, and Zenbu Captions are stored but draw nothing on a page yet.
+Saving isn't built, so the side panel's Images, Words, and Recent tabs show only their empty
+states. Hide Furigana on Known Words and Sentence Translations are stored but draw nothing on a
+page yet.

@@ -28,9 +28,15 @@ const video = document.createElement('video')
 video.controls = true
 video.width = 480
 video.muted = true
+video.style.display = 'block'
 const player = document.createElement('div')
 player.id = 'movie_player'
-player.append(video)
+player.style.cssText = 'position: relative; width: fit-content'
+const siteCaptions = document.createElement('div')
+siteCaptions.className = 'ytp-caption-window-container'
+siteCaptions.style.cssText = 'position: absolute; inset: auto 0 48px; text-align: center'
+siteCaptions.textContent = 'The site’s own caption'
+player.append(video, siteCaptions)
 document.body.append(player)
 video.src = URL.createObjectURL(silentWav(20))
 console.log('[stand-in] watch page ready')

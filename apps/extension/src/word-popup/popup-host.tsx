@@ -21,6 +21,7 @@ type Options = {
   view?: Window
   settings(): PopupSettings
   mount?: typeof mountInShadowRoot
+  prepare?: (mounted: ShadowMount) => void
   report?: (error: unknown) => void
 }
 
@@ -107,6 +108,7 @@ export function wordPopupHost({
   view = window,
   settings,
   mount = mountInShadowRoot,
+  prepare,
   report
 }: Options): PopupHost {
   let shown: { mount: ShadowMount; returnTo: Element | null } | null = null
@@ -151,6 +153,7 @@ export function wordPopupHost({
       { document: doc, report }
     )
     mounted.host.setAttribute(popupHostAttribute, '')
+    prepare?.(mounted)
     shownIn(doc).append(mounted.host)
     shown = { mount: mounted, returnTo }
     if (wasOpen) return

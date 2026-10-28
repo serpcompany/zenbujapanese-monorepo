@@ -68,7 +68,14 @@ describe('youTubeFollower', () => {
     const { video } = watchPage()
     const follower = follow()
     video.currentTime = 12
-    expect(follower.playback).toEqual({ videoId, time: 12, playing: false, rate: 1, ad: false })
+    expect(follower.playback).toEqual({
+      videoId,
+      time: 12,
+      playing: false,
+      rate: 1,
+      ad: false,
+      ended: false
+    })
     follower.seek(30)
     expect(video.currentTime).toBe(30)
     follower.play()
@@ -79,7 +86,23 @@ describe('youTubeFollower', () => {
     expect(follower.playback?.rate).toBe(0.75)
     follower.pause()
     expect(video.paused).toBe(true)
-    expect(follower.playback).toEqual({ videoId, time: 30, playing: false, rate: 0.75, ad: false })
+    expect(follower.playback).toEqual({
+      videoId,
+      time: 30,
+      playing: false,
+      rate: 0.75,
+      ad: false,
+      ended: false
+    })
+  })
+
+  it('says when the video has ended, which is not playing', () => {
+    const { video } = watchPage()
+    const follower = follow()
+    video.currentTime = 12.8
+    Object.defineProperty(video, 'ended', { configurable: true, value: true })
+    video.dispatchEvent(new Event('ended'))
+    expect(follower.playback).toMatchObject({ time: 12.8, playing: false, ended: true })
   })
 
   it("stops while an ad shows, with its time held and the controls off, then puts the learner's 0.75x back", async () => {
@@ -92,7 +115,14 @@ describe('youTubeFollower', () => {
     video.dispatchEvent(new Event('timeupdate'))
     player.classList.add('ad-showing')
     await mutationsSeen()
-    expect(seen.at(-1)).toEqual({ videoId, time: 42, playing: false, rate: 0.75, ad: true })
+    expect(seen.at(-1)).toEqual({
+      videoId,
+      time: 42,
+      playing: false,
+      rate: 0.75,
+      ad: true,
+      ended: false
+    })
     expect(playingLine(lines, follower.playback)).toBeNull()
     setRate(video, 1)
     video.currentTime = 3
@@ -101,7 +131,14 @@ describe('youTubeFollower', () => {
     follower.play()
     follower.setRate(2)
     expect([video.currentTime, video.playbackRate, video.paused]).toEqual([3, 1, true])
-    expect(follower.playback).toEqual({ videoId, time: 42, playing: false, rate: 0.75, ad: true })
+    expect(follower.playback).toEqual({
+      videoId,
+      time: 42,
+      playing: false,
+      rate: 0.75,
+      ad: true,
+      ended: false
+    })
     player.classList.remove('ad-showing')
     await mutationsSeen()
     expect(video.playbackRate).toBe(0.75)
