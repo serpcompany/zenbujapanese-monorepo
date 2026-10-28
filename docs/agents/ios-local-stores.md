@@ -33,9 +33,10 @@ extension change takes the time in its inbox file's name, and a synced word the 
 `stateChangedAt`. `applySynced` reports `.synced`, with each dated change, never `.changed`, which
 only the device's own changes report; `AccountSync.pull` holds them (`holdSyncedProgress`), so a
 read of any number of pages tells the log once. The log keeps today itself: a change dated today or
-later joins today's changes, and today takes the current totals and goal. Changes dated earlier go
-to the core's `progressDays` on the log's write queue (`LocalFileWriteQueue.queue`), once per
-event, and the days it answers are merged in; the log has no rule of its own for an earlier day. A
+later joins today's changes, and today takes the current totals and goal. Changes dated earlier wait
+in a list for the core's `progressDays`, on the log's write queue (`LocalFileWriteQueue.queue`):
+each queued step asks once for every change waiting, so today's totals never hold a past change
+the request lacks, and the days it answers are merged in; the log has no rule of its own for an earlier day. A
 goal change with no day logged for today starts it only from the known words' totals once they're
 loaded, never from an earlier day's. A day's changes decode one at a time, and a file missing any
 is copied aside like any store's. The numbers are the core's (`progressStats` and `progressDays`,

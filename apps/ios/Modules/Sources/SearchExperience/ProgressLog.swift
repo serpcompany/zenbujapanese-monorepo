@@ -107,6 +107,7 @@ final class ProgressLog: LocalFileStore {
   }
   @ObservationIgnored var askForDays: @Sendable (ProgressDaysRequest) async -> [String: ProgressLogDay]? =
     ProgressLog.filledDays
+  @ObservationIgnored private var unfilled: [ProgressLogChange] = []
   @ObservationIgnored private let writer: ProgressLogWriter
   @ObservationIgnored private let defaults: UserDefaults
   @ObservationIgnored private let calendar: Calendar
@@ -203,7 +204,9 @@ final class ProgressLog: LocalFileStore {
     let past = changes.filter { day(of: $0.at) < today }
     keepToday(totals, adding: changes.filter { day(of: $0.at) >= today })
     persist()
-    if !past.isEmpty { fill(past) }
+    guard !past.isEmpty else { return }
+    unfilled.append(contentsOf: past)
+    fill()
   }
 
   private func keepToday(_ totals: ProgressTotals, adding changes: [ProgressLogChange]) {
@@ -213,9 +216,11 @@ final class ProgressLog: LocalFileStore {
     days[today]?.changes.append(contentsOf: changes)
   }
 
-  private func fill(_ changes: [ProgressLogChange]) {
+  private func fill() {
     writes.queue { [self] in
-      guard canChange else { return }
+      guard canChange, !unfilled.isEmpty else { return }
+      let changes = unfilled
+      unfilled = []
       let today = day(of: now())
       let request = ProgressDaysRequest(
         days: days, changes: changes.map { ProgressDaysRequest.Change($0, day: day(of: $0.at)) },
