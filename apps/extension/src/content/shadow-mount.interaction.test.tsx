@@ -34,6 +34,10 @@ function darkQuery(matches: boolean) {
 
 let mounted: ShadowMount | undefined
 let fonts: FakeFontFace[]
+const fontSet = {
+  add: (font: FontFace) => fonts.push(font as unknown as FakeFontFace),
+  [Symbol.iterator]: () => fonts[Symbol.iterator]()
+}
 
 beforeEach(() => {
   vi.stubGlobal('FontFace', FakeFontFace)
@@ -52,7 +56,7 @@ function mount(query = darkQuery(false), report?: (error: unknown) => void) {
   act(() => {
     mounted = mountInShadowRoot(<TestSurface read={() => new Promise(() => {})} />, {
       darkQuery: query,
-      fonts: { add: font => fonts.push(font as unknown as FakeFontFace) },
+      fonts: fontSet,
       report
     })
   })
@@ -70,6 +74,16 @@ describe('mountInShadowRoot', () => {
 
   it('adds Geist to the page under its own family, so the page font of the same name is untouched', () => {
     mount()
+    expect(fonts.map(font => font.family)).toEqual(['Zenbu Geist', 'Zenbu Geist'])
+  })
+
+  it('adds Geist once per document, however many mounts and content scripts add it', async () => {
+    mount()
+    act(() => mounted?.unmount())
+    mount()
+    vi.resetModules()
+    const otherScript = await import('../shared/geist')
+    otherScript.addGeist(fontSet)
     expect(fonts.map(font => font.family)).toEqual(['Zenbu Geist', 'Zenbu Geist'])
   })
 

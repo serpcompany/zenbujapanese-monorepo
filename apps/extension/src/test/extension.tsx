@@ -20,7 +20,7 @@ export function startContentScript(fake: FakeExtension, tabId: number, host: str
   return followSettings(
     settings =>
       mountInShadowRoot(<ReadingAidStates settings={settings} />, {
-        fonts: { add: () => undefined }
+        fonts: new Set<FontFace>()
       }),
     host,
     fake.inTab(tabId)

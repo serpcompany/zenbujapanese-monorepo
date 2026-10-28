@@ -281,3 +281,18 @@ test('a click on the furigana over a word in a link opens the word’s popup and
   await expect(popupFor(page, '要領')).toBeVisible()
   expect(page.url()).toBe(address)
 })
+
+test('adds Geist to the page once, however many popups open', async ({ extension, page }) => {
+  await changeSettings(extension, defaultReadingAids)
+  await readyPage(page, extension)
+  for (let opened = 0; opened < 3; opened++) {
+    await clickWord(page, '#sentence', '要求')
+    await expect(popupFor(page, '要求')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(wordPopup(page)).toHaveCount(0)
+  }
+  const geist = await page.evaluate(
+    () => [...document.fonts].filter(font => font.family.includes('Zenbu Geist')).length
+  )
+  expect(geist).toBe(2)
+})

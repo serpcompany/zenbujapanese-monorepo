@@ -16,14 +16,22 @@ const subsets = [
   }
 ]
 
-type FontFaces = { add(font: FontFace): unknown }
+type FontFaces = Iterable<{ family: string }> & { add(font: FontFace): unknown }
 
 function fontBytes(dataUrl: string): ArrayBuffer {
   const binary = atob(dataUrl.slice(dataUrl.indexOf(',') + 1))
   return Uint8Array.from(binary, character => character.charCodeAt(0)).buffer
 }
 
+function holdsGeist(fonts: FontFaces): boolean {
+  for (const font of fonts) {
+    if (font.family.replaceAll('"', '') === geistFamily) return true
+  }
+  return false
+}
+
 export function addGeist(fonts: FontFaces = document.fonts): void {
+  if (holdsGeist(fonts)) return
   for (const { dataUrl, unicodeRange } of subsets) {
     fonts.add(
       new FontFace(geistFamily, fontBytes(dataUrl), {

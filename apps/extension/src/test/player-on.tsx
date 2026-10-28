@@ -69,7 +69,7 @@ export function standInFonts() {
   vi.stubGlobal('FontFace', StandInFontFace)
   Object.defineProperty(document, 'fonts', {
     configurable: true,
-    value: { add: () => undefined }
+    value: new Set()
   })
 }
 
