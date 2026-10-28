@@ -153,11 +153,17 @@ step's working directory, not a job's, to find the scripts and binaries a step r
 Its `e2e` job starts once those checks pass, about 2 minutes in. It runs the browser tests
 ([`web.md`](web.md), Run and verify) on the site as it deploys, split six ways: a matrix of six
 jobs, `e2e (1/6)` to `e2e (6/6)`, each under a 20-minute limit, runs Playwright with
-`--shard 1/6` to `--shard 6/6`. Each installs Chromium, builds with OpenNext without `SITE_ENV`, so
-the build reads the dictionary fixtures, serves it in workerd with `opennextjs-cloudflare
-preview`, and runs its share of the tests on one worker, against its own workerd, as one job ran
-them all before. That one job took 26 minutes, 24 of them tests, on every pull request and again
-in the merge queue; split, the slowest shard's tests take about 6, and the job about 9.
+`--shard 1/6` to `--shard 6/6`. Each builds with OpenNext without `SITE_ENV`, so the build reads
+the dictionary fixtures, serves it in workerd with `opennextjs-cloudflare preview`, and runs its
+share of the tests on one worker, against its own workerd, as one job ran them all before. That
+one job took 26 minutes, 24 of them tests, on every pull request and again in the merge queue;
+split, the slowest shard's tests take under 5, and the job about 7. Each shard runs in
+Playwright's own image of the version the lockfile installs
+(`mcr.microsoft.com/playwright:v<version>-resolute`, the runner's Ubuntu), which holds Chromium and
+the fonts and libraries it needs. Installing those from Ubuntu's mirror on the runner took from 15
+seconds to 11 minutes, and with six runners one slow mirror held the whole run back. A test in
+`tools/checks/src/workflows.test.ts` fails when the image's version and the lockfile's differ, so
+bumping Playwright means bumping the image.
 Playwright shards tests in order, by count, not time, so the slow contrast and phone-layout tests
 make some shards longer than others, and past six each more shard saves the slowest well under a
 minute. Each shard builds the site itself: the build takes under a minute, while one build shared

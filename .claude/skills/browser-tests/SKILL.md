@@ -32,10 +32,11 @@ option after it as a file filter.
 - **In CI** (`Web`, the `e2e` jobs) it runs on the production build in workerd, where the Worker's
   redirects and headers behave as deployed: `pnpm exec opennextjs-cloudflare build`, then
   `E2E_SERVER=preview pnpm test:e2e --shard <n>/6`, in six jobs, `e2e (1/6)` to `e2e (6/6)`,
-  each on its own build. A test that fails only in CI may fail only beside its shard's other
-  tests: run that shard locally, on the production build, with the same `--shard`. OpenNext can't
-  build on Windows; there, run that in a Linux container, such as `mcr.microsoft.com/playwright`,
-  at the version in `apps/web/package.json`.
+  each on its own build, in the `mcr.microsoft.com/playwright` image at the lockfile's version. A
+  test that fails only in CI may fail only beside its shard's other tests, or only with that
+  image's fonts: run that shard locally, on the production build, with the same `--shard`, and in
+  the same image if it still passes. OpenNext can't build on Windows; there, run it in that image
+  too.
 - **On the production build locally**, build first, without `SITE_ENV`, as CI does:
   `pnpm exec opennextjs-cloudflare build && E2E_SERVER=preview pnpm test:e2e`. The tests load the
   build in `.open-next/`, not the source, so refuse to run them on a build older than your last
