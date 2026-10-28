@@ -102,25 +102,57 @@ test('shows furigana, romaji and word meanings when each is turned on, and takes
 })
 
 for (const tone of tones) {
-  test(`spaces neighbouring word meanings apart and mutes them, readable on a ${tone} page`, async ({
+  test(`spaces word meanings by the transcript's gap and mutes them, readable on a ${tone} page`, async ({
     extension,
     page
   }) => {
     await changeSettings(extension, { 'readingAids.wordMeanings': true })
     await openWordsPage(page, extension, tone)
+    await page.evaluate(() => {
+      const later = document.querySelector('#later')
+      later?.append(
+        Object.assign(document.createElement('p'), { id: 'neighbours', textContent: '要所要領' })
+      )
+    })
     const meanings = page.locator('#choice [data-zenbu-aid="meaning"]')
+    const neighbours = page.locator('#neighbours [data-zenbu-aid="meaning"]')
     await expect.poll(() => meanings.count()).toBeGreaterThan(1)
-    const shown = await page.locator('#choice').evaluate(choice =>
-      [...choice.querySelectorAll('[data-zenbu-aid="meaning"]')].map(meaning => {
-        const group = meaning.parentElement as HTMLElement
-        const style = getComputedStyle(group)
-        return { before: style.marginInlineStart, after: style.marginInlineEnd }
-      })
+    await expect.poll(() => neighbours.count()).toBe(2)
+    const spacing = await page.evaluate(() => {
+      const gaps = (id: string) =>
+        [...document.querySelectorAll(`#${id} [data-zenbu-aid="meaning"]`)].map(meaning => {
+          const group = meaning.parentElement as HTMLElement
+          const before = group.previousElementSibling
+          const left = group.getBoundingClientRect().left
+          const parent = group.parentElement as HTMLElement
+          const start =
+            parent.getBoundingClientRect().left +
+            Number.parseFloat(getComputedStyle(parent).paddingLeft)
+          return {
+            after: before?.querySelector('[data-zenbu-aid="meaning"]')
+              ? 'meaning'
+              : before
+                ? 'text'
+                : 'start',
+            gap:
+              Math.round((left - (before ? before.getBoundingClientRect().right : start)) * 10) / 10
+          }
+        })
+      return {
+        transcriptGap: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) / 2,
+        choice: gaps('choice'),
+        neighbours: gaps('neighbours')
+      }
+    })
+    const { transcriptGap, choice, neighbours: side } = spacing
+    expect(choice[0]).toEqual({ after: 'start', gap: 0 })
+    expect(choice.slice(1)).toEqual(
+      choice.slice(1).map(() => ({ after: 'text', gap: transcriptGap }))
     )
-    const quarterRem = await page.evaluate(
-      () => `${Number.parseFloat(getComputedStyle(document.documentElement).fontSize) / 4}px`
-    )
-    for (const margins of shown) expect(margins).toEqual({ before: quarterRem, after: quarterRem })
+    expect(side).toEqual([
+      { after: 'start', gap: 0 },
+      { after: 'meaning', gap: transcriptGap }
+    ])
     for (const meaning of await meanings.all()) {
       expect(await meaning.evaluate(element => getComputedStyle(element).color)).not.toBe(
         underlineColors[tone]
