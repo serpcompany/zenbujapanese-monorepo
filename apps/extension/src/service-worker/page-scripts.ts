@@ -2,7 +2,7 @@ import { stopPageLookup } from '../page-lookup/messages'
 import { languageDataOrigin } from '../shared/hosts'
 import type { FailureCode } from './router'
 
-export const pageScriptId = 'page-lookup'
+const pageScriptId = 'page-lookup'
 
 const pageScriptFile = 'page-lookup.js'
 

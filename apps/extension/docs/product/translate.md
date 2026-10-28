@@ -26,7 +26,7 @@ A box, "Type or paste Japanese or English", then **Use Selection** and **Clear**
 
 | Button | What it does |
 | --- | --- |
-| **Use Selection** | Puts the text selected in the side panel, or else on the page in the active tab, in the box. With nothing selected it says "Nothing is selected." and leaves the box as it was; on a page the extension can't read, such as a Chrome page, "Can't read the selection on this page. Copy and paste it instead." |
+| **Use Selection** | Puts the text selected in the side panel, or else on the page in the active tab, in the box. On a page where Zenbu underlines words, Zenbu's page script reads it and leaves out the furigana, romaji, and meanings Zenbu added; on another page Zenbu reads it itself, which Chrome lets it do on a site the learner allowed and on a tab whose toolbar icon was clicked. With nothing selected it says "Nothing is selected." and leaves the box as it was; on a page the extension can't read, such as a Chrome page, "Can't read the selection on this page. Copy and paste it instead." |
 | **Clear** | Empties the box and removes the result. Emptying the box by hand removes it too. |
 | **Translate** | Translates the box. Text that is neither Japanese nor English, such as only numbers, gets "Type Japanese or English to translate." and nothing is sent. |
 
@@ -49,6 +49,18 @@ Japanese", "copies the translation…", "speaks the translation…", "turns Spea
 the last result…", and "drops an answer that comes after Clear"; `src/translate/speech.test.ts`
 for the voice.
 
+## Words in Japanese text
+
+When the text is Japanese, each dictionary word in it is underlined as on a page, and a click on
+one opens its word popup under the text ([`word-popup.md`](word-popup.md)). The popup's Open Full
+Entry opens the word's Word Detail over the tab; Close or Escape puts the popup away and gives
+focus back to the word. The text has the reading aids turned on in Settings: furigana over its
+kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
+Reading Aids). Until the dictionary is ready, the text is plain.
+
+Check: `src/translate/source-words.interaction.test.tsx`, and the tab's test, "links the words of
+a Japanese source…".
+
 ## Downloading and unavailable
 
 The first translation in a direction downloads Chrome's model for it, from that click on
@@ -65,6 +77,5 @@ Check: the tab's test, "downloads the model from the click…", "says Translate 
 
 ## Not built yet
 
-Words in the text and its translation don't open the word popup, and the source has no reading
-aids (#957). In the release build, Use Selection reads the page once the extension has
-`activeTab` (#959).
+The Japanese translation of English text is plain: its words don't open the word popup and it has
+no reading aids.

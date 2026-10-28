@@ -134,7 +134,21 @@ describe('Settings', () => {
     startExtension()
     const settings = await openSettings('#sites')
     expect(settings.querySelector('[data-site-off]')).toBeNull()
-    expect(find(settings, 'main p').textContent).toBe('Zenbu is on for every site it can run on.')
+    expect(byText(settings, 'main p', 'Zenbu is on for every site it can run on.')).toBeTruthy()
+  })
+
+  it('turns Zenbu on for every site from Sites, and says so once Chrome allows it', async () => {
+    const extension = startExtension()
+    const settings = await openSettings('#sites')
+    expect(find(settings, '[data-every-site]').getAttribute('data-every-site')).toBe('off')
+    await click(byText(settings, 'button', 'Turn On for Every Site'))
+    expect(extension.requested).toEqual([['http://*/*', 'https://*/*']])
+    expect(find(settings, '[data-every-site]').textContent).toBe(
+      'Zenbu can underline Japanese on every site.'
+    )
+    extension.revoke(['http://*/*', 'https://*/*'])
+    await settle()
+    expect(find(settings, '[data-every-site]').getAttribute('data-every-site')).toBe('off')
   })
 
   it('credits every source the core lists for the extension, with its link', async () => {

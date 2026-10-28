@@ -10,8 +10,6 @@ export type Annotation = { inserted: Node[]; pieces: Piece[] }
 
 export type Glosses = ReadonlyMap<string, string | null>
 
-export const anyAid = (aids: Aids) => aids.furigana || aids.romaji || aids.meanings
-
 const meaningStyle = (tone: Tone) =>
   'display: block; max-width: 8em; overflow: hidden; text-overflow: ellipsis; ' +
   `white-space: nowrap; font-size: 0.7em; line-height: 1.3; color: ${underlineColors[tone]};`
@@ -39,7 +37,7 @@ function tokenNodes(doc: Document, token: PageToken, furigana: boolean, pieces: 
   })
 }
 
-const glossOf = (group: readonly PageToken[], glosses: Glosses) => {
+export const glossOf = (group: readonly PageToken[], glosses: Glosses) => {
   const word = group.find(token => token.ids.length === 1)
   return word ? (glosses.get(word.ids[0]) ?? null) : null
 }

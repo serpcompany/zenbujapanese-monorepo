@@ -4,9 +4,9 @@ import { wordPopupEvents } from './popup-events'
 import { popupPlacement } from './position'
 import { WordPopup, type WordPopupProps } from './word-popup'
 
-export const popupHostAttribute = 'data-zenbu-word-popup'
+const popupHostAttribute = 'data-zenbu-word-popup'
 
-export type PopupTarget = Pick<WordPopupProps, 'text' | 'ids'> & { anchor: () => DOMRect }
+type PopupTarget = Pick<WordPopupProps, 'text' | 'ids'> & { anchor: () => DOMRect }
 
 export type PopupSettings = Omit<WordPopupProps, 'text' | 'ids' | 'close'>
 

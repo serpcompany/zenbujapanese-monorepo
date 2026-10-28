@@ -8,16 +8,23 @@ import {
   ItemTitle
 } from '@zenbu/ui/components/item'
 import { GlobeIcon } from 'lucide-react'
+import { EverySite } from '../shared/every-site'
 import { type Settings, sitesOffWith, writeSettings } from '../shared/settings'
 import { settingsLabels } from './labels'
 
 export function SitesPage({ settings }: { settings: Settings }) {
   const off = settings['sites.off']
   if (off.length === 0) {
-    return <p className="text-sm text-muted-foreground">{settingsLabels.sites.none}</p>
+    return (
+      <>
+        <EverySite />
+        <p className="text-sm text-muted-foreground">{settingsLabels.sites.none}</p>
+      </>
+    )
   }
   return (
     <>
+      <EverySite />
       <p className="text-sm text-muted-foreground">{settingsLabels.sites.intro}</p>
       <ItemGroup>
         {off.map(host => (

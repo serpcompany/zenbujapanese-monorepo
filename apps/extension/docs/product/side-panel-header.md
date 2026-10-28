@@ -20,6 +20,5 @@ Each check is in `src/side-panel/header-controls.interaction.test.tsx` unless it
 | Settings, which opens Settings in a tab. | `opens Settings from its menu` |
 
 The reading aids, Zenbu Captions, and the sites Zenbu is off on are kept in the browser
-(`chrome.storage.local`), so they stay through a restart. What a reading aid draws on a page, and
-the captions, come with the word popup and the captions; until then the test content script shows
-each setting's state.
+(`chrome.storage.local`), so they stay through a restart. What the site switch and the reading
+aids do on a page is in [`page-lookup.md`](page-lookup.md).

@@ -1,16 +1,12 @@
 import type { Page } from '@playwright/test'
 import { wordPath } from '@zenbu/dictionary-core/detail/word-path'
+import { highlightNames, type Tone } from '../src/page-lookup/underline.ts'
 import type { Settings } from '../src/shared/settings.ts'
 import type { Extension } from './fixtures.ts'
 
-export type Tone = 'light' | 'dark'
+export { highlightNames }
 
 export const tones: Tone[] = ['light', 'dark']
-
-export const highlightNames: Record<Tone, string> = {
-  light: 'zenbu-japanese-word',
-  dark: 'zenbu-japanese-word-on-dark'
-}
 
 export const underlineColors: Record<Tone, string> = {
   light: 'rgb(37, 99, 235)',
@@ -19,7 +15,7 @@ export const underlineColors: Record<Tone, string> = {
 
 export const allowedHost = 'allowed.localhost'
 
-export const wordsPageUrl = (extension: Extension, tone: Tone) =>
+const wordsPageUrl = (extension: Extension, tone: Tone) =>
   `${extension.server.allowedSiteUrl}/test-pages/words.html${tone === 'dark' ? '?dark' : ''}`
 
 export const noReadingAids: Partial<Settings> = {
@@ -89,7 +85,7 @@ export function pageLayout(page: Page) {
   )
 }
 
-export function wordPoint(page: Page, selector: string, word: string) {
+function wordPoint(page: Page, selector: string, word: string) {
   return page.evaluate(
     ([within, wanted]) => {
       const element = document.querySelector(within)

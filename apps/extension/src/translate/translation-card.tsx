@@ -7,20 +7,27 @@ import {
   CardHeader
 } from '@zenbu/ui/components/card'
 import { useState, useSyncExternalStore } from 'react'
+import type { PanelPage } from '../side-panel/route'
 import type { Direction } from '../translation/messages'
 import { translateLabels } from './labels'
 import type { TranslateServices } from './services'
+import { SourceWords } from './source-words'
 
 export type Translated = { source: string; translation: string; direction: Direction }
 
-type CardServices = Pick<TranslateServices, 'copy' | 'speak' | 'localVoice' | 'watchVoices'>
+type CardServices = Pick<
+  TranslateServices,
+  'copy' | 'speak' | 'localVoice' | 'watchVoices' | 'segment' | 'popupCard'
+>
 
 export function TranslationCard({
   translated: { source, translation, direction },
-  services
+  services,
+  open
 }: {
   translated: Translated
   services: CardServices
+  open?(page: PanelPage): void
 }) {
   const [copied, setCopied] = useState(false)
   const voice = useSyncExternalStore(services.watchVoices, () => services.localVoice(direction.to))
@@ -36,9 +43,17 @@ export function TranslationCard({
         <CardDescription data-direction>{translateLabels.direction(direction)}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <p lang={direction.from} data-source className="whitespace-pre-wrap text-muted-foreground">
-          {source}
-        </p>
+        {direction.from === 'ja' ? (
+          <SourceWords source={source} services={services} open={open} />
+        ) : (
+          <p
+            lang={direction.from}
+            data-source
+            className="whitespace-pre-wrap text-muted-foreground"
+          >
+            {source}
+          </p>
+        )}
         <p lang={direction.to} data-translation className="whitespace-pre-wrap text-base">
           {translation}
         </p>

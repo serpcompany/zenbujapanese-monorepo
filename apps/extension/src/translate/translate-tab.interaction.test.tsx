@@ -1,14 +1,18 @@
 import { act, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Failure } from '../shared/messages'
 import type { PanelTabProps } from '../side-panel/route'
+import { startExtension } from '../test/extension'
+import { click, find, settle } from '../test/render'
+import { notReady, popupAnswer, sentence, sentenceAnswer } from '../test/word-cards'
 import type { TranslationAnswer, TranslatorState } from '../translation/messages'
 import {
   downloadTranslator,
   onDeviceTranslation,
   translatorAvailability
 } from '../translation/translator'
+import { wordPopupLabels } from '../word-popup/labels'
 import { translateLabels } from './labels'
 import type { TranslateServices } from './services'
 import { TranslateTab } from './translate-tab'
@@ -21,7 +25,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const phrasebook: Record<string, string> = {
   '駅まで歩いて何分ですか？': 'How many minutes does it take to walk to the station?',
   トイレはどこですか: 'Where is the toilet?',
-  'Where can I buy a Suica card?': 'Suicaカードはどこで買えますか？'
+  'Where can I buy a Suica card?': 'Suicaカードはどこで買えますか？',
+  [sentence]: 'A demand is needed.'
 }
 
 type CreateOptions = { monitor?(monitor: EventTarget): void }
@@ -60,11 +65,17 @@ function servicesWith(selection: string | null = '') {
     copy: vi.fn(async (_text: string) => {}),
     localVoice: vi.fn<TranslateServices['localVoice']>(() => 'Kyoko'),
     watchVoices: vi.fn(() => () => {}),
-    speak: vi.fn()
+    speak: vi.fn(),
+    segment: vi.fn<TranslateServices['segment']>(async () => notReady),
+    popupCard: vi.fn<TranslateServices['popupCard']>(async id => popupAnswer(id))
   } satisfies TranslateServices
 }
 
 const unmounts: (() => void)[] = []
+
+beforeEach(() => {
+  startExtension()
+})
 
 afterEach(() => {
   for (const unmount of unmounts.splice(0)) act(unmount)
@@ -72,11 +83,11 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-async function showTab(services: TranslateServices) {
+async function showTab(services: TranslateServices, open = vi.fn()) {
   const panel = document.body.appendChild(document.createElement('main'))
   const root = createRoot(panel)
   unmounts.push(() => root.unmount())
-  await act(async () => root.render(<TranslateTab services={services} />))
+  await act(async () => root.render(<TranslateTab services={services} open={open} />))
   const button = (name: string) =>
     [...panel.querySelectorAll('button')].find(found => found.textContent === name) as
       | HTMLButtonElement
@@ -118,6 +129,21 @@ describe('the Translate tab', () => {
       'How many minutes does it take to walk to the station?'
     )
     expect(tab.card()?.textContent).toContain(translateLabels.onThisDevice)
+  })
+
+  it('links the words of a Japanese source to the word popup, and its Open Full Entry to Word Detail', async () => {
+    standInTranslator()
+    const services = servicesWith()
+    services.segment.mockImplementation(async () => sentenceAnswer)
+    const open = vi.fn()
+    const tab = await showTab(services, open)
+    await tab.type(sentence)
+    await tab.click(translateLabels.translate)
+    await settle()
+    await click(find(document, '[data-source] [data-word="要求"]'))
+    await tab.click(wordPopupLabels.openFullEntry)
+    expect(open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
+    expect(services.segment).toHaveBeenCalledWith(sentence)
   })
 
   it('translates English typed in the box to Japanese', async () => {

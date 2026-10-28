@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from './fixtures.ts'
+import { type Extension, expect, test } from './fixtures.ts'
 import {
   allowedHost,
   changeSettings,
@@ -19,6 +19,12 @@ import {
 const siteOff = { ...noReadingAids, 'sites.off': [allowedHost] }
 
 const underlinesIn = async (page: Page) => (await underlinedWords(page)).light
+
+async function openMarkedPage(page: Page, extension: Extension) {
+  await openWordsPage(page, extension, 'light')
+  await expect.poll(() => underlinesIn(page)).toEqual(pageWords)
+  await page.evaluate(() => Object.assign(window, { notReloaded: true }))
+}
 
 test.beforeEach(async ({ extension }) => {
   await changeSettings(extension, noReadingAids)
@@ -57,9 +63,7 @@ test('shows furigana, romaji and word meanings when each is turned on, and takes
   extension,
   page
 }) => {
-  await openWordsPage(page, extension, 'light')
-  await expect.poll(() => underlinesIn(page)).toEqual(pageWords)
-  await page.evaluate(() => Object.assign(window, { notReloaded: true }))
+  await openMarkedPage(page, extension)
   const sentence = page.locator('#sentence')
 
   await changeSettings(extension, { 'readingAids.furigana': true })
@@ -128,9 +132,7 @@ test('starts on an open page when Chrome grants its site, and stops when the sit
   extension,
   page
 }) => {
-  await openWordsPage(page, extension, 'light')
-  await expect.poll(() => underlinesIn(page)).toEqual(pageWords)
-  await page.evaluate(() => Object.assign(window, { notReloaded: true }))
+  await openMarkedPage(page, extension)
   const settings = await extension.context.newPage()
   await settings.goto('chrome://extensions')
   try {

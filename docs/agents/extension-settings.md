@@ -39,8 +39,9 @@ Besides `offscreen` and `sidePanel`, the manifest asks for `storage`, for the se
 `activeTab`, so a click on the toolbar icon shows the header the tab's address. Neither adds an
 install warning. It asks for no site at install: `http://*/*` and `https://*/*` are
 `optional_host_permissions`, and the header menu's Allow on This Site asks Chrome for one site
-with `chrome.permissions.request`. It never asks for `tabs`, which would warn that it reads the
-browsing history, and nothing in it asks for every site (#957).
+with `chrome.permissions.request`, as Turn On for Every Site does for `http://*/*` and
+`https://*/*`, on the welcome tab and in Sites (`src/shared/every-site.tsx`). It never asks for
+`tabs`, which would warn that it reads the browsing history.
 
 ## Checks
 

@@ -1,3 +1,4 @@
+import { lookUpPopupCard, segmentText } from '../shared/dictionary'
 import type { Failure } from '../shared/messages'
 import {
   type Direction,
@@ -9,9 +10,10 @@ import {
 } from '../translation/messages'
 import { downloadTranslator, translatorAvailability } from '../translation/translator'
 import { readSelection } from './selection'
+import type { SourceServices } from './source-words'
 import { onDeviceSpeech } from './speech'
 
-export type TranslateServices = {
+export type TranslateServices = SourceServices & {
   translate(request: TranslationRequest): Promise<TranslationAnswer | Failure>
   availability(direction: Direction): Promise<TranslatorState>
   download(direction: Direction, onProgress: (fraction: number) => void): Promise<TranslatorState>
@@ -28,5 +30,7 @@ export const onDeviceServices: TranslateServices = {
   download: downloadTranslator,
   readSelection,
   copy: text => navigator.clipboard.writeText(text),
+  segment: text => segmentText(text),
+  popupCard: (languageReferenceID, frequency) => lookUpPopupCard(languageReferenceID, frequency),
   ...onDeviceSpeech
 }
