@@ -8,6 +8,12 @@ export const firstAttachments = ['compound_pitch', 'jlpt', 'tubelex', 'word_inde
 
 export const laterAttachments = ['strokes', 'ranked'] as const
 
+export const builtForArtifact: ReadonlySet<string> = new Set(
+  laterAttachments
+    .filter(name => attachments[name].languageData)
+    .map(name => attachments[name].file)
+)
+
 export const kanjiFiles = ['KanjiReferenceData.json', 'KanjiElementReferenceData.json'] as const
 
 export const kuromojiFile = (file: string) => `Kuromoji/${file}.dat.gz`

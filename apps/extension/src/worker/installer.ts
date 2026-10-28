@@ -1,7 +1,7 @@
 import type { DataState, InstalledRelease } from '../shared/data-state'
 import { donePath, download, downloadBytes } from './download'
 import { type Fetch, newestRelease, type Release, type ReleaseFile } from './release'
-import { fileKey } from './release-files'
+import { artifactFile, builtForArtifact, fileKey } from './release-files'
 import type { Storage } from './storage'
 
 export interface Installed extends InstalledRelease {
@@ -140,7 +140,12 @@ export function installer(options: InstallerOptions) {
     await fetchFiles(changed, report)
     if (!installed) state = { state: 'checking' }
     const previous = installed?.files ?? {}
-    const later = release.later.filter(file => file.name in previous)
+    const sameArtifact = release.first.some(file => file.name === artifactFile && isInstalled(file))
+    const later = release.later.filter(
+      file =>
+        file.name in previous &&
+        (sameArtifact || isInstalled(file) || !builtForArtifact.has(file.name))
+    )
     await swap(
       {
         release: release.release,

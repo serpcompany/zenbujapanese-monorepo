@@ -74,7 +74,9 @@ again if Chrome cleared it), once a day (the `language-data-update` alarm), and 
 SHA-256 changed download. The old set answers until the new one opens and checks; then
 `installed.json` swaps and the old files are deleted. A later file whose SHA-256 changed is the
 exception: the first swap keeps the old one, its pool database and its `files/<sha>` folder, so
-kanji keep their strokes, until the new one installs. An update that fails keeps the installed set:
+kanji keep their strokes, until the new one installs. It doesn't keep an old `RankedLists` when
+`LanguageReferenceData` changed, since the core refuses a ranked file built for another one
+(`checkArtifact`); ranked lists are left out until the new release's file installs. An update that fails keeps the installed set:
 the state stays `ready`, with `updateFailed` saying why. A pool that failed to open is opened again
 by the next try (`src/worker/opened-once.ts`), not kept as a failure.
 
@@ -115,7 +117,8 @@ until the first set is in, never an empty result.
   update that downloads only the changed file, answers from the old set until the swap, and
   then deletes the old one, and a cut update's files deleted before the next, so the pool never
   runs out of room, and a changed `KanjiStrokeData` whose old copy answers, and stays, until the
-  new one installs. `src/worker/opened-once.test.ts`: a pool that failed to open opens again.
+  new one installs, and an update whose `LanguageReferenceData` changed opening with the
+  `RankedLists` built for it. `src/worker/opened-once.test.ts`: a pool that failed to open opens again.
 - `src/worker/answer.test.ts`: `not-ready` before the first set, the state, each lookup, and
   kanji rows while the stroke data downloads. `src/shared/dictionary.test.ts`: each helper's
   request, and a failure for a wrong answer or a throw. The core's `kanji.test.ts` and

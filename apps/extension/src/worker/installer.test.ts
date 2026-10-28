@@ -16,7 +16,8 @@ const firstFiles = releaseFiles.filter(name => !laterFiles.includes(name))
 function extension(
   server: LanguageDataServer,
   storage = new MemoryStorage(),
-  pool = new MemoryPool()
+  pool = new MemoryPool(),
+  check: (installed: Installed) => Promise<void> = async () => undefined
 ) {
   const opened: Installed[] = []
   const states: DataState[] = []
@@ -34,6 +35,7 @@ function extension(
     storage,
     pool: async () => pool,
     open: async installed => {
+      await check(installed)
       opened.push(installed)
     },
     now: () => clock
@@ -395,6 +397,37 @@ describe('updating the language data', () => {
     expect(pool.databases.has(old)).toBe(false)
     expect(pool.databases.get(updated)).toEqual(contentOf('KanjiStrokeData.sqlite3', '2026.10.2'))
     expect(pool.most).toBeLessThanOrEqual(16)
+  })
+
+  it('opens an update whose main file changed with the ranked lists built for it', async () => {
+    const ranked = 'RankedLists.sqlite3'
+    const releases = ['2026.10.1', '2026.10.2']
+    const builtFor = async (installed: Installed) => {
+      for (const release of releases) {
+        const main = await sha256Of(artifactFile, release)
+        const lists = await sha256Of(ranked, release)
+        if (installed.files[artifactFile] === main) {
+          if (ranked in installed.files && installed.files[ranked] !== lists) {
+            throw new Error(`${ranked} was built for another LanguageReferenceData`)
+          }
+          return
+        }
+      }
+    }
+    const server = await published({ release: releases[0] })
+    const { languageData, opened } = extension(
+      server,
+      new MemoryStorage(),
+      new MemoryPool(),
+      builtFor
+    )
+    await languageData.start()
+    await server.publish({ release: releases[1], changed: [artifactFile, ranked] })
+    await languageData.update()
+
+    expect(languageData.state()).toMatchObject({ state: 'ready', release: releases[1] })
+    expect(languageData.state()).not.toHaveProperty('updateFailed')
+    expect(opened.at(-1)?.files[ranked]).toBe(await sha256Of(ranked, releases[1]))
   })
 
   it('shows a check for updates at once, and records when it checked', async () => {
