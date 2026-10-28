@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/postcss'
 import { build, type InlineConfig, type Plugin, type UserConfig } from 'vite'
 import { errorReportDefines } from './error-reports.ts'
 import { defaultEnvironment, type Environment, hostDefines, type Variant } from './hosts.ts'
-import { type ContentScript, contentScripts, extensionVersion, manifest } from './manifest.ts'
+import { builtContentScripts, type ContentScript, extensionVersion, manifest } from './manifest.ts'
 import { shadowSafeCss } from './shadow-safe-css.ts'
 
 const packageFolder = fileURLToPath(new URL('..', import.meta.url))
@@ -90,7 +90,7 @@ function extensionFiles(variant: Variant, environment: Environment): Plugin {
       })
     },
     async closeBundle() {
-      for (const script of contentScripts(variant)) {
+      for (const script of builtContentScripts(variant)) {
         await build(contentScriptBuild(variant, environment, script))
       }
     }

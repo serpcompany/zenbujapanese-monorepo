@@ -8,11 +8,21 @@ export const minimumChromeVersion = '138'
 
 export const extensionVersion: string = packageJson.version
 
+export const testAllowedSite = 'http://allowed.localhost'
+
 const testPagesContentScript: ContentScript = {
   name: 'test-content-script',
   entry: 'test-pages/test-content-script.tsx',
   matches: ['http://localhost/*', 'http://127.0.0.1/*']
 }
+
+const pageLookupContentScript: ContentScript = {
+  name: 'page-lookup',
+  entry: 'src/content/page-lookup.ts',
+  matches: []
+}
+
+const optionalSites = ['http://*/*', 'https://*/*']
 
 const youTubeContentScript: ContentScript = {
   name: 'youtube',
@@ -28,17 +38,18 @@ export function contentScripts(variant: Variant): ContentScript[] {
     : [youTubeContentScript]
 }
 
+export function builtContentScripts(variant: Variant): ContentScript[] {
+  return [...contentScripts(variant), pageLookupContentScript]
+}
+
 function onPages(scripts: ContentScript[]) {
-  if (scripts.length === 0) return {}
   return {
     content_scripts: scripts.map(script => ({
       matches: script.matches,
       js: [contentScriptFile(script)],
       run_at: 'document_idle'
     })),
-    web_accessible_resources: [
-      { resources: ['assets/*.woff2'], matches: scripts.flatMap(script => script.matches) }
-    ]
+    web_accessible_resources: [{ resources: ['assets/*.woff2'], matches: optionalSites }]
   }
 }
 
@@ -67,9 +78,10 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
     ],
     host_permissions: [
       `${hostsOf(variant, environment).languageData}/*`,
-      'https://www.youtube.com/*'
+      'https://www.youtube.com/*',
+      ...(variant === 'test' ? [`${testAllowedSite}/*`] : [])
     ],
-    optional_host_permissions: ['http://*/*', 'https://*/*'],
+    optional_host_permissions: optionalSites,
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     },

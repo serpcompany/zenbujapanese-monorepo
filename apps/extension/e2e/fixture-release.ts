@@ -2,20 +2,19 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-import { gzipSync } from 'node:zlib'
-import { attachments } from '@zenbu/dictionary-core/artifact/database'
+import { type AttachmentName, attachments } from '@zenbu/dictionary-core/artifact/database'
 import { retiredEntriesFile } from '@zenbu/dictionary-core/artifact/retired'
 import { rankedPackIds } from '@zenbu/dictionary-core/browse/lists'
-import { ipadicFiles } from '@zenbu/dictionary-core/examples/ipadic'
 import { publishRelease, releasesIndex } from '../src/test/publish-release.ts'
 import {
   artifactFile,
   firstSet,
   kanjiFiles,
-  kuromojiFile,
   laterSet,
   sha256Hex
 } from '../src/worker/release-files.ts'
+import { kuromojiFiles } from './fixture-ipadic.ts'
+import { attachmentRows, type Fill, fillEntries } from './fixture-words.ts'
 
 export const fixtureRelease = '2026.10.1'
 
@@ -43,12 +42,13 @@ const artifactMetadata = {
 
 type Attachment = (typeof attachments)[keyof typeof attachments]
 
-function database(folder: string, name: string, metadata: Record<string, string>, sql = '') {
+function database(folder: string, name: string, metadata: Record<string, string>, fill?: Fill) {
   const path = join(folder, name)
   const db = new DatabaseSync(path)
-  db.exec(`CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL); ${sql}`)
+  db.exec('CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
   const insert = db.prepare('INSERT INTO metadata (key, value) VALUES (?, ?)')
   for (const [key, value] of Object.entries(metadata)) insert.run(key, value)
+  fill?.(db)
   db.close()
   return new Uint8Array(readFileSync(path))
 }
@@ -66,10 +66,15 @@ const rankedLists = `CREATE TABLE ranked_lists (pack_id TEXT PRIMARY KEY); ${ran
   .map(packId => `INSERT INTO ranked_lists VALUES ('${packId}');`)
   .join(' ')}`
 
+const attachmentFills: Partial<Record<AttachmentName, Fill>> = {
+  ...attachmentRows,
+  ranked: db => db.exec(rankedLists)
+}
+
 const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value))
 
 async function fileBytes(folder: string): Promise<Map<string, Uint8Array>> {
-  const artifact = database(folder, artifactFile, artifactMetadata)
+  const artifact = database(folder, artifactFile, artifactMetadata, fillEntries)
   const artifactSha256 = await sha256Hex(artifact)
   const bytes = new Map<string, Uint8Array>([
     [artifactFile, artifact],
@@ -91,12 +96,12 @@ async function fileBytes(folder: string): Promise<Map<string, Uint8Array>> {
       })
     ]
   ])
-  for (const attachment of Object.values(attachments)) {
-    const sql = attachment === attachments.ranked ? rankedLists : ''
+  for (const name of Object.keys(attachments) as AttachmentName[]) {
+    const attachment = attachments[name]
     const metadata = attachmentMetadata(attachment, artifactSha256)
-    bytes.set(attachment.file, database(folder, attachment.file, metadata, sql))
+    bytes.set(attachment.file, database(folder, attachment.file, metadata, attachmentFills[name]))
   }
-  for (const file of ipadicFiles) bytes.set(kuromojiFile(file), new Uint8Array(gzipSync(file)))
+  for (const [file, gzipped] of kuromojiFiles()) bytes.set(file, gzipped)
   return bytes
 }
 

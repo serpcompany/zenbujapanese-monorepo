@@ -18,13 +18,14 @@ export type Extension = {
   manifest: Record<string, unknown>
 }
 
-const extensionSchemes = new Set(['chrome-extension:', 'data:', 'blob:', 'about:'])
+const extensionSchemes = new Set(['chrome-extension:', 'chrome:', 'data:', 'blob:', 'about:'])
 
 function isAllowedRequest(url: string, server: LocalServer, extensionOrigin: string) {
   const { protocol, host, origin } = new URL(url)
   if (protocol === 'chrome-extension:') return `${protocol}//${host}` === extensionOrigin
   return (
-    extensionSchemes.has(protocol) || origin === server.url || origin === server.languageDataUrl
+    extensionSchemes.has(protocol) ||
+    [server.url, server.languageDataUrl, server.allowedSiteUrl].includes(origin)
   )
 }
 
@@ -32,16 +33,21 @@ function onlyTheLocalServer(server: LocalServer) {
   return `--host-resolver-rules=${server.hostRule}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1`
 }
 
-export const test = base.extend<{ outsideRequests: string[] }, { extension: Extension }>({
+export const test = base.extend<
+  { outsideRequests: string[] },
+  { extension: Extension; languageDataHeld: boolean }
+>({
+  languageDataHeld: [false, { option: true, scope: 'worker' }],
   extension: [
-    async ({ playwright }, use) => {
-      const server = await startLocalServer()
+    async ({ playwright, languageDataHeld }, use) => {
+      const server = await startLocalServer(0, languageDataHeld)
       const profile = mkdtempSync(join(tmpdir(), 'zenbu-extension-'))
       const context = await playwright.chromium.launchPersistentContext(profile, {
         channel: 'chromium',
         args: [
           `--disable-extensions-except=${extensionBuild}`,
           `--load-extension=${extensionBuild}`,
+          '--disable-blink-features=WebShare',
           onlyTheLocalServer(server)
         ]
       })

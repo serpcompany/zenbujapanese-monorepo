@@ -3,7 +3,12 @@ import { join, relative, sep } from 'node:path'
 import { builtPages } from './extension-config.ts'
 import { type Environment, environments, hosts, testLanguageDataHost } from './hosts.ts'
 import { extensionIdOf, storeExtensionId } from './key.ts'
-import { contentScriptFile, contentScripts, extensionVersion } from './manifest.ts'
+import {
+  builtContentScripts,
+  contentScriptFile,
+  contentScripts,
+  extensionVersion
+} from './manifest.ts'
 import { unzipFiles, type ZipEntry, zipFiles } from './zip.ts'
 
 export const packageKinds = ['store', 'unpacked'] as const
@@ -26,7 +31,7 @@ type BuiltManifest = {
 const manifestFile = 'manifest.json'
 const textFile = /\.(js|html|css|json)$/
 const buildSettingMark = '__ZENBU_'
-const releaseScripts = contentScripts('release').map(contentScriptFile)
+const releaseScripts = builtContentScripts('release').map(contentScriptFile)
 const testOnlyScripts = contentScripts('test')
   .map(contentScriptFile)
   .filter(file => !releaseScripts.includes(file))
@@ -114,7 +119,9 @@ function namedFiles(manifest: BuiltManifest): string[] {
 
 function fileProblems(files: Map<string, Buffer>, manifest: BuiltManifest): string[] {
   const named = namedFiles(manifest)
-  const missing = [...new Set([...builtPages, ...named])].filter(file => !files.has(file))
+  const missing = [...new Set([...builtPages, ...named, ...releaseScripts])].filter(
+    file => !files.has(file)
+  )
   const testOnly = testOnlyScripts.filter(file => files.has(file) || named.includes(file))
   const maps = [...files.keys()].filter(file => file.endsWith('.map'))
   return [

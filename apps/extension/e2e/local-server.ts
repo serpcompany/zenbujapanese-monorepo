@@ -4,14 +4,17 @@ import type { AddressInfo } from 'node:net'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { testLanguageDataHost } from '../build/hosts.ts'
+import { testAllowedSite } from '../build/manifest.ts'
 import { fixtureRelease, fixtureReleaseObjects } from './fixture-release.ts'
 
 export type LocalServer = {
   url: string
   languageDataUrl: string
+  allowedSiteUrl: string
   hostRule: string
   release: string
   asked: string[]
+  releaseLanguageData(): void
   close(): Promise<void>
 }
 
@@ -34,10 +37,16 @@ function sendFile(response: ServerResponse, path: string, type: string) {
   createReadStream(path).pipe(response)
 }
 
-export async function startLocalServer(port = 0): Promise<LocalServer> {
+export async function startLocalServer(port = 0, held = false): Promise<LocalServer> {
   const objects = await fixtureReleaseObjects()
   const asked: string[] = []
-  const server = createServer((request, response) => {
+  let releaseLanguageData = () => {}
+  const languageData = held
+    ? new Promise<void>(resolve => {
+        releaseLanguageData = resolve
+      })
+    : Promise.resolve()
+  const server = createServer(async (request, response) => {
     response.setHeader('access-control-allow-origin', '*')
     response.setHeader('cache-control', 'no-store')
     const path = decodeURIComponent(new URL(request.url ?? '/', 'http://127.0.0.1').pathname)
@@ -51,6 +60,7 @@ export async function startLocalServer(port = 0): Promise<LocalServer> {
       return sendFile(response, file, contentTypes[page[2]])
     }
     if (!object) return send(response, 404, 'text/plain', 'not found')
+    await languageData
     asked.push(key)
     send(response, 200, contentTypes[key.endsWith('.json') ? 'json' : 'bytes'], object)
   })
@@ -59,9 +69,13 @@ export async function startLocalServer(port = 0): Promise<LocalServer> {
   return {
     url: `http://127.0.0.1:${bound}`,
     languageDataUrl: testLanguageDataHost,
-    hostRule: `MAP ${new URL(testLanguageDataHost).host} 127.0.0.1:${bound}`,
+    allowedSiteUrl: testAllowedSite,
+    hostRule: [testLanguageDataHost, testAllowedSite]
+      .map(origin => `MAP ${new URL(origin).host} 127.0.0.1:${bound}`)
+      .join(', '),
     release: fixtureRelease,
     asked,
+    releaseLanguageData: () => releaseLanguageData(),
     close: () => new Promise(resolve => server.close(() => resolve()))
   }
 }
