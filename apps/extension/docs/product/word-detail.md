@@ -55,3 +55,7 @@ A form's page shows the form alone, with no explanation and no furigana, because
 carries only the form. The app's and the website's form headline follows Reading Aids
 ([`dictionary.md`](../../../web/docs/product/dictionary.md), a form's headline); this one waits
 for a route that carries the form's word and kind.
+
+A meaning's Speak reads the whole display meaning, a gloss's note in brackets included,
+because the word rows carry no glosses. The app's Speak reads the sense's glosses; that waits for
+#1077, which adds them to the dictionary service's word answer.
