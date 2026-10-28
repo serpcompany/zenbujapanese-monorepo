@@ -95,6 +95,7 @@ struct ProgressNewWordsCard: View {
           .foregroundStyle(.orange)
           .opacity(selected == nil || selected == bar.id ? 1 : 0.4)
           .accessibilityLabel(ProgressWording.dayLine(bar.day))
+          .accessibilityIdentifier("progress.new-words.bar.\(bar.id)")
       }
       ForEach(bars) { bar in
         LineMark(x: .value("Day", bar.id), y: .value("Goal", bar.day.goal))
