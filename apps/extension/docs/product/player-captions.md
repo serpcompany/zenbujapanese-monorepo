@@ -61,6 +61,7 @@ word's popup is open; otherwise they fade out (Controls: "when the controls show
 
 ## Not built yet
 
-Live Captions for a video with no Japanese captions are #968's, and the share of the video's words
+After the extension updates or reloads, a watch page that was already open shows no caption until
+the learner reloads it (#1114). Live Captions for a video with no Japanese captions are #968's, and the share of the video's words
 the learner knows is #965's. Netflix's player is #966's. The fullscreen screenshots and a counted
 Repeat run in branded Chrome are the agent Chrome harness's, by hand.
