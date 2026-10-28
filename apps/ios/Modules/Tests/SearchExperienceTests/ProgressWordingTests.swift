@@ -33,6 +33,23 @@ struct ProgressWordingTests {
     #expect(Today().spokenToday(sayingWhatsLeft: true) == "Today, 0 of 5 new words, 5 more to go")
   }
 
+  @Test func aMetDayIsSpokenTheSameOnBothScreens() {
+    struct Today: ShowsTodaysProgress {
+      let stats: ProgressStats?
+      let goal = 5
+    }
+    let met = ProgressStats.Day(day: "2026-10-28", added: 6, markedKnown: 0, goal: 5, met: true)
+    let none = ProgressStats.GoalMet(met: 0, days: 0)
+    let stats = ProgressStats(
+      today: met, days: [met], streak: 3, bestStreak: nil, last7: [], last30: [],
+      goalMet: ProgressStats.GoalMetDays(last7: none, last30: none),
+      totals: ProgressStats.Totals(known: 0, learning: 0, markedKnownLast7: 0, addedLast7: 6, addedLast30: 6),
+      knownOverTime: [], dailyAverage: ProgressStats.DailyAverage(average: 0, days: 0), words: [])
+    let today = Today(stats: stats)
+    #expect(today.spokenToday(sayingWhatsLeft: false) == "Today, 6 of 5 new words, goal met, 3-day streak")
+    #expect(today.spokenToday(sayingWhatsLeft: true) == "Today, 6 of 5 new words, goal met, 3-day streak")
+  }
+
   @Test func wordsAndMonths() {
     #expect(ProgressWording.newWords(1) == "1 new word")
     #expect(ProgressWording.newWords(20) == "20 new words")

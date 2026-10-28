@@ -70,7 +70,7 @@ private let touch: Set<TestDevice.Kind> = [.phone, .pad]
 private let chartDays = [
   allow(
     .hitRegion, .identifiedBy(prefix: "progress.new-words.bar."),
-    on: ["Progress, a month of new words", "Progress, its end"], because: Why.monthBar),
+    on: ["Progress, a month of new words", "Progress, its end"], [.phone], because: Why.monthBar),
 ]
 private let iPadSheets = [
   "Image's sources", "A frequency rank's details", "Add to List", "A word's photo", "Handwriting", "Radicals",
@@ -141,7 +141,7 @@ private enum Why {
   static let headword =
     "A long headword shrinks one size to keep its reading beside the pitch accent, as the product docs say; at the accessibility sizes it is full size on a line of its own"
   static let monthBar =
-    "A Month bar is one of 30 days across the chart, 12 points wide on an iPhone, and VoiceOver reads each as its day's line. Swift Charts would group the bars two to an element to make them wider, which leaves VoiceOver reading two-day ranges instead of days. A tap selects a day by where it lands across the whole chart's height, and the Week shows the last seven days as wide bars"
+    "With dates on the x axis, Swift Charts grouped the bars two to an element, so VoiceOver read two-day ranges; each bar is its own element now, 12 points wide on an iPhone, and a tap selects by its position across the chart"
   static let largerText =
     "Image Search's Text view sets its text one size larger than the device's, so the audit always reports it as missing the device's size, though it grows with it, as the largest-size pass shows. Its list lays every row out again at each size the audit steps through, so the audit often loses the text it found and reports it with no element to name, which no allowance can match. The text-clipped audit still runs there"
 }
