@@ -5,17 +5,17 @@ import { useEffect, useState } from 'react'
 import { captionLabels } from '../captions/labels'
 import type { CaptionsAnswer } from '../captions/messages'
 import type { Settings } from '../shared/settings'
+import { ModelNotice } from '../shared/translation-model'
 import { useSettings } from '../shared/use-settings'
 import { emptyTab } from '../side-panel/empty-tab'
 import { labels as panelLabels } from '../side-panel/labels'
 import type { PanelTabProps } from '../side-panel/route'
 import { translateLabels } from '../translate/labels'
-import { DownloadProgress } from '../translate/translate-tab'
 import { useActiveTab, type WatchedVideo, watchedIn } from './active-tab'
 import { videoTabLabels } from './labels'
 import { onDeviceVideoServices, type VideoTabServices } from './services'
 import { Transcript } from './transcript'
-import { type Translator, useEnglish } from './use-english'
+import { useEnglish } from './use-english'
 import { useCaptions, usePlayback } from './use-video'
 
 type Shared = { services: VideoTabServices; open: PanelTabProps['open'] }
@@ -31,6 +31,11 @@ const noteClass = 'text-sm text-muted-foreground'
 const noEnglish: ReadonlyMap<string, string> = new Map()
 
 const noFailures: ReadonlySet<string> = new Set()
+
+const englishText = {
+  asks: videoTabLabels.englishNeedsDownload,
+  unavailable: translateLabels.notices.unavailable
+}
 
 function useNow(ticking: boolean): number {
   const [now, setNow] = useState(() => Date.now())
@@ -61,25 +66,6 @@ function RateLimited({ retryAt, tryAgain }: { retryAt: number; tryAgain(): void 
   return <Notice text={captionLabels.rateLimited(retryAt, now)} tryAgain={tryAgain} />
 }
 
-function EnglishNotice({ translator, download }: { translator: Translator; download(): void }) {
-  if (translator.state === 'downloading') return <DownloadProgress fraction={translator.fraction} />
-  if (translator.state === 'unavailable')
-    return <p className={noteClass}>{translateLabels.notices.unavailable}</p>
-  if (translator.state !== 'downloadable' && translator.state !== 'download-failed') return null
-  return (
-    <div data-english-notice className="flex items-center gap-3">
-      <p className={`${noteClass} flex-1`}>
-        {translator.state === 'downloadable'
-          ? videoTabLabels.englishNeedsDownload
-          : translateLabels.notices.downloadFailed}
-      </p>
-      <Button variant="outline" size="sm" onClick={download}>
-        {videoTabLabels.download}
-      </Button>
-    </div>
-  )
-}
-
 function ReloadNotice({ reload }: { reload(): void }) {
   return (
     <div data-reload-notice className="flex items-center gap-3">
@@ -108,7 +94,7 @@ function Lines({
   return (
     <>
       {unreachable && <ReloadNotice reload={() => shared.services.reload(video.tabId)} />}
-      {translations && <EnglishNotice translator={translator} download={download} />}
+      {translations && <ModelNotice model={translator} download={download} text={englishText} />}
       <Transcript
         lines={lines}
         english={translations ? english : noEnglish}

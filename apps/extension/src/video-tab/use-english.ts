@@ -1,69 +1,35 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { failure } from '../shared/messages'
-import type { Direction, TranslatorState } from '../translation/messages'
+import {
+  type ModelServices,
+  type ModelState,
+  modelIn,
+  useTranslationModel
+} from '../shared/translation-model'
+import { japaneseToEnglish } from '../translation/direction'
 import type { VideoTabServices } from './services'
-
-export type Translator =
-  | { state: 'checking' }
-  | { state: 'available' }
-  | { state: 'downloadable' }
-  | { state: 'downloading'; fraction: number }
-  | { state: 'download-failed' }
-  | { state: 'unavailable' }
 
 type EnglishServices = Pick<VideoTabServices, 'translate' | 'availability' | 'download'>
 
-const japaneseToEnglish: Direction = { from: 'ja', to: 'en' }
-
 const translatingAtOnce = 2
 
-const checking: Translator = { state: 'checking' }
-
-function translatorIn(state: TranslatorState): Translator {
-  if (state === 'available') return { state: 'available' }
-  if (state === 'unavailable') return { state: 'unavailable' }
-  return { state: 'downloadable' }
-}
-
-function afterDownload(state: TranslatorState): Translator {
-  if (state === 'available' || state === 'unavailable') return translatorIn(state)
-  return { state: 'download-failed' }
-}
-
 function useTranslator(on: boolean, services: EnglishServices) {
-  const [translator, setTranslator] = useState<Translator>(checking)
-  useEffect(() => {
-    if (!on) return
-    let live = true
-    Promise.resolve()
-      .then(() => services.availability(japaneseToEnglish))
-      .then(translatorIn, (): Translator => ({ state: 'unavailable' }))
-      .then(next => {
-        if (live) setTranslator(next)
-      })
-    return () => {
-      live = false
-    }
-  }, [on, services])
-  const download = useCallback(() => {
-    setTranslator({ state: 'downloading', fraction: 0 })
-    Promise.resolve()
-      .then(() =>
-        services.download(japaneseToEnglish, fraction =>
-          setTranslator({ state: 'downloading', fraction })
-        )
-      )
-      .then(afterDownload, (): Translator => ({ state: 'download-failed' }))
-      .then(setTranslator)
-  }, [services])
+  const model = useMemo<ModelServices>(
+    () => ({
+      availability: () => services.availability(japaneseToEnglish),
+      download: onProgress => services.download(japaneseToEnglish, onProgress)
+    }),
+    [services]
+  )
+  const { model: translator, setModel: setTranslator, download } = useTranslationModel(on, model)
   return { translator, setTranslator, download }
 }
 
 export type English = {
   english: ReadonlyMap<string, string>
   failed: ReadonlySet<string>
-  translator: Translator
+  translator: ModelState
   download(): void
   retry(text: string): void
 }
@@ -88,7 +54,7 @@ export function useEnglish(
         .catch((error: unknown) => failure(error))
       if (!mounted.current) return false
       if (answer.type === 'not-available') {
-        setTranslator(translatorIn(answer.state))
+        setTranslator(modelIn(answer.state))
         return false
       }
       if (answer.type === 'translated' && answer.texts[0]) known.current.set(text, answer.texts[0])
