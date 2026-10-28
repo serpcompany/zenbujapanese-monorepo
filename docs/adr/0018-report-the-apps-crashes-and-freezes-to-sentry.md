@@ -97,3 +97,13 @@ standard was written for desktop apps. Where this app departs from it:
 - [`ios-crash-reports.md`](../agents/ios-crash-reports.md) has how it's built and checked, and the
   product docs' [Crash reports](../../apps/ios/docs/product/crash-reports.md) what the learner
   sees.
+
+## Amendment: the browser extension reports the same way
+
+Amended 2026-10-28 (issue 953): the browser extension's error reports follow this record. They
+are on by default, as here, with a **Send Crash Reports** switch on its Settings page that takes
+effect at once, and they go to Sentry in the same `serpcompany` organization, with the same rule
+of a code, never a message, for a handled failure. The extension has no Sentry project of its own
+yet: the owner chose on 2026-10-27 not to create `zenbujapanese-extension` for now, so its DSN is
+empty and no build sends anything until it is created. How it is built, scrubbed, and checked is
+in [`extension-error-reports.md`](../agents/extension-error-reports.md).
