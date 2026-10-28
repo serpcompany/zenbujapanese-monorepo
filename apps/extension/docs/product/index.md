@@ -70,5 +70,5 @@ set in Sentry.
 ## Not built yet
 
 Saving isn't built, so the side panel's Images, Words, and Recent tabs show only their empty
-states. Hide Furigana on Known Words and Sentence Translations are stored but draw nothing on a
-page yet.
+states. Hide Furigana on Known Words is stored but changes nothing yet. Sentence Translations
+shows English only in the Video tab and under the caption on the player, not on other pages.
