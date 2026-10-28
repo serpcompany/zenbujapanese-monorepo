@@ -25,6 +25,14 @@ const offscreenDocument = 'offscreen/offscreen.html'
 
 export const builtPages = [...pages.map(page => `pages/${page}.html`), offscreenDocument]
 
+export const iconAssets = () =>
+  Promise.all(
+    iconSizes.map(async size => ({
+      fileName: iconFile(size),
+      source: await readFile(fromPackage(`../../assets/brand/extensions/icon-${size}.png`))
+    }))
+  )
+
 const isShadowRootStylesheet = (file: string) =>
   file.split('?')[0] === fromPackage('src/styles/shadow.css')
 
@@ -98,13 +106,7 @@ function extensionFiles(variant: Variant, environment: Environment): Plugin {
       })
     },
     async buildStart() {
-      for (const size of iconSizes) {
-        this.emitFile({
-          type: 'asset',
-          fileName: iconFile(size),
-          source: await readFile(fromPackage(`../../assets/brand/extensions/icon-${size}.png`))
-        })
-      }
+      for (const icon of await iconAssets()) this.emitFile({ type: 'asset', ...icon })
     },
     async closeBundle() {
       for (const script of builtContentScripts(variant)) {
