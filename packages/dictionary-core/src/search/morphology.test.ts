@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { analyzedWords, lookupSegments, type MorphologyWord } from './morphology'
+import { analyzedWords, isOneWordPhrase, lookupSegments, type MorphologyWord } from './morphology'
 import { morphemes } from './morphology.fixture'
 
 describe('analyzedWords', () => {
@@ -60,6 +60,19 @@ describe('lookupSegments', () => {
     ).toEqual(['日本語', '勉強', 'する'])
   })
 
+  test('keeps adverbs, pre-noun words, and conjunctions, which a learner looks up as words', () => {
+    expect(
+      lookupSegments([
+        word('すこし', 'すこし', '副詞'),
+        word('この', 'この', '連体詞'),
+        word('そして', 'そして', '接続詞'),
+        word('おくれる', 'おくれる', '動詞'),
+        word('か', 'か', '助詞'),
+        word('も', 'も', '助詞')
+      ])
+    ).toEqual(['すこし', 'この', 'そして', 'おくれる'])
+  })
+
   test('drops unknown and non-Japanese words, and keeps the surface without a dictionary form', () => {
     expect(
       lookupSegments([
@@ -69,5 +82,34 @@ describe('lookupSegments', () => {
         word('犬', '', '名詞')
       ])
     ).toEqual(['猫', '犬'])
+  })
+})
+
+describe('isOneWordPhrase', () => {
+  test('is one word looked up with only particles, endings, and punctuation around it', () => {
+    expect(
+      isOneWordPhrase([
+        word('遅れる', '遅れる', '動詞'),
+        word('か', 'か', '助詞'),
+        word('も', 'も', '助詞')
+      ])
+    ).toBe(true)
+    expect(
+      isOneWordPhrase([
+        word('夜', '夜', '名詞'),
+        word('です', 'です', '助動詞'),
+        word('。', '。', '補助記号')
+      ])
+    ).toBe(true)
+  })
+
+  test('is not two words, a lone prefix or suffix, or a word beside one the analyzer didn’t know', () => {
+    expect(isOneWordPhrase([word('この', 'この', '連体詞'), word('本', '本', '名詞')])).toBe(false)
+    expect(
+      isOneWordPhrase([word('髙橋', '髙橋', '名詞', true), word('さん', 'さん', '接尾辞')])
+    ).toBe(false)
+    expect(isOneWordPhrase([word('お', 'お', '接頭辞'), word('か', 'か', '助詞')])).toBe(false)
+    expect(isOneWordPhrase([word('あ', 'あ', '感動詞'), word('゙', '゙', '名詞', true)])).toBe(false)
+    expect(isOneWordPhrase([word('か', 'か', '助詞')])).toBe(false)
   })
 })

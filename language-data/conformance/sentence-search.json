@@ -4575,11 +4575,15 @@
     },
     {
       "covers" : "a query example-search.json records",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "はい。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "はい",
+          "id" : "a4f80246ab8a717bd00557c2de706799",
+          "reading" : "はい"
+        }
       ],
       "searched" : [
         "はい"
@@ -6908,11 +6912,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of up to 8 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "放っといて。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "放る",
+          "id" : "413a8bf4731dbb1ab7f17d6989ac53c7",
+          "reading" : "ほうる"
+        }
       ],
       "searched" : [
         "放る"
@@ -7449,11 +7457,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of up to 8 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "嘘！",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "嘘",
+          "id" : "bfa61b4bd6bcdcb10e77f2fa34f43cb1",
+          "reading" : "うそ"
+        }
       ],
       "searched" : [
         "嘘"
@@ -7589,11 +7601,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of up to 8 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "ようこそ！",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "ようこそ",
+          "id" : "a98753c09f6fdd04f58d71974567176a",
+          "reading" : "ようこそ"
+        }
       ],
       "searched" : [
         "ようこそ"
@@ -8027,11 +8043,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of up to 8 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "夜です。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "夜",
+          "id" : "a1ac87f290a2e64884d8194581ed52ab",
+          "reading" : "よる"
+        }
       ],
       "searched" : [
         "夜"
@@ -8835,11 +8855,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of up to 8 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "完璧だった。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "完璧",
+          "id" : "ab7bd5272bb4a4398576a1d05c5ff934",
+          "reading" : "かんぺき"
+        }
       ],
       "searched" : [
         "完璧"
@@ -9393,11 +9417,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of up to 8 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "分からない。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "分かる",
+          "id" : "d3094eebd02ffb0c94cb40cfbdf7d1c3",
+          "reading" : "わかる"
+        }
       ],
       "searched" : [
         "分かる"
@@ -10204,11 +10232,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of up to 8 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "おいで。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "おい",
+          "id" : "505e088b32eb08338c0438b97ec34873",
+          "reading" : "おい"
+        }
       ],
       "searched" : [
         "おい"
@@ -11266,11 +11298,15 @@
     },
     {
       "covers" : "a Tatoeba sentence of 9 to 25 characters",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "からかってないよ。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "からかう",
+          "id" : "e3285727665d78b91d5e37f0dce2cb96",
+          "reading" : "からかう"
+        }
       ],
       "searched" : [
         "からかう"
@@ -11856,6 +11892,11 @@
           "reading" : "ひる"
         },
         {
+          "headword" : "ずっと",
+          "id" : "e3cbdd0fe38cdd1f811585188879e28d",
+          "reading" : "ずっと"
+        },
+        {
           "headword" : "忙しい",
           "id" : "0c0ad95f6fca0eea2bd615f465b298da",
           "reading" : "いそがしい"
@@ -11863,6 +11904,7 @@
       ],
       "searched" : [
         "昼",
+        "ずっと",
         "忙しい"
       ],
       "words" : [
@@ -12137,6 +12179,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "列車",
           "id" : "1820dcb7cba440c323ca945c684cdf95",
           "reading" : "れっしゃ"
@@ -12148,6 +12195,7 @@
         }
       ],
       "searched" : [
+        "その",
         "列車",
         "間に合う"
       ],
@@ -12312,6 +12360,11 @@
           "reading" : "ふたり"
         },
         {
+          "headword" : "詰まり",
+          "id" : "40ddeba4346006204669cb131fd91da7",
+          "reading" : "つまり"
+        },
+        {
           "headword" : "メリージェーン",
           "id" : "b172fab5bbdcf98a24e3a302d55deade",
           "reading" : "メリージェーン"
@@ -12331,6 +12384,7 @@
         "彼女",
         "級友",
         "二人",
+        "つまり",
         "ジェーン",
         "メアリー",
         "招く"
@@ -12566,6 +12620,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "橋",
           "id" : "4d23e97b17d2c2cba357382be08dac1f",
           "reading" : "はし"
@@ -12576,14 +12635,21 @@
           "reading" : "ながさ"
         },
         {
+          "headword" : "どの",
+          "id" : "b49ffbd0e984ea110127aab91a9d7a54",
+          "reading" : "どの"
+        },
+        {
           "headword" : "有る",
           "id" : "45eefee1383a89cb3c6287032622e6fa",
           "reading" : "ある"
         }
       ],
       "searched" : [
+        "この",
         "橋",
         "長さ",
+        "どの",
         "ある"
       ],
       "words" : [
@@ -12793,6 +12859,11 @@
           "reading" : "ら"
         },
         {
+          "headword" : "決して",
+          "id" : "d7e2b35f3bfbed04f63f0cad90831369",
+          "reading" : "けっして"
+        },
+        {
           "headword" : "折れる",
           "id" : "811dd48674251cc3ea0c70d7029e5591",
           "reading" : "おれる"
@@ -12816,6 +12887,7 @@
       "searched" : [
         "彼",
         "ら",
+        "決して",
         "折れる",
         "弁解",
         "する",
@@ -13101,6 +13173,11 @@
           "reading" : "レストラン"
         },
         {
+          "headword" : "一杯",
+          "id" : "9b63ae3deb49218356bbb64579216a09",
+          "reading" : "いっぱい"
+        },
+        {
           "headword" : "有る",
           "id" : "45eefee1383a89cb3c6287032622e6fa",
           "reading" : "ある"
@@ -13110,6 +13187,7 @@
         "ハワイ",
         "和食",
         "レストラン",
+        "いっぱい",
         "ある"
       ],
       "words" : [
@@ -13955,6 +14033,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "あの",
+          "id" : "921632736e8008edbe0deed0df74318a",
+          "reading" : "あの"
+        },
+        {
           "headword" : "店",
           "id" : "ca81b6acad7fa9c8e82b0a4373c97eaa",
           "reading" : "てん"
@@ -13981,6 +14064,7 @@
         }
       ],
       "searched" : [
+        "あの",
         "店",
         "魚",
         "肉",
@@ -15013,6 +15097,11 @@
           "reading" : "かのじょ"
         },
         {
+          "headword" : "とても",
+          "id" : "fc45ab3c50b61351197aae6a325227e6",
+          "reading" : "とても"
+        },
+        {
           "headword" : "動揺",
           "id" : "4926fa3cebf3dd12d0a8b95abe8ecf05",
           "reading" : "どうよう"
@@ -15030,6 +15119,7 @@
       ],
       "searched" : [
         "彼女",
+        "とても",
         "動揺",
         "する",
         "いる"
@@ -16275,6 +16365,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "もう",
+          "id" : "069fc08d9f2da08db0e7bde6954e19ff",
+          "reading" : "もう"
+        },
+        {
           "headword" : "一回",
           "id" : "af094885e74c7b168e902d04d629b54d",
           "reading" : "いっかい"
@@ -16291,6 +16386,7 @@
         }
       ],
       "searched" : [
+        "もう",
         "一回",
         "やる",
         "いい"
@@ -17259,6 +17355,11 @@
           "reading" : "かのじょ"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "知らせ",
           "id" : "2a4a0201f76814eb8827a46fe72216c9",
           "reading" : "しらせ"
@@ -17276,6 +17377,7 @@
       ],
       "searched" : [
         "彼女",
+        "その",
         "知らせ",
         "聞く",
         "悲しむ"
@@ -17908,6 +18010,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "そう",
+          "id" : "8fb2ea6878dacc21841a19ae484a3a43",
+          "reading" : "そう"
+        },
+        {
           "headword" : "言う",
           "id" : "f29080a71f7c90fd3a74d41ae1cac271",
           "reading" : "いう"
@@ -17929,6 +18036,7 @@
         }
       ],
       "searched" : [
+        "そう",
         "いう",
         "事態",
         "我慢",
@@ -18411,6 +18519,11 @@
           "reading" : "くん"
         },
         {
+          "headword" : "良く",
+          "id" : "a6c28430dd5d3942b6cc1b8532a0315f",
+          "reading" : "よく"
+        },
+        {
           "headword" : "文法",
           "id" : "c8c97f3db71e4777e42fd9f4199527b7",
           "reading" : "ぶんぽう"
@@ -18423,6 +18536,7 @@
       ],
       "searched" : [
         "君",
+        "よく",
         "文法",
         "知る"
       ],
@@ -18795,6 +18909,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "あの",
+          "id" : "921632736e8008edbe0deed0df74318a",
+          "reading" : "あの"
+        },
+        {
           "headword" : "子",
           "id" : "5e29c737e6b459090b26c80f7e6d935b",
           "reading" : "ね"
@@ -18821,6 +18940,7 @@
         }
       ],
       "searched" : [
+        "あの",
         "子",
         "無理",
         "塾",
@@ -20506,8 +20626,8 @@
           "reading" : "はやる"
         },
         {
-          "headword" : "旅",
-          "id" : "7521de92af4f3f280417f820b20ae29e",
+          "headword" : "度",
+          "id" : "48c06e169cd8aed96e6b46a216bf82af",
           "reading" : "たび"
         },
         {
@@ -20988,6 +21108,11 @@
           "reading" : "ジム"
         },
         {
+          "headword" : "未だ",
+          "id" : "8550b3929559da3a5e8f262fed1f5ad8",
+          "reading" : "まだ"
+        },
+        {
           "headword" : "帰る",
           "id" : "4bd8cdefc834f5588c299866758cd048",
           "reading" : "かえる"
@@ -21000,6 +21125,7 @@
       ],
       "searched" : [
         "ジム",
+        "まだ",
         "帰る",
         "いる"
       ],
@@ -21754,6 +21880,11 @@
           "reading" : "かいしゃ"
         },
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "様",
           "id" : "b8ee6c2c6366d9c748a2472377444e93",
           "reading" : "よう"
@@ -21777,6 +21908,7 @@
       "searched" : [
         "最近",
         "会社",
+        "この",
         "様",
         "支出",
         "正当化",
@@ -21994,6 +22126,11 @@
           "reading" : "まいばん"
         },
         {
+          "headword" : "同じ",
+          "id" : "b53c93e6f147069263e03b69c7724207",
+          "reading" : "おなじ"
+        },
+        {
           "headword" : "夢",
           "id" : "86f8a943e17462a4f959d4980e6cf4b6",
           "reading" : "ゆめ"
@@ -22008,6 +22145,7 @@
         "ここ",
         "ところ",
         "毎晩",
+        "同じ",
         "夢",
         "見る"
       ],
@@ -24359,6 +24497,11 @@
           "reading" : "はやい"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "曲",
           "id" : "558985314972f734894967a422b7a17c",
           "reading" : "きょく"
@@ -24384,6 +24527,7 @@
         "軽快",
         "テンポ",
         "速い",
+        "その",
         "曲",
         "若者",
         "好む",
@@ -24720,6 +24864,11 @@
           "reading" : "たてる"
         },
         {
+          "headword" : "お毛毛",
+          "id" : "a261081021782867a7341ca394e04936",
+          "reading" : "おけけ"
+        },
+        {
           "headword" : "ない",
           "id" : "3339a283acf7daea039bc87b898cc58f",
           "reading" : "ない"
@@ -24739,6 +24888,7 @@
         "あなた",
         "腹",
         "立てる",
+        "けけ",
         "ない",
         "自分",
         "腹",
@@ -25432,6 +25582,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "そして",
+          "id" : "3977172a68ce872d98a7704c06f77326",
+          "reading" : "そして"
+        },
+        {
           "headword" : "それ",
           "id" : "1dd06ede325b321de11e918788c2896c",
           "reading" : "それ"
@@ -25473,6 +25628,7 @@
         }
       ],
       "searched" : [
+        "そして",
         "それ",
         "ら",
         "家",
@@ -26667,6 +26823,11 @@
           "reading" : "ふさい"
         },
         {
+          "headword" : "或る",
+          "id" : "669dd28645223fb1d732050e9526035f",
+          "reading" : "ある"
+        },
+        {
           "headword" : "年",
           "id" : "dd0960a6648dc271b678dea2764859f3",
           "reading" : "ねん"
@@ -26695,6 +26856,7 @@
       "searched" : [
         "デイビス",
         "夫妻",
+        "ある",
         "年",
         "ホテル",
         "クリスマスパーティー",
@@ -27729,6 +27891,11 @@
           "reading" : "つく"
         },
         {
+          "headword" : "はっきり",
+          "id" : "08ddce59fd6465cef4a8c4096eadc6d3",
+          "reading" : "はっきり"
+        },
+        {
           "headword" : "知る",
           "id" : "70a3815436eac0487a15f8839f5b8a84",
           "reading" : "しる"
@@ -27745,6 +27912,7 @@
         "旅行",
         "計画",
         "つく",
+        "はっきり",
         "知る",
         "いる"
       ],
@@ -29132,6 +29300,11 @@
           "reading" : "ら"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "建設",
           "id" : "780a501861038ca2bfc3dfb24ea35e7b",
           "reading" : "けんせつ"
@@ -29175,6 +29348,7 @@
       "searched" : [
         "彼",
         "ら",
+        "その",
         "建設",
         "始まる",
         "時",
@@ -29917,6 +30091,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "写真",
           "id" : "edf18362d54832b550e6c8666235b4a0",
           "reading" : "しゃしん"
@@ -29932,6 +30111,11 @@
           "reading" : "あなた"
         },
         {
+          "headword" : "そう",
+          "id" : "8fb2ea6878dacc21841a19ae484a3a43",
+          "reading" : "そう"
+        },
+        {
           "headword" : "別人",
           "id" : "5739a5a5b1a089a268158620554aa61b",
           "reading" : "べつじん"
@@ -29943,9 +30127,11 @@
         }
       ],
       "searched" : [
+        "この",
         "写真",
         "人",
         "あなた",
+        "そう",
         "別人",
         "みたい"
       ],
@@ -30845,6 +31031,11 @@
           "reading" : "きょうつうてん"
         },
         {
+          "headword" : "沢山",
+          "id" : "9bb99463cabe1877e99d8e5ea7e9fc4b",
+          "reading" : "たくさん"
+        },
+        {
           "headword" : "有る",
           "id" : "45eefee1383a89cb3c6287032622e6fa",
           "reading" : "ある"
@@ -30865,6 +31056,7 @@
         "たち",
         "二人",
         "共通点",
+        "たくさん",
         "ある",
         "思う",
         "いる"
@@ -31168,6 +31360,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "仕事",
           "id" : "52d0eab895319d9bd11f8d66f2f0a60b",
           "reading" : "しごと"
@@ -31199,6 +31396,7 @@
         }
       ],
       "searched" : [
+        "その",
         "仕事",
         "する",
         "彼",
@@ -31498,6 +31696,11 @@
           "reading" : "かのじょ"
         },
         {
+          "headword" : "ずっと",
+          "id" : "e3cbdd0fe38cdd1f811585188879e28d",
+          "reading" : "ずっと"
+        },
+        {
           "headword" : "若い",
           "id" : "8ee173c78b8c53b662331ed7e4019736",
           "reading" : "わかい"
@@ -31532,6 +31735,7 @@
         "あなた",
         "彼女",
         "あなた",
+        "ずっと",
         "若い",
         "いう",
         "こと",
@@ -33121,6 +33325,11 @@
           "reading" : "じ"
         },
         {
+          "headword" : "もう",
+          "id" : "069fc08d9f2da08db0e7bde6954e19ff",
+          "reading" : "もう"
+        },
+        {
           "headword" : "年",
           "id" : "dd0960a6648dc271b678dea2764859f3",
           "reading" : "ねん"
@@ -33136,6 +33345,7 @@
         "最後",
         "行く",
         "時",
+        "もう",
         "年",
         "たつ"
       ],
@@ -34036,6 +34246,11 @@
           "reading" : "じんせい"
         },
         {
+          "headword" : "大分",
+          "id" : "99257377fc00d227956e6fd51689d789",
+          "reading" : "だいぶ"
+        },
+        {
           "headword" : "違う",
           "id" : "c6da8073a189539b1bcc31346ba8852b",
           "reading" : "ちがう"
@@ -34047,6 +34262,7 @@
         "遅い",
         "生まれる",
         "人生",
+        "大分",
         "違う"
       ],
       "words" : [
@@ -34331,6 +34547,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "俳優",
           "id" : "8362471ec754c4202b60064bb8309c62",
           "reading" : "はいゆう"
@@ -34372,9 +34593,11 @@
         }
       ],
       "searched" : [
+        "その",
         "俳優",
         "自分",
         "スーツ",
+        "その",
         "仕立屋",
         "さん",
         "つくる",
@@ -36215,6 +36438,11 @@
           "reading" : "もの"
         },
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "私",
           "id" : "819a30cc88dca4967262e8051a957df9",
           "reading" : "あたし"
@@ -36235,6 +36463,7 @@
         "価値",
         "ある",
         "もの",
+        "どう",
         "私",
         "確信",
         "もてる"
@@ -37349,6 +37578,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "そして",
+          "id" : "3977172a68ce872d98a7704c06f77326",
+          "reading" : "そして"
+        },
+        {
           "headword" : "宮",
           "id" : "896e9a85dec865cc3f2a465a3b5a89e9",
           "reading" : "みや"
@@ -37420,6 +37654,7 @@
         }
       ],
       "searched" : [
+        "そして",
         "宮",
         "中",
         "牛",
@@ -38023,6 +38258,11 @@
           "reading" : "きょうちょう"
         },
         {
+          "headword" : "もっとも",
+          "id" : "3767c9fe44d311e832c98b9615e36704",
+          "reading" : "もっとも"
+        },
+        {
           "headword" : "重要",
           "id" : "8f5c343f425c4f20c3d956c09beb0115",
           "reading" : "じゅうよう"
@@ -38046,6 +38286,7 @@
         "強調",
         "する",
         "こと",
+        "もっとも",
         "重要",
         "ある"
       ],
@@ -38903,6 +39144,11 @@
           "reading" : "いる"
         },
         {
+          "headword" : "幾ら",
+          "id" : "42a1987f7898a83626ac651d2a222a50",
+          "reading" : "いくら"
+        },
+        {
           "headword" : "何",
           "id" : "9bfc3adbfaef4e83e82cbf9ecd93e795",
           "reading" : "なん"
@@ -38925,6 +39171,7 @@
         "掴み取り",
         "やる",
         "いる",
+        "いくら",
         "なん",
         "マニアック",
         "すぎる"
@@ -39956,6 +40203,11 @@
           "reading" : "さい"
         },
         {
+          "headword" : "丁度",
+          "id" : "69413171433daab4ee4c02878694b583",
+          "reading" : "ちょうど"
+        },
+        {
           "headword" : "半分",
           "id" : "119a90bb90123441667e6c18818f9d56",
           "reading" : "はんぶん"
@@ -39986,6 +40238,7 @@
         "歳",
         "メアリー",
         "トム",
+        "ちょうど",
         "半分",
         "歳",
         "メアリー",
@@ -41786,6 +42039,11 @@
           "reading" : "よう"
         },
         {
+          "headword" : "頻り",
+          "id" : "cf223fae1d48df2bae45186be983864e",
+          "reading" : "しきり"
+        },
+        {
           "headword" : "勧める",
           "id" : "6ff4addece742c6950853f8db3083fce",
           "reading" : "すすめる"
@@ -41804,6 +42062,11 @@
           "headword" : "受け入れる",
           "id" : "268d82b93884b5fd0e86a3bdd15d42a0",
           "reading" : "うけいれる"
+        },
+        {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
         },
         {
           "headword" : "代わり",
@@ -41839,10 +42102,12 @@
         "勉強",
         "する",
         "よう",
+        "しきり",
         "勧める",
         "ホーキング",
         "それ",
         "受け入れる",
+        "その",
         "代わり",
         "数学",
         "物理学",
@@ -43303,6 +43568,11 @@
           "reading" : "いえる"
         },
         {
+          "headword" : "一先ず",
+          "id" : "e73156658f9d52a5e9c119372827dc6e",
+          "reading" : "ひとまず"
+        },
+        {
           "headword" : "おめでとう",
           "id" : "841d9b1bf589daaf9ad8c0892b1b5ceb",
           "reading" : "おめでとう"
@@ -43336,6 +43606,7 @@
         "気の毒",
         "過ぎる",
         "言える",
+        "ひとまず",
         "おめでとう",
         "ありがとう"
       ],
@@ -45712,6 +45983,11 @@
           "reading" : "ずるい"
         },
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "する",
           "id" : "27b712d1aa61f1de61ebf3c7eb9ef070",
           "reading" : "する"
@@ -45767,6 +46043,11 @@
           "reading" : "おいぬく"
         },
         {
+          "headword" : "めっちゃ",
+          "id" : "1f80bb264176e8f73432d5e37a0ab1b4",
+          "reading" : "めっちゃ"
+        },
+        {
           "headword" : "悔しい",
           "id" : "344d23bf5ac1ed7b3dce2fab50a32743",
           "reading" : "くやしい"
@@ -45777,6 +46058,7 @@
         "乗る",
         "奴",
         "ずるい",
+        "どう",
         "する",
         "こっち",
         "一生懸命",
@@ -45790,6 +46072,7 @@
         "よう",
         "横",
         "追い抜く",
+        "めっちゃ",
         "悔しい"
       ],
       "words" : [
@@ -46758,6 +47041,11 @@
           "reading" : "ドル"
         },
         {
+          "headword" : "更に",
+          "id" : "94a187eb5313e08cf62c703e425a3039",
+          "reading" : "さらに"
+        },
+        {
           "headword" : "増える",
           "id" : "8f1c047d02e859174c82bf172b50548e",
           "reading" : "ふえる"
@@ -46790,6 +47078,7 @@
         "資産",
         "年",
         "ドル",
+        "さらに",
         "増える",
         "ドル",
         "及ぶ",
@@ -47666,6 +47955,11 @@
           "reading" : "やつ"
         },
         {
+          "headword" : "ほいほい",
+          "id" : "35daa127c067dd2ebfb40be79e11ae13",
+          "reading" : "ほいほい"
+        },
+        {
           "headword" : "結婚",
           "id" : "2af5d03adb2f00f9304bace7e5190ee5",
           "reading" : "けっこん"
@@ -47751,13 +48045,18 @@
           "reading" : "じょきょうじゅ"
         },
         {
+          "headword" : "まあ",
+          "id" : "87e3e7b200aebb3d699c5f1d8f5e7b5b",
+          "reading" : "まあ"
+        },
+        {
           "headword" : "入る",
           "id" : "c78ae645968bfa3a8b664c3652e1a533",
           "reading" : "はいる"
         },
         {
-          "headword" : "給ふ",
-          "id" : "24089a6b1c80993384418076a7dcd9bd",
+          "headword" : "給う",
+          "id" : "f6c7eb8abe538c59a26605b6a3fac0b7",
           "reading" : "たまう"
         },
         {
@@ -47792,6 +48091,7 @@
         "わかる",
         "よう",
         "奴",
+        "ほいほい",
         "やれる",
         "結婚",
         "する",
@@ -47813,6 +48113,7 @@
         "病院",
         "役職",
         "助教授",
+        "まぁ",
         "入る",
         "たまう",
         "おい",
@@ -49444,6 +49745,11 @@
           "reading" : "これ"
         },
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "する",
           "id" : "27b712d1aa61f1de61ebf3c7eb9ef070",
           "reading" : "する"
@@ -49486,6 +49792,7 @@
         "ある",
         "出る",
         "これ",
+        "どう",
         "する",
         "いい",
         "権限",
@@ -50478,6 +50785,11 @@
           "reading" : "め"
         },
         {
+          "headword" : "随分",
+          "id" : "01f740c6f884941fa0e33c5714950fbd",
+          "reading" : "ずいぶん"
+        },
+        {
           "headword" : "可憐",
           "id" : "8fa69645f23d20394974be9dbfe6b71d",
           "reading" : "かれん"
@@ -50546,6 +50858,7 @@
         "女の子",
         "健",
         "目",
+        "ずいぶん",
         "可憐",
         "映る",
         "いる",
@@ -52067,6 +52380,11 @@
           "reading" : "よる"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "トラック",
           "id" : "4ad7dc53c7dce3ff9c9a149ddcb95497",
           "reading" : "トラック"
@@ -52128,6 +52446,7 @@
         "ジャネット",
         "広報官",
         "よる",
+        "その",
         "トラック",
         "州間",
         "高速道路",
@@ -53476,9 +53795,19 @@
           "reading" : "にほんじん"
         },
         {
+          "headword" : "出来るだけ",
+          "id" : "acf7f2ccb55d9e96e09613df7ea9d47c",
+          "reading" : "できるだけ"
+        },
+        {
           "headword" : "自分",
           "id" : "7669931783fe46a882af7435ebcec82f",
           "reading" : "じぶん"
+        },
+        {
+          "headword" : "同じ",
+          "id" : "b53c93e6f147069263e03b69c7724207",
+          "reading" : "おなじ"
         },
         {
           "headword" : "よう",
@@ -53499,6 +53828,11 @@
           "headword" : "安定",
           "id" : "50bef0c1d52a3906da8348ff83b01dd7",
           "reading" : "あんてい"
+        },
+        {
+          "headword" : "ゆっくり",
+          "id" : "df6f92f3a708f194560eeec5dbdc30ae",
+          "reading" : "ゆっくり"
         },
         {
           "headword" : "有る",
@@ -53563,11 +53897,14 @@
       ],
       "searched" : [
         "日本人",
+        "出来るだけ",
         "自分",
+        "同じ",
         "よう",
         "結婚相手",
         "選ぶ",
         "安定",
+        "ゆっくり",
         "ある",
         "着実",
         "昇進",
@@ -55845,6 +56182,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "する",
           "id" : "27b712d1aa61f1de61ebf3c7eb9ef070",
           "reading" : "する"
@@ -55856,6 +56198,7 @@
         }
       ],
       "searched" : [
+        "どう",
         "する",
         "つもり"
       ],
@@ -55988,6 +56331,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "是非",
+          "id" : "5afc550f5e5f1260393da53ad0bd049a",
+          "reading" : "ぜひ"
+        },
+        {
           "headword" : "それ",
           "id" : "1dd06ede325b321de11e918788c2896c",
           "reading" : "それ"
@@ -56004,6 +56352,7 @@
         }
       ],
       "searched" : [
+        "ぜひ",
         "それ",
         "する",
         "なさる"
@@ -56125,9 +56474,19 @@
           "reading" : "コーヒー"
         },
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "出来る",
           "id" : "4bc5fe2e4e25270ac4a5d88364cd2d70",
           "reading" : "できる"
+        },
+        {
+          "headword" : "そう",
+          "id" : "8fb2ea6878dacc21841a19ae484a3a43",
+          "reading" : "そう"
         },
         {
           "headword" : "する",
@@ -56152,7 +56511,9 @@
       ],
       "searched" : [
         "コーヒー",
+        "どう",
         "できる",
+        "そう",
         "する",
         "いく",
         "ところ",
@@ -56605,11 +56966,15 @@
     },
     {
       "covers" : "a Tatoeba sentence in kana only",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "バレンタインデーだよ。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "バレンタインデー",
+          "id" : "c2a3cb5c77ddc25785bc0974a9b25105",
+          "reading" : "バレンタインデー"
+        }
       ],
       "searched" : [
         "バレンタインデー"
@@ -57035,6 +57400,7 @@
         }
       ],
       "searched" : [
+        "ウルウル",
         "する",
         "くる"
       ],
@@ -57150,6 +57516,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "どんな",
+          "id" : "b914941ec9d6d05d0a43cf5acd6595ae",
+          "reading" : "どんな"
+        },
+        {
           "headword" : "ワイン",
           "id" : "4ff5c5fda518c14a3a31f57ca6cb6567",
           "reading" : "ワイン"
@@ -57161,6 +57532,7 @@
         }
       ],
       "searched" : [
+        "どんな",
         "ワイン",
         "ある"
       ],
@@ -57430,6 +57802,11 @@
           "reading" : "トムソンがた"
         },
         {
+          "headword" : "もう",
+          "id" : "069fc08d9f2da08db0e7bde6954e19ff",
+          "reading" : "もう"
+        },
+        {
           "headword" : "オーストラリア",
           "id" : "a2157835be9747256ffe496e22a13b27",
           "reading" : "オーストラリア"
@@ -57442,6 +57819,7 @@
       ],
       "searched" : [
         "トム",
+        "もう",
         "オーストラリア",
         "いる"
       ],
@@ -57596,6 +57974,11 @@
           "reading" : "タバコ"
         },
         {
+          "headword" : "中々",
+          "id" : "9a8683f369517cc9e2adda0bc7464c14",
+          "reading" : "なかなか"
+        },
+        {
           "headword" : "辞める",
           "id" : "aeaa1ba99f31f332d230675904601a3b",
           "reading" : "やめる"
@@ -57603,6 +57986,7 @@
       ],
       "searched" : [
         "タバコ",
+        "なかなか",
         "やめる"
       ],
       "words" : [
@@ -57734,6 +58118,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "もう",
+          "id" : "069fc08d9f2da08db0e7bde6954e19ff",
+          "reading" : "もう"
+        },
+        {
           "headword" : "やる",
           "id" : "bec2e5ad75829619c808df25ff6122c6",
           "reading" : "やる"
@@ -57745,6 +58134,7 @@
         }
       ],
       "searched" : [
+        "もう",
         "やる",
         "みる"
       ],
@@ -57899,6 +58289,11 @@
           "reading" : "それ"
         },
         {
+          "headword" : "良く",
+          "id" : "a6c28430dd5d3942b6cc1b8532a0315f",
+          "reading" : "よく"
+        },
+        {
           "headword" : "有る",
           "id" : "45eefee1383a89cb3c6287032622e6fa",
           "reading" : "ある"
@@ -57911,6 +58306,7 @@
       ],
       "searched" : [
         "それ",
+        "よく",
         "ある",
         "こと"
       ],
@@ -58638,6 +59034,16 @@
           "reading" : "トムソンがた"
         },
         {
+          "headword" : "直ぐ",
+          "id" : "8815011dd9a34bb06719f31ea1b72f44",
+          "reading" : "すぐ"
+        },
+        {
+          "headword" : "カッと",
+          "id" : "05a85e9db7323d1907004dea8932ee6b",
+          "reading" : "カッと"
+        },
+        {
           "headword" : "なる",
           "id" : "54d598cee7bf263a0bef4809849e464b",
           "reading" : "なる"
@@ -58645,6 +59051,8 @@
       ],
       "searched" : [
         "トム",
+        "すぐ",
+        "カッと",
         "なる"
       ],
       "words" : [
@@ -58801,11 +59209,17 @@
           "headword" : "珈琲",
           "id" : "0345e1c1134ffd5d3616da4973deb562",
           "reading" : "コーヒー"
+        },
+        {
+          "headword" : "されど",
+          "id" : "c423d572c41d1dcb29d96f6a05c5b8ec",
+          "reading" : "されど"
         }
       ],
       "searched" : [
         "たか",
         "コーヒー",
+        "されど",
         "コーヒー"
       ],
       "words" : [
@@ -59579,6 +59993,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "ラジオ",
           "id" : "70f1b063208adb4ff80ffb0269aae8e7",
           "reading" : "ラジオ"
@@ -59590,6 +60009,7 @@
         }
       ],
       "searched" : [
+        "この",
         "ラジオ",
         "あなた"
       ],
@@ -59734,13 +60154,23 @@
     },
     {
       "covers" : "a Tatoeba sentence in kana only",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "そんなんじゃないんだ。",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "そんな",
+          "id" : "0946ecde65bc660bc155bf20c5509c67",
+          "reading" : "そんな"
+        },
+        {
+          "headword" : "ない",
+          "id" : "3339a283acf7daea039bc87b898cc58f",
+          "reading" : "ない"
+        }
       ],
       "searched" : [
+        "そんな",
         "ない"
       ],
       "words" : [
@@ -59872,6 +60302,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "籠",
           "id" : "20f3f6fad8780748869d8aaf61abaad2",
           "reading" : "かご"
@@ -59888,6 +60323,7 @@
         }
       ],
       "searched" : [
+        "その",
         "かご",
         "リンゴ",
         "いっぱい"
@@ -61732,8 +62168,8 @@
       "resolution" : "analyzed",
       "results" : [
         {
-          "headword" : "代替",
-          "id" : "a3b85328995fe98f215e2b0557108f06",
+          "headword" : "大体",
+          "id" : "88d0ec2858ff431fb498d94f9d1d8e7e",
           "reading" : "だいたい"
         },
         {
@@ -61861,6 +62297,11 @@
           "reading" : "まえ"
         },
         {
+          "headword" : "全く",
+          "id" : "bfccc49fb9f5bab3bdd8808c0a77bfa0",
+          "reading" : "まったく"
+        },
+        {
           "headword" : "違う",
           "id" : "c6da8073a189539b1bcc31346ba8852b",
           "reading" : "ちがう"
@@ -61872,6 +62313,7 @@
         "年",
         "前",
         "彼",
+        "全く",
         "違う"
       ],
       "words" : [
@@ -63035,6 +63477,11 @@
           "reading" : "あたし"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "川",
           "id" : "ac4bfe938509d4d27dd7b70cc8b7a70d",
           "reading" : "かわ"
@@ -63064,6 +63511,7 @@
         "歳",
         "とき",
         "私",
+        "その",
         "川",
         "泳ぐ",
         "渡る",
@@ -63804,6 +64252,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "油絵",
           "id" : "820d21334b13b8c5834207760bc4bc9c",
           "reading" : "あぶらえ"
@@ -63820,6 +64273,7 @@
         }
       ],
       "searched" : [
+        "この",
         "油絵",
         "世紀",
         "もの"
@@ -63987,6 +64441,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "小説",
           "id" : "0cfcb6f283838d3302423477ccd70093",
           "reading" : "しょうせつ"
@@ -64033,6 +64492,7 @@
         }
       ],
       "searched" : [
+        "この",
         "小説",
         "トム",
         "いう",
@@ -65761,6 +66221,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "会社",
           "id" : "2ca2d3d17ea13458f7316b205d3071a7",
           "reading" : "かいしゃ"
@@ -65787,6 +66252,7 @@
         }
       ],
       "searched" : [
+        "その",
         "会社",
         "経営者",
         "人",
@@ -66012,6 +66478,11 @@
           "reading" : "あたし"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "人",
           "id" : "2e2360526d3d5fa30239db0f6498fb5e",
           "reading" : "ひと"
@@ -66027,6 +66498,11 @@
           "reading" : "ちゅう"
         },
         {
+          "headword" : "最も",
+          "id" : "ae5eb7816c274ebffb33267afd2aef0f",
+          "reading" : "もっとも"
+        },
+        {
           "headword" : "忙しい",
           "id" : "0c0ad95f6fca0eea2bd615f465b298da",
           "reading" : "いそがしい"
@@ -66034,9 +66510,11 @@
       ],
       "searched" : [
         "私",
+        "その",
         "人",
         "少年",
         "中",
+        "最も",
         "忙しい"
       ],
       "words" : [
@@ -67341,12 +67819,18 @@
           "headword" : "年",
           "id" : "dd0960a6648dc271b678dea2764859f3",
           "reading" : "ねん"
+        },
+        {
+          "headword" : "どんな",
+          "id" : "b914941ec9d6d05d0a43cf5acd6595ae",
+          "reading" : "どんな"
         }
       ],
       "searched" : [
         "トム",
         "とる",
         "年",
+        "どんな",
         "年"
       ],
       "words" : [
@@ -67740,6 +68224,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "問題",
           "id" : "2ca83d20a0dc1df54579c64949413e36",
           "reading" : "もんだい"
@@ -67753,6 +68242,11 @@
           "headword" : "恒等式",
           "id" : "fdcb2f3e3e526e09b0e708dbcbd3deb8",
           "reading" : "こうとうしき"
+        },
+        {
+          "headword" : "先ず",
+          "id" : "5d3fe5b50cafafaf8f8efd0a99a829ad",
+          "reading" : "まず"
         },
         {
           "headword" : "与",
@@ -67771,9 +68265,11 @@
         }
       ],
       "searched" : [
+        "この",
         "問題",
         "つく",
         "恒等式",
+        "まず",
         "与",
         "式",
         "つく",
@@ -68374,6 +68870,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "我が",
+          "id" : "9bd2ed37bc1ed0d61ff99bf93f18c01a",
+          "reading" : "わが"
+        },
+        {
           "headword" : "チーム",
           "id" : "d93c49b0cc9a3fb4a99ae12483eebad6",
           "reading" : "チーム"
@@ -68390,6 +68891,7 @@
         }
       ],
       "searched" : [
+        "わが",
         "チーム",
         "チーム",
         "対等",
@@ -70159,6 +70661,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "文",
           "id" : "8dd62b656ab7eb7bfceafbef83e45464",
           "reading" : "ぶん"
@@ -70190,6 +70697,7 @@
         }
       ],
       "searched" : [
+        "この",
         "文",
         "よる",
         "無作為",
@@ -70492,6 +71000,11 @@
           "reading" : "わくせい"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "運動",
           "id" : "275e7fda9e2dbf7edd85fb92d0fdf0f7",
           "reading" : "うんどう"
@@ -70519,6 +71032,7 @@
         "ある",
         "ケプラー",
         "惑星",
+        "その",
         "運動",
         "つく",
         "研究",
@@ -71075,6 +71589,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "もし",
+          "id" : "3c64da81b54dbc0e28870bfa097b5ec8",
+          "reading" : "もし"
+        },
+        {
           "headword" : "アルファベット",
           "id" : "4ab543a9cc6f89ad64011abf701f30b4",
           "reading" : "アルファベット"
@@ -71106,6 +71625,7 @@
         }
       ],
       "searched" : [
+        "もし",
         "アルファベット",
         "並べ直す",
         "いい",
@@ -71488,6 +72008,11 @@
           "reading" : "たよる"
         },
         {
+          "headword" : "もっとも",
+          "id" : "3767c9fe44d311e832c98b9615e36704",
+          "reading" : "もっとも"
+        },
+        {
           "headword" : "奇妙",
           "id" : "c18e21265049532ec985e5b1fffdf495",
           "reading" : "きみょう"
@@ -71509,6 +72034,7 @@
         "出典",
         "する",
         "頼る",
+        "もっとも",
         "奇妙",
         "もの",
         "ある"
@@ -73258,6 +73784,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "近辺",
           "id" : "98ea8bbb93a35ea31ff0e29714168a6e",
           "reading" : "きんぺん"
@@ -73269,6 +73800,7 @@
         }
       ],
       "searched" : [
+        "この",
         "近辺",
         "ある"
       ],
@@ -73715,6 +74247,11 @@
           "reading" : "あたし"
         },
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "プレイヤー",
           "id" : "935847bdee957a61cc385f19506b1c35",
           "reading" : "プレイヤー"
@@ -73732,6 +74269,7 @@
       ],
       "searched" : [
         "私",
+        "この",
         "プレイヤー",
         "ただ",
         "得る"
@@ -74710,6 +75248,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "まるで",
+          "id" : "ab8a9e93571e84398e6ff443e170f3bf",
+          "reading" : "まるで"
+        },
+        {
           "headword" : "伝言",
           "id" : "9d933d928e1637959c911762a1776fae",
           "reading" : "でんごん"
@@ -74726,6 +75269,7 @@
         }
       ],
       "searched" : [
+        "まるで",
         "伝言",
         "ゲーム",
         "よう"
@@ -75104,6 +75648,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "会",
           "id" : "c0508719fd45dff59d60e2ee59d2afdd",
           "reading" : "かい"
@@ -75120,6 +75669,7 @@
         }
       ],
       "searched" : [
+        "この",
         "会",
         "名称",
         "する"
@@ -75382,6 +75932,11 @@
           "reading" : "よる"
         },
         {
+          "headword" : "もう",
+          "id" : "069fc08d9f2da08db0e7bde6954e19ff",
+          "reading" : "もう"
+        },
+        {
           "headword" : "機",
           "id" : "e85c36e30a75f785a02f168bc5e8546c",
           "reading" : "き"
@@ -75420,6 +75975,7 @@
       "searched" : [
         "ニュース",
         "よる",
+        "もう",
         "機",
         "ジェット",
         "旅客機",
@@ -76457,6 +77013,16 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "ばあ",
+          "id" : "84c52593edc855b54557e210781352f7",
+          "reading" : "ばあ"
+        },
+        {
+          "headword" : "ば",
+          "id" : "3395cbb9bdd0e5cd08a20f4aecd7df60",
+          "reading" : "ば"
+        },
+        {
           "headword" : "何処",
           "id" : "628ff17f0d1999707460fc690ac6dcaa",
           "reading" : "どこ"
@@ -76468,6 +77034,8 @@
         }
       ],
       "searched" : [
+        "ばあ",
+        "ば",
         "どこ",
         "台所"
       ],
@@ -76685,6 +77253,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "する",
           "id" : "27b712d1aa61f1de61ebf3c7eb9ef070",
           "reading" : "する"
@@ -76701,6 +77274,7 @@
         }
       ],
       "searched" : [
+        "どう",
         "する",
         "車",
         "故障",
@@ -77510,6 +78084,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "もし",
+          "id" : "3c64da81b54dbc0e28870bfa097b5ec8",
+          "reading" : "もし"
+        },
+        {
           "headword" : "疲れる",
           "id" : "5bb6d49d29929dd7c8a5a5cd44ebac32",
           "reading" : "つかれる"
@@ -77523,6 +78102,11 @@
           "headword" : "寝る",
           "id" : "3ee73bc74b631954edbad00428460bd4",
           "reading" : "ねる"
+        },
+        {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
         },
         {
           "headword" : "僕",
@@ -77556,9 +78140,11 @@
         }
       ],
       "searched" : [
+        "もし",
         "疲れる",
         "いる",
         "寝る",
+        "どう",
         "僕",
         "今",
         "寝る",
@@ -78002,9 +78588,19 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "する",
           "id" : "27b712d1aa61f1de61ebf3c7eb9ef070",
           "reading" : "する"
+        },
+        {
+          "headword" : "小さな",
+          "id" : "70e43be36b6edd46c48373ff8681318e",
+          "reading" : "ちいさな"
         },
         {
           "headword" : "白い",
@@ -78023,7 +78619,9 @@
         }
       ],
       "searched" : [
+        "どう",
         "する",
+        "小さな",
         "白い",
         "ウサギ",
         "聞く"
@@ -78332,6 +78930,11 @@
           "reading" : "トムソンがた"
         },
         {
+          "headword" : "良く",
+          "id" : "a6c28430dd5d3942b6cc1b8532a0315f",
+          "reading" : "よく"
+        },
+        {
           "headword" : "見る",
           "id" : "7f490a9c9c0da94f4e9474f4efe74be1",
           "reading" : "みる"
@@ -78364,9 +78967,11 @@
       ],
       "searched" : [
         "トム",
+        "よく",
         "見る",
         "かっこいい",
         "え",
+        "よく",
         "見る",
         "かっこ",
         "よい",
@@ -78788,9 +79393,9 @@
           "reading" : "だいじょうぶ"
         },
         {
-          "headword" : "亜",
-          "id" : "3645a845755a107611f09a4e23f4f750",
-          "reading" : "あ"
+          "headword" : "あっ",
+          "id" : "bf97e10bc9c91218a5490e84b46a8e2c",
+          "reading" : "あっ"
         },
         {
           "headword" : "これ",
@@ -79997,6 +80602,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "入れ歯",
           "id" : "7b72aa28b045c4b0d355b0592357e4ca",
           "reading" : "いれば"
@@ -80023,6 +80633,7 @@
         }
       ],
       "searched" : [
+        "この",
         "入れ歯",
         "噛み合わせ",
         "悪い",
@@ -80345,6 +80956,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "あの",
+          "id" : "921632736e8008edbe0deed0df74318a",
+          "reading" : "あの"
+        },
+        {
           "headword" : "本",
           "id" : "6245b12a543fe049cb5c9e623e12fb75",
           "reading" : "ほん"
@@ -80371,6 +80987,7 @@
         }
       ],
       "searched" : [
+        "あの",
         "本",
         "持つ",
         "くる",
@@ -80684,6 +81301,11 @@
           "reading" : "まえ"
         },
         {
+          "headword" : "しょっちゅう",
+          "id" : "4f6585de2003907177e621eb30fc9c9b",
+          "reading" : "しょっちゅう"
+        },
+        {
           "headword" : "食べる",
           "id" : "042e07f7052f611fed33ddddf37f55fd",
           "reading" : "たべる"
@@ -80711,6 +81333,7 @@
         "する",
         "ピザ",
         "前",
+        "しょっちゅう",
         "食べる",
         "最近",
         "食べる",
@@ -81379,6 +82002,11 @@
           "reading" : "ことば"
         },
         {
+          "headword" : "やっと",
+          "id" : "384c65bfcf33d44d9a8165084c96810c",
+          "reading" : "やっと"
+        },
+        {
           "headword" : "耳慣れる",
           "id" : "54e36a63af8e51afc4172e5c55ab8aca",
           "reading" : "みみなれる"
@@ -81391,6 +82019,7 @@
       ],
       "searched" : [
         "言葉",
+        "やっと",
         "耳慣れる",
         "くる"
       ],
@@ -82463,6 +83092,11 @@
           "reading" : "こと"
         },
         {
+          "headword" : "良く",
+          "id" : "a6c28430dd5d3942b6cc1b8532a0315f",
+          "reading" : "よく"
+        },
+        {
           "headword" : "知る",
           "id" : "70a3815436eac0487a15f8839f5b8a84",
           "reading" : "しる"
@@ -82478,6 +83112,7 @@
         "風光",
         "明媚",
         "こと",
+        "よく",
         "知る",
         "いる"
       ],
@@ -82700,6 +83335,11 @@
           "reading" : "サッカー"
         },
         {
+          "headword" : "必ず",
+          "id" : "c38cec320c5294bbf9c128c348b97950",
+          "reading" : "かならず"
+        },
+        {
           "headword" : "男",
           "id" : "d29839be1dc5944b09f8b06269df1c27",
           "reading" : "おとこ"
@@ -82722,6 +83362,7 @@
       ],
       "searched" : [
         "サッカー",
+        "必ず",
         "男",
         "限る",
         "もの",
@@ -83112,6 +83753,16 @@
           "reading" : "わたしたち"
         },
         {
+          "headword" : "偶然",
+          "id" : "62574b1053c87806adc2927c8a314b5b",
+          "reading" : "ぐうぜん"
+        },
+        {
+          "headword" : "同じ",
+          "id" : "b53c93e6f147069263e03b69c7724207",
+          "reading" : "おなじ"
+        },
+        {
           "headword" : "バス",
           "id" : "c852b88063ae12efaaef51355a471bc0",
           "reading" : "バス"
@@ -83124,6 +83775,8 @@
       ],
       "searched" : [
         "私達",
+        "偶然",
+        "同じ",
         "バス",
         "乗り合わせる"
       ],
@@ -83298,6 +83951,11 @@
           "reading" : "りょうて"
         },
         {
+          "headword" : "ぶるぶる",
+          "id" : "ab63d245769467cbb258ed4ee685421e",
+          "reading" : "ぶるぶる"
+        },
+        {
           "headword" : "震える",
           "id" : "4008648640d130d5445c896f6232bce7",
           "reading" : "ふるえる"
@@ -83309,6 +83967,7 @@
         "時",
         "彼",
         "両手",
+        "ぶるぶる",
         "震える"
       ],
       "words" : [
@@ -83508,6 +84167,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "丁度",
+          "id" : "69413171433daab4ee4c02878694b583",
+          "reading" : "ちょうど"
+        },
+        {
           "headword" : "君",
           "id" : "bf0b15d5fa56f69a78494073d2a88d4a",
           "reading" : "くん"
@@ -83534,6 +84198,7 @@
         }
       ],
       "searched" : [
+        "ちょうど",
         "君",
         "欲しい",
         "がる",
@@ -83725,6 +84390,11 @@
           "reading" : "きんだち"
         },
         {
+          "headword" : "どう",
+          "id" : "eae0af93375e7d10d69d9d67cbe40716",
+          "reading" : "どう"
+        },
+        {
           "headword" : "やる",
           "id" : "bec2e5ad75829619c808df25ff6122c6",
           "reading" : "やる"
@@ -83747,6 +84417,7 @@
       ],
       "searched" : [
         "君達",
+        "どう",
         "やる",
         "お",
         "互い",
@@ -84205,6 +84876,11 @@
           "reading" : "かれ"
         },
         {
+          "headword" : "ぶつぶつ",
+          "id" : "5dc89f366f26445b27b5f99459337efc",
+          "reading" : "ぶつぶつ"
+        },
+        {
           "headword" : "独り言",
           "id" : "4a07dd88ddb75f85cc015f93ed9d7654",
           "reading" : "ひとりごと"
@@ -84223,6 +84899,7 @@
       "searched" : [
         "私",
         "彼",
+        "ぶつぶつ",
         "独り言",
         "いう",
         "聞く"
@@ -84441,9 +85118,19 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "少女",
           "id" : "b4737c0d51e28b6022f845c32141ef82",
           "reading" : "しょうじょ"
+        },
+        {
+          "headword" : "大きな",
+          "id" : "0666f292a4e595cc649c5f4d4ca5b605",
+          "reading" : "おおきな"
         },
         {
           "headword" : "赤い",
@@ -84467,7 +85154,9 @@
         }
       ],
       "searched" : [
+        "その",
         "少女",
+        "大きな",
         "赤い",
         "帽子",
         "かぶる",
@@ -85196,6 +85885,11 @@
           "reading" : "かわいそう"
         },
         {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
           "headword" : "少女",
           "id" : "b4737c0d51e28b6022f845c32141ef82",
           "reading" : "しょうじょ"
@@ -85223,6 +85917,7 @@
       ],
       "searched" : [
         "かわいそう",
+        "その",
         "少女",
         "日",
         "中",
@@ -86079,6 +86774,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "とても",
+          "id" : "fc45ab3c50b61351197aae6a325227e6",
+          "reading" : "とても"
+        },
+        {
           "headword" : "静か",
           "id" : "657d72cf95a8d0510ef6464fc032bae0",
           "reading" : "しずか"
@@ -86090,6 +86790,7 @@
         }
       ],
       "searched" : [
+        "とても",
         "静か",
         "部屋"
       ],
@@ -86953,13 +87654,23 @@
     },
     {
       "covers" : "a sentence with words Sudachi doesn't know",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "ぴよぴよが鳴いた",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "ぴよぴよ",
+          "id" : "4ea62fa63c94f84d3f497d8ba69f1387",
+          "reading" : "ぴよぴよ"
+        },
+        {
+          "headword" : "鳴く",
+          "id" : "f724ef657ec52be63b5fd3e690215576",
+          "reading" : "なく"
+        }
       ],
       "searched" : [
+        "ぴよぴよ",
         "鳴く"
       ],
       "words" : [
@@ -87167,6 +87878,11 @@
       "resolution" : "analyzed",
       "results" : [
         {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
           "headword" : "アプリ",
           "id" : "e9d577a63ba88fc1e1e87419492d7821",
           "reading" : "アプリ"
@@ -87178,6 +87894,7 @@
         }
       ],
       "searched" : [
+        "この",
         "アプリ",
         "便利"
       ],
@@ -88984,11 +89701,15 @@
     },
     {
       "covers" : "a word or sentence in kana only",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "すごーい！！",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "凄い",
+          "id" : "1aedbd0dda7f92d466387b4b0cc6cd20",
+          "reading" : "すごい"
+        }
       ],
       "searched" : [
         "すごーい"
@@ -89049,11 +89770,15 @@
     },
     {
       "covers" : "a word or sentence with kanji",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "本当に？",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "本当",
+          "id" : "21d197eca5c24aaf819cdd88cda963eb",
+          "reading" : "ほんとう"
+        }
       ],
       "searched" : [
         "本当"
@@ -89240,14 +89965,18 @@
     },
     {
       "covers" : "a word or sentence in kana only",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "……そうですか",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "そう",
+          "id" : "8fb2ea6878dacc21841a19ae484a3a43",
+          "reading" : "そう"
+        }
       ],
       "searched" : [
-
+        "そう"
       ],
       "words" : [
         {
@@ -90436,11 +91165,15 @@
     },
     {
       "covers" : "a word or sentence with kanji",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "静かだ",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "静か",
+          "id" : "657d72cf95a8d0510ef6464fc032bae0",
+          "reading" : "しずか"
+        }
       ],
       "searched" : [
         "静か"
@@ -90773,11 +91506,17 @@
           "headword" : "茶",
           "id" : "1a5c5e4298adf603649d58a0933f5cae",
           "reading" : "ちゃ"
+        },
+        {
+          "headword" : "どうぞ",
+          "id" : "e8501184ef7ddde7c60ef97cfc8b8349",
+          "reading" : "どうぞ"
         }
       ],
       "searched" : [
         "お",
-        "茶"
+        "茶",
+        "どうぞ"
       ],
       "words" : [
         {
@@ -92545,11 +93284,15 @@
     },
     {
       "covers" : "a word or sentence in kana only",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "あ゛い",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "亜",
+          "id" : "3645a845755a107611f09a4e23f4f750",
+          "reading" : "あ"
+        }
       ],
       "searched" : [
         "あ"
@@ -96173,11 +96916,15 @@
     },
     {
       "covers" : "a word or sentence in kana only",
-      "presentation" : "ranked",
+      "presentation" : "discoveredWords",
       "query" : "まじで",
-      "resolution" : "direct",
+      "resolution" : "analyzed",
       "results" : [
-
+        {
+          "headword" : "まじ",
+          "id" : "5a6dc9caf8b39ef8eed96bd21e960ede",
+          "reading" : "まじ"
+        }
       ],
       "searched" : [
         "まじ"
@@ -96524,7 +97271,7 @@
         }
       ],
       "searched" : [
-
+        "ぴ"
       ],
       "words" : [
         {
@@ -97325,7 +98072,7 @@
         }
       ],
       "searched" : [
-
+        "見る見る"
       ],
       "words" : [
         {

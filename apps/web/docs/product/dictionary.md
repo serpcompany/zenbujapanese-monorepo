@@ -106,15 +106,15 @@ such as 9999999, which the app's stemmer shortens. `*` after a word matches any 
   every row, for the 43 queries that reach it (い, `eat`, 見る, and others), and the rendered い
   and いる cases in `search-results.test.tsx`; SR records only the first 10 (`resultLimit: 10`).
 
-**Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as
-日本語を勉強する, lists its Discovered Words: each word the app's Sudachi finds in it, in order, as
-the app does with its Japanese Text Analysis pack. The dictionary service runs the same Sudachi,
-with the dictionary the app pins.
+**Sentence search.** A Japanese sentence or phrase that isn't a word the dictionary holds, such
+as 日本語を勉強する or すこしおくれるかも, lists its Discovered Words: each word the app's Sudachi
+finds in it, in order, as the app does with its Japanese Text Analysis pack. The dictionary
+service runs the same Sudachi, with the dictionary the app pins.
 
 - Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app
   runs too; `JapaneseMorphologyClient.swift`;
   ADR 0009 (the owner's decision to build what the website couldn't analyze before).
-- Check: SSR, every field, for 325 sentences: the Discovered Words heading, each row with its chips,
+- Check: SSR, every field, for 343 sentences: the Discovered Words heading, each row with its chips,
   and the Example Sentences row; `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "a
   word the dictionary holds is still searched as itself".
 
