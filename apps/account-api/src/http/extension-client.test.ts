@@ -1,5 +1,6 @@
 import { decodeJwt } from 'jose'
 import { describe, expect, test } from 'vitest'
+import { clients } from '../domain/clients'
 import { useAccountService } from '../test/accounts'
 import { appleCodeFor } from '../test/identity-provider'
 import { publicUrl, websiteOrigin, websiteServicesId } from '../test/service'
@@ -137,6 +138,12 @@ describe('the browser extension, zenbu-extension', () => {
     })
     expect(unnamed).toMatchObject({ status: 400, body: { error: { code: 'unknown_client' } } })
     expect(sessionToken(unnamed)).toBe('')
+  })
+
+  test('trusts each listed extension by its exact Chrome ID, never a pattern Better Auth would widen', () => {
+    const listed = clients.flatMap(client => client.extensionIds)
+    expect(listed).toContain(extensionId)
+    for (const id of listed) expect(id).toMatch(/^[a-p]{32}$/)
   })
 })
 

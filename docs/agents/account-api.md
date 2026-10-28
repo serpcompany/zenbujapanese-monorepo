@@ -447,9 +447,9 @@ fields. `word-notes.test.ts`, `photos.test.ts`, `photo-files.test.ts`, `photo-bo
 and files to their rules ([`account-photos.md`](account-photos.md), Check it). Both run two or
 three `SyncClient`s (`src/test/sync-client.ts`, the iOS app's client in TypeScript) through
 offline changes on each until they hold the same state as a new device. `src/http/clients.test.ts`
-holds each app to its scopes: only `zenbu-ios` changes watch history, bookmarks, and photos; the
-website reads them, and reads and changes notes, settings, and searches. `kind-reads.test.ts`
-reads one kind, and `website-copy.test.ts` has the website's copy and a `SyncClient` converge.
+holds each app to its scopes: `zenbu-ios` and `zenbu-extension` change watch history, only
+`zenbu-ios` bookmarks and photos; the website reads them and changes notes, settings, and searches.
+`kind-reads.test.ts` reads one kind; `website-copy.test.ts` syncs the website and a `SyncClient`.
 
 The domain's tests replay the account rules' name and username cases and cover the cursor.
 `src/db/database.test.ts` covers the journal's trigger
