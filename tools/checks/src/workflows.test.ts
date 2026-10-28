@@ -78,6 +78,16 @@ describe('the workflows a merge can be made to wait for', () => {
   })
 })
 
+test("the website's browser tests run in the Playwright image of the version the lockfile installs", () => {
+  const lockfile = parse(readRepositoryFile('pnpm-lock.yaml')) as {
+    importers: Record<string, { devDependencies: Record<string, { version: string }> }>
+  }
+  const { version } = lockfile.importers['apps/web'].devDependencies['@playwright/test']
+  expect(readWorkflow('.github/workflows/web.yml').jobs.e2e.container?.image).toBe(
+    `mcr.microsoft.com/playwright:v${version}-resolute`
+  )
+})
+
 describe("what a workflow's last job reports, with its jobs played out as GitHub settles them", () => {
   const settle = (name: string, trigger: Partial<Trigger>) =>
     jobResults(readWorkflow(`.github/workflows/${name}.yml`), {

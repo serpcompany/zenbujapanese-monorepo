@@ -113,8 +113,16 @@ jobs:
   e2e:
     needs: [changes, check]
     if: needs.changes.outputs.changed == 'true'
+    name: e2e (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-resolute
+      options: --user 1001
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
@@ -130,23 +138,21 @@ jobs:
       - run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
-      - name: Install Chromium
-        working-directory: apps/web
-        run: pnpm exec playwright install --with-deps chromium
       - name: Build the site as it deploys, on the fixtures
         working-directory: apps/web
         run: pnpm exec opennextjs-cloudflare build
-      - name: Run the browser tests on the build, in workerd
+      - name: Run this shard of the browser tests on the build, in workerd
         working-directory: apps/web
         env:
           E2E_SERVER: preview
           E2E_SERVER_LOG: e2e/server.log
-        run: pnpm test:e2e
+          SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
+        run: pnpm test:e2e --shard "$SHARD"
       - name: Keep the report
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             apps/web/e2e/report
             apps/web/e2e/results

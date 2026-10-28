@@ -26,6 +26,7 @@ export interface Step {
 interface Job {
   if?: string
   needs?: string | string[]
+  container?: { image: string; options?: string }
   concurrency?: { group: string; 'cancel-in-progress'?: boolean }
   'timeout-minutes'?: number
   permissions?: Record<string, string>
