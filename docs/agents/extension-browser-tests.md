@@ -58,7 +58,7 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
 - **A page's word meanings:** `words.html` with Word Meanings on, light and dark, and a paragraph
   of two neighbouring words added. By their boxes, a meaning after plain text and a meaning after
   another meaning are the transcript's gap, half the page's root font size, from it, and a meaning
-  that starts its paragraph is not indented. Each meaning is not the underline's blue, and its
+  that starts its element is not indented. Each meaning is not the underline's blue, and its
   contrast over the page's backgrounds is at least 4.5:1, with `e2e/contrast.ts`
   (`page-lookup.spec.ts`).
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1` and maps

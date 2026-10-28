@@ -57,7 +57,7 @@ page's text is as it was, under its underlines.
 
 A word with a meaning has the Video tab's transcript's gap before it, half the page's root font
 size, and none after, so two neighbouring meanings and a meaning after plain text are that far
-apart. A word that starts its paragraph, with nothing shown before it, has no gap. The gap comes
+apart. A word that starts its element, with nothing shown before it, has no gap. The gap comes
 from `src/shared/meaning-aid.ts`, which the transcript, Translate's linked words, and the caption
 on the player read too.
 
