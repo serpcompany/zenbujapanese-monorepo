@@ -1,3 +1,4 @@
+import { dailyListId } from '@zenbu/account-rules/daily-lists'
 import { listLimits, listName } from '@zenbu/account-rules/lists'
 import {
   applied,
@@ -36,6 +37,24 @@ const badFields = rejection(
 )
 
 const listIdOf = uuidOf
+
+const firstDailyList = Date.UTC(2026, 9, 1)
+const dayLength = 86_400_000
+
+function uncountedDailyLists(now: Date): string[] {
+  const ids: string[] = []
+  for (let day = firstDailyList; day <= now.getTime() + dayLength; day += dayLength) {
+    const id = dailyListId(new Date(day).toISOString().slice(0, 10))
+    if (id) ids.push(id)
+  }
+  return ids
+}
+
+async function holdsTooMany(account: LockedAccount, id: string) {
+  const uncounted = uncountedDailyLists(new Date())
+  if (uncounted.includes(id)) return false
+  return (await account.wordListCount(uncounted)) >= listLimits.lists
+}
 
 const nameOf = (raw: unknown) => (typeof raw === 'string' ? listName(raw) : null)
 
@@ -107,7 +126,7 @@ export const wordLists: Entity = {
         const id = listIdOf(mutation.entityId)
         if (!id) return rejected(badList)
         if (await account.wordList(id)) return rejected(taken)
-        if ((await account.wordListCount()) >= listLimits.lists) return rejected(tooMany)
+        if (await holdsTooMany(account, id)) return rejected(tooMany)
         const fields = mutation.fields ?? {}
         if (!('name' in fields && 'position' in fields)) return rejected(badFields)
         const checked = listFields(fields)

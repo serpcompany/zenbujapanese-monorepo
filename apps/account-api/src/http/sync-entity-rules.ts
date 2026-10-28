@@ -68,13 +68,13 @@ export const studyRules = {
     }
   },
   list: {
-    rule: `A word list. An account holds at most ${count(listLimits.lists)}, and a deleted list's ID can't be used again.`,
+    rule: `A word list. An account holds at most ${count(listLimits.lists)} of the learner's own, and a deleted list's ID can't be used again. Daily lists don't count: a daily list's ID is \`00000000-da11-4000-8000-0000yyyymmdd\`, its day's digits (\`dailyListId\` in \`packages/account-rules\`), and it is left out of the count while its day is from 2026-10-01 to the day after the service's own date, in UTC. A list for any other day counts like the learner's own.`,
     entityId: 'Its UUID, in either case; answers name it in lowercase.',
     data: 'WordList',
     operations: {
       create: {
         baseVersion: false,
-        rule: `Rejected \`already_exists\` if the account has or had a list with that ID, and \`too_many_lists\` past ${count(listLimits.lists)}.`,
+        rule: `Rejected \`already_exists\` if the account has or had a list with that ID, a deleted daily list too, and \`too_many_lists\` once it holds ${count(listLimits.lists)} lists that count, unless the new list is a daily list that doesn't.`,
         fields: 'ListCreateFields',
         example: { entityId: listId, fields: { name: 'Food', position: 0 } }
       },
