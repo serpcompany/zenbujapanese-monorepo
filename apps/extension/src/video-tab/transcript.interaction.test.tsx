@@ -7,9 +7,8 @@ import { writeSettings } from '../shared/settings'
 import { recheckMs } from '../shared/translation-model'
 import { click, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
-import { popupAnswer } from '../test/word-cards'
+import { openFullEntryButton, popupAnswer } from '../test/word-cards'
 import { translateLabels } from '../translate/labels'
-import { wordPopupLabels } from '../word-popup/labels'
 import { videoTabLabels } from './labels'
 
 let tab: ReturnType<typeof watching> | undefined
@@ -36,6 +35,31 @@ const englishOf = (shown: ReturnType<typeof watching>) =>
 const popup = () => document.querySelector('[data-word-popup]')
 
 const walkWord = (word: string) => `[data-line] [data-source] [data-word="${word}"]`
+
+async function pressEscape() {
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
+  await settle()
+}
+
+async function playsAgain(shown: ReturnType<typeof watching>) {
+  await vi.waitFor(() =>
+    expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
+  )
+}
+
+async function closesAndPlaysAgain(shown: ReturnType<typeof watching>) {
+  await pressEscape()
+  expect(popup()).toBeNull()
+  await playsAgain(shown)
+}
+
+async function pausedForAWord() {
+  const shown = await transcript()
+  await shown.playsAt(12)
+  await click(document.querySelector(walkWord('散歩')))
+  await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+  return shown
+}
 
 describe('the transcript’s English', () => {
   it('gives each row its own English, a line at a time', async () => {
@@ -223,29 +247,29 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('散歩')))
     expect(popup()).not.toBeNull()
     await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
-    await click(shown.button(wordPopupLabels.close))
+    await closesAndPlaysAgain(shown)
+  })
+
+  it('closes the popup on a press outside it, and plays the video again', async () => {
+    const shown = await pausedForAWord()
+    await act(async () => {
+      document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    })
+    await settle()
     expect(popup()).toBeNull()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await playsAgain(shown)
   })
 
   it('plays the video again when the transcript closes with a popup open', async () => {
-    const shown = await transcript()
-    await shown.playsAt(12)
-    await click(document.querySelector(walkWord('散歩')))
-    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    const shown = await pausedForAWord()
     shown.close()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await playsAgain(shown)
   })
 
   it('leaves a paused video paused when the popup closes', async () => {
     const shown = await transcript()
     await click(document.querySelector(walkWord('散歩')))
-    await click(shown.button(wordPopupLabels.close))
-    await settle()
+    await pressEscape()
     expect(shown.services.control).toHaveBeenCalledExactlyOnceWith(5, { type: 'pause' })
   })
 
@@ -257,19 +281,14 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('行きましょう')))
     expect(document.querySelectorAll('[data-word-popup]')).toHaveLength(1)
     expect(shown.video.controls).toEqual([{ type: 'pause' }])
-    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
-    await settle()
-    expect(popup()).toBeNull()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await closesAndPlaysAgain(shown)
   })
 
   it('opens Word Detail from the popup’s Open Full Entry', async () => {
     const shown = await transcript()
     shown.services.popupCard.mockImplementation(async () => popupAnswer('youkyuu'))
     await click(document.querySelector(walkWord('散歩')))
-    await click(shown.button(wordPopupLabels.openFullEntry))
+    await click(openFullEntryButton(document))
     expect(shown.open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
   })
 })

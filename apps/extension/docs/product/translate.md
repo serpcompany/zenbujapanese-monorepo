@@ -53,9 +53,10 @@ for the voice.
 
 When the text is Japanese, each dictionary word in it is underlined as on a page, and a click on
 one opens its word popup under the text ([`word-popup.md`](word-popup.md)). The popup's Open Full
-Entry opens the word's Word Detail over the tab; Close or Escape puts the popup away and gives
-focus back to the word. The text has the reading aids turned on in Settings: furigana over its
-kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
+Entry opens the word's Word Detail over the tab; Escape or a press outside the popup puts it
+away. Escape gives focus back to the word; a press leaves focus where it lands. While the popup's
+••• menu is open, a press closes only the menu. The text has the reading aids turned on in
+Settings: furigana over its kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
 Reading Aids). A meaning is in the muted foreground, half a rem from the word before it; one wider
 than its column is cut with an ellipsis, and its sense's full text is its tooltip and what a screen
 reader reads. Until the dictionary is ready, the text is plain; the tab asks again, waiting longer

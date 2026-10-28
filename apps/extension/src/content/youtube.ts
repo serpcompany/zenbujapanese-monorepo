@@ -3,7 +3,7 @@ import { toServiceWorker } from '../error-reports/forwarding'
 import { afterTimeout } from '../page-lookup/scan'
 import { playerCaptions } from '../player-captions/player-captions'
 import { lookUpPopupCard, segmentText } from '../shared/dictionary'
-import { askSettings, onSettingsChanged } from '../shared/settings'
+import { askSettings, onSettingsChanged, writeSettings } from '../shared/settings'
 import { openPanel } from '../side-panel/route'
 import { translate } from '../translation/messages'
 import { followYouTubePage } from '../video/youtube-page'
@@ -23,7 +23,9 @@ followYouTubePage(document, {
         wait: afterTimeout,
         popupCard: (id, frequency) => lookUpPopupCard(id, frequency),
         openPanel: route => void openPanel(route),
-        translate: request => translate(request)
+        translate: request => translate(request),
+        keepCaptionPlace: place =>
+          void writeSettings({ 'videos.captionPlace': place }).catch(report)
       }
     })
   }

@@ -46,6 +46,21 @@ describe('settings', () => {
     expect(settings).not.toHaveProperty('unknown')
   })
 
+  it('keeps the caption’s place only as two shares, and none by default', () => {
+    const place = (stored: unknown) => settingsFrom({ 'videos.captionPlace': stored })
+    expect(settingDefaults['videos.captionPlace']).toBeNull()
+    expect(place({ x: 0, y: 1 })['videos.captionPlace']).toEqual({ x: 0, y: 1 })
+    for (const stored of [
+      { x: 0.5 },
+      { x: 0.5, y: 1.5 },
+      { x: '0.5', y: 0 },
+      [0.5, 0.5],
+      0.5,
+      null
+    ])
+      expect(place(stored)['videos.captionPlace']).toBeNull()
+  })
+
   it('writes one key per setting and reads them back', async () => {
     const { chrome, items } = fakeChrome()
     await writeSettings(

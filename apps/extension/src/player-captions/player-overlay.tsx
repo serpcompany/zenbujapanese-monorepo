@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react'
 import type { PageToken } from '../page-lookup/words'
 import type { Settings } from '../shared/settings'
 import type { SourceServices } from '../translate/source-words'
+import type { KeepPlace } from './caption-drag'
 import { playerCaptionLabels as labels } from './labels'
 import type { LineControls } from './line-controls'
 import type { LineEnglish } from './line-english'
@@ -25,6 +26,7 @@ export type OverlayProps = {
   services: SourceServices
   settings: SettingsSource
   pick(token: PageToken, word: HTMLElement): void
+  keepPlace: KeepPlace
 }
 
 export function PlayerOverlay({
@@ -35,7 +37,8 @@ export function PlayerOverlay({
   english,
   services,
   settings: source,
-  pick
+  pick,
+  keepPlace
 }: OverlayProps) {
   const view = useSyncExternalStore(controls.subscribe, controls.view)
   const popupOpen = useSyncExternalStore(hold.subscribe, hold.open)
@@ -52,7 +55,7 @@ export function PlayerOverlay({
         </output>
       </div>
       {view.line === null ? null : (
-        <div className="absolute inset-x-0 bottom-[max(64px,12%)] flex justify-center px-4">
+        <div className="absolute inset-x-4 inset-y-0">
           <PlayerCaption
             lines={lines}
             line={view.line}
@@ -60,6 +63,7 @@ export function PlayerOverlay({
             services={services}
             english={english}
             pick={pick}
+            keepPlace={keepPlace}
           />
         </div>
       )}

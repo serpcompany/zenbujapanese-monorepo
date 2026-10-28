@@ -3,32 +3,10 @@ import type { Page } from '@playwright/test'
 import { playerCaptionLabels as labels } from '../src/player-captions/labels.ts'
 import { textContrast } from './contrast.ts'
 import { expect, test } from './fixtures.ts'
+import { caption, enterFullscreen, openAt, overlay, videoState } from './watch-page.ts'
 import { changeSettings, tones, wordPopup } from './words-page.ts'
-import { standInWatchPage } from './youtube-stand-in.ts'
 
 test.use({ youTubeStandIn: true })
-
-const overlay = (page: Page) => page.locator('#movie_player > [data-zenbu-player-captions]')
-
-const caption = (page: Page) => overlay(page).locator('[data-player-caption]')
-
-const videoState = (page: Page) =>
-  page.evaluate(() => {
-    const element = document.querySelector('video')
-    return { paused: element?.paused, rate: element?.playbackRate, time: element?.currentTime }
-  })
-
-async function openAt(page: Page, time: number) {
-  await page.goto(standInWatchPage)
-  await expect(overlay(page)).toBeAttached()
-  await page.evaluate(at => {
-    const element = document.querySelector('video')
-    if (!element) throw new Error('No video')
-    element.muted = true
-    element.currentTime = at
-  }, time)
-  await expect(caption(page).locator('[data-word="要求"]')).toBeVisible()
-}
 
 async function chooseSpeed(page: Page, from: number, to: number) {
   await overlay(page)
@@ -44,6 +22,7 @@ test('draws the line being heard inside the player, in place of the site’s cap
   extension,
   page
 }) => {
+  const askedBefore = extension.youTube?.asked.length ?? 0
   await openAt(page, 1)
   await expect(page.locator('.ytp-caption-window-container')).toBeHidden()
   await expect(caption(page).locator('[data-word="要る"]')).toBeVisible()
@@ -57,7 +36,8 @@ test('draws the line being heard inside the player, in place of the site’s cap
     styles: [expect.stringContaining('.ytp-caption-window-container')],
     links: 0
   })
-  const timedText = () => extension.youTube?.asked.filter(line => line.includes('/api/timedtext'))
+  const timedText = () =>
+    extension.youTube?.asked.slice(askedBefore).filter(line => line.includes('/api/timedtext'))
   expect(timedText()).toHaveLength(1)
   await page.evaluate(() => {
     const element = document.querySelector('video')
@@ -120,8 +100,7 @@ test('draws the caption in Geist with no request from the page for the extension
 test('opens the speed menu inside the player, in and out of fullscreen', async ({ page }) => {
   await openAt(page, 1)
   await chooseSpeed(page, 1, 0.75)
-  await page.evaluate(() => document.querySelector('#movie_player')?.requestFullscreen())
-  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('movie_player')
+  await enterFullscreen(page)
   await chooseSpeed(page, 0.75, 1.25)
   await overlay(page)
     .getByRole('button', { name: labels.speedMenu(1.25) })

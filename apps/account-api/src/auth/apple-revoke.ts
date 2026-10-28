@@ -2,7 +2,7 @@ import { log } from '@zenbu/node-service/log'
 import { decodeJwt } from 'jose'
 import type { AuthConfig } from '../config'
 import type { AppleRevocation, AppleRevoker } from '../domain/account-deletion'
-import { clientById } from '../domain/clients'
+import { appleReturnForExtensions, type Client, clientById } from '../domain/clients'
 import { appleClientSecret } from './apple'
 
 const appleToken = 'https://appleid.apple.com/auth/token'
@@ -93,14 +93,24 @@ async function revokeGrant(credentials: Credentials, refreshToken: string) {
   }
 }
 
+const signsInThroughTheWeb = (app: Client | null) =>
+  app !== null && (app.signsInOnTheWeb || app.extensionIds.length > 0)
+
+function returnUrlOf(app: Client | null, redirectUri: string | undefined, publicUrl: string) {
+  if (app && app.extensionIds.length > 0) return `${publicUrl}${appleReturnForExtensions}`
+  if (app?.signsInOnTheWeb) return redirectUri ?? `${publicUrl}/v1/auth/callback/apple`
+  return undefined
+}
+
 export function appleRevoker(apple: AuthConfig['apple'], publicUrl: string): AppleRevoker {
   const key = apple?.signingKey ?? null
   return {
     configured: key !== null,
     async revoke({ code, redirectUri }, clientId, appleUserIds, inUse): Promise<AppleRevocation> {
       const app = clientById(clientId)
-      const web = app?.signsInOnTheWeb ?? false
-      const appleClientId = web ? apple?.servicesIds[0] : app?.appleBundleIds[0]
+      const appleClientId = signsInThroughTheWeb(app)
+        ? apple?.servicesIds[0]
+        : app?.appleBundleIds[0]
       if (!key || !appleClientId) {
         log('error', 'no Apple client to revoke a deletion with', { app: clientId })
         return 'unavailable'
@@ -109,11 +119,7 @@ export function appleRevoker(apple: AuthConfig['apple'], publicUrl: string): App
         client_id: appleClientId,
         client_secret: await appleClientSecret(key, appleClientId)
       }
-      const grant = await exchange(
-        credentials,
-        code,
-        web ? (redirectUri ?? `${publicUrl}/v1/auth/callback/apple`) : undefined
-      )
+      const grant = await exchange(credentials, code, returnUrlOf(app, redirectUri, publicUrl))
       if (typeof grant === 'string') return grant
       const ours = appleUserIds.includes(grant.owner)
       if (!ours && (await inUse(grant.owner))) return 'other_apple_id'

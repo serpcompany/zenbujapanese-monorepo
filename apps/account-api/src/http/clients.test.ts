@@ -87,7 +87,7 @@ describe("each app's access to an account", () => {
     expect((await accounts.me(zenbu.token)).body).toMatchObject({ name: '' })
   })
 
-  test('only the iOS app changes watch history and Translate bookmarks: the website reads them, and Tomodachi never sees them', async () => {
+  test('the iOS app and the extension change watch history, only the iOS app Translate bookmarks: the website reads them, and Tomodachi never sees them', async () => {
     const email = 'app-only-scopes@example.com'
     const zenbu = await accounts.learner(email)
     const bookmark = randomUUID()
@@ -118,26 +118,29 @@ describe("each app's access to an account", () => {
     expect(decodeJwt(zenbu.token).scope).toContain(
       'watch:read watch:write translations:read translations:write'
     )
-    for (const client of ['tomodachi', 'zenbu-web']) {
+    for (const client of ['tomodachi', 'zenbu-web', 'zenbu-extension']) {
       const other = await accounts.learner(email, client)
       expect(other.userId).toBe(zenbu.userId)
       const scope = String(decodeJwt(other.token).scope)
-      expect(scope, client).not.toMatch(/watch:write|translations:write/)
-      expect(/watch:read translations:read/.test(scope), client).toBe(client === 'zenbu-web')
+      const watches = client === 'zenbu-extension'
+      expect(scope, client).not.toMatch(/translations:write/)
+      expect(/watch:write/.test(scope), client).toBe(watches)
+      expect(/watch:read/.test(scope), client).toBe(client !== 'tomodachi')
+      expect(/translations:read/.test(scope), client).toBe(client === 'zenbu-web')
       const answer = await send(
         other.token,
         ...appOnly,
         { entity: 'watchedVideo', operation: 'remove', entityId: 'dQw4w9WgXcQ' },
         { entity: 'bookmarkedSentence', operation: 'remove', entityId: bookmark, baseVersion: 1 }
       )
+      const watch = watches ? 'applied' : 'not_allowed'
       expect(
-        answer.results.map(result => result.error?.code),
+        answer.results.map(result => result.error?.code ?? result.status),
         client
-      ).toEqual(['not_allowed', 'not_allowed', 'not_allowed', 'not_allowed'])
+      ).toEqual([watch, 'not_allowed', watch, 'not_allowed'])
       const entities = answer.changes.map(change => change.entity)
-      for (const entity of ['watchedVideo', 'bookmarkedSentence']) {
-        expect(entities.includes(entity), `${client} ${entity}`).toBe(client === 'zenbu-web')
-      }
+      expect(entities.includes('watchedVideo'), client).toBe(client !== 'tomodachi')
+      expect(entities.includes('bookmarkedSentence'), client).toBe(client === 'zenbu-web')
     }
   })
 

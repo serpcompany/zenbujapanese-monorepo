@@ -17,9 +17,10 @@ export type WordPopupProps = {
   frequency: readonly string[]
   romaji: boolean
   openFullEntry(page: PanelPage): void
-  close(): void
   sharing?: Sharing
 }
+
+const dismissed = (error: unknown) => error instanceof DOMException && error.name === 'AbortError'
 
 const labels = wordPopupLabels
 
@@ -108,7 +109,6 @@ export function WordPopup({
   frequency,
   romaji,
   openFullEntry,
-  close,
   sharing
 }: WordPopupProps) {
   const cards = useCards(ids, lookUp)
@@ -131,9 +131,12 @@ export function WordPopup({
       const share = sharing?.share ?? navigator.share?.bind(navigator)
       if (!share) return void copyLink(shown)
       share({ title: shown.headword, text: shareText(shown), url: wordAddress(shown) }).catch(
-        () => undefined
+        (error: unknown) => {
+          if (!dismissed(error)) void copyLink(shown)
+        }
       )
     },
+    openFullEntry: shown => openFullEntry(entryPage(shown, ids, cards)),
     onUnsupported: setNotice
   }
   const name = card ? card.headword : text
@@ -171,16 +174,6 @@ export function WordPopup({
           {notice}
         </output>
       ) : null}
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <Button variant="outline" onClick={close}>
-          {labels.close}
-        </Button>
-        {card ? (
-          <Button onClick={() => openFullEntry(entryPage(card, ids, cards))}>
-            {labels.openFullEntry}
-          </Button>
-        ) : null}
-      </div>
     </div>
   )
 }

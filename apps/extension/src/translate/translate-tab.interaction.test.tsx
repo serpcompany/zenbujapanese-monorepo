@@ -6,14 +6,19 @@ import type { PanelTabProps } from '../side-panel/route'
 import { startExtension } from '../test/extension'
 import { click, find, settle } from '../test/render'
 import { standInTranslator as standInChrome } from '../test/translator-stand-in'
-import { notReady, popupAnswer, sentence, sentenceAnswer } from '../test/word-cards'
+import {
+  notReady,
+  openFullEntryButton,
+  popupAnswer,
+  sentence,
+  sentenceAnswer
+} from '../test/word-cards'
 import type { TranslationAnswer, TranslatorState } from '../translation/messages'
 import {
   downloadTranslator,
   onDeviceTranslation,
   translatorAvailability
 } from '../translation/translator'
-import { wordPopupLabels } from '../word-popup/labels'
 import { translateLabels } from './labels'
 import type { TranslateServices } from './services'
 import { TranslateTab } from './translate-tab'
@@ -119,7 +124,7 @@ describe('the Translate tab', () => {
     await tab.click(translateLabels.translate)
     await settle()
     await click(find(document, '[data-source] [data-word="要求"]'))
-    await tab.click(wordPopupLabels.openFullEntry)
+    await click(openFullEntryButton(document))
     expect(open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
     expect(services.segment).toHaveBeenCalledWith(sentence)
   })

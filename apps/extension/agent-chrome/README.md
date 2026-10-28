@@ -97,8 +97,10 @@ the video listener with `Page.addScriptToEvaluateOnNewDocument`.
   a stand-in for YouTube's own caption (`.ytp-caption-window-container`). The browser tests serve
   the same site (`e2e/youtube-stand-in.ts`). `POST /youtubei/v1/player` answers
   #984's player fixture (`src/captions/fixtures/player-japanese.json`) for the asked video, and
-  `/api/timedtext` answers `stand-in-timedtext.xml`, three lines made of words in the fixture
-  dictionary (要求, 要る, 要領, 要所), so each line's words link in a test build. Each answer is a
+  `/api/timedtext` answers `stand-in-timedtext.xml`, four lines made of words in the fixture
+  dictionary (要求, 要る, 要領, 要所), so each line's words link in a test build. The last line,
+  from 15 seconds, is half as long as the others, so a test can change the caption's width by
+  far more than any font can. Each answer is a
   `[site]` line. Nothing reaches YouTube.
 - **`--host-rule <rule>`** adds a `--host-resolver-rules` rule ahead of the others. `verify` maps
   the test build's language data host, `language-data.localhost`, to the local server's port.

@@ -1,5 +1,6 @@
 import { type ReactNode, useLayoutEffect, useRef } from 'react'
 import { mountInShadowRoot, type ShadowMount } from '../content/shadow-mount'
+import { hasOpenMenu } from './open-menu'
 import { wordPopupEvents } from './popup-events'
 import { outOfWindow, popupPlacement } from './position'
 import { WordPopup, type WordPopupProps } from './word-popup'
@@ -8,7 +9,7 @@ const popupHostAttribute = 'data-zenbu-word-popup'
 
 type PopupTarget = Pick<WordPopupProps, 'text' | 'ids'> & { anchor: () => DOMRect }
 
-export type PopupSettings = Omit<WordPopupProps, 'text' | 'ids' | 'close'>
+export type PopupSettings = Omit<WordPopupProps, 'text' | 'ids'>
 
 export type PopupHost = {
   open(target: PopupTarget): void
@@ -25,7 +26,7 @@ type Options = {
   report?: (error: unknown) => void
 }
 
-const highest = '2147483647'
+const hostStyle = 'position:fixed;top:0;left:0;z-index:2147483647;'
 
 function windowSize(doc: Document, view: Window) {
   const root = doc.documentElement
@@ -76,7 +77,8 @@ function Placed({
       frame = 0
       if (!outOfWindow(anchor(), windowSize(doc, view))) place()
       else if (!held()) gone()
-      else released.observe(root, { childList: true, subtree: true })
+      else
+        released.observe(root, { childList: true, subtree: true, attributeFilter: ['data-open'] })
     }
     place()
     const resized = new ResizeObserver(place)
@@ -92,7 +94,7 @@ function Placed({
     }
   }, [anchor, doc, view, held, gone])
   return (
-    <div ref={box} style={{ position: 'fixed', left: 0, top: 0, zIndex: highest }}>
+    <div ref={box} style={{ position: 'fixed', left: 0, top: 0 }}>
       {children}
     </div>
   )
@@ -116,7 +118,7 @@ export function wordPopupHost({
 
   const holds = (event: Event) => shown !== null && event.composedPath().includes(shown.mount.host)
 
-  const menuOpen = () => shown?.mount.shadowRoot.querySelector('[role="menu"]') != null
+  const menuOpen = () => (shown ? hasOpenMenu(shown.mount.shadowRoot) : false)
 
   const onKey = (event: KeyboardEvent) => {
     if (event.key !== 'Escape' || menuOpen()) return
@@ -148,11 +150,12 @@ export function wordPopupHost({
     shown?.mount.unmount()
     const mounted = mount(
       <Placed anchor={target.anchor} doc={doc} view={view} held={menuOpen} gone={close}>
-        <WordPopup {...settings()} text={target.text} ids={target.ids} close={close} />
+        <WordPopup {...settings()} text={target.text} ids={target.ids} />
       </Placed>,
       { document: doc, report }
     )
     mounted.host.setAttribute(popupHostAttribute, '')
+    mounted.host.setAttribute('style', hostStyle)
     prepare?.(mounted)
     shownIn(doc).append(mounted.host)
     shown = { mount: mounted, returnTo }

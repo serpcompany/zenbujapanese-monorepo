@@ -22,7 +22,9 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   `http://allowed.localhost/test-pages/words.html`, a site the test build holds: the underlines,
   the page's layout kept, the reading aids, a site turned off, words added later, a site given
   and taken back with `chrome.developerPrivate` from a `chrome://extensions` page, and the popup's
-  card, choice, placement, closing, links, Open Full Entry, Share, and Copy Link. The
+  card, choice, placement, closing, its More menu over it with one Escape each for the menu and
+  the popup, links, Open Full Entry, Share, and Copy Link; the More menu also over a caption
+  word's popup on the YouTube stand-in, in and out of fullscreen (`word-popup.spec.ts`). The
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
@@ -33,7 +35,15 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   reading aids, nothing added to the page's styles, one `timedtext` request whatever the controls
   do, the speed menu in and out of fullscreen, a word's popup pausing the video, and a word
   meaning's contrast against the caption's band over a white frame, the brightest a video can
-  show, written to the test's `contrast.json` (`player-captions.spec.ts`).
+  show, written to the test's `contrast.json` (`player-captions.spec.ts`); dragging the caption,
+  its cursor, its edges, a line change mid-drag, and its place kept through a resize, fullscreen,
+  and the next video (`caption-drag.spec.ts`), which puts the place back after each test since
+  the browser and its storage last the worker. Both open the page
+  with `e2e/watch-page.ts`, and the stand-in's request log lasts the worker too, so a count of
+  requests starts from the log's length when the test began. Both enter fullscreen through its
+  `enterFullscreen`, from a real click on the page's heading, since Chrome refuses
+  `requestFullscreen` without a fresh input. The line change goes to the track's short last line,
+  so the width changes whatever fonts the machine has.
 - **The Video tab's word meanings:** `side-panel.html` at 380 and 360 pixels wide, in light and
   dark. An init script on that page alone stands in for the active tab (a YouTube watch page),
   its port (playback in the second line, so that row is the line being played), and the
