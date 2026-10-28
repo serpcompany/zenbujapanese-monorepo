@@ -130,25 +130,26 @@ const keptPresses = '[data-word-popup], [role="menu"], [data-start]'
 function usePicked(source: RefObject<HTMLParagraphElement | null>) {
   const [picked, setPicked] = useState<PageToken | null>(null)
   const start = picked?.start
-  const close = useCallback(() => {
-    setPicked(null)
-    source.current?.querySelector<HTMLElement>(`[data-start="${start}"]`)?.focus()
-  }, [source, start])
   useEffect(() => {
     if (start === undefined) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !hasOpenMenu(document)) close()
+      if (event.key !== 'Escape' || hasOpenMenu(document)) return
+      setPicked(null)
+      source.current
+        ?.querySelector<HTMLElement>(`[data-start="${start}"]`)
+        ?.focus({ preventScroll: true })
     }
     const onPress = (event: PointerEvent) => {
-      if (!(event.target instanceof Element && event.target.closest(keptPresses))) close()
+      if (hasOpenMenu(document)) return
+      if (!(event.target instanceof Element && event.target.closest(keptPresses))) setPicked(null)
     }
     document.addEventListener('keydown', onKey)
-    document.addEventListener('pointerdown', onPress)
+    document.addEventListener('pointerdown', onPress, true)
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.removeEventListener('pointerdown', onPress)
+      document.removeEventListener('pointerdown', onPress, true)
     }
-  }, [start, close])
+  }, [start, source])
   return [picked, setPicked] as const
 }
 

@@ -10,6 +10,7 @@ import {
   sentence,
   sentenceAnswer
 } from '../test/word-cards'
+import { hasOpenMenu } from '../word-popup/open-menu'
 import { type SourceServices, SourceWords } from './source-words'
 
 type Segmented = Awaited<ReturnType<SourceServices['segment']>>
@@ -47,9 +48,18 @@ const popup = () => document.querySelector('[data-word-popup]')
 
 const press = async (target: Element) => {
   act(() => {
-    target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) {
+      const Press = type.startsWith('pointer') ? PointerEvent : MouseEvent
+      target.dispatchEvent(new Press(type, { bubbles: true, cancelable: true, button: 0 }))
+    }
   })
   await settle()
+}
+
+const outside = () => {
+  const button = document.body.appendChild(document.createElement('button'))
+  button.focus()
+  return button
 }
 
 const escapeOn = async (target: Element | null) => {
@@ -94,29 +104,50 @@ describe('the Japanese source of a translation', () => {
     expect(open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
   })
 
-  it('puts the popup away on a press outside it and on Escape, leaves Escape to an open menu but not a closing one, and gives focus back to the word', async () => {
+  it('puts the popup away on a press outside it and leaves focus and scroll where the press put them', async () => {
     const container = await showSource(services())
     const word = find(container, '[data-word="要る"]')
     await click(word)
     await press(find(document, '[data-meaning]'))
+    expect(popup()).not.toBeNull()
+    const elsewhere = outside()
+    const focus = vi.spyOn(word, 'focus')
+    await press(elsewhere)
+    expect(popup()).toBeNull()
+    expect(document.activeElement).toBe(elsewhere)
+    expect(focus).not.toHaveBeenCalled()
+    elsewhere.remove()
+  })
+
+  it('closes only the ••• menu on a press while it is open, its backdrop included', async () => {
+    const container = await showSource(services())
+    await click(find(container, '[data-word="要る"]'))
     await press(await openMenu(document))
     expect(popup()).not.toBeNull()
-    await press(document.body)
-    expect(popup()).toBeNull()
-    expect(document.activeElement).toBe(word)
+    const backdrop = find(document, '[role="presentation"][data-base-ui-inert]')
+    expect(popup()?.contains(backdrop)).toBe(false)
+    await press(backdrop)
+    expect(hasOpenMenu(document)).toBe(false)
+    expect(popup()).not.toBeNull()
+  })
 
+  it('puts the popup away on Escape, leaves Escape to an open menu but not a closing one, and gives focus back to the word without scrolling', async () => {
+    const container = await showSource(services())
+    const word = find(container, '[data-word="要る"]')
     await click(word)
     const menu = await openMenu(document)
     await escapeOn(menu)
     expect(popup()).not.toBeNull()
-    expect(document.querySelector('[role="menu"][data-open]')).toBeNull()
+    expect(hasOpenMenu(document)).toBe(false)
     const closing = document.body.appendChild(document.createElement('div'))
     closing.setAttribute('role', 'menu')
     closing.setAttribute('data-closed', '')
+    const focus = vi.spyOn(word, 'focus')
     await escapeOn(popup())
     closing.remove()
     expect(popup()).toBeNull()
     expect(document.activeElement).toBe(word)
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true })
   })
 
   it('stays plain text while the dictionary isn’t ready, and links its words once it is', async () => {
