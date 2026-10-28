@@ -44,8 +44,9 @@ the extension keeps on the device; `alarms`, for the daily language-data update 
 extension's own YouTube caption requests. Its `host_permissions` are the language data host
 (`https://data.zenbujapanese.com/*`, in the test build `http://language-data.localhost/*`) and
 `https://www.youtube.com/*`, for the YouTube content script and the caption requests; the test
-build adds `http://allowed.localhost/*`, which the tests use as an allowed site. Only the YouTube
-host adds an install warning, which names youtube.com; the other permissions add none. It asks
+build adds `http://allowed.localhost/*`, which the tests use as an allowed site. The two hosts together add one install
+warning, which names both: "Read and change your data on data.zenbujapanese.com and
+www.youtube.com" (Chrome 156, production and staging alike); the other permissions add none. It asks
 for no other site at install: `http://*/*` and `https://*/*` are the only
 `optional_host_permissions`, the only access asked for later, and the header menu's Allow on This
 Site asks Chrome for one site with `chrome.permissions.request`, as Turn On for Every Site does
