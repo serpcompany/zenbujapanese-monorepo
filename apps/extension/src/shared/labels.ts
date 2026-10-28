@@ -19,7 +19,16 @@ export const labels = {
       'Open a Japanese page, or a YouTube video with Japanese captions.',
       'Click an underlined word to see what it means.',
       'Pin Zenbu to the toolbar to open it on any tab.'
-    ]
+    ],
+    translationOffer:
+      "English translations use Chrome's own Japanese download, made once for every site.",
+    translationReady: 'English translations are ready.'
+  },
+  translation: {
+    download: 'Download',
+    downloading: (fraction: number) =>
+      `Downloading Chrome's Japanese translation… ${Math.round(fraction * 100)}%`,
+    downloadFailed: "The download didn't finish. Try again."
   },
   everySite: {
     off: 'Zenbu underlines Japanese only on the sites you allow.',

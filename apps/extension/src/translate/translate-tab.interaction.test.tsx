@@ -5,6 +5,7 @@ import type { Failure } from '../shared/messages'
 import type { PanelTabProps } from '../side-panel/route'
 import { startExtension } from '../test/extension'
 import { click, find, settle } from '../test/render'
+import { standInTranslator as standInChrome } from '../test/translator-stand-in'
 import { notReady, popupAnswer, sentence, sentenceAnswer } from '../test/word-cards'
 import type { TranslationAnswer, TranslatorState } from '../translation/messages'
 import {
@@ -29,31 +30,7 @@ const phrasebook: Record<string, string> = {
   [sentence]: 'A demand is needed.'
 }
 
-type CreateOptions = { monitor?(monitor: EventTarget): void }
-
-function standInTranslator(state: TranslatorState = 'available') {
-  let current = state
-  let finishDownload = () => {}
-  const downloaded = new Promise<void>(resolve => {
-    finishDownload = resolve
-  })
-  const Translator = {
-    availability: vi.fn(async () => current),
-    create: vi.fn(async ({ monitor }: CreateOptions) => {
-      if (current === 'unavailable') throw new Error('Unavailable.')
-      if (current !== 'available') {
-        const progress = new EventTarget()
-        monitor?.(progress)
-        progress.dispatchEvent(Object.assign(new Event('downloadprogress'), { loaded: 0.42 }))
-        await downloaded
-        current = 'available'
-      }
-      return { translate: async (text: string) => phrasebook[text] ?? '', destroy() {} }
-    })
-  }
-  vi.stubGlobal('Translator', Translator)
-  return { Translator, finishDownload: () => finishDownload() }
-}
+const standInTranslator = (state: TranslatorState = 'available') => standInChrome(state, phrasebook)
 
 function servicesWith(selection: string | null = '') {
   const translateOnDevice = onDeviceTranslation()

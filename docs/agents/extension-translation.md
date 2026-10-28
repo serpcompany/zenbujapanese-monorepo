@@ -28,5 +28,29 @@ no progress for 60 seconds is stopped and answers Chrome's state then. The page 
 through the offscreen document, which makes its own Translator once the model is `available`. The
 offscreen document translates with no click once the model is `available`: checked on 2026-10-27 in
 Chrome 156, in the headful agent Chrome, by sending a translation from the test content script's
-world, with no user gesture, in a Chrome just started. Each direction has its own model. The model
-is Chrome's, on this computer, and nothing is sent anywhere to translate.
+world, with no user gesture, in a Chrome just started. The model is Chrome's, on this computer, and
+nothing is sent anywhere to translate.
+
+## One download, from the welcome tab
+
+Chrome's Japanese translation is one language pack, `en_ja`, about 97 MB with Chrome's
+translation library, holding both directions' models; the first Translator either way downloads
+it. A click makes one Translator: Chrome takes the click's activation with the first `create`,
+and a second `create` in the same click fails at once with `NotAllowedError` ("Requires a user
+gesture when availability is \"downloading\" or \"downloadable\""). Once the pack is in, the
+other direction still reports `downloadable` and needs a click of its own, but makes its
+Translator in about 0.1 seconds with no download. All measured on 2026-10-29 in Chrome 156, in
+the headful agent Chrome, on a fresh profile.
+
+So the welcome tab's Download makes the `ja` to `en` Translator, the one the Video tab and the
+caption on the player need, and that downloads the pack. `chromeModel`
+(`src/shared/translation-model.tsx`) is that direction's `translatorAvailability` and
+`downloadTranslator`; the Video tab asks the same direction through its services. After it,
+neither the Video tab nor Translate's Japanese asks; Translate's first English to Japanese makes
+its Translator from its own Translate click, with no download. Whether the model is in is never
+stored: Chrome's `availability` is the one record, so a model Chrome removes is asked for again.
+`translation-model.tsx` also holds what pages show of it: `useTranslationModel`, the state from
+the page's check to the end of a download, `ModelNotice`, the ask, its progress, and its failure,
+and `DownloadProgress`. `src/shared/welcome-translation.interaction.test.tsx` checks the welcome
+tab's offer in each of Chrome's states, one Translator from its click, a failure, and the Video
+tab and Translate with no ask after it.

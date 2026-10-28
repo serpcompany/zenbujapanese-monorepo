@@ -2,6 +2,7 @@ import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { japaneseLines } from '../captions/fixtures/youtube-stand-in'
 import { captionLabels } from '../captions/labels'
+import { labels } from '../shared/labels'
 import { writeSettings } from '../shared/settings'
 import { click, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
@@ -55,30 +56,30 @@ describe('the transcript’s English', () => {
   it('before the download, starts it only from a click on Download, showing its progress', async () => {
     const shown = await transcript({ translator: 'downloadable' })
     await vi.waitFor(() =>
-      expect(shown.text('[data-english-notice] p')).toBe(videoTabLabels.englishNeedsDownload)
+      expect(shown.text('[data-translation-model] p')).toBe(videoTabLabels.englishNeedsDownload)
     )
     await settle()
     expect(shown.services.download).not.toHaveBeenCalled()
     expect(englishOf(shown)).toEqual([undefined, undefined, undefined])
-    await click(shown.button(videoTabLabels.download))
+    await click(shown.button(labels.translation.download))
     expect(shown.services.download).toHaveBeenCalledOnce()
     expect(shown.panel.querySelector('progress')?.value).toBe(0.42)
     await shown.finishDownload()
     await vi.waitFor(() =>
       expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))
     )
-    expect(shown.panel.querySelector('[data-english-notice]')).toBeNull()
+    expect(shown.panel.querySelector('[data-translation-model]')).toBeNull()
   })
 
   it('says so when the download fails, and Download starts it again', async () => {
     const shown = await transcript({ translator: 'downloadable' })
     shown.services.download.mockRejectedValueOnce(new Error('The download stopped.'))
-    await vi.waitFor(() => expect(shown.button(videoTabLabels.download)).toBeDefined())
-    await click(shown.button(videoTabLabels.download))
+    await vi.waitFor(() => expect(shown.button(labels.translation.download)).toBeDefined())
+    await click(shown.button(labels.translation.download))
     await vi.waitFor(() =>
-      expect(shown.text('[data-english-notice] p')).toBe(translateLabels.notices.downloadFailed)
+      expect(shown.text('[data-translation-model] p')).toBe(labels.translation.downloadFailed)
     )
-    await click(shown.button(videoTabLabels.download))
+    await click(shown.button(labels.translation.download))
     await shown.finishDownload()
     await vi.waitFor(() =>
       expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))

@@ -64,9 +64,11 @@ a Japanese source…".
 
 ## Downloading and unavailable
 
-The first translation in a direction downloads Chrome's model for it, from that click on
-**Translate**, which starts it straight away: "Downloading Japanese for Translate… 42%" with a
-progress bar, then the translation. **Translate** waits while it downloads. If the download
+Once Chrome's Japanese translation is on this computer, from the welcome tab's Download or
+anywhere else, **Translate** translates with no download. Before it is, the first translation
+downloads it from that click on **Translate**, which starts it straight away:
+"Downloading Chrome's Japanese translation… 42%" with a progress bar, then the translation.
+**Translate** waits while it downloads. If the download
 doesn't finish, or makes no progress for a minute: "The download didn't finish. Try again.", and
 **Translate** tries again. On a computer without the Translator: "Translate isn't available on
 this computer.", and nothing is translated. Any other failure: "Translate didn't answer. Try
@@ -74,6 +76,8 @@ again."
 
 Check: the tab's test, "downloads the model from the click…", "says Translate isn't available…",
 "says the download didn't finish…", and "says Translate didn't answer…";
+`src/shared/welcome-translation.interaction.test.tsx`, "the Video tab and Translate translate, and
+neither asks to download";
 `src/service-worker/translation.test.ts`, "gives up on a download that makes no progress…".
 
 ## Not built yet
