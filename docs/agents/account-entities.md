@@ -23,7 +23,8 @@ API reference's [Sync entities](../api/account-api.md#sync-entities).
   is, and without one it is the service's time when the change applies. A change that moves the
   word keeps its time; one that leaves the state as it was, or conflicts, keeps the earlier one. A
   word whose state began before the service kept the time (`known_words.state_changed_at`, added
-  empty) answers `null` until its state changes.
+  empty) answers `null` until its state changes. While an older image still serves during a
+  rollback, a state change it makes keeps the earlier time, as that image doesn't write the column.
 - **Learning, to an app that doesn't show it,** is not known (`known: false` beside `state`). Its
   mark makes a Learning word Known, and its clear of one changes nothing, as clearing any word not
   known does: it can't end a state it can't see, and an app that shows Learning ends it with
