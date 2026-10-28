@@ -31,7 +31,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     let app = launch(pass)
     open(.account, in: app)
     audit("Account", in: app)
-    openAccountRow("account.daily-goal", showing: find("daily-goal.choice.custom", in: app), in: app)
+    openAccountRow("account.daily-goal", showing: find("daily-goal.cancel", in: app), in: app)
     waitUntilStill(waitForSheet("daily-goal.sheet", in: app))
     audit("Daily Goal", in: app)
     tap(find("daily-goal.cancel", in: app))

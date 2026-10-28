@@ -6,7 +6,15 @@ struct AccountProgressSection: View {
   @State private var stats: ProgressStats?
   @State private var choosesGoal = false
 
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   private var goal: Int { DailyGoal.clamped(storedGoal) }
+
+  private var rowLayout: AnyLayout {
+    dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+      : AnyLayout(HStackLayout())
+  }
 
   var body: some View {
     Section {
@@ -17,16 +25,17 @@ struct AccountProgressSection: View {
       Button {
         choosesGoal = true
       } label: {
-        LabeledContent {
-          HStack {
+        HStack {
+          rowLayout {
+            SettingsRowLabel("Daily Goal", systemImage: "target", tint: .green)
+            Spacer(minLength: 0)
             Text(ProgressWording.newWords(goal))
-            Image(systemName: "chevron.forward")
-              .font(.footnote.weight(.semibold))
-              .foregroundStyle(.tertiary)
-              .accessibilityHidden(true)
+              .foregroundStyle(.secondary)
           }
-        } label: {
-          SettingsRowLabel("Daily Goal", systemImage: "target", tint: .green)
+          Image(systemName: "chevron.forward")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.tertiary)
+            .accessibilityHidden(true)
         }
       }
       .foregroundStyle(.primary)
@@ -60,10 +69,23 @@ enum ProgressWording {
   static func perMonth(_ goal: Int) -> Int {
     goal * 30
   }
+
+  static func paceDate(
+    _ pace: JLPTCoverage.Pace?, today: Date = .now, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    guard let pace else { return "Done" }
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = timeZone
+    guard let date = ProgressWeek.date(of: pace.date, in: calendar) else { return pace.date }
+    let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: today)
+    let format = Date.FormatStyle(timeZone: timeZone).month(.abbreviated).day()
+    return date.formatted(sameYear ? format : format.year())
+  }
 }
 
 struct TodayProgressCard: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @ScaledMetric(relativeTo: .title3) private var ringSize = 58.0
   let stats: ProgressStats?
   let goal: Int
 
@@ -97,13 +119,18 @@ struct TodayProgressCard: View {
       ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
       : AnyLayout(HStackLayout(spacing: 16))
     return layout {
-      Gauge(value: Double(min(added, todaysGoal)), in: 0...Double(todaysGoal)) {
-        Text("Today")
-      } currentValueLabel: {
+      ZStack {
+        Circle()
+          .stroke(.orange.opacity(0.2), lineWidth: ringSize / 9)
+        Circle()
+          .trim(from: 0, to: todaysGoal > 0 ? min(Double(added) / Double(todaysGoal), 1) : 0)
+          .stroke(.orange, style: StrokeStyle(lineWidth: ringSize / 9, lineCap: .round))
+          .rotationEffect(.degrees(-90))
         Text(added, format: .number)
+          .font(.title3.bold())
+          .monospacedDigit()
       }
-      .gaugeStyle(.accessoryCircularCapacity)
-      .tint(.orange)
+      .frame(width: ringSize, height: ringSize)
       VStack(alignment: .leading, spacing: 2) {
         Text("Today")
           .font(.caption.weight(.semibold))
@@ -175,7 +202,7 @@ struct ProgressWeek {
     }
   }
 
-  private static func date(of name: String, in calendar: Calendar) -> Date? {
+  static func date(of name: String, in calendar: Calendar) -> Date? {
     let parts = name.split(separator: "-").compactMap { Int($0) }
     guard parts.count == 3 else { return nil }
     return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))

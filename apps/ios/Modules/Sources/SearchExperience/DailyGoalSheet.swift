@@ -54,12 +54,7 @@ struct DailyGoalSheet: View {
             }
           }
         }
-        Section {
-          Text("At \(goal) a day")
-            .font(.headline)
-          LabeledContent("New words a month", value: "≈ \(ProgressWording.perMonth(goal).formatted())")
-            .accessibilityIdentifier("daily-goal.month")
-        }
+        DailyGoalPace(goal: goal)
       }
       .formStyle(.grouped)
       .navigationTitle("Daily Goal")
@@ -106,5 +101,36 @@ struct DailyGoalSheet: View {
     .accessibilityElement(children: .combine)
     .accessibilityAddTraits(isChosen ? .isSelected : [])
     .accessibilityIdentifier("daily-goal.choice.\(identifier)")
+  }
+}
+
+private struct DailyGoalPace: View {
+  @Environment(WordKnowledge.self) private var knowledge
+  @State private var model: JLPTCoverageModel?
+  let goal: Int
+
+  private var levels: [JLPTCoverage.Level] {
+    (model?.coverage?.levels ?? []).filter { (3...5).contains($0.level) }.sorted { $0.level > $1.level }
+  }
+
+  var body: some View {
+    Section {
+      Text("At \(goal) a day")
+        .font(.headline)
+        .task {
+          let model = JLPTCoverageModel(knowledge: knowledge, goal: goal)
+          self.model = model
+          await model.follow()
+        }
+        .onChange(of: goal) { model?.goal = goal }
+      LabeledContent("New words a month", value: "≈ \(ProgressWording.perMonth(goal).formatted())")
+        .accessibilityIdentifier("daily-goal.month")
+      ForEach(levels) { level in
+        LabeledContent("All \(level.name) in Learning", value: ProgressWording.paceDate(level.pace))
+          .accessibilityIdentifier("daily-goal.pace.n\(level.level)")
+      }
+    } footer: {
+      Text("Dates are when every word of the level is in Learning, from what you know today.")
+    }
   }
 }

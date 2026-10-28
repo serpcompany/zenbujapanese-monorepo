@@ -20,11 +20,14 @@ wrap onto two rows.
 **Daily Goal** shows the goal, "20 new words", and opens a sheet with the presets 5 · Light,
 10 · Steady, 20 · Focused (the goal until one is chosen), and 30 · Intense, each with about 30 times
 as many a month, and **Custom**, a stepper from 1 to 200. Under them, "At 20 a day" gives the new
-words a month. **Done** keeps the choice and **Cancel** drops it. The goal is kept under
+words a month and, from the shared core's JLPT coverage at that goal, the day every N5, N4, and N3
+word would be in Learning ("All N5 in Learning", Done once it is). **Done** keeps the choice and
+**Cancel** drops it. The goal is kept under
 `progress.dailyGoal` and syncs ([Zenbu account and sync](account-sync.md)).
 
 Check: UI `AccountUITests.testTheTodayCardCountsWordsMarkedLearningAgainstTheGoalTheSheetChooses`
 (the count and goal, a word marked Learning raising it, and a preset changing the card and the row)
 and `testTheTodayCardShowsAStreakAndAMetGoal` (a streak seeded with `ZENBU_PROGRESS_STREAK`, the goal
 met, and Custom); `AccountAuditUITests` (the section alone at the largest size, and the sheet);
-package `SyncedSettingsTests` and `SharedSettingsRulesTests` (the goal's values).
+package `SyncedSettingsTests` and `SharedSettingsRulesTests` (the goal's values), and
+`ProgressWordingTests` (the pace's dates and the card's words).

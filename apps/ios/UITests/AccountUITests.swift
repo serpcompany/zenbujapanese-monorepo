@@ -42,6 +42,9 @@ final class AccountUITests: ZenbuUITestCase {
     waitUntil(find("daily-goal.choice.20", in: app), "selected == true")
     tap(find("daily-goal.choice.5", in: app))
     waitUntil(find("daily-goal.month", in: app), mentions: "150")
+    for level in ["N5", "N4", "N3"] {
+      waitUntil(find("daily-goal.pace.\(level.lowercased())", in: app), mentions: "All \(level) in Learning")
+    }
     tap(find("daily-goal.done", in: app))
     waitUntil(today, "label == %@", "Today, 1 of 5 new words")
     waitUntil(goal, mentions: "5 new words")
