@@ -27,13 +27,14 @@ const lookups: ReadonlySet<string> = new Set<Lookup['type']>([
   'kanji',
   'word-examples',
   'form-examples',
-  'resolve'
+  'resolve',
+  'search'
 ])
 
-function lookUp(
+async function lookUp(
   request: Lookup,
   { dictionary, attached }: OpenDictionary
-): DictionaryAnswer | Failure {
+): Promise<DictionaryAnswer | Failure> {
   switch (request.type) {
     case 'segment':
       return { type: 'segment', ...dictionary.segmentation(request.text, { writtenAlike: true }) }
@@ -61,10 +62,15 @@ function lookUp(
     }
     case 'resolve':
       return { type: 'resolve', entSeq: dictionary.resolve(request.headword, request.reading) }
+    case 'search':
+      return { type: 'search', screen: (await dictionary.search(request.query)).screen }
   }
 }
 
-export function answer(request: DictionaryRequest, worker: WorkerData): DictionaryAnswer | Failure {
+export async function answer(
+  request: DictionaryRequest,
+  worker: WorkerData
+): Promise<DictionaryAnswer | Failure> {
   switch (request.type) {
     case 'ping':
       return { type: 'pong', from: 'dictionary-worker' }
@@ -78,7 +84,7 @@ export function answer(request: DictionaryRequest, worker: WorkerData): Dictiona
   const open = worker.open()
   if (!open) return { type: 'not-ready', data: worker.state() }
   try {
-    return lookUp(request, open)
+    return await lookUp(request, open)
   } catch (error) {
     return failure(error)
   }
