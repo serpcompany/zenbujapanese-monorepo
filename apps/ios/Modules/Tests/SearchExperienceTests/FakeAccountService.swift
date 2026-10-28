@@ -18,6 +18,7 @@ final class FakeAccountService: @unchecked Sendable {
   var droppedUploads: Set<String> = []
   var pageSize = 100
   var refusesSet = false
+  var now: () -> Date = Date.init
   private(set) var invalidCursors = 0
   private var forgottenThrough: [String: Int] = [:]
   private var sessions: [String: String] = [:]
@@ -159,6 +160,20 @@ final class FakeAccountService: @unchecked Sendable {
     return profile
   }
 
+  private func isUncounted(_ listID: String) -> Bool {
+    guard let day = UUID(uuidString: listID).flatMap(WordLists.day(of:)) else { return false }
+    let days = ISO8601DateFormatter()
+    days.formatOptions = [.withFullDate]
+    return day >= "2026-10-01" && day <= days.string(from: now().addingTimeInterval(86_400))
+  }
+
+  private func countedListCount(of user: String) -> Int {
+    (accounts[user] ?? [:]).count {
+      $0.key.hasPrefix("list:") && $0.value.data != nil
+        && !isUncounted(String($0.key.dropFirst(5)))
+    }
+  }
+
   private func apply(_ mutation: StubSyncRequest.Mutation, for user: String) -> [String: Any] {
     if mutation.entity == "profile" { _ = profile(of: user) }
     if SyncEntity.kept.contains(mutation.entity) { return applyKept(mutation, for: user) }
@@ -175,6 +190,9 @@ final class FakeAccountService: @unchecked Sendable {
     switch (mutation.entity, mutation.operation) {
     case ("list", "create"):
       guard current == nil else { return StubSync.rejected(mutation.id, "already_exists") }
+      guard isUncounted(mutation.entityId) || countedListCount(of: user) < 500 else {
+        return StubSync.rejected(mutation.id, "too_many_lists")
+      }
       var position = 0
       if case .number(let value) = mutation.fields?["position"] { position = value }
       return save(

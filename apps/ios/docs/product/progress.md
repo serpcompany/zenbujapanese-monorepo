@@ -13,8 +13,9 @@ each marked met, short, or today (days before the log began show as short); and 
 as "6-day streak", with **See progress** beside it. With nothing marked Learning yet it shows "0 of 20 new words" and no streak.
 VoiceOver reads the card as one element: "Today, 12 of 20 new words, 6-day streak", with "goal met"
 before the streak once it is. At the largest text sizes the ring sits above the words, the days
-stay on one row inside the card, and **See progress** goes under the streak. When the date changes, with Zenbu open or in the background, the card
-moves to the new day.
+stay on one row inside the card, and **See progress** goes under the streak. When the date changes
+while Zenbu is open, and when Zenbu becomes active again on a different date than it last read, the
+card moves to the new day; becoming active on the same date changes nothing.
 
 ## The Progress screen
 
@@ -64,6 +65,6 @@ Check: UI `AccountUITests.testTheTodayCardCountsWordsMarkedLearningAgainstTheGoa
 and `testTheTodayCardShowsAStreakAndAMetGoal` (a streak seeded with `ZENBU_PROGRESS_STREAK`, the goal
 met, and Custom); `AccountAuditUITests` (the section alone at the largest size, and the sheet);
 package `SyncedSettingsTests` and `SharedSettingsRulesTests` (the goal's values), and
-`ProgressWordingTests` (the pace's dates and the card's words), `ProgressLogTests.dayTurns` (the
+`ProgressWordingTests` (the pace's dates and the card's words), `ProgressLogTests.dayTurns`, `resumeOnANewDay`, and `resumeOnTheSameDay` (the
 card's new day), `SyncedSettingsTests.roundedGoalStaysUnsent` (a rounded goal isn't sent back), and
 `TodayProgressCardLayoutTests` (the card fits a 320-point row at large, AX3, and AX5).

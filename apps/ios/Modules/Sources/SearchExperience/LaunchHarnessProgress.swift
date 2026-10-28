@@ -2,12 +2,12 @@ import Foundation
 
 #if DEBUG
   extension LaunchHarness {
-    private struct SeededProgress: Encodable {
+    struct SeededProgress: Encodable {
       let version = 1
       let days: [String: ProgressLogDay]
     }
 
-    private struct SeededKnowledge: Encodable {
+    struct SeededKnowledge: Encodable {
       let version = 2
       let records: [WordKnowledgeRecord]
     }
@@ -96,13 +96,6 @@ import Foundation
     ) -> ProgressLogChange {
       ProgressLogChange(
         id: record.entryID, before: before.stored, after: record.status.stored, at: record.updatedAt)
-    }
-
-    private static func write(_ value: some Encodable, to file: URL) {
-      guard let data = try? JSONEncoder.localStore.encode(value) else { return }
-      try? FileManager.default.createDirectory(
-        at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-      try? data.write(to: file, options: .atomic)
     }
   }
 #endif

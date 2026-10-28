@@ -47,6 +47,7 @@ enum AppLifecycle {
     switch phase {
     case .active:
       WordKnowledge.shared.saveIfNeeded()
+      ProgressLog.shared.refreshDay()
       ProgressLog.shared.saveIfNeeded()
       WordLists.shared.saveIfNeeded()
       applySharedChanges()

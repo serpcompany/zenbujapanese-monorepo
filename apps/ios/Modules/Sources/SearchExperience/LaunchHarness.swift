@@ -371,6 +371,9 @@ enum LaunchHarness {
       if let seed = environment[progressSeedKey] {
         seedProgress(from: URL(filePath: seed))
       }
+      if let days = environment[dailyListsKey].flatMap(Int.init) {
+        seedDailyLists(days: days)
+      }
     #endif
   }()
 }

@@ -313,20 +313,20 @@ marks it, and Account's Known Words and **Learning** list the Known and the Lear
 Lists are the learner's own named groups of dictionary words and kanji, such as "Favorites" or
 "Anime S1 vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted
 like any other; once deleted it is not created again. Signed in, Favorites is one list on every
-device and Zenbu app ([Zenbu account and sync](account-sync.md)). Words and kanji are added
-from their page's **•••** menu (see [Dictionary](dictionary.md)).
+device and Zenbu app ([Zenbu account and sync](account-sync.md)). Words and kanji are added from
+their page's **•••** menu (see [Dictionary](dictionary.md)).
 
-The Account row shows how many lists there are. Lists shows every list in the learner's order with
-its word count; two lists in one place, as after signing in on a second phone, show in the same
-order on every device. A learner can create a list, swipe a list to rename or delete it (a list that
-has words asks first), and open a list. In Edit, the learner drags lists to reorder them and taps a
-list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are
-trimmed, can't be empty, hold at most 500 characters, cut to fit (control characters become spaces),
-and may repeat. A list shows its words most recently added first, with each word's Known or Learning
-tag; the learner can search it by headword or reading, swipe a word to remove it from that list, or
-open its word page, found the same way as in [Known Words](known-words.md). Its **•••** menu renames
-the list, deletes it (asking first when it has words), or selects words: while selecting, the top
-bar offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
+The Account row counts the learner's own lists. Lists shows a row for the [daily
+lists](daily-lists.md) once there is one, then the learner's own lists in their order with word
+counts; two lists in one place, as after signing in on a second phone, show in the same order on
+every device. A learner can create and open a list, or swipe it to rename or delete it (one with
+words asks first). In Edit, the learner drags lists into order and taps a list to rename it; the Mac
+has no Edit, and its lists are dragged into order. Names are trimmed, can't be empty, hold at most
+500 characters, cut to fit (control characters become spaces), and may repeat. A list shows its
+words most recently added first, with each word's Known or Learning tag; the learner can search it
+by headword or reading, swipe a word to remove it from that list, or open its word page. Its **•••**
+menu renames the list, deletes it (asking if it has words), or selects words: while selecting, the
+top bar offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
 Check: package `WordListsTests`, `SharedAccountRulesTests.listNames()`, and `SavedKanjiTests`; UI
 `ListsUITests` (making, renaming, deleting, and dragging a list into order) and
