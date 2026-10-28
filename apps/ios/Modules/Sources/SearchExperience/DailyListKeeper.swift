@@ -32,12 +32,13 @@ final class DailyListKeeper {
 
   private func keep(_ change: KnownWordChange, from previous: WordKnowledgeStatus, on day: String) {
     guard let listID = AccountRules.shared.dailyListID(day) else { return }
-    let asked = ProgressStatsRequest(
-      days: log.days.filter { $0.key == day }, goal: log.goal, today: day)
     let core = core
     let earlier = working
     working = Task {
       await earlier?.value
+      await log.flush()
+      let asked = ProgressStatsRequest(
+        days: log.days.filter { $0.key == day }, goal: log.goal, today: day)
       guard let stats = await ProgressLog.answer(asked, using: core) else { return }
       let added = stats.words.first { $0.day == day }?.addedToLearning ?? []
       if !lists.isLoaded { await lists.flush() }
@@ -57,6 +58,6 @@ final class DailyListKeeper {
     }
     lists.addWord(
       LanguageReferenceID(rawValue: change.storedID), headword: change.headword,
-      reading: change.reading, to: listID)
+      reading: change.reading, to: listID, at: change.changedAt ?? Date())
   }
 }

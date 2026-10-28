@@ -16,6 +16,7 @@ struct AccountSyncLearningTests {
   @Test("a word being learned syncs as set with its state, and another device shows it Learning")
   func learningSyncs() async throws {
     let (service, phone, pad) = await Fixture.twoPhones()
+    phone.wordKnowledge.now = { Fixture.start }
     phone.mark(.learning, Fixture.taberu)
     try await phone.signIn()
 
@@ -25,6 +26,7 @@ struct AccountSyncLearningTests {
     #expect(
       sent.fields == [
         "state": .string("learning"), "headword": .string("食べる"), "reading": .string("たべる"),
+        "stateChangedAt": .string("2026-10-03T04:00:00.000Z"),
       ])
     #expect(known(Fixture.taberu, in: service) == "learning")
 

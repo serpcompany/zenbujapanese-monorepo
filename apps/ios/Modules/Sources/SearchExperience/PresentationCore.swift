@@ -76,7 +76,13 @@ final class PresentationCore: @unchecked Sendable {
   }
 
   func answer<Answer: Decodable>(_ method: String, _ argument: String) throws -> Answer {
-    try lock.withLock { try preparedCore().answer(method, argument) }
+    try answer(method, argument, decodedBy: JSONDecoder())
+  }
+
+  func answer<Answer: Decodable>(
+    _ method: String, _ argument: String, decodedBy decoder: JSONDecoder
+  ) throws -> Answer {
+    try lock.withLock { try preparedCore().answer(method, argument, decodedBy: decoder) }
   }
 
   func answer<Answer: Decodable>(_ method: String, _ argument: some Encodable) throws -> Answer {

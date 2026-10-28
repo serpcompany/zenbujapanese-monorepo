@@ -70,15 +70,19 @@ final class ProgressLogTests {
   private func share(
     _ id: LanguageReferenceID, _ headword: String, _ status: WordKnowledgeStatus, madeAt made: Date
   ) throws -> SharedChanges {
-    let inbox = SharedChanges(folder: folder.appending(path: "Inbox"))
-    try FileManager.default.createDirectory(at: inbox.folder, withIntermediateDirectories: true)
-    let name = String(
-      format: "%020llu-%010d-%@.json", UInt64(made.timeIntervalSince1970 * 1_000_000_000), 1,
-      UUID().uuidString)
-    let change = SharedChange.known(
-      KnownWordChange(storedID: id.rawValue, headword: headword, reading: headword, status: status))
-    try JSONEncoder.localStore.encode(change).write(to: inbox.folder.appending(path: name))
-    return inbox
+    try SharedChanges.holding(
+      KnownWordChange(storedID: id.rawValue, headword: headword, reading: headword, status: status),
+      madeAt: made, in: folder)
+  }
+
+  private func opened(applying inbox: SharedChanges, at time: Date) async -> (
+    WordKnowledge, ProgressLog
+  ) {
+    clock.now = time
+    let (knowledge, log) = await stores()
+    await inbox.apply(to: WordLists(fileURL: folder.appending(path: "word-lists.json")), knowledge)
+    await log.flush()
+    return (knowledge, log)
   }
 
   @Test("changes at 23:59 and at 00:01 fall on two days, each kept as it happened")
@@ -156,11 +160,7 @@ final class ProgressLogTests {
     let made = october(27, 23, 59)
     let inbox = try share(eki, "駅", .learning, madeAt: made)
 
-    clock.now = october(28, 8, 0)
-    let (knowledge, log) = await stores()
-    let lists = WordLists(fileURL: folder.appending(path: "word-lists.json"))
-    await inbox.apply(to: lists, knowledge)
-    await log.flush()
+    let (_, log) = await opened(applying: inbox, at: october(28, 8, 0))
 
     #expect(ids(on: "2026-10-27", in: log) == [eki.rawValue])
     #expect(log.days["2026-10-27"]?.changes.first?.at == made)
@@ -199,15 +199,24 @@ final class ProgressLogTests {
     try Data(seeded.utf8).write(to: logURL)
     let inbox = try share(eki, "駅", .learning, madeAt: october(25, 23, 59))
 
-    clock.now = october(28, 8, 0)
-    let (knowledge, log) = await stores()
-    await inbox.apply(to: WordLists(fileURL: folder.appending(path: "word-lists.json")), knowledge)
-    await log.flush()
+    let (knowledge, log) = await opened(applying: inbox, at: october(28, 8, 0))
 
     #expect(log.days["2026-10-25"]?.totals == ProgressTotals(known: 0, learning: 1))
     #expect(log.days["2026-10-26"]?.totals == ProgressTotals(known: 2, learning: 4))
     #expect(log.days["2026-10-27"]?.totals == ProgressTotals(known: 2, learning: 4))
     #expect(log.days["2026-10-28"]?.totals == knowledge.totals)
+  }
+
+  @Test("two share sheet changes on two past days applied together each count once")
+  func twoShareSheetChangesOnTwoPastDays() async throws {
+    _ = try share(eki, "駅", .learning, madeAt: october(25, 12, 0))
+    let inbox = try share(taberu, "食べる", .learning, madeAt: october(27, 12, 0))
+
+    let (_, log) = await opened(applying: inbox, at: october(29, 8, 0))
+
+    #expect(log.days["2026-10-25"]?.totals == ProgressTotals(known: 0, learning: 1))
+    #expect(log.days["2026-10-27"]?.totals == ProgressTotals(known: 0, learning: 2))
+    #expect(log.days["2026-10-29"]?.totals == ProgressTotals(known: 0, learning: 2))
   }
 
   @Test("a synced change updates the day's totals and isn't recorded as a change")

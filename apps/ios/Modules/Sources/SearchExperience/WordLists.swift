@@ -157,8 +157,11 @@ final class WordLists: LocalFileStore {
     add(storedID: item.storedID, headword: item.headword, reading: item.reading, to: listID)
   }
 
-  func addWord(_ id: LanguageReferenceID, headword: String, reading: String, to listID: UUID) {
-    add(storedID: id.rawValue, headword: headword, reading: reading, to: listID)
+  func addWord(
+    _ id: LanguageReferenceID, headword: String, reading: String, to listID: UUID,
+    at addedAt: Date = Date()
+  ) {
+    add(storedID: id.rawValue, headword: headword, reading: reading, to: listID, at: addedAt)
   }
 
   func removeWord(_ id: LanguageReferenceID, from listID: UUID) {
@@ -174,13 +177,18 @@ final class WordLists: LocalFileStore {
     changeObserver?(.wordRemoved(membership))
   }
 
-  private func add(storedID: String, headword: String, reading: String, to listID: UUID) {
+  private func add(
+    storedID: String, headword: String, reading: String, to listID: UUID,
+    at addedAt: Date = Date()
+  ) {
     guard canChange, lists.contains(where: { $0.id == listID }),
       !contains(storedID: storedID, in: listID)
     else { return }
     let membership = WordListMembership(
-      listID: listID, entryID: storedID, headword: headword, reading: reading, addedAt: Date())
-    membershipsByList[listID, default: []].insert(membership, at: 0)
+      listID: listID, entryID: storedID, headword: headword, reading: reading, addedAt: addedAt)
+    let words = membershipsByList[listID, default: []]
+    let place = words.firstIndex { $0.addedAt <= addedAt } ?? words.count
+    membershipsByList[listID, default: []].insert(membership, at: place)
     persist()
     changeObserver?(.wordAdded(membership))
   }

@@ -48,12 +48,17 @@ input to the rules the account service and the website do.
   and each launch's first sync uploads that entity again, from no cursor, until the service knows
   it.
 - **Known words.** Each change to a word's state goes as `set`, with its `state` (`known`,
-  `learning`, or `unknown`), and the headword and reading unless it's Unknown; the first upload
-  sends each word that isn't Unknown, oldest first. A service older than Learning refuses `set` as
-  `unknown_operation`, and the word keeps its state on the phone: a held copy of the phone's own
-  earlier change is dropped, unless it's newer than the refused change's base. Unless a newer change
-  to the word is queued, a Known goes again as `mark`, with the headword and reading, and an Unknown
-  as `clear`, with no fields, each under a new ID; a Learning `set` waits in `retryNextLaunch`.
+  `learning`, or `unknown`), its time as `stateChangedAt`, and the headword and reading unless it's
+  Unknown; the first upload sends each word that isn't Unknown, oldest first, with its `updatedAt`:
+  the change's own time, which is the inbox file's for a Share extension change.
+  A word that comes down brings its `stateChangedAt` into `KnownWordChange.changedAt`, and into
+  `updatedAt` (the time it arrived when the account has none). A service
+  older than Learning refuses `set` as `unknown_operation`, and the word keeps its state on the
+  phone: a held copy of the phone's own earlier change is dropped, unless it's newer than the
+  refused change's base. Unless a newer change to the word is queued, a Known goes again as `mark`,
+  with the headword and reading but no time, which a service without `set` doesn't keep, and an
+  Unknown as `clear`, with no fields, each under a new ID; a Learning `set` waits in
+  `retryNextLaunch`.
 - **Watch history.** `WatchHistory` (`WatchHistory.swift`, in `UserDefaults` under
   `watch.recent-videos.v1`) reports each `record` and swipe removal through `changeObserver`, and
   takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest
