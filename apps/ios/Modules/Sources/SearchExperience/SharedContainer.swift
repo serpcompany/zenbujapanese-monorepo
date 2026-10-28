@@ -44,7 +44,7 @@ enum SharedChange: Codable, Equatable, Sendable {
   }
 
   @MainActor
-  func apply(to lists: WordLists, _ knowledge: WordKnowledge) {
+  func apply(to lists: WordLists, _ knowledge: WordKnowledge, madeAt time: Date? = nil) {
     switch self {
     case .listCreated(let list):
       lists.createList(named: list.name, id: list.id)
@@ -57,7 +57,7 @@ enum SharedChange: Codable, Equatable, Sendable {
     case .known(let word):
       knowledge.setStatus(
         word.status, id: LanguageReferenceID(rawValue: word.storedID),
-        headword: word.headword, reading: word.reading)
+        headword: word.headword, reading: word.reading, at: time ?? word.changedAt)
     }
   }
 }
@@ -89,6 +89,14 @@ struct SharedChanges: Sendable {
     notify_post(Self.notice)
   }
 
+  static func madeAt(_ name: String) -> Date? {
+    let digits = name.prefix { $0.isASCII && $0.isNumber }
+    guard digits.count == nanosecondDigits, let nanoseconds = UInt64(digits) else { return nil }
+    return Date(timeIntervalSince1970: Double(nanoseconds) / 1_000_000_000)
+  }
+
+  private static let nanosecondDigits = 20
+
   func pending() -> [(file: URL, change: SharedChange)] {
     let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
     return names.filter { $0.hasSuffix(".json") }.sorted().compactMap { name in
@@ -111,7 +119,7 @@ struct SharedChanges: Sendable {
     for (file, change) in pending()
     where !Self.applying.contains(file) && change.canApply(to: lists, knowledge) {
       Self.applying.insert(file)
-      change.apply(to: lists, knowledge)
+      change.apply(to: lists, knowledge, madeAt: Self.madeAt(file.lastPathComponent))
       applied.append(file)
     }
     guard !applied.isEmpty else { return }
