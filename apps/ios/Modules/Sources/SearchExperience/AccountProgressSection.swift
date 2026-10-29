@@ -225,6 +225,10 @@ struct ProgressWeek {
     return calendar
   }
 
+  static func letter(of name: String, in calendar: Calendar = gregorian()) -> String {
+    date(of: name, in: calendar)?.formatted(.dateTime.weekday(.narrow)) ?? ""
+  }
+
   static func date(of name: String, in calendar: Calendar) -> Date? {
     let parts = name.split(separator: "-").compactMap { Int($0) }
     guard parts.count == 3 else { return nil }

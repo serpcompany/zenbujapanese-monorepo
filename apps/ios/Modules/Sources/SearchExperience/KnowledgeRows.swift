@@ -103,3 +103,10 @@ private struct SavedRecordRow: View {
 
   private var identifier: String { "knowledge.item.\(record.entryID)" }
 }
+
+extension WordKnowledge {
+  func rows(for records: [WordKnowledgeRecord], using lookupClient: LookupClient) async -> KnowledgeRows? {
+    await KnowledgeRows.resolving(
+      records, known: Set(records.map(\.entryID).filter(isKnown(storedID:))), using: lookupClient)
+  }
+}

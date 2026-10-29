@@ -149,9 +149,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
   | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
   | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
-  | `phraseNote` | A phrase with its entry's meanings and parts of speech | A set phrase's first three meanings, or null |
+  | `phraseNote` | A phrase, its meanings and parts of speech | Its first three meanings, or null |
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
   | `progressStats`, `progressDays` | The log's days, goal, today, changes | Stats; days filled |
+  | `knownByDate` | The log's days, today, a week back | A week's Known IDs by day, total, change |
   | `youTubeVideo`, `youTubeCaptions`, `youTubeTranslatedCaptions` | A player response; timed text; captions, translated timed text | Its track and playability; captions; them paired; or null |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
