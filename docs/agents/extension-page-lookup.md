@@ -49,7 +49,11 @@ pieces are tested apart:
 
 `wordPopupHost` (`src/word-popup/popup-host.tsx`) mounts `WordPopup` with `mountInShadowRoot`
 next to the word, places it inside the window (`position.ts`), and moves it as the page scrolls
-or resizes. Escape, Close, and a click outside close it and give focus back. Open Full Entry
+or resizes. Escape and a click outside close it and give focus back; while its More menu is open
+(`[role="menu"][data-open]`, `open-menu.ts`), Escape is the menu's. The shadow host is the
+popup's layer (`position: fixed`, the highest `z-index`), and the placed box inside it has none,
+so the More menu, which portals to the shadow root's surface, stacks over the card; a `z-index`
+on the box made a stacking context the menu's `z-50` was below. Open Full Entry
 calls `openPanel(route)` from the click: the service worker opens the side panel before it awaits
 anything, so the click's activation carries through one message (checked in Chromium by the
 browser tests; no fallback is built). Share and Copy Link use `websiteOrigin` and `wordPath`.

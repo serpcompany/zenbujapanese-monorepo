@@ -45,10 +45,12 @@ Japanese or English…"; `src/translate/selection.test.ts` for where the selecti
 A card with the direction, such as **Japanese → English** or **English → Japanese**, the text as
 it was, its translation, "Translated on this device", and **Copy** and **Speak**. **Copy** copies
 the translation and then reads **Copied**. **Speak** reads the translation aloud in its language
-with a voice on this computer, never one of Chrome's online voices, which would send the text to a
-server. With no such voice for the language, **Speak** is off and the card says "There's no
-English voice on this computer to speak it." (or Japanese). A new translation replaces the last
-one, and an answer that comes after **Clear** is dropped.
+with the best voice on this computer, chosen as Pronounce chooses one
+([`word-popup.md`](word-popup.md), Its actions), US English before other English as in the app,
+and never one of Chrome's online voices, which would send the text to a server. With no such voice
+for the language, **Speak** is off and the card says "There's no English voice on this computer to
+speak it." (or Japanese). A new translation replaces the last one, and an answer that comes after
+**Clear** is dropped.
 
 Check: the tab's test, "…from Japanese to English", "translates English typed in the box to
 Japanese", "copies the translation…", "speaks the translation…", "turns Speak off…", "replaces
@@ -59,9 +61,10 @@ for the voice.
 
 When the text is Japanese, each dictionary word in it is underlined as on a page, and a click on
 one opens its word popup under the text ([`word-popup.md`](word-popup.md)). The popup's Open Full
-Entry opens the word's Word Detail over the tab; Close or Escape puts the popup away and gives
-focus back to the word. The text has the reading aids turned on in Settings: furigana over its
-kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
+Entry opens the word's Word Detail over the tab; Escape or a press outside the popup puts it
+away. Escape gives focus back to the word; a press leaves focus where it lands. While the popup's
+••• menu is open, a press closes only the menu. The text has the reading aids turned on in
+Settings: furigana over its kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
 Reading Aids). A meaning is in the muted foreground, half a rem from the word before it; one wider
 than its column is cut with an ellipsis, and its sense's full text is its tooltip and what a screen
 reader reads. Until the dictionary is ready, the text is plain; the tab asks again, waiting longer
@@ -73,16 +76,25 @@ which draws the same line (`e2e/transcript-meanings.spec.ts`).
 
 ## Downloading and unavailable
 
-The first translation in a direction downloads Chrome's model for it, from that click on
-**Translate**, which starts it straight away: "Downloading Japanese for Translate… 42%" with a
-progress bar, then the translation. **Translate** waits while it downloads. If the download
+Once Chrome's Japanese translation is on this computer, from the welcome tab's Download or
+anywhere else, **Translate** translates both ways with no ask and no download line. Chrome still
+reports English to Japanese as a download until a page makes its translator, and makes it only
+from a click, so the first English to Japanese makes it from that click on **Translate**: about
+a tenth of a second from the pack already in, under "Translating…". Before the pack is in, the
+first translation downloads it from that click on **Translate**, which starts it straight away.
+The tab says "Translating…" until Chrome reports bytes still to load, then
+"Downloading Chrome's Japanese translation… 42%" with a progress bar, then the translation.
+**Translate** waits while it downloads. If the download
 doesn't finish, or makes no progress for a minute: "The download didn't finish. Try again.", and
 **Translate** tries again. On a computer without the Translator: "Translate isn't available on
 this computer.", and nothing is translated. Any other failure: "Translate didn't answer. Try
 again."
 
-Check: the tab's test, "downloads the model from the click…", "says Translate isn't available…",
+Check: the tab's test, "downloads the model from the click…", "says Translating… until Chrome
+reports bytes still loading…", "says Translate isn't available…",
 "says the download didn't finish…", and "says Translate didn't answer…";
+`src/shared/welcome-translation.interaction.test.tsx`, "the Video tab and Translate translate both
+ways, and neither asks to download";
 `src/service-worker/translation.test.ts`, "gives up on a download that makes no progress…".
 
 ## Not built yet

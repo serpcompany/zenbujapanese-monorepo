@@ -2,12 +2,13 @@ import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { japaneseLines } from '../captions/fixtures/youtube-stand-in'
 import { captionLabels } from '../captions/labels'
+import { labels } from '../shared/labels'
 import { writeSettings } from '../shared/settings'
+import { recheckMs } from '../shared/translation-model'
 import { click, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
-import { popupAnswer } from '../test/word-cards'
+import { openFullEntryButton, popupAnswer } from '../test/word-cards'
 import { translateLabels } from '../translate/labels'
-import { wordPopupLabels } from '../word-popup/labels'
 import { videoTabLabels } from './labels'
 
 let tab: ReturnType<typeof watching> | undefined
@@ -18,6 +19,7 @@ afterEach(() => {
   document.body.replaceChildren()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  vi.useRealTimers()
 })
 
 async function transcript(options?: Parameters<typeof watching>[0]) {
@@ -33,6 +35,31 @@ const englishOf = (shown: ReturnType<typeof watching>) =>
 const popup = () => document.querySelector('[data-word-popup]')
 
 const walkWord = (word: string) => `[data-line] [data-source] [data-word="${word}"]`
+
+async function pressEscape() {
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
+  await settle()
+}
+
+async function playsAgain(shown: ReturnType<typeof watching>) {
+  await vi.waitFor(() =>
+    expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
+  )
+}
+
+async function closesAndPlaysAgain(shown: ReturnType<typeof watching>) {
+  await pressEscape()
+  expect(popup()).toBeNull()
+  await playsAgain(shown)
+}
+
+async function pausedForAWord() {
+  const shown = await transcript()
+  await shown.playsAt(12)
+  await click(document.querySelector(walkWord('散歩')))
+  await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+  return shown
+}
 
 describe('the transcript’s English', () => {
   it('gives each row its own English, a line at a time', async () => {
@@ -55,30 +82,52 @@ describe('the transcript’s English', () => {
   it('before the download, starts it only from a click on Download, showing its progress', async () => {
     const shown = await transcript({ translator: 'downloadable' })
     await vi.waitFor(() =>
-      expect(shown.text('[data-english-notice] p')).toBe(videoTabLabels.englishNeedsDownload)
+      expect(shown.text('[data-translation-model] p')).toBe(videoTabLabels.englishNeedsDownload)
     )
     await settle()
     expect(shown.services.download).not.toHaveBeenCalled()
     expect(englishOf(shown)).toEqual([undefined, undefined, undefined])
-    await click(shown.button(videoTabLabels.download))
+    await click(shown.button(labels.translation.download))
     expect(shown.services.download).toHaveBeenCalledOnce()
     expect(shown.panel.querySelector('progress')?.value).toBe(0.42)
     await shown.finishDownload()
     await vi.waitFor(() =>
       expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))
     )
-    expect(shown.panel.querySelector('[data-english-notice]')).toBeNull()
+    expect(shown.panel.querySelector('[data-translation-model]')).toBeNull()
+  })
+
+  it('while Chrome is already downloading, says so with no Download, and shows the English once a check finds the model', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const shown = await transcript({ translator: 'downloading' })
+    await vi.waitFor(() =>
+      expect(shown.text('[data-translation-model]')).toBe(labels.translation.chromeDownloading)
+    )
+    expect(shown.button(labels.translation.download)).toBeUndefined()
+    shown.services.availability.mockResolvedValue('available')
+    shown.services.translate.mockImplementation(async request => ({
+      type: 'translated',
+      texts: request.type === 'translate' ? request.texts.map(text => lineEnglish[text] ?? '') : []
+    }))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(recheckMs)
+    })
+    await vi.waitFor(() =>
+      expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))
+    )
+    expect(shown.panel.querySelector('[data-translation-model]')).toBeNull()
+    expect(shown.services.download).not.toHaveBeenCalled()
   })
 
   it('says so when the download fails, and Download starts it again', async () => {
     const shown = await transcript({ translator: 'downloadable' })
     shown.services.download.mockRejectedValueOnce(new Error('The download stopped.'))
-    await vi.waitFor(() => expect(shown.button(videoTabLabels.download)).toBeDefined())
-    await click(shown.button(videoTabLabels.download))
+    await vi.waitFor(() => expect(shown.button(labels.translation.download)).toBeDefined())
+    await click(shown.button(labels.translation.download))
     await vi.waitFor(() =>
-      expect(shown.text('[data-english-notice] p')).toBe(translateLabels.notices.downloadFailed)
+      expect(shown.text('[data-translation-model] p')).toBe(labels.translation.downloadFailed)
     )
-    await click(shown.button(videoTabLabels.download))
+    await click(shown.button(labels.translation.download))
     await shown.finishDownload()
     await vi.waitFor(() =>
       expect(englishOf(shown)).toEqual(japaneseLines.map(line => lineEnglish[line]))
@@ -198,29 +247,29 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('散歩')))
     expect(popup()).not.toBeNull()
     await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
-    await click(shown.button(wordPopupLabels.close))
+    await closesAndPlaysAgain(shown)
+  })
+
+  it('closes the popup on a press outside it, and plays the video again', async () => {
+    const shown = await pausedForAWord()
+    await act(async () => {
+      document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    })
+    await settle()
     expect(popup()).toBeNull()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await playsAgain(shown)
   })
 
   it('plays the video again when the transcript closes with a popup open', async () => {
-    const shown = await transcript()
-    await shown.playsAt(12)
-    await click(document.querySelector(walkWord('散歩')))
-    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    const shown = await pausedForAWord()
     shown.close()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await playsAgain(shown)
   })
 
   it('leaves a paused video paused when the popup closes', async () => {
     const shown = await transcript()
     await click(document.querySelector(walkWord('散歩')))
-    await click(shown.button(wordPopupLabels.close))
-    await settle()
+    await pressEscape()
     expect(shown.services.control).toHaveBeenCalledExactlyOnceWith(5, { type: 'pause' })
   })
 
@@ -232,19 +281,14 @@ describe('the transcript’s words', () => {
     await click(document.querySelector(walkWord('行きましょう')))
     expect(document.querySelectorAll('[data-word-popup]')).toHaveLength(1)
     expect(shown.video.controls).toEqual([{ type: 'pause' }])
-    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
-    await settle()
-    expect(popup()).toBeNull()
-    await vi.waitFor(() =>
-      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
-    )
+    await closesAndPlaysAgain(shown)
   })
 
   it('opens Word Detail from the popup’s Open Full Entry', async () => {
     const shown = await transcript()
     shown.services.popupCard.mockImplementation(async () => popupAnswer('youkyuu'))
     await click(document.querySelector(walkWord('散歩')))
-    await click(shown.button(wordPopupLabels.openFullEntry))
+    await click(openFullEntryButton(document))
     expect(shown.open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
   })
 })

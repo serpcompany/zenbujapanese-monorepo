@@ -73,10 +73,12 @@ export function useTranslation(
       const request: TranslationRequest = { type: 'translate', direction, texts: [source] }
       const here = await services.availability(direction).catch(() => null)
       if (here === 'downloadable' || here === 'downloading') {
-        show({ state: 'downloading', fraction: 0 })
-        const downloaded = await services
-          .download(direction, fraction => show({ state: 'downloading', fraction }))
-          .catch(() => null)
+        let loading = false
+        const progressed = (fraction: number) => {
+          if (fraction > 0 && fraction < 1) loading = true
+          if (loading) show({ state: 'downloading', fraction })
+        }
+        const downloaded = await services.download(direction, progressed).catch(() => null)
         if (downloaded === null) return show({ state: 'notice', notice: 'failed' })
         if (downloaded !== 'available') return show(noticeFor(downloaded))
       }

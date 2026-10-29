@@ -1,3 +1,4 @@
+import { labels } from '../shared/labels'
 import type { Direction, Language } from '../translation/messages'
 
 const languageNames: Record<Language, string> = { ja: 'Japanese', en: 'English' }
@@ -17,11 +18,9 @@ export const translateLabels = {
   noVoice: (language: Language) =>
     `There's no ${languageNames[language]} voice on this computer to speak it.`,
   direction: ({ from, to }: Direction) => `${languageNames[from]} → ${languageNames[to]}`,
-  downloading: (fraction: number) =>
-    `Downloading Japanese for Translate… ${Math.round(fraction * 100)}%`,
   notices: {
     unavailable: "Translate isn't available on this computer.",
-    downloadFailed: "The download didn't finish. Try again.",
+    downloadFailed: labels.translation.downloadFailed,
     failed: "Translate didn't answer. Try again.",
     noLanguage: 'Type Japanese or English to translate.',
     nothingSelected: 'Nothing is selected.',

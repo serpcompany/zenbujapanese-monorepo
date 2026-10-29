@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     "./components/*": "./src/components/*.tsx",
+    "./dictionary/voice": "./src/dictionary/voice.ts",
     "./dictionary/*": "./src/dictionary/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
     "./lib/*": "./src/lib/*.tsx",

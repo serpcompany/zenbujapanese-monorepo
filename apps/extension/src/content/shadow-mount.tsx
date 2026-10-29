@@ -1,3 +1,4 @@
+import { PronounceWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-button'
 import { PortalContainer } from '@zenbu/ui/lib/portal'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -37,7 +38,11 @@ export function mountInShadowRoot(content: ReactNode, options: Options = {}): Sh
     console.error(error)
   }
   const root = createRoot(container, { onUncaughtError: handle, onCaughtError: handle })
-  root.render(<PortalContainer value={surface}>{content}</PortalContainer>)
+  root.render(
+    <PortalContainer value={surface}>
+      <PronounceWithoutLocalVoice value="unsupported">{content}</PronounceWithoutLocalVoice>
+    </PortalContainer>
+  )
   return {
     host,
     shadowRoot,

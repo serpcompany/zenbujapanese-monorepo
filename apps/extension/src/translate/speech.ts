@@ -1,14 +1,10 @@
+import { bestLocalVoice } from '@zenbu/ui/dictionary/voice'
 import type { Language } from '../translation/messages'
 
-type Voice = Pick<SpeechSynthesisVoice, 'lang' | 'localService'>
+const appLocale: Record<Language, string> = { ja: 'ja-JP', en: 'en-US' }
 
-const speaks = (voice: Voice, language: Language) =>
-  voice.lang.toLowerCase().replace('_', '-').split('-')[0] === language
-
-export const localVoiceAmong = <V extends Voice>(voices: readonly V[], language: Language) =>
-  voices.find(voice => voice.localService && speaks(voice, language)) ?? null
-
-const localVoiceFor = (language: Language) => localVoiceAmong(speechSynthesis.getVoices(), language)
+const localVoiceFor = (language: Language) =>
+  bestLocalVoice(speechSynthesis.getVoices(), appLocale[language])
 
 export const onDeviceSpeech = {
   localVoice: (language: Language) => localVoiceFor(language)?.name ?? null,

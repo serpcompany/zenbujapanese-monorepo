@@ -3,6 +3,7 @@ import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@zenbu/ui/
 import { Textarea } from '@zenbu/ui/components/textarea'
 import { ChevronRight, ScanText } from 'lucide-react'
 import { useRef, useState } from 'react'
+import { DownloadProgress } from '../shared/translation-model'
 import type { PanelTabProps } from '../side-panel/route'
 import { translateLabels } from './labels'
 import { onDeviceServices, type TranslateServices } from './services'
@@ -14,19 +15,6 @@ function NoticeText({ notice }: { notice: Notice }) {
     <p data-notice={notice} className="text-sm text-muted-foreground">
       {translateLabels.notices[notice]}
     </p>
-  )
-}
-
-export function DownloadProgress({ fraction }: { fraction: number }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-sm text-muted-foreground">{translateLabels.downloading(fraction)}</p>
-      <progress
-        value={fraction}
-        max={1}
-        className="h-1.5 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
-      />
-    </div>
   )
 }
 

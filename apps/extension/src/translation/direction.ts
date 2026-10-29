@@ -1,7 +1,7 @@
 import { writtenLanguage } from '@zenbu/dictionary-core/search/query'
 import type { Direction } from './messages'
 
-const japaneseToEnglish: Direction = { from: 'ja', to: 'en' }
+export const japaneseToEnglish: Direction = { from: 'ja', to: 'en' }
 const englishToJapanese: Direction = { from: 'en', to: 'ja' }
 
 export function directionOf(text: string): Direction | null {

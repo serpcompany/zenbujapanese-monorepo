@@ -7,10 +7,11 @@ import { HTTPException } from 'hono/http-exception'
 import { routePath } from 'hono/route'
 import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
-import { clientById, type Principal } from '../domain/clients'
+import { clientById, extensionScheme, type Principal } from '../domain/clients'
 import type { Billing } from '../domain/subscription-billing'
 import { failureFields } from '../failure'
 import { accountRoutes } from './accounts'
+import { appleExtensionRoutes } from './apple-extension'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
 import { kindReadRoutes } from './kind-reads'
@@ -62,16 +63,18 @@ function isLocal(url: string): boolean {
 const subscriptionPaths = [subscriptionPath, `${subscriptionPath}/*`] as const
 const accountPaths = ['/v1/me', '/v1/sync/*', '/v1/photos/*', ...subscriptionPaths] as const
 
-function forTheWebsite(response: Response): Response {
+function without(response: Response, names: readonly string[]): Response {
   const headers = new Headers(response.headers)
-  headers.delete('set-auth-token')
-  if (response.status >= 400) headers.delete('set-cookie')
+  for (const name of names) headers.delete(name)
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers
   })
 }
+
+const forTheWebsite = (response: Response) =>
+  without(response, response.status >= 400 ? ['set-auth-token', 'set-cookie'] : ['set-auth-token'])
 
 export function createApp(options: AppOptions) {
   const { release, databaseReady, auth, devMailbox } = options
@@ -144,11 +147,13 @@ export function createApp(options: AppOptions) {
   webhookRoutes(app, options.billing)
   photoRoutes(app, options.photoFiles)
   signInContract(app)
+  appleExtensionRoutes(app)
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context => {
     const answer = await inErrorFormat(await auth.handler(context.req.raw))
-    const origin = context.req.header('origin')
-    return origin && options.allowedOrigins.includes(origin) ? forTheWebsite(answer) : answer
+    const origin = context.req.header('origin') ?? ''
+    if (options.allowedOrigins.includes(origin)) return forTheWebsite(answer)
+    return origin.startsWith(extensionScheme) ? without(answer, ['set-cookie']) : answer
   })
 
   app.get('/dev/mail', context => {

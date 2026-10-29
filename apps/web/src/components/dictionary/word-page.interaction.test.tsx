@@ -153,10 +153,21 @@ function renderHeader(pitch: typeof capsule | null, locale: Locale, toaster?: Re
 }
 
 describe('pronouncing the word', () => {
-  const said: { text: string; lang: string }[] = []
+  type Said = { text: string; lang: string; voice: unknown; rate: number }
+  const said: Said[] = []
+  const kyoko = { name: 'Kyoko', voiceURI: 'Kyoko', lang: 'ja-JP', localService: true }
+  const kyokoEnhanced = { ...kyoko, name: 'Kyoko (Enhanced)', voiceURI: 'Kyoko (Enhanced)' }
+  const googleJapanese = {
+    ...kyoko,
+    name: 'Google 日本語',
+    voiceURI: 'Google 日本語',
+    localService: false
+  }
+  let listed: unknown[] = []
 
   beforeEach(() => {
     said.length = 0
+    listed = [kyoko, kyokoEnhanced]
     vi.stubGlobal(
       'SpeechSynthesisUtterance',
       class {
@@ -165,23 +176,42 @@ describe('pronouncing the word', () => {
       }
     )
     vi.stubGlobal('speechSynthesis', {
+      getVoices: () => listed,
+      addEventListener: () => {},
+      removeEventListener: () => {},
       cancel: () => {},
-      speak: ({ text, lang }: { text: string; lang: string }) => said.push({ text, lang })
+      speak: ({ text, lang, voice, rate }: Said) => said.push({ text, lang, voice, rate })
     })
   })
 
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
 
   test.each([
     ['the pitch capsule', capsule, 'en'],
     ['the speaker of a word without pitch', null, 'en'],
     ['on a Japanese page, the pitch capsule', capsule, 'ja'],
     ['on a Japanese page, the speaker of a word without pitch', null, 'ja']
-  ] as const)('%s says the reading in the browser’s Japanese voice', (_, pitch, locale) => {
+  ] as const)('%s says the reading in the best Japanese voice on this computer, at the app’s rate', (_, pitch, locale) => {
     const speaker = renderHeader(pitch, locale)
     expect(said).toEqual([])
     act(() => speaker.click())
-    expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP' }])
+    expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP', voice: kyokoEnhanced, rate: 0.82 }])
+  })
+
+  test.each([
+    ['a computer with only a network Japanese voice', [googleJapanese]],
+    ['a browser that lists no voices within a second', []]
+  ])('%s still says the reading, in the browser’s own voice', (_, voices) => {
+    vi.useFakeTimers()
+    listed = voices
+    const speaker = renderHeader(capsule, 'en', <Toaster />)
+    act(() => speaker.click())
+    act(() => vi.advanceTimersByTime(1000))
+    expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP', voice: null, rate: 0.82 }])
+    expect(document.body.textContent).not.toContain(getDictionary('en').pronounce.unsupported)
   })
 
   test('a browser that can’t speak shows the page’s unsupported toast', async () => {

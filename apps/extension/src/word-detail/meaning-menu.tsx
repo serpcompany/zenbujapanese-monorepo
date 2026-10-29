@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@zenbu/ui/components/dropdown-menu'
-import { speak } from '@zenbu/ui/dictionary/pronounce-button'
+import { speak, useWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-button'
 import { CopyIcon, MoreHorizontalIcon, Volume2Icon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { wordDetailLabels } from './labels'
@@ -25,6 +25,7 @@ export function MeaningWithMenu({
   meaning: ReactNode
 }) {
   const labels = wordDetailLabels.meaning
+  const withoutLocalVoice = useWithoutLocalVoice()
   return (
     <div className="flex items-start gap-2" data-meaning={number}>
       <div className="min-w-0 flex-1">{meaning}</div>
@@ -43,7 +44,9 @@ export function MeaningWithMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem
-            onClick={() => speak(actions.spoken, englishVoice, labels.unsupported, notify)}
+            onClick={() =>
+              speak(actions.spoken, englishVoice, labels.unsupported, notify, withoutLocalVoice)
+            }
           >
             <Volume2Icon />
             {labels.speak}
