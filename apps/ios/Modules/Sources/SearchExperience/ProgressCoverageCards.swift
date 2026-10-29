@@ -70,6 +70,7 @@ struct ProgressLevelBar: View {
         Text(ProgressWording.levelCounts(level))
           .font(.subheadline)
           .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
       }
       Chart {
         BarMark(x: .value("Words", level.known), y: .value("Level", level.name), height: .ratio(1))

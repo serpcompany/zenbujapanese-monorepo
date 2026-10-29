@@ -99,9 +99,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     let details = reveal(find("progress.jlpt.details", in: app), in: app)
     tapClearOfTheBars(details, toShow: find("jlpt-progress.ring", in: app), in: app)
     audit("JLPT Progress", in: app)
-    reveal(find("jlpt-progress.bar.n1", in: app), in: app)
-    scroll(app.windows.firstMatch, back: false)
-    audit("JLPT Progress, its end", in: app)
+    audit("JLPT Progress, its end", placing: find("jlpt-progress.bar.n1", in: app), in: app)
   }
 
   private func auditAlone(_ screen: String, _ section: String, showing identifier: String, _ pass: AuditPass) {

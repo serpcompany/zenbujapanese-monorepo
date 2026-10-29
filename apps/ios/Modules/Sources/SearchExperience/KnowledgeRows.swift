@@ -29,7 +29,18 @@ struct KnowledgeRows: Equatable, Sendable {
   ) async -> KnowledgeRows? {
     let ids = entryIDs.map(LanguageReferenceID.init(rawValue:))
     let found = (try? await lookupClient.entries(ids)) ?? [:]
-    let entries = ids.compactMap { id in found[id].flatMap { $0.id == id ? $0 : nil } }
+    return await listing(matched(ids, in: found), known: known, core: core)
+  }
+
+  static func matched(
+    _ ids: [LanguageReferenceID], in found: [LanguageReferenceID: DictionaryEntry]
+  ) -> [DictionaryEntry] {
+    ids.compactMap { id in found[id].flatMap { $0.id == id ? $0 : nil } }
+  }
+
+  static func listing(
+    _ entries: [DictionaryEntry], known: Set<String>, core: PresentationCore = .shared
+  ) async -> KnowledgeRows? {
     await core.frequencyLists?.ready()
     let rows = WordRowsRequest(
       entries: entries.map { WordRowsRequest.Entry(id: $0.id.rawValue, summary: $0.summary) },

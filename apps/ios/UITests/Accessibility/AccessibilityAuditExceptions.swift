@@ -219,13 +219,7 @@ private let textThatScales = [
     .dynamicType, .labels(["N1", "0% known · 0 / 3,061"]), on: ["JLPT Progress, its end"], [.phone], [.standard],
     because: Why.scales),
   allow(
-    .textClipped, .label("0% known · 0 / 3,061"), on: ["JLPT Progress, its end"], [.phone], [.standard],
-    because: Why.scales),
-  allow(
     .dynamicType, .identifier("jlpt-progress.add"), on: ["JLPT Progress, its end"], [.phone], [.standard],
-    because: Why.scales),
-  allow(
-    .textClipped, .identifier("jlpt-progress.add"), on: ["JLPT Progress, its end"], [.phone], [.standard],
     because: Why.scales),
   allow(
     .dynamicType,

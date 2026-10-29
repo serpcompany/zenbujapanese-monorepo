@@ -13,7 +13,10 @@ final class JLPTProgressUITests: ZenbuUITestCase {
 
   func testChoosingALevelByItsSegmentOrItsBarChangesTheCounts() {
     let app = launch(progressSeed)
-    openJLPTProgress(in: app)
+    openProgress(in: app)
+    XCTAssertTrue(reveal(find("progress.jlpt.n4", in: app), in: app).exists)
+    XCTAssertFalse(app.buttons["progress.jlpt.n4"].exists)
+    openJLPTProgressFromProgress(in: app)
     let ring = find("jlpt-progress.ring", in: app)
     waitUntil(ring, "label == %@", "22% of N5 known")
     tap(app.segmentedControls["jlpt-progress.level"].buttons["N3"])
@@ -24,6 +27,12 @@ final class JLPTProgressUITests: ZenbuUITestCase {
     waitUntil(ring, "label ENDSWITH %@", " of N4 known")
     waitUntil(ring, "value ENDSWITH %@", " 523 Not started")
     XCTAssertTrue(app.segmentedControls["jlpt-progress.level"].buttons["N4"].isSelected)
+    XCTAssertTrue(reveal(app.buttons["jlpt-progress.bar.n4"], in: app).isSelected)
+    for other in [5, 3, 2, 1] {
+      let bar = app.buttons["jlpt-progress.bar.n\(other)"]
+      XCTAssertTrue(bar.exists, "N\(other)'s bar is a button")
+      XCTAssertFalse(bar.isSelected, "N\(other)'s bar isn't selected")
+    }
   }
 
   func testAddingTenMarksThemLearningAndRaisesTodaysCount() {
@@ -62,8 +71,16 @@ final class JLPTProgressUITests: ZenbuUITestCase {
   }
 
   private func openJLPTProgress(in app: XCUIApplication) {
+    openProgress(in: app)
+    openJLPTProgressFromProgress(in: app)
+  }
+
+  private func openProgress(in app: XCUIApplication) {
     open(.account, in: app)
     tap(reveal(find("account.progress.see", in: app), in: app), toShow: find("progress.today", in: app))
+  }
+
+  private func openJLPTProgressFromProgress(in app: XCUIApplication) {
     tap(reveal(find("progress.jlpt.details", in: app), in: app), toShow: find("jlpt-progress.ring", in: app))
   }
 

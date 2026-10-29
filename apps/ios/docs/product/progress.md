@@ -72,7 +72,8 @@ shared core's JLPT coverage, at the daily goal; the screen counts nothing. From 
   opens the word's page. **Add 10 N5 words to Learning** (or "Add 3 N1 words" when fewer are
   left) marks the core's next 10 Learning, each as its own change, the same as marking it on its
   page: they count toward today's goal and go into today's daily list. The ring, the pace, and Up
-  next then move on.
+  next then move on. The button counts only the words the dictionary found; when it finds none,
+  "These words couldn’t be looked up." stands in its place.
 - Every level's bar, the same bars as Progress's card; a tap chooses that level.
 
 Check: UI `JLPTProgressUITests` (in from Progress on N5 with its counts and pace, a level chosen by
@@ -80,7 +81,7 @@ its segment and by its bar, **Add 10** moving the counts and the pace and raisin
 count, an Up next word's page, and, seeded from `Fixtures/Progress/n4-known.json`, a level with
 nothing Not started); `AccountAuditUITests` (JLPT Progress, at the default and largest sizes and
 in dark); package `JLPTProgressTests` (the level it opens on, the pace sentence, the button's
-words, and Up next asked for only by this screen); core `progress/jlpt-coverage.test.ts`.
+words and the words it adds, and Up next asked for only by this screen); core `progress/jlpt-coverage.test.ts`.
 
 ## The daily goal
 

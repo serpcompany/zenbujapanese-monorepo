@@ -131,49 +131,74 @@ private struct JLPTLevelRing: View {
 
 private struct JLPTUpNext: View {
   @Environment(WordKnowledge.self) private var knowledge
-  @State private var rows: KnowledgeRows?
-  @State private var entries: [DictionaryEntry] = []
-  @State private var resolved: [String] = []
+  @State private var found: JLPTUpNextWords?
   let level: JLPTCoverage.Level
   let lookupClient: LookupClient
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    let words = level.upNext.prefix(JLPTProgressScreen.shown).compactMap { rows?.words[$0] }
+    let current = found.flatMap { $0.ids == level.upNext ? $0 : nil }
     Section {
-      if words.isEmpty {
+      if let current {
+        if current.entries.isEmpty {
+          Text("These words couldn’t be looked up.")
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("jlpt-progress.up-next.failed")
+        }
+        ForEach(current.shown, id: \.entry.id) { word in
+          ResultRow(entry: word.entry, row: word.row) { openWord(word.entry) }
+        }
+        if current.count > 0 {
+          Button {
+            add(current.entries)
+          } label: {
+            Text(ProgressWording.addToLearning(current.count, level: level.name))
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.borderedProminent)
+          .controlSize(.large)
+          .disabled(!knowledge.canChange)
+          .accessibilityIdentifier("jlpt-progress.add")
+        }
+      } else {
         ProgressView()
           .frame(maxWidth: .infinity)
       }
-      ForEach(words, id: \.entry.id) { word in
-        ResultRow(entry: word.entry, row: word.row) { openWord(word.entry) }
-      }
-      Button(action: add) {
-        Text(ProgressWording.addToLearning(level.upNext.count, level: level.name))
-          .frame(maxWidth: .infinity)
-      }
-      .buttonStyle(.borderedProminent)
-      .controlSize(.large)
-      .disabled(!knowledge.canChange || resolved != level.upNext)
-      .accessibilityIdentifier("jlpt-progress.add")
     } header: {
       Text("Up next in \(level.name)")
     }
     .task(id: level.upNext) {
-      let ids = level.upNext
-      let found = (try? await lookupClient.entries(ids.map(LanguageReferenceID.init(rawValue:)))) ?? [:]
-      let shown = Array(ids.prefix(JLPTProgressScreen.shown))
-      guard let listed = await KnowledgeRows.resolving(ids: shown, known: [], using: lookupClient)
+      guard
+        let words = await JLPTUpNextWords.resolving(
+          level.upNext, shown: JLPTProgressScreen.shown, using: lookupClient)
       else { return }
-      rows = listed
-      entries = ids.compactMap { id in found[LanguageReferenceID(rawValue: id)] }
-      resolved = ids
+      found = words
     }
   }
 
-  private func add() {
+  private func add(_ entries: [DictionaryEntry]) {
     for entry in entries {
       knowledge.setStatus(.learning, for: entry)
     }
+  }
+}
+
+struct JLPTUpNextWords: Equatable, Sendable {
+  let ids: [String]
+  let entries: [DictionaryEntry]
+  let rows: KnowledgeRows
+
+  var count: Int { entries.count }
+  var shown: [KnowledgeRows.Word] { entries.compactMap { rows.words[$0.id.rawValue] } }
+
+  static func resolving(
+    _ ids: [String], shown: Int, using lookupClient: LookupClient, core: PresentationCore = .shared
+  ) async -> JLPTUpNextWords? {
+    let references = ids.map(LanguageReferenceID.init(rawValue:))
+    let found = (try? await lookupClient.entries(references)) ?? [:]
+    let entries = KnowledgeRows.matched(references, in: found)
+    guard let rows = await KnowledgeRows.listing(Array(entries.prefix(shown)), known: [], core: core)
+    else { return nil }
+    return JLPTUpNextWords(ids: ids, entries: entries, rows: rows)
   }
 }

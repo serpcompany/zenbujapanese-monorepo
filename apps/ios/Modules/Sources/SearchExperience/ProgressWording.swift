@@ -102,7 +102,7 @@ enum ProgressWording {
     guard let pace = level.pace else { return "Every \(level.name) word is in Learning or Known." }
     let date = shortDate(pace.date, today: today, timeZone: timeZone)
     return
-      "At \(goal) new words a day, every \(level.name) word would be in Learning by \(date) (\(days(pace.days)))."
+      "At \(newWords(goal)) a day, every \(level.name) word would be in Learning by \(date) (\(days(pace.days)))."
   }
 
   static func addToLearning(_ count: Int, level name: String) -> String {
