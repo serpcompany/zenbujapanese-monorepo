@@ -14,7 +14,6 @@ export type {
   NotReady,
   PopupAnswer,
   ResolveAnswer,
-  SearchAnswer,
   SegmentAnswer,
   StateAnswer,
   WordAnswer,
@@ -91,6 +90,3 @@ export const lookUpFormExamples = (form: string, from: number, ask: Ask = askDic
 
 export const resolveWord = (headword: string, reading: string, ask: Ask = askDictionary) =>
   lookUp('resolve', { type: 'resolve', headword, reading }, ask)
-
-export const searchDictionary = (query: string, ask: Ask = askDictionary) =>
-  lookUp('search', { type: 'search', query }, ask)

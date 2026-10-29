@@ -4,7 +4,6 @@ import type {
   NotReady,
   PopupAnswer,
   ResolveAnswer,
-  SearchAnswer,
   SegmentAnswer,
   StateAnswer,
   WordAnswer,
@@ -22,7 +21,6 @@ export type DictionaryRequest =
   | { type: 'word-examples'; entSeq: number; from: number }
   | { type: 'form-examples'; form: string; from: number }
   | { type: 'resolve'; headword: string; reading: string }
-  | { type: 'search'; query: string }
 
 export type DictionaryAnswer =
   | { type: 'pong'; from: 'dictionary-worker' }
@@ -35,7 +33,6 @@ export type DictionaryAnswer =
   | WordExamplesAnswer
   | FormExamplesAnswer
   | ResolveAnswer
-  | SearchAnswer
 
 export type Failure = { type: 'failed'; reason: string }
 

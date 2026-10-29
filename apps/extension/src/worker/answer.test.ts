@@ -24,8 +24,7 @@ const dictionary = {
   kanji: () => ({ rows: kanjiRows }),
   wordExamples: (entSeq: number) => (entSeq === 1546640 ? { rows: ['example'] } : null),
   formExamples: (form: string, from: number) => ({ rows: [`${form} from ${from}`], listed: 51 }),
-  resolve: (headword: string) => (headword === '有る' ? 1296400 : null),
-  search: async (query: string) => ({ screen: { state: 'noResults', query } })
+  resolve: (headword: string) => (headword === '有る' ? 1296400 : null)
 } as unknown as Dictionary
 
 const opened = (
@@ -44,89 +43,75 @@ describe('answering a dictionary request', () => {
     { type: 'kanji', character: '食' },
     { type: 'word-examples', entSeq: 1546640, from: 10 },
     { type: 'form-examples', form: 'いる', from: 0 },
-    { type: 'resolve', headword: '有る', reading: 'ある' },
-    { type: 'search', query: 'taberu' }
-  ])('answers $type before the language data is ready with where the download is', async request => {
-    expect(await answer(request, worker(null))).toEqual({ type: 'not-ready', data: downloading })
+    { type: 'resolve', headword: '有る', reading: 'ある' }
+  ])('answers $type before the language data is ready with where the download is', request => {
+    expect(answer(request, worker(null))).toEqual({ type: 'not-ready', data: downloading })
   })
 
-  it('answers the state, and starts an update when asked for one', async () => {
+  it('answers the state, and starts an update when asked for one', () => {
     const asked = worker(null)
-    expect(await answer({ type: 'update' }, asked)).toEqual({ type: 'state', data: downloading })
+    expect(answer({ type: 'update' }, asked)).toEqual({ type: 'state', data: downloading })
     expect(asked.update).toHaveBeenCalledOnce()
-    expect(await answer({ type: 'state' }, asked)).toEqual({ type: 'state', data: downloading })
+    expect(answer({ type: 'state' }, asked)).toEqual({ type: 'state', data: downloading })
   })
 
-  it('splits text once it is ready, naming the other words written as each linked one', async () => {
-    expect(await ask({ type: 'segment', text: '食べます' })).toEqual({
+  it('splits text once it is ready, naming the other words written as each linked one', () => {
+    expect(ask({ type: 'segment', text: '食べます' })).toEqual({
       type: 'segment',
       tokens: [{ text: '要', languageReferenceID: 'you', writtenAlike: ['kaname'] }],
       romaji: 'tabemasu'
     })
   })
 
-  it('answers a kanji’s rows while its stroke data is still downloading, and says so', async () => {
-    expect(await ask({ type: 'kanji', character: '要' })).toEqual({
+  it('answers a kanji’s rows while its stroke data is still downloading, and says so', () => {
+    expect(ask({ type: 'kanji', character: '要' })).toEqual({
       type: 'kanji',
       rows: kanjiRows,
       strokes: 'downloading'
     })
-    expect(await ask({ type: 'kanji', character: '要' }, ['jlpt', 'strokes'])).toMatchObject({
+    expect(ask({ type: 'kanji', character: '要' }, ['jlpt', 'strokes'])).toMatchObject({
       strokes: 'ready'
     })
   })
 
-  it('answers a page of a word’s examples, and none for an unknown word', async () => {
-    expect(await ask({ type: 'word-examples', entSeq: 1546640, from: 10 })).toEqual({
+  it('answers a page of a word’s examples, and none for an unknown word', () => {
+    expect(ask({ type: 'word-examples', entSeq: 1546640, from: 10 })).toEqual({
       type: 'word-examples',
       rows: ['example']
     })
-    expect(await ask({ type: 'word-examples', entSeq: 1, from: 0 })).toEqual({
+    expect(ask({ type: 'word-examples', entSeq: 1, from: 0 })).toEqual({
       type: 'word-examples',
       rows: []
     })
   })
 
-  it('answers a page of a form’s examples with how many there are', async () => {
-    expect(await ask({ type: 'form-examples', form: 'いる', from: 10 })).toEqual({
+  it('answers a page of a form’s examples with how many there are', () => {
+    expect(ask({ type: 'form-examples', form: 'いる', from: 10 })).toEqual({
       type: 'form-examples',
       rows: ['いる from 10'],
       listed: 51
     })
   })
 
-  it('resolves a related word to its entry, or to null', async () => {
-    expect(await ask({ type: 'resolve', headword: '有る', reading: 'ある' })).toEqual({
+  it('resolves a related word to its entry, or to null', () => {
+    expect(ask({ type: 'resolve', headword: '有る', reading: 'ある' })).toEqual({
       type: 'resolve',
       entSeq: 1296400
     })
-    expect(await ask({ type: 'resolve', headword: '食べる', reading: 'たべる' })).toEqual({
+    expect(ask({ type: 'resolve', headword: '食べる', reading: 'たべる' })).toEqual({
       type: 'resolve',
       entSeq: null
     })
   })
 
-  it('answers a search with the screen the core builds for it', async () => {
-    expect(await ask({ type: 'search', query: 'taberu' })).toEqual({
-      type: 'search',
-      screen: { state: 'noResults', query: 'taberu' }
-    })
-  })
-
-  it('answers a failed lookup or search with its reason', async () => {
+  it('answers a failed lookup with its reason', () => {
     const failing = {
       kanji: () => {
         throw new Error('no such table: kanji_strokes')
-      },
-      search: async () => {
-        throw new Error('no such table: dictionary_form_fts')
       }
     } as unknown as Dictionary
     expect(
-      await answer({ type: 'kanji', character: '食' }, worker(opened(['strokes'], failing), ready))
+      answer({ type: 'kanji', character: '食' }, worker(opened(['strokes'], failing), ready))
     ).toEqual({ type: 'failed', reason: 'no such table: kanji_strokes' })
-    expect(
-      await answer({ type: 'search', query: '食べる' }, worker(opened([], failing), ready))
-    ).toEqual({ type: 'failed', reason: 'no such table: dictionary_form_fts' })
   })
 })

@@ -15,7 +15,7 @@ class FakeWorker extends EventTarget implements DictionaryWorker {
   }
 
   postMessage(request: DictionaryRequest, [port]: Transferable[]) {
-    void answer(request, installing).then(found => (port as MessagePort).postMessage(found))
+    ;(port as MessagePort).postMessage(answer(request, installing))
   }
 }
 

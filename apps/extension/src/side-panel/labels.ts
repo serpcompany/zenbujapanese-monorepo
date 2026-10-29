@@ -3,7 +3,6 @@ export const labels = {
   tabBar: 'Side panel tabs',
   backTo: (tab: string) => `Back to ${tab}`,
   tabs: {
-    lookUp: 'Look Up',
     translate: 'Translate',
     player: 'Player',
     account: 'Account'

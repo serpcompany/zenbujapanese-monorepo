@@ -11,7 +11,7 @@ export type PanelState = {
 export function startState(tab: PanelTab): PanelState {
   return {
     tab,
-    stacks: { lookUp: [], translate: [], player: [], account: [] },
+    stacks: { translate: [], player: [], account: [] },
     nextKey: 0
   }
 }

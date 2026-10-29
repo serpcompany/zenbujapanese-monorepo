@@ -1,12 +1,8 @@
-import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
-import { fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { lookUpLabels } from '../look-up/labels'
 import type { DataState } from '../shared/data-state'
 import { labels as sharedLabels } from '../shared/labels'
-import type { DictionaryAnswer, DictionaryRequest } from '../shared/messages'
 import { fakeChrome } from '../test/fake-chrome'
 import { translateLabels } from '../translate/labels'
 import { labels } from './labels'
@@ -39,7 +35,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function fakeHost(lastTab: PanelTab = 'lookUp', pending: PanelRoute | null = null) {
+function fakeHost(lastTab: PanelTab = 'translate', pending: PanelRoute | null = null) {
   const watchers: Array<(route: PanelRoute) => void> = []
   const kept = { lastTab, pending }
   const host: PanelHost = {
@@ -84,7 +80,6 @@ const shown = (selector: string) =>
 const backButton = () => shown('button[aria-label^="Back to"]')[0] as HTMLButtonElement | undefined
 const emptyTitles = () => shown('[data-slot="empty-title"]').map(title => title.textContent)
 const translateBox = () => shown('textarea')[0] as HTMLTextAreaElement | undefined
-const lookUpBox = () => shown('input[aria-label="Look Up"]')[0] as HTMLInputElement | undefined
 const shownButton = (name: string) =>
   shown('button').find(each => each.textContent === name) as HTMLElement
 const testPageText = () => shown('[data-test-page]').map(page => page.textContent)
@@ -108,16 +103,10 @@ describe('SidePanel', () => {
     expect(drawn.map(node => node.textContent).join('')).toBe('')
   })
 
-  it("shows the app's four tabs, in its order, with its labels and icons", async () => {
+  it("shows the app's Translate, Player and Account tabs, in its order, with its labels and icons", async () => {
     await draw(fakeHost())
-    expect(tabs().map(each => each.textContent)).toEqual([
-      'Look Up',
-      'Translate',
-      'Player',
-      'Account'
-    ])
+    expect(tabs().map(each => each.textContent)).toEqual(['Translate', 'Player', 'Account'])
     expect(tabs().map(each => each.querySelector('svg')?.classList[1])).toEqual([
-      'lucide-search',
       'lucide-languages',
       'lucide-square-play',
       'lucide-circle-user-round'
@@ -129,14 +118,12 @@ describe('SidePanel', () => {
 
   it('opens each tab on its own screen', async () => {
     await draw(fakeHost())
-    expect(selectedTab()?.textContent).toBe('Look Up')
-    expect(lookUpBox()?.placeholder).toBe(lookUpLabels.placeholder)
-    expect(emptyTitles()).toEqual([])
-    await click(tab('Translate'))
+    expect(selectedTab()?.textContent).toBe('Translate')
     expect(translateBox()?.placeholder).toBe(translateLabels.placeholder)
     expect(shown('button').map(each => each.textContent)).toContain(translateLabels.translate)
-    expect(lookUpBox()).toBeUndefined()
+    expect(emptyTitles()).toEqual([])
     await click(tab('Player'))
+    expect(translateBox()).toBeUndefined()
     expect(emptyTitles()).toEqual([labels.empty.video.title, labels.empty.recent.title])
     expect(shown('[data-recent] h2').map(each => each.textContent)).toEqual([labels.recent])
     await click(tab('Account'))
@@ -153,65 +140,14 @@ describe('SidePanel', () => {
     expect(translateBox()).toBeDefined()
   })
 
-  it('opens the word card from a Look Up result, over Look Up', async () => {
-    const [iru] = fixtureWordRows
-    const answers: Record<string, DictionaryAnswer> = {
-      state: { type: 'state', data: { state: 'ready', release: '1', bytes: 1, checkedAt: null } },
-      search: {
-        type: 'search',
-        screen: {
-          state: 'results',
-          query: 'iru',
-          sections: ['results'],
-          examples: null,
-          readingRefinement: null,
-          kanji: null,
-          rows: [
-            {
-              ...iru.entry,
-              ruby: rubySegments(iru.entry.headword, iru.entry.reading),
-              summary: 'to be needed',
-              chips: [],
-              retrievalOrder: 0
-            }
-          ],
-          resultCount: 1
-        }
-      },
-      word: { type: 'word', rows: iru }
-    }
-    browser.chrome.runtime.onMessage.addListener((message, _sender, respond) => {
-      const { request } = message as { request: DictionaryRequest }
-      respond(answers[request.type])
-      return true
-    })
-    await draw(fakeHost())
-    act(() => {
-      const box = lookUpBox() as HTMLInputElement
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(box, 'iru')
-      box.dispatchEvent(new Event('input', { bubbles: true }))
-    })
-    await click(shownButton(lookUpLabels.search))
-    const row = shown(`[data-result-row="${iru.entry.entSeq}"]`)[0]?.closest('button')
-    await click(row as HTMLElement)
-    expect(backButton()?.getAttribute('aria-label')).toBe('Back to Look Up')
-    expect(shown('h1[aria-label]').map(title => title.getAttribute('aria-label'))).toEqual(['要る'])
-    expect(browser.sent).toContainEqual({
-      target: 'service-worker',
-      request: { type: 'search', query: 'iru' }
-    })
-    await click(backButton() as HTMLElement)
-    expect(lookUpBox()?.value).toBe('iru')
-  })
-
   it('moves along the tab bar with the arrow keys, wrapping at the ends', async () => {
     await draw(fakeHost())
-    act(() => tab('Look Up').focus())
-    await press(tab('Look Up'), 'ArrowRight')
-    expect(selectedTab()?.textContent).toBe('Translate')
-    expect(document.activeElement).toBe(tab('Translate'))
+    act(() => tab('Translate').focus())
+    await press(tab('Translate'), 'ArrowRight')
+    expect(selectedTab()?.textContent).toBe('Player')
+    expect(document.activeElement).toBe(tab('Player'))
+    await press(tab('Player'), 'ArrowLeft')
     await press(tab('Translate'), 'ArrowLeft')
-    await press(tab('Look Up'), 'ArrowLeft')
     expect(selectedTab()?.textContent).toBe('Account')
   })
 
@@ -221,8 +157,8 @@ describe('SidePanel', () => {
     await host.move({ page: { page: 'test', text: '猫' } })
     expect(testPageText()).toEqual(['猫'])
     expect(isShown(document.querySelector('[role="tablist"]'))).toBe(true)
-    expect(lookUpBox()).toBeUndefined()
-    expect(backButton()?.getAttribute('aria-label')).toBe('Back to Look Up')
+    expect(translateBox()).toBeUndefined()
+    expect(backButton()?.getAttribute('aria-label')).toBe('Back to Translate')
 
     await click(shownButton(labels.testPage.openAnother))
     expect(testPageText()).toEqual(['猫 +'])
@@ -231,7 +167,7 @@ describe('SidePanel', () => {
     await click(backButton() as HTMLElement)
     expect(testPageText()).toEqual([])
     expect(backButton()).toBeUndefined()
-    expect(lookUpBox()).toBeDefined()
+    expect(translateBox()).toBeDefined()
   })
 
   it("keeps each tab's pages when another tab is chosen", async () => {
@@ -242,7 +178,7 @@ describe('SidePanel', () => {
     expect(selectedTab()?.textContent).toBe('Account')
     expect(backButton()?.getAttribute('aria-label')).toBe('Back to Account')
     expect(testPageText()).toEqual(['犬'])
-    await click(tab('Look Up'))
+    await click(tab('Translate'))
     expect(testPageText()).toEqual(['猫'])
     await click(tab('Account'))
     await click(backButton() as HTMLElement)
@@ -268,7 +204,7 @@ describe('SidePanel', () => {
     expect(host.kept.pending).toBeNull()
   })
 
-  it('offers sign-up on the website in a new tab from Player and Account, and no link from Look Up', async () => {
+  it('offers sign-up on the website in a new tab from Player and Account, and no link from Translate', async () => {
     await draw(fakeHost())
     expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
     for (const name of ['Player', 'Account']) {
@@ -296,8 +232,8 @@ describe('SidePanel', () => {
   })
 
   it('shows the dictionary progress on every tab but Translate while the dictionary is not ready', async () => {
-    await draw(fakeHost(), { state: 'downloading', done: 10, total: 100 })
-    expect(tabs()).toHaveLength(4)
+    await draw(fakeHost('player'), { state: 'downloading', done: 10, total: 100 })
+    expect(tabs()).toHaveLength(3)
     expect(shown('[data-dictionary-progress]')).toHaveLength(1)
     expect(emptyTitles()).toEqual([])
     expect(shown('button').filter(each => each.textContent === labels.tryAgain)).toHaveLength(0)
@@ -326,7 +262,7 @@ describe('SidePanel', () => {
   })
 
   it('offers Try again when the dictionary failed, and shows the tab once it is ready', async () => {
-    const host = fakeHost()
+    const host = fakeHost('player')
     const again = await draw(host, { state: 'failed', reason: 'offline' })
     const tryAgain = () => shown('button').find(each => each.textContent === labels.tryAgain)
     await click(tryAgain() as HTMLElement)
@@ -335,6 +271,6 @@ describe('SidePanel', () => {
     expect(tryAgain()).toBeUndefined()
     await draw(host, { state: 'ready', release: '2026.10.1', bytes: 1, checkedAt: null }, again)
     expect(shown('[data-dictionary-progress]')).toHaveLength(0)
-    expect(lookUpBox()).toBeDefined()
+    expect(emptyTitles()).toEqual([labels.empty.video.title, labels.empty.recent.title])
   })
 })

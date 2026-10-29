@@ -123,7 +123,7 @@ describe('openPanel, through the service worker, to the side panel', () => {
     await browser.click(() => openPanel(onTestPage, browser.inTab(7)))
     expect(browser.state.panelOpen).toBe(true)
     await drawPanel()
-    expect(selectedTab()).toBe('Look Up')
+    expect(selectedTab()).toBe('Translate')
     expect(testPageText()).toEqual(['猫'])
     expect(browser.session.size).toBe(0)
     closePanel()
@@ -152,7 +152,7 @@ describe('openPanel, through the service worker, to the side panel', () => {
     const browser = fakeBrowser()
     await drawPanel()
     await browser.click(() => openPanel({ tab: 'player' }, browser.inTab(8)))
-    expect(selectedTab()).toBe('Look Up')
+    expect(selectedTab()).toBe('Translate')
     expect(browser.session.get('sidePanel.route.8')).toEqual({ tab: 'player' })
   })
 
@@ -166,7 +166,7 @@ describe('openPanel, through the service worker, to the side panel', () => {
   it('keeps the last tab in local storage, and opens on it next time', async () => {
     const browser = fakeBrowser()
     await drawPanel()
-    await act(async () => (document.querySelectorAll('[role="tab"]')[3] as HTMLElement).click())
+    await act(async () => (document.querySelectorAll('[role="tab"]')[2] as HTMLElement).click())
     expect(browser.local.get('sidePanel.lastTab')).toBe('account')
     closePanel()
     await drawPanel()
@@ -178,7 +178,8 @@ describe('openPanel, through the service worker, to the side panel', () => {
     ['recent', 'Player', 'player'],
     ['images', 'Translate', 'translate'],
     ['words', 'Account', 'account'],
-    ['settings', 'Look Up', 'lookUp']
+    ['lookUp', 'Translate', 'translate'],
+    ['settings', 'Translate', 'translate']
   ])('opens on the tab that took over a last tab kept as %s, and keeps that tab instead', async (kept, opens, saved) => {
     const browser = fakeBrowser()
     browser.local.set('sidePanel.lastTab', kept)

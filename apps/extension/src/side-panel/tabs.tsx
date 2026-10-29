@@ -1,6 +1,5 @@
-import { CircleUserRound, Languages, type LucideIcon, Search, SquarePlay } from 'lucide-react'
+import { CircleUserRound, Languages, type LucideIcon, SquarePlay } from 'lucide-react'
 import type { ComponentType } from 'react'
-import { LookUpTab } from '../look-up/look-up-tab'
 import { TranslateTab } from '../translate/translate-tab'
 import { VideoTab } from '../video-tab/video-tab'
 import { AccountTab } from './account-tab'
@@ -15,12 +14,6 @@ export type PanelTabDefinition = {
 }
 
 export const tabs: PanelTabDefinition[] = [
-  {
-    id: 'lookUp',
-    label: labels.tabs.lookUp,
-    icon: Search,
-    Content: LookUpTab
-  },
   {
     id: 'translate',
     label: labels.tabs.translate,

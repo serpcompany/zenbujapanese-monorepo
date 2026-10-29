@@ -21,6 +21,7 @@ describe('isPanelRoute', () => {
     expect(isPanelRoute(null)).toBe(false)
     expect(isPanelRoute({ tab: 'history' })).toBe(false)
     expect(isPanelRoute({ tab: 'video' })).toBe(false)
+    expect(isPanelRoute({ tab: 'lookUp' })).toBe(false)
     expect(isPanelRoute({ page: { page: 'settings' } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'toString' } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'word', entSeq: '1358280' } })).toBe(false)
@@ -69,23 +70,23 @@ describe('openPanel', () => {
 
 describe('navigation', () => {
   it('keeps a stack of pages for each tab, and Back pops one page of the current tab', () => {
-    const onLookUp = openPage(openPage(startState('lookUp'), word), kanji)
-    const onAccount = openPage(selectTab(onLookUp, 'account'), word)
-    expect(onAccount.stacks.lookUp.map(stacked => stacked.page)).toEqual([word, kanji])
+    const onTranslate = openPage(openPage(startState('translate'), word), kanji)
+    const onAccount = openPage(selectTab(onTranslate, 'account'), word)
+    expect(onAccount.stacks.translate.map(stacked => stacked.page)).toEqual([word, kanji])
     expect(onAccount.stacks.account.map(stacked => stacked.page)).toEqual([word])
-    const back = goBack(selectTab(onAccount, 'lookUp'))
-    expect(back.stacks.lookUp.map(stacked => stacked.page)).toEqual([word])
+    const back = goBack(selectTab(onAccount, 'translate'))
+    expect(back.stacks.translate.map(stacked => stacked.page)).toEqual([word])
     expect(back.stacks.account).toHaveLength(1)
     expect(goBack(goBack(back))).toEqual(goBack(back))
   })
 
   it('gives every page its own key, and does not stack the page already on top', () => {
-    const state = openPage(openPage(openPage(startState('lookUp'), word), word), kanji)
-    expect(state.stacks.lookUp.map(stacked => stacked.key)).toEqual([0, 1])
+    const state = openPage(openPage(openPage(startState('translate'), word), word), kanji)
+    expect(state.stacks.translate.map(stacked => stacked.key)).toEqual([0, 1])
   })
 
   it('goes to a route by choosing its tab, then opening its page there', () => {
-    const state = goTo(startState('lookUp'), { tab: 'player', page: kanji })
+    const state = goTo(startState('translate'), { tab: 'player', page: kanji })
     expect(state.tab).toBe('player')
     expect(state.stacks.player.map(stacked => stacked.page)).toEqual([kanji])
     expect(goTo(state, {})).toBe(state)
