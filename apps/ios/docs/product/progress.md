@@ -45,6 +45,7 @@ From the top:
   **Details** in its header opens [JLPT Progress](#jlpt-progress).
 - **Known over time**: the Known words on each day of the log, with "+16 in 7 days" and the first
   day's and today's counts; with fewer than two days, "Your Known words show here as the days go by."
+  **Known words by date** closes the card.
 
 Check: UI `ProgressUITests` (in from the card and from the row, the totals and streaks of a log
 seeded from `Fixtures/Progress/dashboard.json` with `ZENBU_PROGRESS_SEED`, Week and Month, Week again
@@ -82,6 +83,33 @@ count, an Up next word's page, and, seeded from `Fixtures/Progress/n4-known.json
 nothing Not started); `AccountAuditUITests` (JLPT Progress, at the default and largest sizes and
 in dark); package `JLPTProgressTests` (the level it opens on, the pace sentence, the button's
 words and the words it adds, and Up next asked for only by this screen); core `progress/jlpt-coverage.test.ts`.
+
+## Known by date
+
+**Known words by date** on Progress opens **Known Words by Date** on Account's stack, on this week:
+the 7 days ending today, as Progress's Week is. From the shared core's words marked Known each day
+(`knownByDate`), counting nothing itself:
+
+- **The week**: its days, "Oct 22 – Today", with **Earlier week** and **Later week** (chevrons),
+  each disabled at its end; earlier weeks stop at the one holding the log's first day, and the
+  screen always opens on this week. Then "16 marked Known", the sum of the bars, and "+7 vs the
+  week before" (or "−9"), left out when the week before lies wholly before the log began.
+- **The chart**: a bar a day of the words marked Known, over weekday letters, with the day's line,
+  "Wed, Oct 28 · 4 marked Known", above it, the week's last day until a bar is tapped. VoiceOver
+  reads each bar as its day's line.
+- **A section a day** that has words, newest first: "Today", "Yesterday", then "Monday, Oct 26",
+  each with "3 words". Each word is Known Words' row (Look Up's result row, the shared kanji row
+  for a kanji), with its tag as it is now: a word since moved back keeps its day with its new tag,
+  and one with no saved status now shows untagged. Tapping a row opens its page.
+- **The footer**: "Dates start Sep 24, 2026, when Zenbu began keeping them.", the log's first day.
+
+Check: UI `KnownByDateUITests` (in from Progress on the log `ZENBU_PROGRESS_SEED` seeds, the words
+marked Known today and yesterday under their days, the footer, earlier weeks to the log's first
+and back, a tapped bar, and a row opening its page); `AccountAuditUITests` (Known by date at the
+default and largest sizes and in dark, and its end without the text-size sweeps); package `KnownByDateTests` (its words, and a
+word with no record now) and `ProgressLogTests.knownByDateThroughTheBundle`; core
+`progress/known-by-date.test.ts` (the week's days, total, and change, earlier weeks to the log's
+first day, days before the log, and a word moved back after being marked Known).
 
 ## The daily goal
 

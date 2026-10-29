@@ -61,15 +61,25 @@ final class ProgressUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(reveal(find(identifier, in: app), in: app), toShow: find("progress.today", in: app))
   }
-
-  private static func dayName(back days: Int) -> String {
-    let day = Calendar.current.date(byAdding: .day, value: -days, to: .now) ?? .now
-    return day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
-  }
 }
 
 extension ZenbuUITestCase {
+  var progressFixture: URL {
+    fixtures.deletingLastPathComponent().appending(path: "Progress/dashboard.json")
+  }
+
   var progressSeed: [String: String] {
-    ["ZENBU_PROGRESS_SEED": fixtures.deletingLastPathComponent().appending(path: "Progress/dashboard.json").path]
+    ["ZENBU_PROGRESS_SEED": progressFixture.path]
+  }
+
+  static func dayName(back days: Int) -> String {
+    let day = Calendar.current.date(byAdding: .day, value: -days, to: .now) ?? .now
+    return day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+  }
+
+  static func dayID(back days: Int) -> String {
+    let day = Calendar.current.date(byAdding: .day, value: -days, to: .now) ?? .now
+    let parts = Calendar.current.dateComponents([.year, .month, .day], from: day)
+    return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
   }
 }

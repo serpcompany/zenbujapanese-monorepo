@@ -81,12 +81,7 @@ struct MarkedWordsView: View {
     }
     .task(id: rowsRequest) {
       guard wordKnowledge.isLoaded else { return }
-      let records = wordKnowledge.marked(words.status)
-      guard
-        let resolved = await KnowledgeRows.resolving(
-          records,
-          known: Set(records.map(\.entryID).filter(wordKnowledge.isKnown(storedID:))),
-          using: lookupClient)
+      guard let resolved = await wordKnowledge.rows(for: wordKnowledge.marked(words.status), using: lookupClient)
       else { return }
       rows = resolved
     }

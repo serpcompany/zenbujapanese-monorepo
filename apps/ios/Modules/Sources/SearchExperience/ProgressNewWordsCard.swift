@@ -15,21 +15,8 @@ struct ProgressNewWordsCard: View {
   @State private var selected: String?
   let stats: ProgressStats?
 
-  private struct Bar: Identifiable {
-    let day: ProgressStats.Day
-    let date: Date
-
-    var id: String { day.day }
-  }
-
-  private let calendar = ProgressWeek.gregorian()
-
   private var days: [ProgressStats.Day] {
     (span == .week ? stats?.last7 : stats?.last30) ?? []
-  }
-
-  private var bars: [Bar] {
-    days.compactMap { day in ProgressWeek.date(of: day.day, in: calendar).map { Bar(day: day, date: $0) } }
   }
 
   private var shown: ProgressStats.Day? {
@@ -90,15 +77,15 @@ struct ProgressNewWordsCard: View {
 
   private var chart: some View {
     Chart {
-      ForEach(bars) { bar in
-        BarMark(x: .value("Day", bar.id), y: .value("Words", bar.day.added))
+      ForEach(days, id: \.day) { day in
+        BarMark(x: .value("Day", day.day), y: .value("Words", day.added))
           .foregroundStyle(.orange)
-          .opacity(selected == nil || selected == bar.id ? 1 : 0.4)
-          .accessibilityLabel(ProgressWording.dayLine(bar.day))
-          .accessibilityIdentifier("progress.new-words.bar.\(bar.id)")
+          .opacity(selected == nil || selected == day.day ? 1 : 0.4)
+          .accessibilityLabel(ProgressWording.dayLine(day))
+          .accessibilityIdentifier("progress.new-words.bar.\(day.day)")
       }
-      ForEach(bars) { bar in
-        LineMark(x: .value("Day", bar.id), y: .value("Goal", bar.day.goal))
+      ForEach(days, id: \.day) { day in
+        LineMark(x: .value("Day", day.day), y: .value("Goal", day.goal))
           .interpolationMethod(.stepCenter)
           .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
           .foregroundStyle(Color.secondary)
@@ -116,20 +103,26 @@ struct ProgressNewWordsCard: View {
           .accessibilityValue(ProgressWording.newWords(goal))
       }
     }
-    .chartXSelection(value: $touched)
-    .chartGesture { proxy in
-      SpatialTapGesture().onEnded { proxy.selectXValue(at: $0.location.x) }
-    }
-    .chartYAxis(.hidden)
-    .chartXAxis {
-      AxisMarks { value in
-        AxisValueLabel {
-          Text(bars.first { $0.id == value.as(String.self) }?.date.formatted(.dateTime.weekday(.narrow)) ?? "")
-        }
-      }
-    }
+    .tappableDays(touched: $touched)
     .chartXAxis(span == .week ? .visible : .hidden)
     .frame(height: min(chartHeight, 320))
     .accessibilityIdentifier("progress.new-words.chart")
+  }
+}
+
+extension View {
+  func tappableDays(touched: Binding<String?>) -> some View {
+    chartXSelection(value: touched)
+      .chartGesture { proxy in
+        SpatialTapGesture().onEnded { proxy.selectXValue(at: $0.location.x) }
+      }
+      .chartYAxis(.hidden)
+      .chartXAxis {
+        AxisMarks { value in
+          AxisValueLabel {
+            Text(value.as(String.self).map { ProgressWeek.letter(of: $0) } ?? "")
+          }
+        }
+      }
   }
 }

@@ -895,6 +895,35 @@
     return filled;
   }
 
+  // src/progress/known-by-date.ts
+  var weekLength = 7;
+  function knownByDate(request) {
+    const stats = progressStats({ days: request.days, goal: 0, today: request.today });
+    const marked = new Map(stats.words.map((words) => [words.day, words.markedKnown]));
+    const firstDay = stats.days[0]?.day ?? request.today;
+    const today = dayNumber(request.today);
+    const earliest = Math.floor((today - dayNumber(firstDay)) / weekLength);
+    const week = Math.min(Math.max(0, Math.trunc(request.week) || 0), earliest);
+    const daysOf = (shown2) => Array.from({ length: weekLength }, (_, index) => {
+      const day = dayName(today - shown2 * weekLength - (weekLength - 1) + index);
+      const ids = marked.get(day) ?? [];
+      return { day, markedKnown: ids, count: ids.length };
+    });
+    const totalOf = (days2) => days2.reduce((sum2, day) => sum2 + day.count, 0);
+    const days = daysOf(week);
+    const total = totalOf(days);
+    const hasEarlier = week < earliest;
+    return {
+      week,
+      days,
+      total,
+      change: hasEarlier ? total - totalOf(daysOf(week + 1)) : null,
+      hasEarlier,
+      hasLater: week > 0,
+      firstDay
+    };
+  }
+
   // src/search/query.ts
   var graphemeSegmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
   function graphemes2(value) {
@@ -6919,6 +6948,7 @@ ${sense.noteText}` : sense.meaning
       sourceCredits: creditsShownBy,
       progressStats: (request) => progressStats(JSON.parse(request)),
       progressDays: (request) => progressDays(JSON.parse(request)),
+      knownByDate: (request) => knownByDate(JSON.parse(request)),
       youTubeVideo,
       youTubeCaptions,
       youTubeTranslatedCaptions: (request) => {

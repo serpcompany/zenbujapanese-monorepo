@@ -100,6 +100,11 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     tapClearOfTheBars(details, toShow: find("jlpt-progress.ring", in: app), in: app)
     audit("JLPT Progress", in: app)
     audit("JLPT Progress, its end", placing: find("jlpt-progress.bar.n1", in: app), in: app)
+    goBack(in: app)
+    openAccountRow("progress.known-by-date", showing: find("known-by-date.total", in: app), in: app)
+    audit("Known words by date", in: app)
+    let oldestDay = find("known-by-date.day.\(Self.dayID(back: 6))", in: app)
+    audit("Known words by date, its end", placing: oldestDay, in: app, .allButTextSizes)
   }
 
   private func auditAlone(_ screen: String, _ section: String, showing identifier: String, _ pass: AuditPass) {

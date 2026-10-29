@@ -74,12 +74,12 @@ const averagedDays = 7
 const shortWindow = 7
 const longWindow = 30
 
-const dayNumber = (day: string) => {
+export const dayNumber = (day: string) => {
   const [year, month, date] = day.split('-').map(Number)
   return Math.round(Date.UTC(year ?? 1970, (month ?? 1) - 1, date ?? 1) / dayLength)
 }
 
-const dayName = (number: number) => new Date(number * dayLength).toISOString().slice(0, 10)
+export const dayName = (number: number) => new Date(number * dayLength).toISOString().slice(0, 10)
 
 export const isDay = (day: string) => /^\d{4}-\d{2}-\d{2}$/.test(day)
 

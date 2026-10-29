@@ -99,6 +99,7 @@ struct ProgressLevelBar: View {
 }
 
 struct ProgressKnownOverTimeCard: View {
+  @Environment(\.openAccountRoute) private var openAccountRoute
   @ScaledMetric private var chartHeight = 120.0
   let stats: ProgressStats?
 
@@ -151,6 +152,9 @@ struct ProgressKnownOverTimeCard: View {
           .foregroundStyle(.secondary)
           .accessibilityIdentifier("progress.known-over-time.empty")
       }
+      Button("Known words by date") { openAccountRoute(.knownByDate) }
+        .buttonStyle(.borderless)
+        .accessibilityIdentifier("progress.known-by-date")
     }
     .padding(.vertical, 6)
     .redacted(reason: stats == nil ? .placeholder : [])
