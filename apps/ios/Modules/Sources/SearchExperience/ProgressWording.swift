@@ -87,8 +87,26 @@ enum ProgressWording {
     return "Goal met \(goalMet.met) of \(days(goalMet.days)) · \(words(added))"
   }
 
+  static func percent(_ level: JLPTCoverage.Level) -> String {
+    level.percentKnown == 0 && level.known > 0 ? "<1%" : "\(level.percentKnown)%"
+  }
+
   static func percentKnown(_ level: JLPTCoverage.Level) -> String {
-    level.percentKnown == 0 && level.known > 0 ? "<1% known" : "\(level.percentKnown)% known"
+    "\(percent(level)) known"
+  }
+
+  static func pace(
+    _ level: JLPTCoverage.Level, goal: Int, today: Date = .now,
+    timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    guard let pace = level.pace else { return "Every \(level.name) word is in Learning or Known." }
+    let date = shortDate(pace.date, today: today, timeZone: timeZone)
+    return
+      "At \(goal) new words a day, every \(level.name) word would be in Learning by \(date) (\(days(pace.days)))."
+  }
+
+  static func addToLearning(_ count: Int, level name: String) -> String {
+    "Add \(count) \(name) \(count == 1 ? "word" : "words") to Learning"
   }
 
   static func levelCounts(_ level: JLPTCoverage.Level) -> String {

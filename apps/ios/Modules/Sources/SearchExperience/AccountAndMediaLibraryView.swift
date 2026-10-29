@@ -39,6 +39,10 @@ struct AccountTabRoot: View {
           CreditsView()
         case .progress:
           ProgressScreen()
+        case .jlptProgress:
+          JLPTProgressScreen(lookupClient: lookupClient) {
+            openItem($0.id.rawValue, $0.headword, $0.reading)
+          }
         }
       }
       .modifier(TranslateDestinations(experience: translate, words: words))
@@ -205,6 +209,7 @@ enum AccountRoute: Hashable {
   case frequencyDictionaries
   case credits
   case progress
+  case jlptProgress
 }
 
 struct ReadingAidSettingsView: View {

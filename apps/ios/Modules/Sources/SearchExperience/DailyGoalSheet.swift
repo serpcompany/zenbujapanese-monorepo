@@ -134,12 +134,14 @@ private struct JLPTCoverageFollower: ViewModifier {
   @Environment(ProgressLog.self) private var progressLog
   @Binding var model: JLPTCoverageModel?
   let goal: Int
+  let upNext: Int?
 
   func body(content: Content) -> some View {
     content
       .task {
         let model = JLPTCoverageModel(
-          knowledge: knowledge, goal: goal, today: { [progressLog] in progressLog.today })
+          knowledge: knowledge, goal: goal, upNext: upNext,
+          today: { [progressLog] in progressLog.today })
         self.model = model
         await model.follow()
       }
@@ -148,7 +150,9 @@ private struct JLPTCoverageFollower: ViewModifier {
 }
 
 extension View {
-  func followsJLPTCoverage(goal: Int, into model: Binding<JLPTCoverageModel?>) -> some View {
-    modifier(JLPTCoverageFollower(model: model, goal: goal))
+  func followsJLPTCoverage(
+    goal: Int, upNext: Int? = nil, into model: Binding<JLPTCoverageModel?>
+  ) -> some View {
+    modifier(JLPTCoverageFollower(model: model, goal: goal, upNext: upNext))
   }
 }

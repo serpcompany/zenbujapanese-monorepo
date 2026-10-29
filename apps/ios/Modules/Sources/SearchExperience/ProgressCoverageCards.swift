@@ -1,7 +1,7 @@
 import Charts
 import SwiftUI
 
-private enum ProgressBand {
+enum ProgressBand {
   static let known = "Known"
   static let learning = "Learning"
   static let knownTint = Color.teal
@@ -9,6 +9,7 @@ private enum ProgressBand {
 }
 
 struct ProgressJLPTCoverageCard: View {
+  @Environment(\.openAccountRoute) private var openAccountRoute
   let coverage: JLPTCoverage?
 
   private var levels: [JLPTCoverage.Level] {
@@ -17,8 +18,14 @@ struct ProgressJLPTCoverageCard: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
-      Text("JLPT coverage")
-        .font(.headline)
+      StackedWhenLarge(spacing: 2) {
+        Text("JLPT coverage")
+          .font(.headline)
+        Spacer(minLength: 0)
+        Button("Details") { openAccountRoute(.jlptProgress) }
+          .buttonStyle(.borderless)
+          .accessibilityIdentifier("progress.jlpt.details")
+      }
       if coverage == nil {
         ProgressView()
           .frame(maxWidth: .infinity)
@@ -37,11 +44,24 @@ struct ProgressJLPTCoverageCard: View {
   }
 }
 
-private struct ProgressLevelBar: View {
+struct ProgressLevelBar: View {
   @ScaledMetric(relativeTo: .body) private var barHeight = 10.0
   let level: JLPTCoverage.Level
+  var identifier = "progress.jlpt"
+  var isChosen = false
+  var choose: (() -> Void)?
 
   var body: some View {
+    if let choose {
+      Button(action: choose) { bar }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isChosen ? .isSelected : [])
+    } else {
+      bar
+    }
+  }
+
+  private var bar: some View {
     VStack(alignment: .leading, spacing: 6) {
       StackedWhenLarge(spacing: 2) {
         Text(level.name)
@@ -72,7 +92,8 @@ private struct ProgressLevelBar: View {
     .accessibilityLabel(level.name)
     .accessibilityValue(
       "\(ProgressWording.levelCounts(level)), \(level.learning.formatted()) \(ProgressBand.learning)")
-    .accessibilityIdentifier("progress.jlpt.n\(level.level)")
+    .contentShape(.rect)
+    .accessibilityIdentifier("\(identifier).n\(level.level)")
   }
 }
 

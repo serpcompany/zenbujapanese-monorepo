@@ -96,6 +96,12 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     audit("Progress, a month of new words", placing: chart, in: app)
     auditAtTheLargestSize("Progress, JLPT coverage", showing: find("progress.jlpt.n1", in: app), in: app)
     audit("Progress, its end", placing: find("progress.known-over-time.chart", in: app), in: app)
+    let details = reveal(find("progress.jlpt.details", in: app), in: app)
+    tapClearOfTheBars(details, toShow: find("jlpt-progress.ring", in: app), in: app)
+    audit("JLPT Progress", in: app)
+    reveal(find("jlpt-progress.bar.n1", in: app), in: app)
+    scroll(app.windows.firstMatch, back: false)
+    audit("JLPT Progress, its end", in: app)
   }
 
   private func auditAlone(_ screen: String, _ section: String, showing identifier: String, _ pass: AuditPass) {

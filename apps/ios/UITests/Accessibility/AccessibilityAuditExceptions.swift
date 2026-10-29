@@ -213,6 +213,22 @@ private let textThatScales = [
   allow(.dynamicType, .identifier("account.progress.see"), on: ["Account"], because: Why.scales),
   allow(
     .dynamicType,
+    .labels(["Up next in N5", "Turning them Known depends on review, so this shows the start, not the finish."]),
+    on: ["JLPT Progress"], [.phone], [.standard], because: Why.scales),
+  allow(
+    .dynamicType, .labels(["N1", "0% known · 0 / 3,061"]), on: ["JLPT Progress, its end"], [.phone], [.standard],
+    because: Why.scales),
+  allow(
+    .textClipped, .label("0% known · 0 / 3,061"), on: ["JLPT Progress, its end"], [.phone], [.standard],
+    because: Why.scales),
+  allow(
+    .dynamicType, .identifier("jlpt-progress.add"), on: ["JLPT Progress, its end"], [.phone], [.standard],
+    because: Why.scales),
+  allow(
+    .textClipped, .identifier("jlpt-progress.add"), on: ["JLPT Progress, its end"], [.phone], [.standard],
+    because: Why.scales),
+  allow(
+    .dynamicType,
     .labels([
       "TODAY", "0 of 20 new words", "20 more to reach today’s goal", "M", "T", "W", "F", "S", "Daily Goal",
       "20 new words",
