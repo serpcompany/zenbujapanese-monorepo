@@ -13,13 +13,8 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 it. Every tab's `Content` stays mounted, so a tab that reads Chrome or follows something does it
 only while `shown`. A page is a kind in `PanelPage` (`route.ts`) and a line in
 `pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
-The tabs are the app's four, in its order (#1129). Look Up's `Content` is `LookUpTab`
-(`src/look-up/look-up-tab.tsx`, [`look-up.md`](../../apps/extension/docs/product/look-up.md)): it
-sends `{ type: 'search', query }` through `searchDictionary` (`src/shared/dictionary.ts`), the
-worker answers with the screen the core's `Dictionary.search` builds, and
-`src/look-up/search-results.tsx` draws it. The panel imports the core's `SearchResultsScreen` as a
-type only: `results/results.ts` reaches `search/`, which only the worker opens (ARCHITECTURE.md,
-Layers). Translate's is `TranslateTab` (`src/translate/translate-tab.tsx`,
+The tabs are the app's Translate, Player, and Account, in its order (#1129). The app's Look Up
+has no tab: the extension has no dictionary search. Translate's `Content` is `TranslateTab` (`src/translate/translate-tab.tsx`,
 [`translate.md`](../../apps/extension/docs/product/translate.md)), whose Image row opens
 `{ page: 'image-search' }` (`src/translate/image-search-page.tsx`). Account's is `AccountTab`
 (`src/side-panel/account-tab.tsx`), the place sign-in will show (#960, #961). Player's is
@@ -53,9 +48,10 @@ core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts
   panel doesn't reload it. When Chrome refuses to open the panel, the service worker removes the
   key and answers `{ type: 'failed', reason }`.
 - **The last tab** is `sidePanel.lastTab` in `chrome.storage.local` (the manifest asks for
-  `storage`), `lookUp` until a tab is chosen. A tab id from the five tabs before #1129 is read as
+  `storage`), `translate`, the first tab, until a tab is chosen. A tab id from the five tabs before #1129 is read as
   the tab that took it over (`movedTabs` in `panel-storage.ts`): `video` and `recent` as
-  `player`, `images` as `translate`, and `words` as `account`; anything else as `lookUp`. The
+  `player`, `images` as `translate`, and `words` as `account`; anything else, `lookUp` included, as
+  `translate`. The
   panel saves the tab it opens on, so the old id is gone after one open. Nothing syncs.
 - **The test page** (`{ page: 'test' }`) is the test build's: `isPanelRoute` refuses it unless
   `import.meta.env.MODE` is `test`, as it is in Vitest and `pnpm build:test`.
@@ -72,8 +68,8 @@ core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts
   at 320 px (`tmp/agent/verify/978/tab-bar-sizes.json`): each trigger is 60 px wide; at the stock
   `text-sm` and padding, Translate's label needs 61 px and gets 46, and Images' needs 48 and gets
   46, so both are cut (Translate still at 380 px), and with the icon beside the label every label
-  gets 24 px. The compact bar showed all five whole at 320 px; the four tabs since #1129 each get
-  a quarter of the bar.
+  gets 24 px. The compact bar showed all five whole at 320 px; the three tabs since #1129 each get
+  a third of the bar.
 
 ## The header's site
 
@@ -104,16 +100,15 @@ a granted origin covers it or the toolbar icon was clicked on that tab, and its 
 - **Unit and DOM tests,** with `pnpm test` in `apps/extension`: the manifest with no popup;
   routes and tab stacks; the service worker opening the panel from the toolbar icon, calling
   `open` before it awaits anything, handing the route over, and leaving none when Chrome refuses;
-  a refused `setPanelBehavior` reported once; and, in happy-dom, the four tabs with their labels
-  and icons, each tab's screen (Look Up's search is checked in `src/look-up/`, and Player's
-  transcript in `src/video-tab/`), a Look Up result opening Word Detail, Translate's Image row,
-  the arrow keys, pages over a tab and Back, focus after each, the last tab and the five tabs'
-  ids read as the four's, the sign-up links, the dictionary progress on every tab but Translate and on a
+  a refused `setPanelBehavior` reported once; and, in happy-dom, the three tabs with their labels
+  and icons, each tab's screen (Player's transcript is checked in `src/video-tab/`), Translate's
+  Image row, the arrow keys, pages over a tab and Back, focus after each, the last tab and the
+  five tabs' ids read as the three's, the sign-up links, the dictionary progress on every tab but Translate and on a
   page over Translate, Try again, and `openPanel` through a fake Chrome to the panel, closed and
   open. The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)
   lists, with the test content script beside it on one fake Chrome. The browser tests open
-  `side-panel.html` with no popup, and `e2e/side-panel-tabs.spec.ts` its four tabs, each tab's
-  screen, and the old ids read as the four's
+  `side-panel.html` with no popup, and `e2e/side-panel-tabs.spec.ts` its three tabs, each tab's
+  screen, and the old ids read as the three's
   ([`extension-browser-tests.md`](extension-browser-tests.md)).
 - **In Chrome,** with the `verify-extension` skill ([`extension.md`](extension.md), Checks): open the
   side panel from the toolbar icon and with `openPanel` from a click, closed and open, and check

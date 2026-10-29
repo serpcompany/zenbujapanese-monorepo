@@ -64,7 +64,8 @@ _Avoid_: content script (alone, where the YouTube one or the test one could be m
 
 **Side panel**:
 The browser extension's panel beside the page, Chrome's side panel: a tab bar with the app's
-Look Up, Translate, Player, and Account, each tab with its own pages, such as a word's.
+Translate, Player, and Account, each tab with its own pages, such as a word's. It has no Look Up,
+since the extension has no dictionary search; the website has one (#1129, D3).
 _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)
 
 **Word popup**:
@@ -84,6 +85,12 @@ The side panel's Player tab in the browser extension: a YouTube video's Zenbu Ca
 for each line with the time it starts, the line playing highlighted, and a row's click moving the
 video to it. The caption on the player shows one line at a time instead.
 _Avoid_: subtitles, captions (the lines themselves, or the player's caption)
+
+**Player tab**:
+The browser extension's side panel tab that holds the Transcript and Recent, which was its Video
+tab. Its code keeps the old name: `VideoTab`, `src/video-tab/`, `video-tab-port.ts`, the product
+doc `video-tab.md`, and the tests' "Video tab:" check names are all the Player tab.
+_Avoid_: Video tab (for the tab; the code's name only)
 
 **Caption on the player**:
 The line being heard that the browser extension draws on a site's video player, with its words,

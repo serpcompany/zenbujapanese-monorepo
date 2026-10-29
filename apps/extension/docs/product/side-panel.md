@@ -1,7 +1,7 @@
 # Side panel
 
-The side panel is where the extension looks words up, translates, plays a video's transcript, and
-holds the learner's account, beside the page they read. This is what it does today, with the check that holds each behavior. The
+The side panel is where the extension translates, shows a video's transcript, and holds the
+learner's account, beside the page they read. This is what it does today, with the check that holds each behavior. The
 tests named here are in `src/side-panel/` unless a path says otherwise.
 
 ## What a learner sees
@@ -11,13 +11,12 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
   nor "Zenbu Japanese", since Chrome's own title above the panel shows both and can't be removed.
   A screen reader still hears the panel named "Zenbu Japanese", from a heading only it reads
   (`panel.interaction.test.tsx`; `e2e/pages.spec.ts`, with the page's title).
-- **A tab bar at the bottom,** always in view: the app's four tabs, Look Up, Translate, Player,
-  and Account, in the app's order, each an icon over its name: a magnifying glass, the translate
-  mark, a play button in a square, and a person in a circle, as the app's. A click chooses a tab.
+- **A tab bar at the bottom,** always in view: the app's Translate, Player, and Account, in the
+  app's order, each an icon over its name: the translate mark, a play button in a square, and a
+  person in a circle, as the app's. The app's Look Up has no tab: the extension has no dictionary
+  search (#1129, D3). A click chooses a tab.
   The arrow keys move along the bar and choose the tab they land on, wrapping at the ends
   (`panel.interaction.test.tsx`; `e2e/side-panel-tabs.spec.ts`).
-- **Look Up on its search box,** to search the dictionary: [`look-up.md`](look-up.md)
-  (`panel.interaction.test.tsx`, "opens each tab on its own screen").
 - **Translate on its box,** to translate Japanese or English, with an Image row that opens Image
   Search: [`translate.md`](translate.md) (`panel.interaction.test.tsx`, "opens each tab on its own
   screen", "opens Image Search from the Image row on Translate").
@@ -44,7 +43,7 @@ doesn't sign in yet (#961): Account is where it will show.
 ## Pages over a tab
 
 - **A page opens over the tab it was opened from,** with a row above it that goes Back, named for
-  the tab ("Look Up"). Back goes back one page at a time, to the tab itself at the end. The
+  the tab ("Translate"). Back goes back one page at a time, to the tab itself at the end. The
   tab bar stays in view (`panel.interaction.test.tsx`).
 - **Focus goes to what is shown:** to a new page's Back row, and after Back to the Back row of the
   page revealed, or to the tab (`panel.interaction.test.tsx`).
@@ -71,11 +70,11 @@ doesn't sign in yet (#961): Account is where it will show.
   used once: the next time the panel opens by itself, it opens on its last tab with no page
   (`open-panel.interaction.test.tsx`, `src/service-worker/side-panel.test.ts`; in Chrome by an
   agent on 2026-10-28, from a click on an extension page, closed and open).
-- **It opens on the tab it was last on,** in any window, and on Look Up the first time, as the
-  app does (`open-panel.interaction.test.tsx`, `panel.interaction.test.tsx`).
+- **It opens on the tab it was last on,** in any window, and on Translate, the first tab, the
+  first time (`open-panel.interaction.test.tsx`, `panel.interaction.test.tsx`).
 - **A last tab kept from the five tabs before opens on the tab that took it over:** Video or
-  Recent on Player, Images on Translate, and Words on Account, and the panel keeps that tab from
-  then on (`open-panel.interaction.test.tsx`, "opens on the tab that took over…";
+  Recent on Player, Images on Translate, and Words on Account, and anything else, the Look Up of
+  an earlier build included, on Translate. The panel keeps that tab from then on (`open-panel.interaction.test.tsx`, "opens on the tab that took over…";
   `e2e/side-panel-tabs.spec.ts`).
 - **A closed panel opens only from a click.** Chrome lets a click open it and nothing else, so a
   request made without one leaves it closed, and leaves nothing behind for later
