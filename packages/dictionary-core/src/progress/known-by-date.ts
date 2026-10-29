@@ -1,4 +1,4 @@
-import { type ProgressDay, progressStats } from './stats'
+import { dayName, dayNumber, type ProgressDay, progressStats } from './stats'
 
 interface KnownByDateRequest {
   days: Readonly<Record<string, ProgressDay>>
@@ -22,12 +22,7 @@ interface KnownByDate {
   firstDay: string
 }
 
-const dayLength = 86_400_000
 const weekLength = 7
-
-const dayNumber = (day: string) => Math.round(Date.parse(`${day}T00:00:00Z`) / dayLength)
-
-const dayName = (number: number) => new Date(number * dayLength).toISOString().slice(0, 10)
 
 export function knownByDate(request: KnownByDateRequest): KnownByDate {
   const stats = progressStats({ days: request.days, goal: 0, today: request.today })

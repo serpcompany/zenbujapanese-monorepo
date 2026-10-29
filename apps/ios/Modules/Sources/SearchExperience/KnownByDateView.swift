@@ -6,13 +6,13 @@ struct KnownByDateView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var week = 0
   @State private var shown: KnownByDate?
-  @State private var rows: KnowledgeRows?
+  @State private var resolved: KnownByDateRows?
   let lookupClient: LookupClient
   let openWord: (WordKnowledgeRecord) -> Void
 
-  private var markedDays: [KnownByDate.Day] {
-    (shown?.days ?? []).reversed().filter { $0.count > 0 }
-  }
+  private var markedDays: [KnownByDate.Day] { shown?.markedDays ?? [] }
+
+  private var rows: KnowledgeRows? { resolved?.rows(for: shown) }
 
   var body: some View {
     List {
@@ -38,9 +38,9 @@ struct KnownByDateView: View {
       shown = await progressLog.knownByDate(week: week)
     }
     .task(id: rowsRequest) {
-      guard wordKnowledge.isLoaded, !rowsRequest.records.isEmpty else { return }
-      guard let resolved = await wordKnowledge.rows(for: rowsRequest.records, using: lookupClient) else { return }
-      rows = resolved
+      guard wordKnowledge.isLoaded, !rowsRequest.records.isEmpty, let week = shown?.week else { return }
+      guard let rows = await wordKnowledge.rows(for: rowsRequest.records, using: lookupClient) else { return }
+      resolved = KnownByDateRows(week: week, rows: rows)
     }
     .navigationTitle("Known Words by Date")
     .accessibilityIdentifier("known-by-date.list")
@@ -126,9 +126,9 @@ private struct KnownByDateWeek: View {
           .accessibilityIdentifier("known-by-date.week")
         Spacer(minLength: 8)
         HStack(spacing: 0) {
-          step("Earlier week", "chevron.left", by: 1, isOn: shown?.hasEarlier == true)
+          step("Earlier week", "chevron.left", by: 1)
             .accessibilityIdentifier("known-by-date.earlier")
-          step("Later week", "chevron.right", by: -1, isOn: shown?.hasLater == true)
+          step("Later week", "chevron.right", by: -1)
             .accessibilityIdentifier("known-by-date.later")
         }
         .padding(.vertical, -10)
@@ -158,9 +158,9 @@ private struct KnownByDateWeek: View {
     .onChange(of: shown?.week) { selected = nil }
   }
 
-  private func step(_ title: String, _ symbol: String, by change: Int, isOn: Bool) -> some View {
+  private func step(_ title: String, _ symbol: String, by change: Int) -> some View {
     Button {
-      week += change
+      if let shown { week = shown.stepped(by: change) }
     } label: {
       Label(title, systemImage: symbol)
         .labelStyle(.iconOnly)
@@ -168,7 +168,7 @@ private struct KnownByDateWeek: View {
         .contentShape(.rect)
     }
     .buttonStyle(.borderless)
-    .disabled(!isOn)
+    .disabled(shown.map { $0.stepped(by: change) == $0.week } ?? true)
   }
 
   private var chart: some View {

@@ -896,19 +896,16 @@
   }
 
   // src/progress/known-by-date.ts
-  var dayLength2 = 864e5;
   var weekLength = 7;
-  var dayNumber2 = (day) => Math.round(Date.parse(`${day}T00:00:00Z`) / dayLength2);
-  var dayName2 = (number) => new Date(number * dayLength2).toISOString().slice(0, 10);
   function knownByDate(request) {
     const stats = progressStats({ days: request.days, goal: 0, today: request.today });
     const marked = new Map(stats.words.map((words) => [words.day, words.markedKnown]));
     const firstDay = stats.days[0]?.day ?? request.today;
-    const today = dayNumber2(request.today);
-    const earliest = Math.floor((today - dayNumber2(firstDay)) / weekLength);
+    const today = dayNumber(request.today);
+    const earliest = Math.floor((today - dayNumber(firstDay)) / weekLength);
     const week = Math.min(Math.max(0, Math.trunc(request.week) || 0), earliest);
     const daysOf = (shown2) => Array.from({ length: weekLength }, (_, index) => {
-      const day = dayName2(today - shown2 * weekLength - (weekLength - 1) + index);
+      const day = dayName(today - shown2 * weekLength - (weekLength - 1) + index);
       const ids = marked.get(day) ?? [];
       return { day, markedKnown: ids, count: ids.length };
     });
@@ -2434,16 +2431,16 @@
   }
 
   // src/progress/jlpt-coverage.ts
-  var dayLength3 = 864e5;
+  var dayLength2 = 864e5;
   var calendarDayPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
   var calendarDayOf = (time) => new Date(time).toISOString().slice(0, 10);
-  function dayNumber3(day) {
+  function dayNumber2(day) {
     const parts = calendarDayPattern.exec(day);
     const time = parts ? Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])) : Number.NaN;
     if (Number.isNaN(time) || calendarDayOf(time) !== day) {
       throw new Error(`${day} is not a calendar day written as YYYY-MM-DD`);
     }
-    return time / dayLength3;
+    return time / dayLength2;
   }
   function wholeNumberFromOne(value, name3) {
     if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
@@ -2454,12 +2451,12 @@
   function pace(notStarted, goal, today) {
     if (notStarted === 0) return null;
     const days = Math.ceil(notStarted / goal);
-    return { date: calendarDayOf((today + days) * dayLength3), days };
+    return { date: calendarDayOf((today + days) * dayLength2), days };
   }
   function jlptCoverage(levels, request) {
     const goal = wholeNumberFromOne(request.goal, "goal");
     const upNextCount = request.upNext === void 0 ? goal : wholeNumberFromOne(request.upNext, "Up next count");
-    const today = dayNumber3(request.today);
+    const today = dayNumber2(request.today);
     const known2 = new Set(request.known.map((id) => id.toLowerCase()));
     const learning2 = new Set(request.learning.map((id) => id.toLowerCase()));
     return levels.map(({ level, ids }) => {

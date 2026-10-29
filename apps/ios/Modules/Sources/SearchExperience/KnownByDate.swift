@@ -32,6 +32,26 @@ extension ProgressLog {
   }
 }
 
+extension KnownByDate {
+  var markedDays: [Day] {
+    days.reversed().filter { $0.count > 0 }
+  }
+
+  func stepped(by change: Int) -> Int {
+    let allowed = change > 0 ? hasEarlier : change < 0 && hasLater
+    return allowed ? max(0, week + change) : week
+  }
+}
+
+struct KnownByDateRows {
+  let week: Int
+  let rows: KnowledgeRows
+
+  func rows(for shown: KnownByDate?) -> KnowledgeRows? {
+    shown?.week == week ? rows : nil
+  }
+}
+
 extension KnownByDate.Day {
   func records(in knowledge: [String: WordKnowledgeRecord]) -> [WordKnowledgeRecord] {
     markedKnown.map { id in

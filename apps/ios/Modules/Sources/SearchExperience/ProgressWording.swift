@@ -100,18 +100,12 @@ enum ProgressWording {
   static func knownDaySection(
     _ name: String, today: String, timeZone: TimeZone = .autoupdatingCurrent
   ) -> String {
+    if name == today { return "Today" }
+    if name == DailyListDays.day(today, movedBy: -1) { return "Yesterday" }
     let calendar = ProgressWeek.gregorian(in: timeZone)
-    guard let date = ProgressWeek.date(of: name, in: calendar),
-      let now = ProgressWeek.date(of: today, in: calendar)
-    else { return name }
-    switch calendar.dateComponents([.day], from: date, to: now).day {
-    case 0: return "Today"
-    case 1: return "Yesterday"
-    default:
-      let format = Date.FormatStyle(timeZone: timeZone).weekday(.wide).month(.abbreviated).day()
-      let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
-      return date.formatted(sameYear ? format : format.year())
-    }
+    guard let date = ProgressWeek.date(of: name, in: calendar) else { return name }
+    let format = Date.FormatStyle(timeZone: timeZone).weekday(.wide).month(.abbreviated).day()
+    return date.formatted(name.prefix(4) == today.prefix(4) ? format : format.year())
   }
 
   static func knownWeek(

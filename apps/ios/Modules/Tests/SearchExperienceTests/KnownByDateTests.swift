@@ -9,9 +9,9 @@ struct KnownByDateTests {
   private let taberu = "042e07f7052f611fed33ddddf37f55fd"
   private let miru = "7f490a9c9c0da94f4e9474f4efe74be1"
 
-  private func named(_ name: String, _ format: Date.FormatStyle) -> String {
+  private func named(_ name: String, _ format: Date.FormatStyle, in timeZone: TimeZone? = nil) -> String {
     var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = tokyo
+    calendar.timeZone = timeZone ?? tokyo
     return ProgressWeek.date(of: name, in: calendar)!.formatted(format)
   }
 
@@ -46,6 +46,16 @@ struct KnownByDateTests {
       == "Dates start \(named("2026-10-30", full)), when Zenbu began keeping them.")
   }
 
+  @Test func todayAndYesterdayAreCalendarDaysWhereMidnightIsSkipped() {
+    let santiago = TimeZone(identifier: "America/Santiago")!
+    let wide = Date.FormatStyle(timeZone: santiago).weekday(.wide).month(.abbreviated).day()
+    #expect(ProgressWording.knownDaySection("2026-09-07", today: "2026-09-07", timeZone: santiago) == "Today")
+    #expect(ProgressWording.knownDaySection("2026-09-06", today: "2026-09-07", timeZone: santiago) == "Yesterday")
+    #expect(ProgressWording.knownDaySection("2026-09-07", today: "2026-09-08", timeZone: santiago) == "Yesterday")
+    #expect(ProgressWording.knownDaySection("2026-09-06", today: "2026-09-08", timeZone: santiago)
+      == named("2026-09-06", wide, in: santiago))
+  }
+
   @Test func aWordWithNoRecordNowStillShowsUntagged() {
     let kept = WordKnowledgeRecord(
       entryID: taberu, headword: "食べる", reading: "たべる", status: .learning, updatedAt: .now)
@@ -55,5 +65,37 @@ struct KnownByDateTests {
     #expect(records[0] == kept)
     #expect(records[1].status == .unknown && records[1].headword.isEmpty)
     #expect(records[2].status == .unknown && records[2].kanji?.rawValue == "語")
+  }
+
+  private func shown(week: Int, counts: [Int], hasEarlier: Bool, hasLater: Bool) -> KnownByDate {
+    let days = counts.enumerated().map { index, count in
+      KnownByDate.Day(day: "2026-10-2\(index + 2)", markedKnown: Array(repeating: taberu, count: count), count: count)
+    }
+    return KnownByDate(
+      week: week, days: days, total: counts.reduce(0, +), change: nil, hasEarlier: hasEarlier,
+      hasLater: hasLater, firstDay: "2026-09-01")
+  }
+
+  @Test func aDayWithNoWordsGetsNoSectionAndTheNewestComesFirst() {
+    let week = shown(week: 0, counts: [2, 0, 1, 0, 0, 3, 1], hasEarlier: true, hasLater: false)
+    #expect(week.markedDays.map(\.day) == ["2026-10-28", "2026-10-27", "2026-10-24", "2026-10-22"])
+  }
+
+  @Test func aRepeatedTapStepsFromTheShownWeekAndStopsAtEachEnd() {
+    let nextToLast = shown(week: 3, counts: [1], hasEarlier: true, hasLater: true)
+    #expect(nextToLast.stepped(by: 1) == 4)
+    #expect(nextToLast.stepped(by: -1) == 2)
+    let last = shown(week: 4, counts: [1], hasEarlier: false, hasLater: true)
+    #expect(last.stepped(by: 1) == 4)
+    #expect(last.stepped(by: -1) == 3)
+    let first = shown(week: 0, counts: [1], hasEarlier: true, hasLater: false)
+    #expect(first.stepped(by: -1) == 0)
+  }
+
+  @Test func rowsResolvedForOneWeekAreNotShownForAnother() {
+    let resolved = KnownByDateRows(week: 0, rows: .none)
+    #expect(resolved.rows(for: shown(week: 0, counts: [1], hasEarlier: true, hasLater: false)) == KnowledgeRows.none)
+    #expect(resolved.rows(for: shown(week: 1, counts: [1], hasEarlier: true, hasLater: true)) == nil)
+    #expect(resolved.rows(for: nil) == nil)
   }
 }

@@ -55,6 +55,29 @@ final class KnownByDateUITests: ZenbuUITestCase {
     waitForTag("Known", on: "word-detail.status", in: app)
   }
 
+  func testAKanjiShowsTheKanjiRowAndAWordMovedBackShowsItsTagAsItIsNow() throws {
+    let app = launch(progressSeed)
+    search("日", in: app)
+    let menu = find("kanji-detail.more-menu", in: app)
+    tap(find("result.kanji-primary.日", in: app), toShow: menu)
+    chooseStatus("Known", from: menu, in: app)
+    goBack(in: app)
+    openKnownByDate(in: app)
+    let today = find("known-by-date.day.\(Self.dayID(back: 0))", in: app)
+    let yesterday = find("known-by-date.day.\(Self.dayID(back: 1))", in: app)
+    waitUntil(today, "label == %@", "Today, 2 words")
+    let kanji = reveal(find("result.kanji-primary.日", in: app), in: app)
+    XCTAssertGreaterThanOrEqual(kanji.frame.minY, today.frame.maxY)
+    XCTAssertLessThanOrEqual(kanji.frame.maxY, reveal(yesterday, in: app).frame.minY)
+    let marked = try markedKnownInTheSeed()
+    let movedBack = "result.\(marked[marked.count - 2])"
+    reveal(find(movedBack, in: app), in: app)
+    let row = chooseLeadingAction("mark-learning", onRow: movedBack, in: app)
+    waitUntil(row, "value BEGINSWITH 'Learning, '")
+    waitUntil(yesterday, "label == %@", "Yesterday, 3 words")
+    XCTAssertGreaterThanOrEqual(row.frame.minY, yesterday.frame.maxY)
+  }
+
   private func openKnownByDate(in app: XCUIApplication) {
     open(.account, in: app)
     tap(reveal(find("account.progress.see", in: app), in: app), toShow: find("progress.today", in: app))
