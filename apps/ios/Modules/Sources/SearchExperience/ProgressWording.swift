@@ -74,12 +74,59 @@ enum ProgressWording {
   }
 
   static func dayLine(_ day: ProgressStats.Day, timeZone: TimeZone = .autoupdatingCurrent) -> String {
-    let date = ProgressWeek.date(of: day.day, in: ProgressWeek.gregorian(in: timeZone))
-    let named = date.map {
-      $0.formatted(Date.FormatStyle(timeZone: timeZone).weekday(.abbreviated).month(.abbreviated).day())
-    }
-    return [named ?? day.day, words(day.added), day.met ? goalMetInLine : "goal \(day.goal)"]
+    [weekdayDate(day.day, timeZone: timeZone), words(day.added), day.met ? goalMetInLine : "goal \(day.goal)"]
       .joined(separator: " · ")
+  }
+
+  private static func weekdayDate(_ name: String, timeZone: TimeZone) -> String {
+    let date = ProgressWeek.date(of: name, in: ProgressWeek.gregorian(in: timeZone))
+    return date.map {
+      $0.formatted(Date.FormatStyle(timeZone: timeZone).weekday(.abbreviated).month(.abbreviated).day())
+    } ?? name
+  }
+
+  static func markedKnown(_ count: Int) -> String {
+    "\(count.formatted()) marked Known"
+  }
+
+  static func versusWeekBefore(_ change: Int) -> String {
+    "\(change < 0 ? "\u{2212}" : "+")\(abs(change).formatted()) vs the week before"
+  }
+
+  static func knownDayLine(_ day: KnownByDate.Day, timeZone: TimeZone = .autoupdatingCurrent) -> String {
+    "\(weekdayDate(day.day, timeZone: timeZone)) · \(markedKnown(day.count))"
+  }
+
+  static func knownDaySection(
+    _ name: String, today: String, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    let calendar = ProgressWeek.gregorian(in: timeZone)
+    guard let date = ProgressWeek.date(of: name, in: calendar),
+      let now = ProgressWeek.date(of: today, in: calendar)
+    else { return name }
+    switch calendar.dateComponents([.day], from: date, to: now).day {
+    case 0: return "Today"
+    case 1: return "Yesterday"
+    default:
+      let format = Date.FormatStyle(timeZone: timeZone).weekday(.wide).month(.abbreviated).day()
+      let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
+      return date.formatted(sameYear ? format : format.year())
+    }
+  }
+
+  static func knownWeek(
+    _ days: [KnownByDate.Day], today: String, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    guard let first = days.first?.day, let last = days.last?.day else { return "" }
+    let now = ProgressWeek.date(of: today, in: ProgressWeek.gregorian(in: timeZone)) ?? .now
+    let end = last == today ? "Today" : shortDate(last, today: now, timeZone: timeZone)
+    return "\(shortDate(first, today: now, timeZone: timeZone)) – \(end)"
+  }
+
+  static func datesStart(_ first: String, timeZone: TimeZone = .autoupdatingCurrent) -> String {
+    let date = ProgressWeek.date(of: first, in: ProgressWeek.gregorian(in: timeZone))
+    let named = date?.formatted(Date.FormatStyle(timeZone: timeZone).month(.abbreviated).day().year())
+    return "Dates start \(named ?? first), when Zenbu began keeping them."
   }
 
   static func goalMetDays(_ goalMet: ProgressStats.GoalMet, words added: Int) -> String {

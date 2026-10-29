@@ -381,4 +381,30 @@ final class ProgressLogTests {
     #expect(stats.words.last == ProgressStats.Words(
       day: "2026-10-27", addedToLearning: [taberu.rawValue], markedKnown: ["kanji:語"]))
   }
+
+  @Test("the app reads the words marked Known in a week through the bundle")
+  func knownByDateThroughTheBundle() async throws {
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let at = Int(october(20, 9, 0).timeIntervalSince1970 * 1000)
+    let seeded = """
+      {"version":1,"days":{
+      "2026-10-20":{"changes":[{"id":"\(miru.rawValue)","before":"learning","after":"known","at":\(at)}],"goal":1,"known":1,"learning":0},
+      "2026-10-27":{"changes":[{"id":"\(taberu.rawValue)","before":"learning","after":"known","at":\(at)},{"id":"kanji:語","before":"unknown","after":"known","at":\(at)}],"goal":1,"known":3,"learning":0}}}
+      """
+    try Data(seeded.utf8).write(to: logURL)
+    clock.now = october(28, 9, 0)
+    let log = await log()
+
+    let week = try #require(await log.knownByDate(week: 0))
+    #expect(week.days.map(\.count) == [0, 0, 0, 0, 0, 2, 0])
+    #expect(week.days[5] == KnownByDate.Day(day: "2026-10-27", markedKnown: [taberu.rawValue, "kanji:語"], count: 2))
+    #expect(week.total == 2)
+    #expect(week.change == 1)
+    #expect(week.hasEarlier && !week.hasLater)
+    #expect(week.firstDay == "2026-10-20")
+    let earlier = try #require(await log.knownByDate(week: 1))
+    #expect(earlier.total == 1)
+    #expect(earlier.change == nil)
+    #expect(!earlier.hasEarlier && earlier.hasLater)
+  }
 }

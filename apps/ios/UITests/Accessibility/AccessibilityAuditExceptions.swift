@@ -217,6 +217,9 @@ private let textThatScales = [
       "TODAY", "0 of 20 new words", "20 more to reach today’s goal", "M", "T", "W", "F", "S", "Daily Goal",
       "20 new words",
     ]), on: ["Account"], because: Why.scales),
+  allow(
+    .dynamicType, .labels(["Today", "Yesterday", "1 word", "3 words"]), on: ["Known words by date"], touch,
+    [.standard], because: Why.scales),
   allow(.dynamicType, .label("Send Crash Reports"), on: ["Account, its about rows"], because: Why.scales),
   allow(
     .textClipped, .label("Send Crash Reports"), on: ["Account, its about rows"], touch, [.standard],

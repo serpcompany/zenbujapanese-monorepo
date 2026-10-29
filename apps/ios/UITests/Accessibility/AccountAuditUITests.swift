@@ -96,6 +96,10 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     audit("Progress, a month of new words", placing: chart, in: app)
     auditAtTheLargestSize("Progress, JLPT coverage", showing: find("progress.jlpt.n1", in: app), in: app)
     audit("Progress, its end", placing: find("progress.known-over-time.chart", in: app), in: app)
+    openAccountRow("progress.known-by-date", showing: find("known-by-date.total", in: app), in: app)
+    audit("Known words by date", in: app)
+    let oldestDay = find("known-by-date.day.\(Self.dayID(back: 6))", in: app)
+    audit("Known words by date, its end", placing: oldestDay, in: app, .allButTextSizes)
   }
 
   private func auditAlone(_ screen: String, _ section: String, showing identifier: String, _ pass: AuditPass) {
