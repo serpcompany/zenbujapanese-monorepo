@@ -81,8 +81,9 @@ Check: UI `JLPTProgressUITests` (in from Progress on N5 with its counts and pace
 its segment and by its bar, **Add 10** moving the counts and the pace and raising Account's Today
 count, an Up next word's page, and, seeded from `Fixtures/Progress/n4-known.json`, a level with
 nothing Not started); `AccountAuditUITests` (JLPT Progress, at the default and largest sizes and
-in dark); package `JLPTProgressTests` (the level it opens on, the pace sentence, the button's
-words and the words it adds, and Up next asked for only by this screen); core `progress/jlpt-coverage.test.ts`.
+in dark, its Add button at the largest size, and its end without the text-size sweeps); package
+`JLPTProgressTests` (the level it opens on, the pace sentence, the button's words and the words it
+adds, and Up next asked for only by this screen); core `progress/jlpt-coverage.test.ts`.
 
 ## Known by date
 
