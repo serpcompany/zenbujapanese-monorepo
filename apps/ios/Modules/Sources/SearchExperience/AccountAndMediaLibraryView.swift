@@ -39,6 +39,10 @@ struct AccountTabRoot: View {
           CreditsView()
         case .progress:
           ProgressScreen()
+        case .jlptProgress:
+          JLPTProgressScreen(lookupClient: lookupClient) {
+            openItem($0.id.rawValue, $0.headword, $0.reading)
+          }
         case .knownByDate:
           KnownByDateView(lookupClient: lookupClient) { openItem($0.entryID, $0.headword, $0.reading) }
         }
@@ -207,6 +211,7 @@ enum AccountRoute: Hashable {
   case frequencyDictionaries
   case credits
   case progress
+  case jlptProgress
   case knownByDate
 }
 

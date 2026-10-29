@@ -42,6 +42,7 @@ From the top:
   today's.
 - **JLPT coverage**: a bar for each level from N5 to N1, its Known and Learning words in two bands,
   with "45% known · 298 / 667", from the same JLPT coverage as the Daily Goal sheet's pace.
+  **Details** in its header opens [JLPT Progress](#jlpt-progress).
 - **Known over time**: the Known words on each day of the log, with "+16 in 7 days" and the first
   day's and today's counts; with fewer than two days, "Your Known words show here as the days go by."
   **Known words by date** closes the card.
@@ -53,6 +54,36 @@ after leaving, tapping a bar, a Month bar read as its day's line, and the screen
 the default and largest sizes and in dark); package `ProgressWordingTests` (Progress's words) and
 `ProgressLogTests.statsThroughTheBundle`; core `progress/stats.test.ts` (the last 7 and 30 days,
 the days before the log at the first day's goal, the days that met the goal, and the totals).
+
+## JLPT Progress
+
+**Details** on Progress's JLPT coverage card opens **JLPT Progress** on Account's stack, on the
+lowest level not all Known (N5 when every level is); the level isn't remembered. Every number is the
+shared core's JLPT coverage, at the daily goal; the screen counts nothing. From the top:
+
+- A segmented control, N5 to N1, chooses the level.
+- A ring of the level's Known, Learning, and Not started words, with "45% of N5 known" inside and
+  the three counts under it. VoiceOver reads it as one element: "45% of N5 known", "298 Known,
+  96 Learning, 273 Not started".
+- The pace: "At 20 new words a day, every N5 word would be in Learning by Nov 11 (14 days).", the
+  core's date and days at the daily goal, with "Turning them Known depends on review, so this
+  shows the start, not the finish." under it. Once no word of the level is Not started, it says
+  "Every N5 word is in Learning or Known." and **Up next** goes.
+- **Up next in N5**: the first 5 Not-started words, in the core's order, as Look Up's rows; a tap
+  opens the word's page. **Add 10 N5 words to Learning** (or "Add 3 N1 words" when fewer are
+  left) marks the core's next 10 Learning, each as its own change, the same as marking it on its
+  page: they count toward today's goal and go into today's daily list. The ring, the pace, and Up
+  next then move on. The button counts only the words the dictionary found; when it finds none,
+  "These words couldn’t be looked up." stands in its place.
+- Every level's bar, the same bars as Progress's card; a tap chooses that level.
+
+Check: UI `JLPTProgressUITests` (in from Progress on N5 with its counts and pace, a level chosen by
+its segment and by its bar, **Add 10** moving the counts and the pace and raising Account's Today
+count, an Up next word's page, and, seeded from `Fixtures/Progress/n4-known.json`, a level with
+nothing Not started); `AccountAuditUITests` (JLPT Progress, at the default and largest sizes and
+in dark, its Add button at the largest size, and its end without the text-size sweeps); package
+`JLPTProgressTests` (the level it opens on, the pace sentence, the button's words and the words it
+adds, and Up next asked for only by this screen); core `progress/jlpt-coverage.test.ts`.
 
 ## Known by date
 

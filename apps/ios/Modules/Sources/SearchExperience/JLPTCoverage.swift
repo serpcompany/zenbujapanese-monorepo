@@ -27,6 +27,14 @@ struct JLPTCoverage: Decodable, Equatable, Sendable {
   init(from decoder: Decoder) throws {
     levels = try decoder.singleValueContainer().decode([Level].self)
   }
+
+  var startingLevel: Int {
+    levels.sorted { $0.level > $1.level }.first { $0.percentKnown < 100 }?.level ?? 5
+  }
+
+  func level(_ number: Int) -> Level? {
+    levels.first { $0.level == number }
+  }
 }
 
 struct JLPTCoverageRequest: Encodable, Hashable, Sendable {
@@ -34,20 +42,23 @@ struct JLPTCoverageRequest: Encodable, Hashable, Sendable {
   let learning: [String]
   let goal: Int
   let today: String
+  let upNext: Int?
 
-  init(known: [String], learning: [String], goal: Int, today: String) {
+  init(known: [String], learning: [String], goal: Int, today: String, upNext: Int? = nil) {
     self.known = known
     self.learning = learning
     self.goal = goal
     self.today = today
+    self.upNext = upNext
   }
 
   @MainActor
-  init(knowledge: WordKnowledge, goal: Int, today: String) {
+  init(knowledge: WordKnowledge, goal: Int, today: String, upNext: Int? = nil) {
     let words = { (status: WordKnowledgeStatus) in
       knowledge.marked(status).filter { $0.kanji == nil }.map(\.entryID).sorted()
     }
-    self.init(known: words(.known), learning: words(.learning), goal: goal, today: today)
+    self.init(
+      known: words(.known), learning: words(.learning), goal: goal, today: today, upNext: upNext)
   }
 }
 
@@ -72,6 +83,7 @@ final class JLPTCoverageModel {
 
   var goal: Int
   private(set) var coverage: JLPTCoverage?
+  @ObservationIgnored private let upNext: Int?
   @ObservationIgnored private let knowledge: WordKnowledge
   @ObservationIgnored private let ask: Ask
   @ObservationIgnored private let today: @MainActor () -> String
@@ -80,11 +92,13 @@ final class JLPTCoverageModel {
   init(
     knowledge: WordKnowledge,
     goal: Int,
+    upNext: Int? = nil,
     ask: @escaping Ask = JLPTCoverageModel.live,
     today: @escaping @MainActor () -> String
   ) {
     self.knowledge = knowledge
     self.goal = goal
+    self.upNext = upNext
     self.ask = ask
     self.today = today
   }
@@ -94,7 +108,7 @@ final class JLPTCoverageModel {
       let (changed, change) = AsyncStream.makeStream(
         of: Void.self, bufferingPolicy: .bufferingNewest(1))
       let request = withObservationTracking {
-        JLPTCoverageRequest(knowledge: knowledge, goal: goal, today: today())
+        JLPTCoverageRequest(knowledge: knowledge, goal: goal, today: today(), upNext: upNext)
       } onChange: {
         change.yield()
         change.finish()
