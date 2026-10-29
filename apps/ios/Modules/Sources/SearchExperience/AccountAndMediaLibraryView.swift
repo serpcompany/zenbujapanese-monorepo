@@ -29,12 +29,22 @@ struct AccountTabRoot: View {
           }
         case .wordLists:
           WordListsView()
+        case .dailyLists:
+          DailyListsView()
         case .wordList(let listID):
           WordListView(openedListID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
         case .frequencyDictionaries:
           FrequencyDictionariesView(client: .live)
         case .credits:
           CreditsView()
+        case .progress:
+          ProgressScreen()
+        case .jlptProgress:
+          JLPTProgressScreen(lookupClient: lookupClient) {
+            openItem($0.id.rawValue, $0.headword, $0.reading)
+          }
+        case .knownByDate:
+          KnownByDateView(lookupClient: lookupClient) { openItem($0.entryID, $0.headword, $0.reading) }
         }
       }
       .modifier(TranslateDestinations(experience: translate, words: words))
@@ -143,15 +153,9 @@ private struct AccountExternalLink<Label: View>: View {
 }
 
 private struct AccountAboutHeader: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
   var body: some View {
-    let layout =
-      dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-      : AnyLayout(HStackLayout(spacing: 12))
     VStack(alignment: .leading, spacing: 12) {
-      layout {
+      StackedWhenLarge(spacing: 12, across: 12) {
         if let icon = AppIcon.image {
           icon
             .resizable()
@@ -190,6 +194,10 @@ private enum AppBundleInfo {
   }
 }
 
+extension EnvironmentValues {
+  @Entry var openAccountRoute: (AccountRoute) -> Void = { _ in }
+}
+
 enum AccountRoute: Hashable {
   case profile
   case zenbuAccount
@@ -198,9 +206,13 @@ enum AccountRoute: Hashable {
   case notesWithoutAWord
   case marked(WordKnowledgeStatus)
   case wordLists
+  case dailyLists
   case wordList(UUID)
   case frequencyDictionaries
   case credits
+  case progress
+  case jlptProgress
+  case knownByDate
 }
 
 struct ReadingAidSettingsView: View {

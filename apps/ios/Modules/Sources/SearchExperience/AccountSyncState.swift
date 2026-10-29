@@ -83,7 +83,7 @@ struct AccountCopy: Codable, Hashable, Sendable {
       value = .knownWord(
         KnownWordChange(
           storedID: word.itemId, headword: word.headword, reading: word.reading,
-          status: word.status))
+          status: word.status, changedAt: word.stateChangedAt))
     case .list(let list):
       guard let id = UUID(uuidString: list.id) else { return nil }
       value = .list(
@@ -355,10 +355,10 @@ extension SavedItemChange {
     switch self {
     case .known(let change, let previous):
       let key = SyncEntityKey(entity: SyncEntity.knownWord, entityID: change.storedID)
-      let text = change.status == .unknown ? [:] : Self.text(change.headword, change.reading)
-      return Self.queued(
-        key, "set", state, fields: text.merging(["state": .string(change.status.stored)]) { $1 },
-        undo: .setKnown(change.with(previous)))
+      var fields = change.status == .unknown ? [:] : Self.text(change.headword, change.reading)
+      fields["state"] = .string(change.status.stored)
+      if let time = change.changedAt { fields["stateChangedAt"] = Self.moment(time) }
+      return Self.queued(key, "set", state, fields: fields, undo: .setKnown(change.with(previous)))
     case .listCreated(let list):
       return Self.queued(
         Self.key(list.id), "create", state,

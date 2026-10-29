@@ -731,7 +731,7 @@
       if (change.before === unknown && change.after === learning) added.set(change.id, true);
       else if (change.after === unknown && added.has(change.id)) added.set(change.id, false);
     }
-    return [...added].filter(([, counts2]) => counts2).map(([id]) => id);
+    return [...added].filter(([, counts3]) => counts3).map(([id]) => id);
   }
   function markedKnown(changes) {
     return [...new Set(changes.filter((change) => change.after === known).map((change) => change.id))];
@@ -763,6 +763,23 @@
     const first = Math.min(today, ...logged);
     return Array.from({ length: today - first + 1 }, (_, index) => dayName(first + index));
   }
+  function lastDays(days, length2) {
+    const first = dayNumber(days[0]?.day ?? "");
+    const goal = days[0]?.goal ?? 0;
+    const before = Array.from({ length: Math.max(0, length2 - days.length) }, (_, index) => ({
+      day: dayName(first - length2 + days.length + index),
+      added: 0,
+      markedKnown: 0,
+      goal,
+      met: false
+    }));
+    return [...before, ...days.slice(-length2)];
+  }
+  function goalMet(days, length2) {
+    const today = days.at(-1);
+    const counted2 = days.slice(-length2).filter((day) => day !== today || day.met);
+    return { met: counted2.filter((day) => day.met).length, days: counted2.length };
+  }
   function progressStats(request) {
     const range = loggedDays(request);
     const firstGoal = range.map((day) => request.days[day]?.goal).find((goal2) => goal2 !== void 0);
@@ -789,7 +806,8 @@
       if (changes.length > 0) words.push({ day, addedToLearning: added, markedKnown: knownNow });
     }
     const today = days.at(-1);
-    const last7 = days.slice(-shortWindow);
+    const last7 = lastDays(days, shortWindow);
+    const last30 = lastDays(days, longWindow);
     const averaged = days.slice(0, -1).slice(-averagedDays);
     return {
       today,
@@ -797,11 +815,13 @@
       streak: currentStreak(days),
       bestStreak: bestStreak(days),
       last7,
-      last30: days.slice(-longWindow),
+      last30,
+      goalMet: { last7: goalMet(days, shortWindow), last30: goalMet(days, longWindow) },
       totals: {
         ...totals,
         markedKnownLast7: sum(last7, (day) => day.markedKnown),
-        addedLast7: sum(last7, (day) => day.added)
+        addedLast7: sum(last7, (day) => day.added),
+        addedLast30: sum(last30, (day) => day.added)
       },
       knownOverTime,
       dailyAverage: {
@@ -809,6 +829,98 @@
         days: averaged.length
       },
       words
+    };
+  }
+
+  // src/progress/days.ts
+  var sameMoment = 1;
+  var counts = (status, counted2) => status === counted2 ? 1 : 0;
+  var moved = (totals, change, sign = 1) => ({
+    known: totals.known + sign * (counts(change.after, "known") - counts(change.before, "known")),
+    learning: totals.learning + sign * (counts(change.after, "learning") - counts(change.before, "learning"))
+  });
+  var recordedKey = (change) => `${change.id} ${change.after}`;
+  function recordedTimes(days) {
+    const times = /* @__PURE__ */ new Map();
+    for (const change of days.flatMap((day) => day.changes)) {
+      const key = recordedKey(change);
+      times.set(key, [...times.get(key) ?? [], change.at]);
+    }
+    return times;
+  }
+  function newChanges(request, logged) {
+    const recorded = recordedTimes(logged.map((day) => request.days[day]));
+    return request.changes.filter(
+      (change) => isDay(change.day) && change.day < request.today && Number.isFinite(change.at) && !(recorded.get(recordedKey(change)) ?? []).some((at) => Math.abs(at - change.at) < sameMoment)
+    );
+  }
+  var undated = ({ day: _day, ...change }) => change;
+  function dayChanges(own, added) {
+    const changes = own?.changes ?? [];
+    if (added.length === 0) return changes;
+    return [...changes, ...added.map(undated)].sort((first, second) => first.at - second.at);
+  }
+  function progressDays(request) {
+    const logged = Object.keys(request.days).filter(isDay).sort();
+    const changes = newChanges(request, logged);
+    const recorded = logged.flatMap((day) => request.days[day]?.changes ?? []);
+    const base = [...recorded, ...changes].reduce(
+      (totals, change) => moved(totals, change, -1),
+      request.totals
+    );
+    const days = [...new Set(changes.map((change) => change.day))].sort();
+    const first = days[0] ?? request.today;
+    const affected = [
+      .../* @__PURE__ */ new Set([...days, ...logged.filter((day) => day >= first && day < request.today)])
+    ].sort();
+    const filled = {};
+    let movedSoFar = { known: 0, learning: 0 };
+    for (const day of affected) {
+      const added = changes.filter((change) => change.day === day);
+      movedSoFar = added.reduce((totals, change) => moved(totals, change), movedSoFar);
+      const own = request.days[day];
+      const earlierDay = logged.filter((earlier) => earlier < day).at(-1);
+      const anchor = own ?? (earlierDay === void 0 ? void 0 : request.days[earlierDay]);
+      const start = anchor ? { known: anchor.known, learning: anchor.learning } : base;
+      const known2 = Math.max(0, start.known + movedSoFar.known);
+      const learning2 = Math.max(0, start.learning + movedSoFar.learning);
+      if (own && added.length === 0 && own.known === known2 && own.learning === learning2) continue;
+      filled[day] = {
+        changes: dayChanges(own, added),
+        goal: anchor?.goal ?? request.goal,
+        known: known2,
+        learning: learning2
+      };
+    }
+    return filled;
+  }
+
+  // src/progress/known-by-date.ts
+  var weekLength = 7;
+  function knownByDate(request) {
+    const stats = progressStats({ days: request.days, goal: 0, today: request.today });
+    const marked = new Map(stats.words.map((words) => [words.day, words.markedKnown]));
+    const firstDay = stats.days[0]?.day ?? request.today;
+    const today = dayNumber(request.today);
+    const earliest = Math.floor((today - dayNumber(firstDay)) / weekLength);
+    const week = Math.min(Math.max(0, Math.trunc(request.week) || 0), earliest);
+    const daysOf = (shown2) => Array.from({ length: weekLength }, (_, index) => {
+      const day = dayName(today - shown2 * weekLength - (weekLength - 1) + index);
+      const ids = marked.get(day) ?? [];
+      return { day, markedKnown: ids, count: ids.length };
+    });
+    const totalOf = (days2) => days2.reduce((sum2, day) => sum2 + day.count, 0);
+    const days = daysOf(week);
+    const total = totalOf(days);
+    const hasEarlier = week < earliest;
+    return {
+      week,
+      days,
+      total,
+      change: hasEarlier ? total - totalOf(daysOf(week + 1)) : null,
+      hasEarlier,
+      hasLater: week > 0,
+      firstDay
     };
   }
 
@@ -1712,9 +1824,9 @@
   var pronounceLabel = (reading) => `Pronounce ${reading}`;
 
   // src/detail/strokes.ts
-  var counts = (last) => Array.from({ length: last + 1 }, (_, index) => index);
+  var counts2 = (last) => Array.from({ length: last + 1 }, (_, index) => index);
   function strokeOrderLabels(character, strokeCount) {
-    const completed = counts(strokeCount);
+    const completed = counts2(strokeCount);
     return {
       title: "Stroke Order",
       show: `Show stroke order for ${character}`,
@@ -6835,6 +6947,8 @@ ${sense.noteText}` : sense.meaning
       },
       sourceCredits: creditsShownBy,
       progressStats: (request) => progressStats(JSON.parse(request)),
+      progressDays: (request) => progressDays(JSON.parse(request)),
+      knownByDate: (request) => knownByDate(JSON.parse(request)),
       youTubeVideo,
       youTubeCaptions,
       youTubeTranslatedCaptions: (request) => {

@@ -16,8 +16,10 @@ final class AccountAuditUITests: AccessibilityAuditCase {
 
   private func auditAccount(_ pass: AuditPass) throws {
     auditTheAccountAndItsSettings(pass)
+    auditProgress(pass)
     auditReportingAProblem(pass)
     auditTheLearnersWords(pass)
+    auditTheDailyLists(pass)
     auditSigningIn(pass)
     guard device != .mac else { return auditTheSettingsWindow(pass) }
     auditTheZenbuAccount(pass)
@@ -82,6 +84,30 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     auditAlone("Account, its about rows", "about", showing: "account.about", pass)
   }
 
+  private func auditProgress(_ pass: AuditPass) {
+    let app = launch(pass, progressSeed)
+    open(.account, in: app)
+    openAccountRow("account.progress", showing: find("progress.today", in: app), in: app)
+    audit("Progress", in: app)
+    auditAtTheLargestSize("Progress, its tiles", showing: find("progress.daily-average", in: app), in: app)
+    let chart = find("progress.new-words.chart", in: app)
+    audit("Progress, a week of new words", placing: chart, in: app)
+    tap(reveal(app.segmentedControls["progress.span"].buttons["Month"], in: app))
+    audit("Progress, a month of new words", placing: chart, in: app)
+    auditAtTheLargestSize("Progress, JLPT coverage", showing: find("progress.jlpt.n1", in: app), in: app)
+    audit("Progress, its end", placing: find("progress.known-over-time.chart", in: app), in: app)
+    let details = reveal(find("progress.jlpt.details", in: app), in: app)
+    tapClearOfTheBars(details, toShow: find("jlpt-progress.ring", in: app), in: app)
+    audit("JLPT Progress", in: app)
+    auditAtTheLargestSize("JLPT Progress, its Add button", showing: find("jlpt-progress.add", in: app), in: app)
+    audit("JLPT Progress, its end", placing: find("jlpt-progress.bar.n1", in: app), in: app, .allButTextSizes)
+    goBack(in: app)
+    openAccountRow("progress.known-by-date", showing: find("known-by-date.total", in: app), in: app)
+    audit("Known words by date", in: app)
+    let oldestDay = find("known-by-date.day.\(Self.dayID(back: 6))", in: app)
+    audit("Known words by date, its end", placing: oldestDay, in: app, .allButTextSizes)
+  }
+
   private func auditAlone(_ screen: String, _ section: String, showing identifier: String, _ pass: AuditPass) {
     guard runsTextSizeAudits(on: screen) else { return }
     let app = launch(pass, ["ZENBU_ONLY_SECTION": "account.\(section)"])
@@ -126,6 +152,21 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     waitFor(labeled("A username is 3 to 30 letters a to z, digits, or underscores.", in: app))
     waitUntilGone(app.keyboards.firstMatch)
     audit("Profile", in: app)
+  }
+
+  private func auditTheDailyLists(_ pass: AuditPass) {
+    let app = launch(pass, DailyListsUITests.seededDays)
+    open(.account, in: app)
+    let row = find("word-lists.daily-lists", in: app)
+    openAccountRow("account.lists", showing: row, in: app)
+    audit("Lists, with daily lists", in: app)
+    let yesterday = firstElement(identifiedBy: "daily-lists.list.", in: app)
+    tap(row)
+    waitFor(yesterday)
+    audit("Daily Lists", in: app)
+    tap(yesterday)
+    waitFor(firstElement(identifiedBy: "word-list.item.", in: app))
+    audit("A daily list", in: app)
   }
 
   private func auditSigningIn(_ pass: AuditPass) {

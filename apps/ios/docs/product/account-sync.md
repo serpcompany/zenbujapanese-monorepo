@@ -53,7 +53,7 @@ the app sends the account everything on the phone: every word Known or Learning,
 list's words, Recent's videos, bookmarked sentences, notes, photos with their words (each photo's
 file first), the profile photo, each setting changed from its standard, and the frequency
 dictionaries chosen if they aren't the standard ones, then brings down everything the account
-already has.
+already has, each word with the time it last changed ([Progress log](saved-data.md#progress-log)).
 Recent searches go up once the account's first answer brings the key their IDs are made with, and
 a search removed before then is removed from the account too. The first sync gathers all of it,
 so the sign-in sheet closes at once, and a phone that's closed or signed out before that sync
@@ -82,18 +82,18 @@ as a new list.
 Check: package `AccountSignedOutTests`.
 
 **When it syncs.** After each change to a known word, a list, Recent, a bookmark, a note, a photo or
-its words, a setting, or the profile (a search goes with the next sync, rather than starting
-one), when the app opens or returns to
-the foreground with changes waiting or a last sync over 15 minutes ago, when iOS gives it time in
-the background, and when the learner taps **Sync Now** on Zenbu Account. Never on a timer. Offline,
-changes wait on the phone, in order, across relaunches, and go when it's back; a failed sync tries
-again a few times, waiting longer each time, only while the app is open. A sync the account
-answers as not subscribed (`402`), for the sync or for a photo's file going up or coming down,
-keeps every change and photo on the phone, says syncing needs a subscription, and isn't tried
-again until the next change, launch, or **Sync Now**.
+its words, a setting, or the profile (a search goes with the next sync, rather than starting one),
+when the app opens or returns to the foreground with changes waiting or a last sync over 15 minutes
+ago, when iOS gives it time in the background, and when the learner taps **Sync Now** on Zenbu
+Account. Never on a timer. Offline, changes wait on the phone, in order, across relaunches, and go
+when it's back; a failed sync tries again a few times, waiting longer each time, only while the app
+is open. A sync the account answers as not subscribed (`402`), for the sync or for a photo's file
+going up or coming down, keeps every change and photo on the phone, says syncing needs a
+subscription, and isn't tried again until the next change, launch, or **Sync Now**. A word's change
+goes with the time it was made, in the share sheet too.
 
 Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, `AccountSyncKeptTests` (a `402`),
-and `AccountSyncPhotoTests` (a `402` download); UI
+`AccountSyncPhotoTests` (a `402` download), and `AccountSyncProgressTests` (a change's time); UI
 `SubscriptionUITests.testAPhotoSavedWithoutASubscriptionStaysOnTheDeviceWhileSyncingWaitsForOne`
 (iPhone and iPad).
 
@@ -107,8 +107,10 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   exception is Favorites on a phone signing in to an account whose Favorites was deleted before
   (above).
 - A word added to a list elsewhere stays, even if this phone removed it without seeing that add.
-- A change the account can never take, such as a word added to a list deleted elsewhere, is undone
-  on the phone.
+- A change the account can never take, such as a word added to a list deleted elsewhere, is undone.
+- [Daily lists](daily-lists.md) sync as lists, outside the 500-list cap up to tomorrow's date. On
+  `already_exists`, a day's list made on two devices is one, with both devices' words. A daily list
+  the account removed or refused is never made again here. Check: `AccountSyncDailyListsTests`.
 - A video watched on two devices keeps the place from the device that watched it last, by each
   device's clock, even when the other syncs later. A
   video removed from Recent on one device is removed everywhere, even if another device, which
@@ -200,13 +202,14 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncB
 the email, Sync Now, and the last sync).
 
 **Signing out** asks first, then forgets the sign-in on this phone and keeps everything: the
-profile, known words, lists, Recent, Translations, notes, and media stay, and every feature works. Changes made while signed out, such
-as an un-marked word, a deleted list, a removed word, or a rename, are kept in order (each word,
-list word, and list as just its latest change), and go to the account when the learner signs in to
-the same account again, by the account's rules: a change made elsewhere first wins, and the
-profile follows its sign-in rule (above). Signing in to a different account instead sends that
-account everything on the phone, as a first sync does, except the profile. If the account ends the session itself, such as after the account is deleted
-from another app, the app signs out the same way, and the Account row says so.
+profile, known words, lists, Recent, Translations, notes, and media stay, and every feature works.
+Changes made while signed out, such as an un-marked word, a deleted list, a removed word, or a
+rename, are kept in order (each word, list word, and list as just its latest change), and go to the
+account when the learner signs in to the same account again, by the account's rules: a change made
+elsewhere first wins, and the profile follows its sign-in rule (above). Signing in to a different
+account instead sends that account everything on the phone, as a first sync does, except the
+profile. If the account ends the session itself, such as after the account is deleted from another
+app, the app signs out the same way, and the Account row says so.
 
 Check: package `AccountSignedOutTests` and `AccountSignInTests` (a session the service ended); UI
 `AccountSignedInUITests.testSigningOutAsksFirstAndKeepsTheLearnersWords` (iPhone and iPad).
@@ -286,8 +289,8 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
   **Manage in the App Store**, since Apple keeps billing until the learner cancels it. One bought on
   the website is canceled with the account.
 - Afterwards the app is signed out and keeps everything on the phone: Known Words, Learning, lists,
-  Recent, Translations and their bookmarks, notes, and media stay, and every feature works. Signing in again makes a new account, which gets
-  everything on the phone, as a first sync does.
+  Recent, Translations and their bookmarks, notes, and media stay, and every feature works. Signing
+  in again makes a new account, which gets everything on the phone, as a first sync does.
 
 Check: package `AccountSyncTests` and `AccountSyncRecoveryTests` (signing in again, a refused or
 lost deletion, and the phone keeping its data) and `AccountSignedOutTests` (starting over); UI

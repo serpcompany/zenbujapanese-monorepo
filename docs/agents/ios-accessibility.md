@@ -81,7 +81,8 @@ Debug-only harness (`LaunchHarness.onlySections`), opens the page with only the 
 (Word Detail's examples under its meanings are one, `meaning-example`, named with `meaning`, the
 section that holds them, and audited on 日本's page), at the page's top, and the walk audits them
 there (`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
-(`AuditPart.allButTextSizes`). On the iPhone the walk also opens a caption's word sheet at full
+(`AuditPart.allButTextSizes`). Known Words by Date's end keeps only those too: its day sections are
+the rows and headers its top shows, which get the two audits there. On the iPhone the walk also opens a caption's word sheet at full
 height, so the Player page isn't showing behind it.
 
 Account's rows show why (#912). Scrolled to Translations at the largest size, the sweep reported

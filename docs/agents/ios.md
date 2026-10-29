@@ -210,8 +210,9 @@ don't contain them), so they need no network, account, camera, or microphone:
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
   (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
-- `ZENBU_PROGRESS_STREAK=<days>` seeds that many met days before today, for Account's streak, and
-  `ZENBU_DAILY_GOAL=<n>` sets the daily goal (`AccountUITests`).
+- `ZENBU_PROGRESS_STREAK=<days>` seeds that many met days, `ZENBU_DAILY_GOAL=<n>` sets the goal
+  (`AccountUITests`), and `ZENBU_PROGRESS_SEED=<path>` a log and Known Words (`ProgressUITests`,
+  `JLPTProgressUITests`, which also reads `Fixtures/Progress/n4-known.json`).
 - `ZENBU_HOLD_LINKING=1` holds back the answers linking a page of examples', a caption's, or a
   line's words until the test posts `HeldAnswers.letGoNotice`, to see rows arrive linked;
   `ZENBU_FAIL_LINKING=<count>` fails that many, to see a screen read again (`ExampleRowsUITests`);
@@ -488,8 +489,7 @@ file pins the SHA-256 of every bundled artifact it was recorded against. After a
 either screen or its data, record them again with the same `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`
 prefix and `-only-testing:SearchExperienceTests/WordDetailConformanceTests` or
 `-only-testing:SearchExperienceTests/KanjiDetailConformanceTests`, and review the diff. Recording
-keeps each case's `id` or `character` and its `covers` note, so add a case by adding those two
-fields and recording.
+keeps each case's `id` or `character` and its `covers` note: to add a case, add both and record.
 
 `KanjiElementConformanceTests` checks the kanji element page against `kanji-element.json`: for
 each glyph, its meanings, what it contributes, its linked on-readings, its alternatives, the

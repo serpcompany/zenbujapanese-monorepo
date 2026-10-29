@@ -66,6 +66,7 @@ final class WordKnowledge: LocalFileStore {
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
   @ObservationIgnored var progressObserver: ((WordKnowledgeEvent) -> Void)?
   @ObservationIgnored var now: () -> Date = Date.init
+  @ObservationIgnored private var heldProgress: SyncedProgress?
   var canChange: Bool { isLoaded && !isReadOnly }
 
   init(fileURL: URL = WordKnowledge.defaultFileURL, sharedCopy: URL? = nil) {
@@ -147,23 +148,52 @@ final class WordKnowledge: LocalFileStore {
     at time: Date? = nil
   ) {
     let previous = records[storedID]?.status ?? .unknown
-    guard store(status, storedID: storedID, headword: headword, reading: reading) else { return }
+    let time = time ?? now()
+    guard store(status, storedID: storedID, headword: headword, reading: reading, at: time)
+    else { return }
     let change = KnownWordChange(
-      storedID: storedID, headword: headword, reading: reading, status: status,
-      changedAt: time ?? now())
+      storedID: storedID, headword: headword, reading: reading, status: status, changedAt: time)
     progressObserver?(.changed(change, previous: previous, totals: totals))
     changeObserver?(.known(change, previous: previous))
   }
 
   func applySynced(_ word: KnownWordChange) {
-    guard store(word.status, storedID: word.storedID, headword: word.headword, reading: word.reading)
+    let previous = status(storedID: word.storedID)
+    guard
+      store(
+        word.status, storedID: word.storedID, headword: word.headword, reading: word.reading,
+        at: word.changedAt ?? now())
     else { return }
-    progressObserver?(.synced(totals: totals))
+    var progress = heldProgress ?? SyncedProgress()
+    progress.stored = true
+    if let time = word.changedAt {
+      progress.changes.append(
+        ProgressLogChange(
+          id: word.storedID, before: previous.stored, after: word.status.stored, at: time))
+    }
+    guard heldProgress != nil else { return report(progress) }
+    heldProgress = progress
+  }
+
+  func holdSyncedProgress() {
+    heldProgress = heldProgress ?? SyncedProgress()
+  }
+
+  func reportSyncedProgress() {
+    guard let progress = heldProgress else { return }
+    heldProgress = nil
+    report(progress)
+  }
+
+  private func report(_ progress: SyncedProgress) {
+    guard progress.stored else { return }
+    progressObserver?(.synced(progress.changes, totals: totals))
   }
 
   @discardableResult
   private func store(
-    _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String
+    _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String,
+    at time: Date
   ) -> Bool {
     guard canChange, (records[storedID]?.status ?? .unknown) != status else { return false }
     let record = WordKnowledgeRecord(
@@ -171,12 +201,14 @@ final class WordKnowledge: LocalFileStore {
       headword: headword,
       reading: reading,
       status: status,
-      updatedAt: now()
+      updatedAt: time
     )
     records[storedID] = record
     for shown in listed.keys { listed[shown]?.removeAll { $0.entryID == storedID } }
     if WordKnowledgeStatus.listed.contains(status) {
-      listed[status, default: []].insert(record, at: 0)
+      let ordered = listed[status, default: []]
+      let index = ordered.firstIndex { $0.updatedAt <= time } ?? ordered.endIndex
+      listed[status, default: []].insert(record, at: index)
     }
     persist()
     return true
@@ -194,6 +226,11 @@ final class WordKnowledge: LocalFileStore {
   )[0]
   .appending(path: "Zenbu Japanese", directoryHint: .isDirectory)
   .appending(path: "word-knowledge.json")
+}
+
+private struct SyncedProgress {
+  var changes: [ProgressLogChange] = []
+  var stored = false
 }
 
 private actor WordKnowledgeWriter {

@@ -5,6 +5,7 @@ final class AccountRules: @unchecked Sendable {
 
   private let lock = NSLock()
   private var core: Result<DictionaryCore, Error>?
+  private var dailyListDays: [UUID: String?] = [:]
 
   func name(_ typed: String) -> String? { text("accountName", typed) }
 
@@ -15,6 +16,20 @@ final class AccountRules: @unchecked Sendable {
   func signInCode(_ typed: String) -> String? { text("signInCode", typed) }
 
   func listName(_ typed: String) -> String? { text("listName", typed) }
+
+  func dailyListID(_ day: String) -> UUID? {
+    text("dailyListId", day).flatMap(UUID.init(uuidString:))
+  }
+
+  func dailyListDay(_ listID: UUID) -> String? {
+    lock.withLock {
+      if let known = dailyListDays[listID] { return known }
+      guard let core = try? prepared() else { return nil }
+      let day = try? core.text("dailyListDay", listID.uuidString.lowercased())
+      dailyListDays[listID] = .some(day)
+      return day
+    }
+  }
 
   func keptNoteText(_ typed: String) -> String { text("keptNoteText", typed) ?? typed }
 
