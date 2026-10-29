@@ -137,7 +137,10 @@ export function WordPopup({
       )
     },
     openFullEntry: shown => openFullEntry(entryPage(shown, ids, cards)),
-    onUnsupported: setNotice
+    onUnsupported(message, clearWhen) {
+      setNotice(message)
+      clearWhen(() => setNotice(shown => (shown === message ? null : shown)))
+    }
   }
   const name = card ? card.headword : text
   return (

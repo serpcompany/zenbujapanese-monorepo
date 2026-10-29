@@ -39,10 +39,12 @@ Japanese or English…"; `src/translate/selection.test.ts` for where the selecti
 A card with the direction, such as **Japanese → English** or **English → Japanese**, the text as
 it was, its translation, "Translated on this device", and **Copy** and **Speak**. **Copy** copies
 the translation and then reads **Copied**. **Speak** reads the translation aloud in its language
-with a voice on this computer, never one of Chrome's online voices, which would send the text to a
-server. With no such voice for the language, **Speak** is off and the card says "There's no
-English voice on this computer to speak it." (or Japanese). A new translation replaces the last
-one, and an answer that comes after **Clear** is dropped.
+with the best voice on this computer, chosen as Pronounce chooses one
+([`word-popup.md`](word-popup.md), Its actions), US English before other English as in the app,
+and never one of Chrome's online voices, which would send the text to a server. With no such voice
+for the language, **Speak** is off and the card says "There's no English voice on this computer to
+speak it." (or Japanese). A new translation replaces the last one, and an answer that comes after
+**Clear** is dropped.
 
 Check: the tab's test, "…from Japanese to English", "translates English typed in the box to
 Japanese", "copies the translation…", "speaks the translation…", "turns Speak off…", "replaces

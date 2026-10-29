@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestSurface, testErrorMessage } from '../../test-pages/test-surface'
+import { cantPronounce, speakerWithOnlyANetworkVoice } from '../test/network-voice-only'
 import { hostElementName, mountInShadowRoot, type ShadowMount } from './shadow-mount'
 
 declare global {
@@ -147,5 +148,18 @@ describe('mountInShadowRoot', () => {
     act(() => shown.unmount())
     mounted = undefined
     expect(document.querySelector(hostElementName)).toBeNull()
+  })
+})
+
+describe('speaking in a page’s shadow root', () => {
+  it('says it can’t pronounce Japanese, and speaks nothing, when the computer has only a network voice', () => {
+    const { speaker, spoken, said } = speakerWithOnlyANetworkVoice()
+    act(() => {
+      mounted = mountInShadowRoot(speaker, { darkQuery: darkQuery(false), fonts: fontSet })
+    })
+    const button = mounted?.shadowRoot.querySelector<HTMLButtonElement>('button')
+    act(() => button?.click())
+    expect(said).toHaveBeenCalledExactlyOnceWith(cantPronounce, expect.any(Function))
+    expect(spoken).not.toHaveBeenCalled()
   })
 })

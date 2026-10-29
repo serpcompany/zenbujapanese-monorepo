@@ -1,14 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { localVoiceAmong, onDeviceSpeech } from './speech'
+import { onDeviceSpeech } from './speech'
 
 const googleJapanese = { name: 'Google 日本語', lang: 'ja-JP', localService: false }
 const kyoko = { name: 'Kyoko', lang: 'ja-JP', localService: true }
+const kyokoEnhanced = { name: 'Kyoko (Enhanced)', lang: 'ja-JP', localService: true }
 const googleEnglish = { name: 'Google US English', lang: 'en-US', localService: false }
 const samantha = { name: 'Samantha', lang: 'en_US', localService: true }
+const matildaEnhanced = { name: 'Matilda (Enhanced)', lang: 'en-AU', localService: true }
 
 function standInSpeech(voices: (typeof kyoko)[]) {
   const speech = {
-    getVoices: () => voices,
+    getVoices: () => voices.map(voice => ({ ...voice, voiceURI: voice.name })),
     speak: vi.fn(),
     cancel: vi.fn(),
     addEventListener: vi.fn(),
@@ -32,20 +34,30 @@ afterEach(() => {
 
 describe('the voice Speak uses', () => {
   it('is one on this computer, never a remote one, though the remote one comes first', () => {
-    expect(localVoiceAmong([googleJapanese, kyoko, googleEnglish, samantha], 'ja')).toBe(kyoko)
-    expect(localVoiceAmong([googleJapanese, kyoko, googleEnglish, samantha], 'en')).toBe(samantha)
+    standInSpeech([googleJapanese, kyoko, googleEnglish, samantha])
+    expect(onDeviceSpeech.localVoice('ja')).toBe('Kyoko')
+    expect(onDeviceSpeech.localVoice('en')).toBe('Samantha')
   })
 
-  it('is none when only a remote voice speaks the language', () => {
-    expect(localVoiceAmong([googleJapanese, samantha], 'ja')).toBeNull()
+  it('is the best one on this computer, as a word’s Pronounce chooses it', () => {
+    standInSpeech([googleJapanese, kyoko, kyokoEnhanced])
+    expect(onDeviceSpeech.localVoice('ja')).toBe('Kyoko (Enhanced)')
+  })
+
+  it('is one of the app’s region, US English, before a better one of another', () => {
+    standInSpeech([matildaEnhanced, samantha])
+    expect(onDeviceSpeech.localVoice('en')).toBe('Samantha')
   })
 
   it('speaks with the local voice', () => {
     const speech = standInSpeech([googleJapanese, kyoko])
-    expect(onDeviceSpeech.localVoice('ja')).toBe('Kyoko')
     onDeviceSpeech.speak('トイレはどこですか', 'ja')
     expect(speech.speak).toHaveBeenCalledWith(
-      expect.objectContaining({ text: 'トイレはどこですか', voice: kyoko, lang: 'ja-JP' })
+      expect.objectContaining({
+        text: 'トイレはどこですか',
+        voice: expect.objectContaining({ name: 'Kyoko' }),
+        lang: 'ja-JP'
+      })
     )
   })
 

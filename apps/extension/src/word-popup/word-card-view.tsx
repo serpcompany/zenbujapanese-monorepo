@@ -5,7 +5,7 @@ import { Button } from '@zenbu/ui/components/button'
 import { FrequencyBadges } from '@zenbu/ui/dictionary/frequency'
 import { HeadwordRuby } from '@zenbu/ui/dictionary/headword-ruby'
 import { PitchAccent } from '@zenbu/ui/dictionary/pitch-accent'
-import { PronounceButton } from '@zenbu/ui/dictionary/pronounce-button'
+import { type OnUnsupported, PronounceButton } from '@zenbu/ui/dictionary/pronounce-button'
 import { RomajiLine } from '@zenbu/ui/dictionary/reading-aid-lines'
 import { SavedItemActions } from '@zenbu/ui/dictionary/saved-item-actions'
 import { LinkIcon, Maximize2Icon } from 'lucide-react'
@@ -16,7 +16,7 @@ export type CardActions = {
   share(card: WordCard): void
   copyLink(card: WordCard): void
   openFullEntry(card: WordCard): void
-  onUnsupported(message: string): void
+  onUnsupported: OnUnsupported
 }
 
 function OpenFullEntry({ onSelect }: { onSelect(): void }) {
@@ -28,13 +28,7 @@ function OpenFullEntry({ onSelect }: { onSelect(): void }) {
   )
 }
 
-function Pronunciation({
-  card,
-  onUnsupported
-}: {
-  card: WordCard
-  onUnsupported(message: string): void
-}) {
+function Pronunciation({ card, onUnsupported }: { card: WordCard; onUnsupported: OnUnsupported }) {
   const pitch = cardPitch(card)
   const label = pronounceLabel(card.reading)
   const text = wordPopupLabels.pronounce
