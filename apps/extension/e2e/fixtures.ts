@@ -76,7 +76,7 @@ export const test = base.extend<
     async ({ playwright, languageDataHeld, youTubeStandIn, accountService }, use) => {
       const server = await startLocalServer(0, languageDataHeld)
       const youTube = youTubeStandIn ? await startYouTubeStandIn() : null
-      const account = accountService ? await startAccountService() : null
+      const account = accountService ? await startAccountService(server.url) : null
       const profile = mkdtempSync(join(tmpdir(), 'zenbu-extension-'))
       const context = await playwright.chromium.launchPersistentContext(profile, {
         channel: 'chromium',

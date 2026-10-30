@@ -190,8 +190,8 @@ answers `apple-again`, Continue with Apple again.
   release build draws no Continue with Google and asks Google nothing; the test build's is a
   stand-in the browser tests' service takes.
 - **Its tests:** the modules' own, on a stand-in service and stand-in windows
-  (`src/test/account-stand-in.ts`); the component's, in happy-dom; and `e2e/account.spec.ts`,
-  against the account service from the checkout
+  (`src/test/account-stand-in.ts`); the component's, in happy-dom; and `e2e/account.spec.ts` and
+  `e2e/website-sign-in.spec.ts`, against the account service from the checkout
   ([`extension-browser-tests.md`](extension-browser-tests.md), The account service).
 
 ## Setting it up
