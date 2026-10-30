@@ -3,7 +3,7 @@ import {
   defaultEnvironment,
   type Environment,
   hosts,
-  hostsOf,
+  ownHostPatterns,
   type Variant,
   websitesOf
 } from './hosts.ts'
@@ -91,9 +91,7 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
       'identity'
     ],
     host_permissions: [
-      `${hostsOf(variant, environment).languageData}/*`,
-      `${hostsOf(variant, environment).api}/*`,
-      'https://www.youtube.com/*',
+      ...ownHostPatterns(variant, environment),
       ...(variant === 'test' ? [`${testAllowedSite}/*`] : [])
     ],
     optional_host_permissions: optionalSites,
