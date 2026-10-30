@@ -38,6 +38,8 @@ YouTube nothing: the lines come once per video ([`youtube-captions.md`](youtube-
 | A failure | Its reason, as the watch page gives it, such as "YouTube didn't send this video's captions.", and Try again. | Video tab: "shows a failed line with Try again…" |
 | The service worker didn't answer | "Zenbu didn't answer. Try again.", and Try again. | Video tab: "says Zenbu didn't answer…" |
 | Zenbu Captions off | The lines, as with them on, also for the next video it is shown on. | Video tab: "with Zenbu Captions off, still asks…", "with Zenbu Captions off, gets the next video's lines while shown…" |
+| No video, Recent signed out | Under "No video on this tab", Recent: "No recent videos", that a Zenbu account keeps the videos watched on all devices, and "Sign up or sign in", which opens the Account tab. | `recent.interaction.test.tsx`: "offers Sign up or sign in signed out, and explains Recent signed in…" |
+| No video, Recent signed in | "No recent videos" and that the videos watched show here, on all devices, with no sign-in offer. It changes the moment the account signs in or out, with the panel open, with no reopening. | `recent.interaction.test.tsx`: "offers Sign up or sign in signed out, and explains Recent signed in…" |
 
 The tab reads the active tab, asks for lines, and follows the video only once it has been shown.
 With another tab chosen, it stops following the video and keeps its lines; shown again, it follows

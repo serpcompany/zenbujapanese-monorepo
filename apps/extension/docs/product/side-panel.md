@@ -33,7 +33,8 @@ screen"; `e2e/side-panel-tabs.spec.ts`):
 | Where | What shows |
 | --- | --- |
 | Player, on a tab with no video | "No video on this tab", and that a video with Japanese captions shows its transcript here. |
-| Player's Recent | A "Recent" heading, then "No recent videos", that a Zenbu account keeps the videos watched on all devices, and "Sign up or sign in". |
+| Player's Recent, signed out | A "Recent" heading, then "No recent videos", that a Zenbu account keeps the videos watched on all devices, and "Sign up or sign in". |
+| Player's Recent, signed in | A "Recent" heading, then "No recent videos", that the videos watched show here, on all devices, with no sign-in offer. It follows the account's sign-in and sign-out with the panel open (`recent.interaction.test.tsx`, "offers Sign up or sign in signed out, and explains Recent signed in…"). |
 | Account's Words | "No words yet", and that the words known and the lists kept show here. |
 | Image Search, over Translate | "Reading text in pictures is coming soon", with no button. |
 
