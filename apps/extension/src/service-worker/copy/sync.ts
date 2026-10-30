@@ -212,8 +212,7 @@ export function accountSync(parts: SyncParts) {
     return running
   }
 
-  async function due(reason: Reason): Promise<boolean> {
-    const now = parts.now()
+  async function due(reason: Reason, now: number): Promise<boolean> {
     if (now < rateLimitedUntil) return false
     if (reason === 'sync-now' || reason === 'access') {
       paywalled = false
@@ -225,8 +224,20 @@ export function accountSync(parts: SyncParts) {
     return meta !== null && (meta.queue.length > 0 || !fresh(meta.lastSyncedAt, now))
   }
 
+  const needsSubscription = async () =>
+    (await store.keptAccount())?.subscription?.cloudAccess === 'subscription_required'
+
+  async function subscribedSince(reason: Reason): Promise<void> {
+    if (reason !== 'sync-now' && reason !== 'opened') return
+    if (!paywalled && !(await needsSubscription())) return
+    await parts.readSubscription()
+    if (!(await needsSubscription())) paywalled = false
+  }
+
   async function chance(reason: Reason): Promise<void> {
-    if (await due(reason)) await start()
+    const now = parts.now()
+    await subscribedSince(reason)
+    if (await due(reason, now)) await start()
     else if (running) await running
   }
 

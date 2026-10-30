@@ -136,7 +136,13 @@ describe("the copy's sync when the account service fails", () => {
   })
 
   it('sends nothing while the account needs a subscription for cloud access', async () => {
-    const world = copyWorld()
+    const world = copyWorld(
+      undefined,
+      {},
+      {
+        'GET /v1/me/subscription': () => json(200, subscription)
+      }
+    )
     await world.signIn()
     await world.store.keepSubscription('session-user-1', subscription)
     await world.change({ change: 'mark', ...word })
@@ -146,6 +152,21 @@ describe("the copy's sync when the account service fails", () => {
       sync: 'subscription-required',
       unsynced: 1
     })
+  })
+
+  it.each([
+    ['Sync Now', { copy: 'sync' }],
+    ['a page opening', { copy: 'opened' }]
+  ] as const)('reads the subscription again on %s, and syncs once the account has subscribed elsewhere', async (_, asked) => {
+    const world = copyWorld()
+    await world.signIn()
+    await world.store.keepSubscription('session-user-1', subscription)
+    await world.change({ change: 'mark', ...word })
+    await world.settled()
+    await world.ask(asked)
+    await vi.waitFor(() => expect(world.sent()).toHaveLength(1))
+    await world.stopped()
+    await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
   })
 
   it('asks for a new access token once when one is refused, and syncs with it', async () => {
