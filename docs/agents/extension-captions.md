@@ -171,8 +171,10 @@ with JSON-string details (`netflix-protocol.ts`).
   `netflix.appContext.state.playerApp.getAPI().videoPlayer` by `getMovieId`, and answers a tracks
   request: the Japanese and English tracks chosen from `getTimedTextTrackList()` (text only,
   subtitles before closed captions, never forced or none tracks), and each one's file URL, found
-  in the session's player in `cadmiumPlayerRepository.playersById`. A track Netflix hasn't loaded
-  is turned on with `setTimedTextTrack`, read, and the learner's track put back. It applies the
+  in the session's player in `cadmiumPlayerRepository.playersById`, reading own data properties
+  only, never a getter, and first in the object where it last found a track. A track Netflix hasn't
+  loaded is turned on with `setTimedTextTrack`, read, and the learner's track put back, or Netflix's
+  none track when it showed none. It applies the
   controls with the player's `seek`, `play`, `pause`, and `setPlaybackRate`, never the video's
   `currentTime`, which stops Netflix with M7375. It waits 10 seconds for the player and 5 for a
   track, and reads Netflix's objects only, through `safely`.

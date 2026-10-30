@@ -32,8 +32,10 @@ type Options = {
   videoId: string
   tracks?: readonly NetflixTrack[]
   loaded?: readonly string[]
-  showing?: NetflixTrack
+  showing?: NetflixTrack | null
+  listsOffOnceShown?: boolean
   ownRate?: boolean
+  state?: Record<string, unknown>
 }
 
 export function netflixPlayerStandIn(view: NetflixWindow, options: Options) {
@@ -44,7 +46,9 @@ export function netflixPlayerStandIn(view: NetflixWindow, options: Options) {
   const calls: string[] = []
   const loaded = new Set(options.loaded ?? [])
   const tracks = options.tracks ?? allTracks
-  let showing: NetflixTrack = options.showing ?? standInTracks.off
+  let showing: NetflixTrack | null =
+    options.showing === undefined ? standInTracks.off : options.showing
+  let shown = false
   let time = 0
   let rate = 1
   let netflixRate = 1
@@ -88,11 +92,13 @@ export function netflixPlayerStandIn(view: NetflixWindow, options: Options) {
       calls.push('pause')
       video.pause()
     },
-    getTimedTextTrackList: () => [...tracks],
+    getTimedTextTrackList: () =>
+      shown && options.listsOffOnceShown ? [...tracks, standInTracks.off] : [...tracks],
     getTimedTextTrack: () => showing,
     setTimedTextTrack(track: NetflixTrack) {
       calls.push(`show ${String(track.trackId)}`)
       showing = track
+      shown = true
       view.setTimeout(() => {
         if (!track.isNoneTrack) loaded.add(String(track.trackId))
       })
@@ -112,7 +118,11 @@ export function netflixPlayerStandIn(view: NetflixWindow, options: Options) {
     videoPlayer: {
       cadmiumPlayerRepository: {
         playersById: {
-          [standInSession]: { buffer: new Uint8Array(8), streams: { media: { list: timedText() } } }
+          [standInSession]: {
+            ...options.state,
+            buffer: new Uint8Array(8),
+            streams: { media: { list: timedText() } }
+          }
         }
       }
     }

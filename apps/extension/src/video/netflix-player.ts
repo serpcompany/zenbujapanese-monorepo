@@ -95,20 +95,50 @@ export function chosenTrack(
 const skipped = (value: object) =>
   ArrayBuffer.isView(value) || value instanceof ArrayBuffer || value instanceof Node
 
-function trackURL(session: Session, track: NetflixTrack): string | null {
-  const queue: unknown[] = [
+type Memory = { path: string[] | null }
+
+type Step = { value: unknown; parent: number; key: string }
+
+function own(value: unknown, key: string): unknown {
+  if (typeof value !== 'object' || value === null) return undefined
+  return safely(() => Object.getOwnPropertyDescriptor(value, key)?.value ?? null) ?? undefined
+}
+
+const ownKeys = (value: unknown): string[] =>
+  typeof value === 'object' && value !== null ? (safely(() => Object.keys(value)) ?? []) : []
+
+function urlIn(value: unknown, track: NetflixTrack): string | null {
+  const url = own(own(own(value, 'urls'), '0'), 'url')
+  const fits = own(value, 'type') === 'timedtext' && own(value, 'trackId') === track.trackId
+  return fits && typeof url === 'string' ? url : null
+}
+
+function pathTo(queue: readonly Step[], index: number): string[] {
+  const path: string[] = []
+  for (let at = index; at > 0; at = queue[at]?.parent ?? 0) path.unshift(queue[at]?.key ?? '')
+  return path
+}
+
+function trackURL(session: Session, track: NetflixTrack, memory: Memory): string | null {
+  const root =
     session.app.getState().videoPlayer?.cadmiumPlayerRepository?.playersById?.[session.id]
-  ]
+  const known = memory.path?.reduce<unknown>((value, key) => own(value, key), root)
+  for (const key of ownKeys(known)) {
+    const url = urlIn(own(known, key), track)
+    if (url) return url
+  }
+  const queue: Step[] = [{ value: root, parent: -1, key: '' }]
   const seen = new Set<object>()
   for (let index = 0; index < queue.length && index < walkLimit; index++) {
-    const value = queue[index]
+    const value = queue[index]?.value
     if (typeof value !== 'object' || value === null || seen.has(value) || skipped(value)) continue
     seen.add(value)
-    const found = value as { type?: unknown; trackId?: unknown; urls?: unknown }
-    const url = Array.isArray(found.urls) ? (found.urls[0] as { url?: unknown })?.url : undefined
-    if (found.type === 'timedtext' && found.trackId === track.trackId && typeof url === 'string')
+    const url = urlIn(value, track)
+    if (url) {
+      memory.path = pathTo(queue, queue[index]?.parent ?? 0)
       return url
-    for (const key of Object.keys(value)) queue.push(safely(() => Reflect.get(value, key)))
+    }
+    for (const key of ownKeys(value)) queue.push({ value: own(value, key), parent: index, key })
   }
   return null
 }
@@ -126,10 +156,13 @@ function until<T>(read: () => T | null, view: Window, step: number, wait: number
   })
 }
 
+const noneTrack = (tracks: readonly NetflixTrack[]) => tracks.find(track => track.isNoneTrack)
+
 async function tracksOf(
   view: NetflixWindow,
   videoId: string,
-  timing: PlayerTiming
+  timing: PlayerTiming,
+  memory: Memory
 ): Promise<CaptionTracks> {
   const ready = () => {
     const session = sessionOf(view, videoId)
@@ -140,15 +173,19 @@ async function tracksOf(
   const listed = session.player.getTimedTextTrackList()
   const japanese = chosenTrack(listed, 'ja')
   if (!japanese) return { state: 'no-japanese-captions' }
-  const learners = session.player.getTimedTextTrack() ?? listed.find(track => track.isNoneTrack)
+  const learners = session.player.getTimedTextTrack() ?? noneTrack(listed)
   let switched = false
   const urlOf = async (track: NetflixTrack | null): Promise<string | null> => {
     if (!track) return null
-    const loaded = safely(() => trackURL(session, track))
+    const loaded = safely(() => trackURL(session, track, memory))
     if (loaded) return loaded
     switched = true
     await session.player.setTimedTextTrack(track)
-    return until(() => trackURL(session, track), view, timing.step, timing.track)
+    return until(() => trackURL(session, track, memory), view, timing.step, timing.track)
+  }
+  const putBack = () => {
+    const back = learners ?? noneTrack(session.player.getTimedTextTrackList())
+    if (back) session.player.setTimedTextTrack(back)
   }
   try {
     const japaneseURL = await urlOf(japanese)
@@ -159,7 +196,7 @@ async function tracksOf(
       english: await urlOf(chosenTrack(listed, 'en'))
     }
   } finally {
-    if (switched && learners) session.player.setTimedTextTrack(learners)
+    if (switched) safely(putBack)
   }
 }
 
@@ -182,9 +219,10 @@ export function serveNetflixPlayer(
 ): () => void {
   const page = view.document
   let asking: Promise<unknown> = Promise.resolve()
+  const memory: Memory = { path: null }
   const answer = (request: PlayerRequest & { ask: 'tracks' }) => {
     asking = asking
-      .then(() => tracksOf(view, request.videoId, timing))
+      .then(() => tracksOf(view, request.videoId, timing, memory))
       .catch(() => noPlayer)
       .then(tracks =>
         page.dispatchEvent(playerEvent(playerAnswerEvent, { id: request.id, tracks }))
