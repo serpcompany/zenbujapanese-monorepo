@@ -23,6 +23,8 @@
         "src/offscreen/offscreen.ts",
         "src/worker/dictionary-worker.ts",
         "src/content/youtube.ts",
+        "src/content/netflix.ts",
+        "src/content/netflix-player.ts",
         "src/content/page-lookup.ts",
         "test-pages/test-content-script.tsx",
         "test-pages/*.css",

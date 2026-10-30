@@ -6,7 +6,7 @@ so the side panel's Player tab ([`video-tab.md`](video-tab.md)) and the caption 
 [`docs/agents/extension.md`](../../../../docs/agents/extension.md), Captions and the video.
 
 The page is `https://www.youtube.com/watch?v=<id>`, also when YouTube moves to it without loading
-a page. No other YouTube page, and no other site, is followed.
+a page. No other YouTube page is followed; Netflix's watch page is in [`netflix.md`](netflix.md).
 
 ## Captions
 

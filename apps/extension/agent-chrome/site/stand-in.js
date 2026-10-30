@@ -24,16 +24,18 @@ function silentWav(seconds) {
   return new Blob([bytes], { type: 'audio/wav' })
 }
 
+const site = document.body.dataset
 const video = document.createElement('video')
 video.controls = true
 video.width = 480
 video.muted = true
 video.style.display = 'block'
 const player = document.createElement('div')
-player.id = 'movie_player'
+if (site.player) player.id = site.player
+if (site.playerClass) player.className = site.playerClass
 player.style.cssText = 'position: relative; width: fit-content'
 const siteCaptions = document.createElement('div')
-siteCaptions.className = 'ytp-caption-window-container'
+siteCaptions.className = site.siteCaptions
 siteCaptions.style.cssText = 'position: absolute; inset: auto 0 48px; text-align: center'
 siteCaptions.textContent = 'The site’s own caption'
 player.append(video, siteCaptions)

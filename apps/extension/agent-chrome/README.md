@@ -101,7 +101,17 @@ the video listener with `Page.addScriptToEvaluateOnNewDocument`.
   dictionary (要求, 要る, 要領, 要所), so each line's words link in a test build. The last line,
   from 15 seconds, is half as long as the others, so a test can change the caption's width by
   far more than any font can. Each answer is a
-  `[site]` line. Nothing reaches YouTube.
+  `[site]` line. Nothing reaches YouTube. The page reads its player's id or class and the site's
+  caption class from `<body>`'s data attributes, so `stand-in.js` serves both sites.
+- **The stand-in Netflix page.** Mapped as `www.netflix.com`, every page path, `/watch/<id>`
+  included, is `site/netflix.html`: the same video inside `.watch-video--player-view`, a stand-in
+  for Netflix's subtitles (`.player-timedtext`), and `netflix-stand-in.js`, a stand-in for
+  Netflix's player in `window.netflix` with six tracks, only English loaded, that seeks, plays, and
+  sets the speed, puts the speed back to 1× 300 ms after each seek as Netflix does, and logs a
+  `[netflix]` line for each call, and an M7375 line for a seek that didn't come through it. Map a
+  `*.oca.nflxvideo.net` host as well, such as `ipv4-c001-tyo001-ix.1.oca.nflxvideo.net`, the
+  stand-in's: it answers `?t=T:ja` and `?t=T:en` with the saved tracks in
+  `src/captions/fixtures/` and anything else with 404. Nothing reaches Netflix.
 - **`--host-rule <rule>`** adds a `--host-resolver-rules` rule ahead of the others. `verify` maps
   the test build's language data host, `language-data.localhost`, to the local server's port.
 

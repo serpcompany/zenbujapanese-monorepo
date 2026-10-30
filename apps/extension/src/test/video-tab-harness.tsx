@@ -5,6 +5,7 @@ import { expect, vi } from 'vitest'
 import { japaneseVideo } from '../captions/fixtures/youtube-stand-in'
 import type { PanelPage } from '../side-panel/route'
 import type { TranslatorState } from '../translation/messages'
+import type { VideoSitePage } from '../video/video-page'
 import { type Following, openVideoTab } from '../video/video-tab-port'
 import type { ActiveTab, VideoTabServices } from '../video-tab/services'
 import { VideoTab } from '../video-tab/video-tab'
@@ -95,6 +96,7 @@ type Options = {
   title?: string
   contentScript?: boolean
   pagePopup?: PagePopup
+  site?: VideoSitePage
 }
 
 export function watching({
@@ -104,12 +106,19 @@ export function watching({
   url = watchURL(),
   title = '(2) 散歩の日 - YouTube',
   contentScript = true,
-  pagePopup
+  pagePopup,
+  site: videoSite
 }: Options = {}) {
   startExtension()
   happyDOM.setURL(url)
   const video = followerStandIn()
-  const page = watchedTab({ tabId, captionsOn, follow: video.follow, contentScript })
+  const page = watchedTab({
+    tabId,
+    captionsOn,
+    follow: video.follow,
+    contentScript,
+    ...(videoSite ? { site: videoSite } : {})
+  })
   const retries: (() => void)[] = []
   const english = translation ? translatingWith(translation) : translatorStandIn(translator)
   const tabWatchers = new Set<() => void>()

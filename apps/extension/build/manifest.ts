@@ -9,7 +9,7 @@ import {
 } from './hosts.ts'
 import { storeKey } from './key.ts'
 
-export type ContentScript = { name: string; entry: string; matches: string[] }
+export type ContentScript = { name: string; entry: string; matches: string[]; world?: 'MAIN' }
 
 export const minimumChromeVersion = '138'
 
@@ -43,12 +43,27 @@ const youTubeContentScript: ContentScript = {
   matches: ['https://www.youtube.com/*']
 }
 
+const netflixPages = ['https://www.netflix.com/*']
+
+const netflixPlayerContentScript: ContentScript = {
+  name: 'netflix-player',
+  entry: 'src/content/netflix-player.ts',
+  matches: netflixPages,
+  world: 'MAIN'
+}
+
+const netflixContentScript: ContentScript = {
+  name: 'netflix',
+  entry: 'src/content/netflix.ts',
+  matches: netflixPages
+}
+
+const videoContentScripts = [youTubeContentScript, netflixPlayerContentScript, netflixContentScript]
+
 export const contentScriptFile = (script: ContentScript) => `${script.name}.js`
 
 export function contentScripts(variant: Variant): ContentScript[] {
-  return variant === 'test'
-    ? [youTubeContentScript, testPagesContentScript]
-    : [youTubeContentScript]
+  return variant === 'test' ? [...videoContentScripts, testPagesContentScript] : videoContentScripts
 }
 
 export function builtContentScripts(variant: Variant): ContentScript[] {
@@ -60,7 +75,8 @@ function onPages(scripts: ContentScript[]) {
     content_scripts: scripts.map(script => ({
       matches: script.matches,
       js: [contentScriptFile(script)],
-      run_at: 'document_idle'
+      run_at: script.world ? 'document_start' : 'document_idle',
+      ...(script.world ? { world: script.world } : {})
     }))
   }
 }
@@ -94,6 +110,8 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
       `${hostsOf(variant, environment).languageData}/*`,
       `${hostsOf(variant, environment).api}/*`,
       'https://www.youtube.com/*',
+      ...netflixPages,
+      'https://*.oca.nflxvideo.net/*',
       ...(variant === 'test' ? [`${testAllowedSite}/*`] : [])
     ],
     optional_host_permissions: optionalSites,

@@ -3,7 +3,10 @@ import {
   type CaptionsAnswer,
   type CaptionsEnvelope,
   type CaptionsState,
-  isCaptionsChange
+  type CaptionTracks,
+  isCaptionsChange,
+  isCaptionTracksRequest,
+  noPlayer
 } from '../captions/messages'
 import type { CaptionedVideo } from '../player-captions/line-controls'
 import type { ShowCaptions, ShownCaptions } from '../player-captions/player-captions'
@@ -11,34 +14,49 @@ import { isZenbuOn, type PageSettings, type Settings } from '../shared/settings'
 import { applyControl, isVideoControlMessage } from './controls'
 import type { VideoFollower } from './follower'
 import { type TabPort, videoTabPort, videoTabPorts } from './video-tab-port'
-import { watchedVideoId } from './watch-page'
-import { youTubeFollower } from './youtube-follower'
+import { type VideoSite, watchedVideo } from './watch-page'
 
 const retryMargin = 1_000
 
-type Listener = (message: unknown) => false
+export type PageListener = (
+  message: unknown,
+  sender?: unknown,
+  sendResponse?: (response: CaptionTracks) => void
+) => boolean
 
 type Connected = (port: TabPort) => void
 
 type PageRuntime = {
   sendMessage(message: CaptionsEnvelope): Promise<CaptionsAnswer>
-  onMessage: { addListener(listener: Listener): void; removeListener(listener: Listener): void }
+  onMessage: {
+    addListener(listener: PageListener): void
+    removeListener(listener: PageListener): void
+  }
   onConnect: { addListener(listener: Connected): void; removeListener(listener: Connected): void }
 }
 
 export type PlayerCaptions = { settings: PageSettings; show: ShowCaptions }
 
+export type VideoSitePage = {
+  name: VideoSite
+  follow(page: Document, videoId: string): VideoFollower
+  navigations(page: Document, navigated: () => void): () => void
+  captionTracks?(videoId: string): Promise<CaptionTracks>
+}
+
 type Options = {
   runtime?: PageRuntime
-  follow?: typeof youTubeFollower
   captions?: PlayerCaptions
 }
 
 const unfollowed = () => undefined
 
-export function followYouTubePage(page: Document, options: Options = {}): () => void {
+export function followVideoPage(
+  page: Document,
+  site: VideoSitePage,
+  options: Options = {}
+): () => void {
   const runtime = options.runtime ?? chrome.runtime
-  const follow = options.follow ?? youTubeFollower
   const videoTabs = videoTabPorts()
   let videoId: string | null = null
   let follower: VideoFollower | null = null
@@ -63,12 +81,12 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
 
   function open() {
     if (videoId === null) return
-    askCaptions({ type: 'video-opened', videoId }, runtime).then(settle)
+    askCaptions({ type: 'video-opened', site: site.name, videoId }, runtime).then(settle)
   }
 
   const followed = (): VideoFollower | null => {
     if (videoId === null) return null
-    follower ??= follow(page, videoId)
+    follower ??= site.follow(page, videoId)
     return follower
   }
 
@@ -136,7 +154,8 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
   }
 
   const navigated = () => {
-    const next = watchedVideoId(page.location.href)
+    const watched = watchedVideo(page.location.href)
+    const next = watched?.site === site.name ? watched.videoId : null
     if (next === videoId) return
     clearRetry()
     stopFollowing()
@@ -148,7 +167,16 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
     if (videoTabs.open) videoTabs.send(followed()?.playback ?? null)
   }
 
-  const onMessage: Listener = message => {
+  const answerTracks = (asked: string, sendResponse: (response: CaptionTracks) => void) => {
+    const tracks = asked === videoId && site.captionTracks ? site.captionTracks(asked) : null
+    if (!tracks) return false
+    tracks.catch(() => noPlayer).then(sendResponse)
+    return true
+  }
+
+  const onMessage: PageListener = (message, _sender, sendResponse) => {
+    if (isCaptionTracksRequest(message) && sendResponse)
+      return answerTracks(message.videoId, sendResponse)
     if (isCaptionsChange(message)) settle(message.captions)
     else if (isVideoControlMessage(message)) {
       const { control } = message
@@ -175,12 +203,12 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
   const stopSettings = options.captions?.settings.onChanged(heardSettings) ?? unfollowed
   runtime.onMessage.addListener(onMessage)
   runtime.onConnect.addListener(onConnect)
-  page.addEventListener('yt-navigate-finish', navigated)
+  const stopNavigations = site.navigations(page, navigated)
   page.defaultView?.addEventListener('popstate', navigated)
   navigated()
 
   return () => {
-    page.removeEventListener('yt-navigate-finish', navigated)
+    stopNavigations()
     page.defaultView?.removeEventListener('popstate', navigated)
     runtime.onMessage.removeListener(onMessage)
     runtime.onConnect.removeListener(onConnect)

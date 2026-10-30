@@ -20,7 +20,7 @@ is open when the extension is installed, reloaded, or updated: Zenbu puts its pa
 into the open tabs of the sites it has, and the copy the old extension left takes no more part. A
 site taken back
 stops at once, and its underlines, reading aids, and popup go; taking back Every Site stops every
-tab no other site given still covers, YouTube's too. A click on the toolbar icon alone doesn't
+tab no other site given still covers, YouTube's and Netflix's too. A click on the toolbar icon alone doesn't
 start it: it shows the header the tab's address, and Allow on This Site is the way in (#1099,
 [`tech-debt.md`](../../../../docs/tech-debt.md)).
 

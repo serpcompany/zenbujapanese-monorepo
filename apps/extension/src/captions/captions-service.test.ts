@@ -1,7 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { SiteVideo, VideoSite } from '../video/watch-page'
 import { rateLimitJitter, rateLimitWaits } from './backoff'
 import { captionsService } from './captions-service'
 import { memoryStorage } from './fixtures/memory-storage'
+import {
+  englishTrack,
+  japaneseTrack,
+  netflixLines,
+  netflixStandIn,
+  netflixTracks,
+  netflixVideo,
+  trackHost
+} from './fixtures/netflix-stand-in'
 import { controlledTimeouts } from './fixtures/timeouts'
 import {
   englishVideo,
@@ -13,22 +23,29 @@ import {
   youTubeStandIn
 } from './fixtures/youtube-stand-in'
 import { captionLabels } from './labels'
-import type { CaptionsAnswer, CaptionsChange, CaptionsState } from './messages'
+import type { CaptionsAnswer, CaptionsChange, CaptionsState, CaptionTracks } from './messages'
 
 const startedAt = Date.UTC(2026, 9, 28, 9)
 
 function harness({ captionsOn = true, storage = memoryStorage() } = {}) {
   const youTube = youTubeStandIn()
   const changes: CaptionsChange[] = []
-  const urls = new Map<number, string>()
+  const netflix = netflixStandIn()
+  const urls = new Map<number, SiteVideo>()
+  const asked: [number, string][] = []
+  const tracks = { answer: netflixTracks as CaptionTracks }
   const clock = { now: startedAt, random: 0.5, captionsOn, unprepared: null as Error | null }
   const service = captionsService({
     storage,
-    fetch: youTube.fetch,
+    fetch: (url, init) => (url.includes(trackHost) ? netflix : youTube).fetch(url, init),
     prepareRequests: async () => {
       if (clock.unprepared) throw clock.unprepared
     },
     tabVideo: async tabId => urls.get(tabId) ?? null,
+    askTracks: async (tabId, videoId) => {
+      asked.push([tabId, videoId])
+      return tracks.answer
+    },
     captionsOn: async () => clock.captionsOn,
     announce: change => changes.push(change),
     now: () => clock.now,
@@ -38,13 +55,16 @@ function harness({ captionsOn = true, storage = memoryStorage() } = {}) {
     changes.filter(change => change.tabId === tabId).at(-1)?.captions
   return {
     youTube,
+    netflix,
+    asked,
+    tracks,
     storage,
     clock,
     service,
     latest,
-    open(tabId: number, videoId: string) {
-      urls.set(tabId, videoId)
-      return service.answer({ type: 'video-opened', videoId }, tabId)
+    open(tabId: number, videoId: string, site: VideoSite = 'youtube') {
+      urls.set(tabId, { site, videoId })
+      return service.answer({ type: 'video-opened', site, videoId }, tabId)
     },
     leave(tabId: number) {
       urls.delete(tabId)
@@ -114,7 +134,8 @@ describe('captions service', () => {
     const page = harness()
     expect(await page.captions(4)).toEqual({ state: 'no-video' })
     expect(await page.tryAgain(4)).toEqual({ state: 'no-video' })
-    expect(await page.service.answer({ type: 'video-opened', videoId: japaneseVideo })).toEqual({
+    const opened = { type: 'video-opened', site: 'youtube', videoId: japaneseVideo } as const
+    expect(await page.service.answer(opened)).toEqual({
       type: 'failed',
       reason: 'Only a tab opens a video.'
     })
@@ -342,5 +363,38 @@ describe('captions service', () => {
     refuse(values => !JSON.stringify(values).includes('"state":"loading"'))
     expect(await page.tryAgain(1)).toEqual({ state: 'loading', videoId: japaneseVideo })
     expect(await page.settled(1)).toEqual(failed)
+  })
+
+  describe('on Netflix', () => {
+    it("asks the tab for its tracks, then fetches them once, past YouTube's rate limit", async () => {
+      const { page } = await rateLimitedOnce()
+      expect(await page.open(2, netflixVideo, 'netflix')).toEqual({
+        state: 'loading',
+        videoId: netflixVideo
+      })
+      expect(lines(await page.settled(2))).toEqual(netflixLines)
+      expect(page.asked).toEqual([[2, netflixVideo]])
+      expect(page.netflix.urls()).toEqual([japaneseTrack, englishTrack])
+      expect(lines(await page.captions(2))).toEqual(netflixLines)
+      expect(page.netflix.urls()).toHaveLength(2)
+    })
+
+    it('gives No Japanese Captions, or names Netflix, from what the tab answers', async () => {
+      const page = harness()
+      page.tracks.answer = { state: 'no-japanese-captions' }
+      await page.open(1, netflixVideo, 'netflix')
+      expect(await page.settled(1)).toEqual({
+        state: 'no-japanese-captions',
+        videoId: netflixVideo
+      })
+      page.tracks.answer = { state: 'no-player' }
+      await page.open(2, netflixVideo, 'netflix')
+      expect(await page.settled(2)).toEqual({
+        state: 'failed',
+        videoId: netflixVideo,
+        reason: captionLabels.netflix.unavailable
+      })
+      expect(page.netflix.sent).toEqual([])
+    })
   })
 })

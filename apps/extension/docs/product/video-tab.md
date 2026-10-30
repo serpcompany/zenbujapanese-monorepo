@@ -1,22 +1,24 @@
 # Player tab
 
-The side panel's Player tab, which was its Video tab, is the transcript of the YouTube video in
-the tab the learner is on ([`side-panel.md`](side-panel.md)). On a tab with no video it shows that
-there is none, with Recent under it; Recent shows only then, never under a transcript. The
-transcript is
-its lines, the line playing, each line's words and English, and a click to go to a line. The
-lines and the video come from the watch page ([`youtube-captions.md`](youtube-captions.md)); the
-words, their popup, and the English are Translate's ([`translate.md`](translate.md),
+The side panel's Player tab, which was its Video tab, is the transcript of the YouTube or Netflix
+video in the tab the learner is on ([`side-panel.md`](side-panel.md)). On a tab with no video it
+shows that there is none, with Recent under it; Recent shows only then, never under a transcript.
+The transcript is its lines, the line playing, each line's words and English, and a click to go to
+a line. The lines and the video come from the watch page
+([`youtube-captions.md`](youtube-captions.md), [`netflix.md`](netflix.md)); the words, their
+popup, and the English are Translate's ([`translate.md`](translate.md),
 [`word-popup.md`](word-popup.md)). The text is in `src/video-tab/labels.ts`. The tests named here
-are in `src/video-tab/` unless a path says otherwise: `video-tab.interaction.test.tsx` (Video tab)
-and `transcript.interaction.test.tsx` (Transcript), in happy-dom, with a stand-in YouTube, the
-real captions service and watch page, a stand-in for YouTube's video, and a stand-in Translator.
+are in `src/video-tab/` unless a path says otherwise: `video-tab.interaction.test.tsx` (Video tab),
+`transcript.interaction.test.tsx` (Transcript), and `netflix.interaction.test.tsx` (Netflix), in
+happy-dom, with a stand-in YouTube or Netflix, the real captions service and watch page, a
+stand-in for the site's video, and a stand-in Translator.
 
 ## What a learner sees
 
 | Behavior | Check |
 | --- | --- |
 | On a YouTube watch page, the video's title, taken from the tab's own title without YouTube's count of notifications and " - YouTube", then one row for each caption line, with the time it starts, such as 0:05. Nothing is fetched for the title. | Video tab: "shows the video's title over its lines…" |
+| On a Netflix watch page, the tab's own title without " - Netflix", and the rows as on YouTube. A click on a row seeks through Netflix's player. | Netflix: "takes the title from the tab without Netflix's name, and seeks to a row's start from its click" |
 | It follows the tab the learner is on: another tab, or a YouTube page that isn't a video, shows "No video on this tab", and coming back shows the video again. | Video tab: "follows the active tab…", "shows No video on this tab…" |
 | The row of the line playing is highlighted, and the highlight follows the video, with none between lines. | Video tab: "highlights the row of the line playing…" |
 | The row playing is kept in view, in the middle of the list. While a word's popup is open, the list stays where it is. | Transcript: "keeps the playing row in view…" |
@@ -61,7 +63,8 @@ video only once it is shown").
 ## English
 
 Each line's English is under it, from Chrome's Translator on this computer, one line at a time, as
-in Translate; nothing is sent anywhere. Translations off in Settings hides it and asks the
+in Translate; nothing is sent anywhere. On Netflix a line's English is Netflix's own, where its
+English track has a line over it, and the Translator is asked only for the lines without. Translations off in Settings hides it and asks the
 Translator nothing.
 
 | Behavior | Check |
@@ -73,6 +76,8 @@ Translator nothing.
 | Where Chrome reports its download already under way (`downloading`), as when the welcome tab's is still going: "Chrome is downloading its Japanese translation…" with no Download, checked again every 2 seconds, then each line's English. Chrome 156 reports `downloadable` during a download, so there the tab shows Download, and its click joins the running download. | Transcript: "while Chrome is already downloading, says so with no Download…" |
 | On a computer that can't translate Japanese: "Translate isn't available on this computer." | Transcript: "says so when this computer can't translate Japanese" |
 | A line the Translator didn't answer for says "Translate didn't answer." under it, with Try again, which asks for that line again. | Transcript: "shows Try again on a line Translate didn't answer…" |
+| On Netflix, Netflix's English for each line it covers, and the Translator's for a line it doesn't. | Netflix: "shows a Netflix video's lines with Netflix's own English, asking the Translator only for a line without" |
+| When Netflix's English covers every line, no download is offered and the Translator is asked nothing. | Netflix: "doesn't offer Chrome's model when Netflix gives every line English" |
 | With Translations off, no English, and no request to the Translator. | Transcript: "hides the English with Translations off…" |
 
 ## Following the video

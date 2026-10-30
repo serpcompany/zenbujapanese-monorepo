@@ -21,7 +21,7 @@ export const settingsLabels = {
     'readingAids.furiganaHiddenOnKnownWords': 'Waits for Furigana to be on.',
     'readingAids.wordMeanings': "A short meaning under each word you haven't marked known.",
     'readingAids.translations': 'An English translation under each sentence.',
-    'videos.zenbuCaptions': "On YouTube, Zenbu's captions in place of the site's.",
+    'videos.zenbuCaptions': "On YouTube and Netflix, Zenbu's captions in place of the site's.",
     'crashReports.send':
       "Sends the extension's and Chrome's versions, the computer's system, and where in the extension's code a problem happened to its developers through Sentry. Crash reports never include your searches, words, sentences, or the pages you read."
   },

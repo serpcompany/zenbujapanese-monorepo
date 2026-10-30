@@ -33,4 +33,9 @@ export const standInPlayer = join(
   'player-japanese.json'
 )
 export const standInTimedText = join(here, 'stand-in-timedtext.xml')
+const captionFixture = name => join(extensionRoot, 'src', 'captions', 'fixtures', name)
+export const standInNetflixTracks = {
+  'T:ja': captionFixture('netflix-japanese.xml'),
+  'T:en': captionFixture('netflix-english.xml')
+}
 export const verifyRoot = join(checkout, 'tmp', 'agent', 'verify')

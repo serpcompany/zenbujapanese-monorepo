@@ -12,13 +12,13 @@ import {
   playerCaptionsAttribute,
   type ShowCaptions
 } from '../player-captions/player-captions'
-import { type Settings, settingDefaults } from '../shared/settings'
+import type { Settings } from '../shared/settings'
 import '../test/act-environment'
 import { type ClockFollower, clockFollower } from '../test/clock-follower'
+import { pageSettings } from '../test/page-settings'
 import { captionServices, standInFonts } from '../test/player-on'
 import { lineText } from '../test/video-tab-harness'
 import { watchedTab } from '../test/watched-tab'
-import type { PlayerCaptions } from './youtube-page'
 
 const tabId = 5
 
@@ -54,26 +54,6 @@ function recordedCaptions() {
     }
   }
   return { show, shows }
-}
-
-function pageSettings(initial: Partial<Settings>) {
-  let current: Settings = { ...settingDefaults, ...initial }
-  const listeners = new Set<(settings: Settings) => void>()
-  const settings: PlayerCaptions['settings'] = {
-    ask: async () => current,
-    onChanged(listener) {
-      listeners.add(listener)
-      return () => void listeners.delete(listener)
-    }
-  }
-  return {
-    settings,
-    listening: () => listeners.size,
-    change(next: Partial<Settings>) {
-      current = { ...current, ...next }
-      for (const listener of [...listeners]) listener(current)
-    }
-  }
 }
 
 function captionedTab({

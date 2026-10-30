@@ -1,4 +1,5 @@
 import { failure } from '../shared/messages'
+import type { SiteVideo } from '../video/watch-page'
 import { nextRateLimit } from './backoff'
 import { captionLabels } from './labels'
 import type {
@@ -6,8 +7,10 @@ import type {
   CaptionsChange,
   CaptionsRequest,
   CaptionsState,
+  CaptionTracks,
   NoVideo
 } from './messages'
+import { fetchNetflixCaptions } from './netflix-requests'
 import { captionsStore, type SessionStorage, type TabCaptions } from './session-store'
 import { type Fetch, fetchYouTubeCaptions } from './youtube-requests'
 
@@ -17,7 +20,8 @@ export type CaptionsDependencies = {
   storage: SessionStorage
   fetch: Fetch
   prepareRequests(): Promise<void>
-  tabVideo(tabId: number): Promise<string | null>
+  tabVideo(tabId: number): Promise<SiteVideo | null>
+  askTracks(tabId: number, videoId: string): Promise<CaptionTracks>
   captionsOn(): Promise<boolean>
   announce(change: CaptionsChange): void
   now(): number
@@ -76,7 +80,7 @@ export function captionsService(dependencies: CaptionsDependencies) {
   const announce = (tabId: number, captions: CaptionsState) =>
     dependencies.announce({ target: 'captions', tabId, captions })
 
-  function requestCaptions(videoId: string, mode: Mode): Promise<CaptionsState> {
+  function fromYouTube(videoId: string, mode: Mode): Promise<CaptionsState> {
     return youTube(async () => {
       const limit = await store.rateLimit()
       if (mode === 'when-due' && limit && dependencies.now() < limit.retryAt)
@@ -90,7 +94,19 @@ export function captionsService(dependencies: CaptionsDependencies) {
       }
       if (limit) await store.setRateLimit(undefined)
       return { ...fetched, videoId }
-    }).catch((error: unknown) => failed(videoId, failure(error).reason))
+    })
+  }
+
+  const fromNetflix = (tabId: number, videoId: string) =>
+    fetchNetflixCaptions(dependencies.askTracks(tabId, videoId), dependencies.fetch).then(
+      (fetched): CaptionsState => ({ ...fetched, videoId })
+    )
+
+  function requestCaptions(tabId: number, video: SiteVideo, mode: Mode): Promise<CaptionsState> {
+    const { videoId } = video
+    const requested =
+      video.site === 'netflix' ? fromNetflix(tabId, videoId) : fromYouTube(videoId, mode)
+    return requested.catch((error: unknown) => failed(videoId, failure(error).reason))
   }
 
   const settle = (tabId: number, videoId: string, captions: CaptionsState) =>
@@ -102,9 +118,10 @@ export function captionsService(dependencies: CaptionsDependencies) {
       announce(tabId, captions)
     })
 
-  function start(tabId: number, videoId: string, mode: Mode) {
+  function start(tabId: number, video: SiteVideo, mode: Mode) {
+    const { videoId } = video
     fetching.set(tabId, videoId)
-    requestCaptions(videoId, mode)
+    requestCaptions(tabId, video, mode)
       .then(captions => settle(tabId, videoId, captions))
       .catch(() => {
         const unsaved = failed(videoId, captionLabels.failed.unsaved)
@@ -120,18 +137,20 @@ export function captionsService(dependencies: CaptionsDependencies) {
 
   async function nextState(tabId: number, tab: TabCaptions, mode: Mode): Promise<CaptionsState> {
     if (tab.captions && !needsRequest(tabId, tab.captions, mode)) return tab.captions
-    const limit = mode === 'when-due' ? await store.rateLimit() : undefined
+    const limit =
+      mode === 'when-due' && tab.site === 'youtube' ? await store.rateLimit() : undefined
     if (limit && dependencies.now() < limit.retryAt) return rateLimited(tab.videoId, limit.retryAt)
     return loading(tab.videoId)
   }
 
-  const open = (tabId: number, videoId: string, asked: boolean, mode: Mode) =>
+  const open = (tabId: number, video: SiteVideo, asked: boolean, mode: Mode) =>
     forTab(tabId)(async (): Promise<CaptionsState> => {
+      const { videoId } = video
       const stored = await store.tab(tabId)
       const tab: TabCaptions =
-        stored?.videoId === videoId
+        stored?.videoId === videoId && stored.site === video.site
           ? { ...stored, asked: stored.asked || asked }
-          : { videoId, asked, captions: null }
+          : { ...video, asked, captions: null }
       if (!tab.asked && !(await dependencies.captionsOn())) {
         const kept = tab.captions?.state === 'rate-limited' ? null : tab.captions
         await store.setTab(tabId, { ...tab, captions: kept })
@@ -140,25 +159,25 @@ export function captionsService(dependencies: CaptionsDependencies) {
       const captions = await nextState(tabId, tab, mode)
       await store.setTab(tabId, { ...tab, captions })
       if (!sameState(tab.captions, captions)) announce(tabId, captions)
-      if (captions.state === 'loading' && fetching.get(tabId) !== videoId)
-        start(tabId, videoId, mode)
+      if (captions.state === 'loading' && fetching.get(tabId) !== videoId) start(tabId, video, mode)
       return captions
     })
 
   async function answer(request: CaptionsRequest, senderTab?: number): Promise<CaptionsAnswer> {
     if (request.type === 'video-opened') {
       if (senderTab === undefined) return failure('Only a tab opens a video.')
-      return open(senderTab, request.videoId, false, 'when-due')
+      const { site, videoId } = request
+      return open(senderTab, { site, videoId }, false, 'when-due')
     }
-    const videoId = await dependencies.tabVideo(request.tabId)
-    if (videoId === null) return noVideo
-    return open(request.tabId, videoId, true, request.type === 'try-again' ? 'now' : 'when-due')
+    const video = await dependencies.tabVideo(request.tabId)
+    if (video === null) return noVideo
+    return open(request.tabId, video, true, request.type === 'try-again' ? 'now' : 'when-due')
   }
 
   async function openVideosAgain(): Promise<void> {
     for (const tabId of await store.tabIds()) {
-      const videoId = await dependencies.tabVideo(tabId)
-      if (videoId !== null) await open(tabId, videoId, false, 'when-due')
+      const video = await dependencies.tabVideo(tabId)
+      if (video !== null) await open(tabId, video, false, 'when-due')
     }
   }
 

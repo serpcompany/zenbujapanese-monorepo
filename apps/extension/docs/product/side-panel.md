@@ -20,7 +20,7 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
 - **Translate on its box,** to translate Japanese or English, with an Image row that opens Image
   Search: [`translate.md`](translate.md) (`panel.interaction.test.tsx`, "opens each tab on its own
   screen", "opens Image Search from the Image row on Translate").
-- **Player on the transcript** of the YouTube video in the tab the learner is on:
+- **Player on the transcript** of the YouTube or Netflix video in the tab the learner is on:
   [`video-tab.md`](video-tab.md). On a tab with no video, its empty state, with Recent under it;
   Recent shows only then.
 - **Account on the account,** the same one Settings' Account page shows: signed out, the ways to

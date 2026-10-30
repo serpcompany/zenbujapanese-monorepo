@@ -6,7 +6,12 @@ const pageScriptId = 'page-lookup'
 
 const pageScriptFile = 'page-lookup.js'
 
-const ownHosts = [`${languageDataOrigin}/*`, 'https://www.youtube.com/*']
+const ownHosts = [
+  `${languageDataOrigin}/*`,
+  'https://www.youtube.com/*',
+  'https://www.netflix.com/*',
+  'https://*.oca.nflxvideo.net/*'
+]
 
 type Granted = { origins?: string[] }
 
