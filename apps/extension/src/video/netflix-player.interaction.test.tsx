@@ -61,22 +61,14 @@ describe('serveNetflixPlayer', () => {
     expect(await bothTracks(['T:en'])).toEqual(['show T:ja', 'show T:en'])
   })
 
-  it('turns captions back off after loading them for a learner who had them off', async () => {
-    const { standIn, bridge } = served({ tracks: [standInTracks.off, standInTracks.japanese] })
-    await expect(bridge.tracks(videoId)).resolves.toEqual({
-      state: 'tracks',
-      japanese: trackURL('T:ja'),
-      english: null
-    })
-    expect(standIn.calls).toEqual(['show T:ja', 'show T:off'])
-  })
-
-  it('turns captions back off for a learner Netflix shows no track for, once it lists its off track', async () => {
-    const { standIn, bridge } = served({
-      tracks: [standInTracks.japanese],
-      showing: null,
-      listsOffOnceShown: true
-    })
+  it.each([
+    ['a learner who had them off', { tracks: [standInTracks.off, standInTracks.japanese] }],
+    [
+      'a learner Netflix shows no track for, once it lists its off track',
+      { tracks: [standInTracks.japanese], showing: null, listsOffOnceShown: true }
+    ]
+  ])('turns captions back off after loading them for %s', async (_learner, options) => {
+    const { standIn, bridge } = served(options)
     await expect(bridge.tracks(videoId)).resolves.toEqual({
       state: 'tracks',
       japanese: trackURL('T:ja'),
