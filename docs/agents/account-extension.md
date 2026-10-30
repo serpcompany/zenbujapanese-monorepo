@@ -140,6 +140,10 @@ answers `apple-again`, Continue with Apple again.
   A delete whose answer is lost is never taken for done: the service names no code for an
   account that no longer exists, and `401 unauthorized` from `GET /v1/auth/token` also means a
   session that ended. It asks the learner to try again, forgets nothing, and asks nothing more.
+  A try again, the delete or its Send Code (`send-code` with `deleting`), first asks
+  `GET /v1/auth/token` for the kept session, whatever access token is kept: a `401` forgets it
+  and answers signed out, with no code emailed and no sign-in, since an emailed-code sign-in to
+  a deleted account would make a new one. A good session goes on to the fresh sign-in.
 - **The account component,** `src/account/`, is the one the side panel's Account tab and
   Settings' Account page both draw ([product docs](../../apps/extension/docs/product/account.md)).
   It shows each answer's problem inline, by the field or the button it belongs to, with no toast.

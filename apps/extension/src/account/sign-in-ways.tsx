@@ -48,7 +48,8 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
     event?.preventDefault()
     const to = email.trim()
     if (to === '') return
-    const answer = await ask(askAccount({ account: 'send-code', email: to }))
+    const deleting = purpose === 'delete' ? { deleting: true as const } : {}
+    const answer = await ask(askAccount({ account: 'send-code', email: to, ...deleting }))
     if (answer.type === 'code-sent') {
       setSentTo(to)
       setCode('')

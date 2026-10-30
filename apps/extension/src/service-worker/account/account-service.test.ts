@@ -130,8 +130,11 @@ describe('accountService', () => {
     expect(answer).toEqual({ type: 'deleted', appStoreSubscriptionContinues: true })
     const signOut = world.asked.find(asked => asked.route === 'POST /v1/auth/sign-out')
     expect(signOut?.headers.get('authorization')).toBe('Bearer session-earlier')
-    const tokenAsk = world.asked.find(asked => asked.route === 'GET /v1/auth/token')
-    expect(tokenAsk?.headers.get('authorization')).toBe('Bearer session-fresh')
+    const tokenAsks = world.asked.filter(asked => asked.route === 'GET /v1/auth/token')
+    expect(tokenAsks.map(asked => asked.headers.get('authorization'))).toEqual([
+      'Bearer session-earlier',
+      'Bearer session-fresh'
+    ])
     expect(world.asked.at(-1)?.body).toEqual({ confirm: true })
     expect(await world.store.keptAccount()).toBeNull()
   })
@@ -140,7 +143,8 @@ describe('accountService', () => {
     const world = await signedInWorld({
       'POST /v1/auth/sign-in/email-otp': () =>
         signedInAnswer('session-other', { id: 'user-2', email: 'other@example.com' }),
-      'POST /v1/auth/sign-out': () => json(200, { success: true })
+      'POST /v1/auth/sign-out': () => json(200, { success: true }),
+      'GET /v1/auth/token': token
     })
     const answer = await world.account.answer({ account: 'delete', with: code })
     expect(answer).toMatchObject({ type: 'refused', refusal: 'other-account' })
@@ -196,13 +200,15 @@ describe('accountService', () => {
       {
         'POST /v1/auth/sign-in/nonce': () => json(200, { nonce: 'nonce-2' }),
         'POST /v1/auth/sign-in/social': () => signedInAnswer('session-apple'),
-        'POST /v1/auth/sign-out': () => json(200, {})
+        'POST /v1/auth/sign-out': () => json(200, {}),
+        'GET /v1/auth/token': token
       },
       url => returnedFrom(url, { id_token: 'apple-id' })
     )
     const answer = await world.account.answer({ account: 'delete', with: { way: 'apple' } })
     expect(answer).toMatchObject({ type: 'refused', refusal: 'apple-again' })
     expect(world.routes()).toEqual([
+      'GET /v1/auth/token',
       'POST /v1/auth/sign-in/nonce',
       'POST /v1/auth/sign-in/social',
       'POST /v1/auth/sign-out'
@@ -246,7 +252,7 @@ describe('accountService', () => {
     const world = await signedInWorld({
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
       'POST /v1/auth/sign-out': () => json(200, {}),
-      'GET /v1/auth/token': () => (++tokens === 1 ? token() : refusal(401, 'unauthorized')),
+      'GET /v1/auth/token': () => (++tokens <= 2 ? token() : refusal(401, 'unauthorized')),
       'DELETE /v1/me': () => refusal(401, 'unauthorized')
     })
     await expect(world.account.answer({ account: 'delete', with: code })).resolves.toMatchObject({
@@ -254,5 +260,65 @@ describe('accountService', () => {
       refusal: 'sign-in-again'
     })
     expect(world.routes().slice(-2)).toEqual(['DELETE /v1/me', 'GET /v1/auth/token'])
+  })
+
+  it('ends a retried delete that went through at Not signed in, with no sign-in and no code sent', async () => {
+    let gone = false
+    const world = await signedInWorld({
+      'POST /v1/auth/email-otp/send-verification-otp': () => json(200, { success: true }),
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
+      'POST /v1/auth/sign-out': () => json(200, {}),
+      'GET /v1/auth/token': () => (gone ? refusal(401, 'unauthorized') : token()),
+      'DELETE /v1/me': () => {
+        gone = true
+        return new Response('gateway', { status: 504 })
+      }
+    })
+    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toMatchObject({
+      refusal: 'try-again'
+    })
+    const before = world.routes().length
+    const signedOut = { type: 'account', account: { signedIn: false } }
+    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toEqual(
+      signedOut
+    )
+    await expect(
+      world.account.answer({ account: 'send-code', email: user.email, deleting: true })
+    ).resolves.toEqual(signedOut)
+    expect(world.routes().slice(before)).toEqual(['GET /v1/auth/token'])
+    expect(world.local.items.size).toBe(0)
+  })
+
+  it('signs in afresh and deletes on a retry while the session is still good', async () => {
+    let deletes = 0
+    const world = await signedInWorld({
+      'POST /v1/auth/email-otp/send-verification-otp': () => json(200, { success: true }),
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
+      'POST /v1/auth/sign-out': () => json(200, {}),
+      'GET /v1/auth/token': token,
+      'DELETE /v1/me': () =>
+        ++deletes === 1
+          ? new Response('gateway', { status: 504 })
+          : json(200, { status: 'deleted', appStoreSubscriptionContinues: false })
+    })
+    await world.account.answer({ account: 'delete', with: code })
+    const before = world.routes().length
+    await expect(
+      world.account.answer({ account: 'send-code', email: user.email, deleting: true })
+    ).resolves.toEqual({ type: 'code-sent' })
+    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toEqual({
+      type: 'deleted',
+      appStoreSubscriptionContinues: false
+    })
+    expect(world.routes().slice(before)).toEqual([
+      'GET /v1/auth/token',
+      'POST /v1/auth/email-otp/send-verification-otp',
+      'GET /v1/auth/token',
+      'POST /v1/auth/sign-in/email-otp',
+      'POST /v1/auth/sign-out',
+      'GET /v1/auth/token',
+      'DELETE /v1/me'
+    ])
+    expect(await world.store.keptAccount()).toBeNull()
   })
 })

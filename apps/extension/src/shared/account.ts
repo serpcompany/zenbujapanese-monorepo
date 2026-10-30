@@ -35,7 +35,7 @@ export type SignInWay =
 export type AccountRequest =
   | { account: 'read' }
   | { account: 'opened' }
-  | { account: 'send-code'; email: string }
+  | { account: 'send-code'; email: string; deleting?: true }
   | { account: 'sign-in'; with: SignInWay }
   | { account: 'sign-out' }
   | { account: 'delete'; with: SignInWay }

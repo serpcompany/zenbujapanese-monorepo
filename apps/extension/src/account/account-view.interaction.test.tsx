@@ -311,4 +311,47 @@ describe('Deleting the account', () => {
     expect(service.routes()).not.toContain('DELETE /v1/me')
     expect(stateOf(view)).toBe('signed-in')
   })
+
+  it('shows Not signed in, with no code sent and no sign-in, when a retried delete had gone through', async () => {
+    let gone = false
+    const { view, service } = await showAccount(
+      signInRoutes({
+        'GET /v1/auth/token': () =>
+          gone
+            ? refusal(401, 'unauthorized')
+            : json(200, { token: jwtWith(Date.now() / 1000 + 3600) }),
+        'DELETE /v1/me': () => {
+          gone = true
+          return new Response('gateway', { status: 504 })
+        }
+      })
+    )
+    await signInThenDeleteWithCode(view)
+    expect(problem(dialog())).toBe(accountLabels.refusals['try-again'])
+    const before = service.routes().length
+    await click(byText(dialog(), 'button', accountLabels.signIn))
+    expect(service.routes().slice(before)).toEqual(['GET /v1/auth/token'])
+    expect(stateOf(view)).toBe('signed-out')
+    expect(document.querySelector('[data-delete-step]')).toBeNull()
+    expect(view.querySelector('[data-account-deleted]')).toBeNull()
+  })
+
+  it('signs in afresh and deletes when a retried delete finds the session still good', async () => {
+    let deletes = 0
+    const { view, service } = await showAccount(
+      signInRoutes({
+        'DELETE /v1/me': () =>
+          ++deletes === 1
+            ? new Response('gateway', { status: 504 })
+            : json(200, { status: 'deleted', appStoreSubscriptionContinues: false })
+      })
+    )
+    await signInThenDeleteWithCode(view)
+    expect(problem(dialog())).toBe(accountLabels.refusals['try-again'])
+    await click(byText(dialog(), 'button', accountLabels.signIn))
+    const signIns = service.routes().filter(route => route === 'POST /v1/auth/sign-in/email-otp')
+    expect(signIns).toHaveLength(3)
+    expect(stateOf(view)).toBe('signed-out')
+    expect(find(view, '[data-account-deleted]').textContent).toBe(words.deleted)
+  })
 })

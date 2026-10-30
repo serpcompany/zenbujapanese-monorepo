@@ -98,7 +98,15 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     return refusedFor(answer)
   }
 
+  async function keptSessionEnded(): Promise<boolean> {
+    const sessionToken = await store.sessionToken()
+    if (sessionToken === null || (await store.keptAccount()) === null) return true
+    const checked = await tokens.newAccessToken(sessionToken)
+    return typeof checked !== 'string' && !checked.ok && checked.status === 401
+  }
+
   async function deleteAfterSignIn(way: SignInWay): Promise<AccountAnswer> {
+    if (await keptSessionEnded()) return read()
     const kept = await store.keptAccount()
     const earlier = await store.sessionToken()
     if (kept === null || earlier === null) return read()
@@ -137,6 +145,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
       case 'opened':
         return opened()
       case 'send-code': {
+        if (request.deleting === true && (await keptSessionEnded())) return read()
         const refusal = await signIns.sendCode(request.email)
         return refusal ?? { type: 'code-sent' }
       }
