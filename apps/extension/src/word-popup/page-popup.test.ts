@@ -115,9 +115,10 @@ describe('a word’s card on the page, asked for from the side panel', () => {
     expect(tab.ports.map(port => port.disconnected)).toEqual([true, true])
   })
 
-  it('takes the last card off the page when the next can’t be shown there', async () => {
+  it('takes the last card off the page, telling it so, when the next can’t be shown there', async () => {
     const tab = onATab()
-    tab.pagePopup(word, listener())
+    const first = listener()
+    tab.pagePopup(word, first)
     await settled()
     tab.ports[0]?.say(shown)
     const next = listener()
@@ -126,6 +127,8 @@ describe('a word’s card on the page, asked for from the side panel', () => {
     tab.ports[1]?.drop()
     expect(next.said).toEqual(['unavailable'])
     expect(tab.ports[0]?.disconnected).toBe(true)
+    await settled()
+    expect(first.said).toEqual(['shown', 'closed'])
   })
 
   it('takes a shown card off a tab the learner left when the next is asked for on another tab', async () => {
@@ -156,21 +159,6 @@ describe('a word’s card on the page, asked for from the side panel', () => {
     close()
     await settled()
     expect(next.said).toEqual(['shown'])
-  })
-
-  it('tells a shown card it went when the next can’t be shown and takes it off the page', async () => {
-    const tab = onATab()
-    const first = listener()
-    tab.pagePopup(word, first)
-    await settled()
-    tab.ports[0]?.say(shown)
-    const next = listener()
-    tab.pagePopup({ ...word, text: '要る', ids: ['iru'] }, next)
-    await settled()
-    tab.ports[1]?.drop()
-    await settled()
-    expect(next.said).toEqual(['unavailable'])
-    expect(first.said).toEqual(['shown', 'closed'])
   })
 
   it('tells a card not yet shown it went when the next is asked for, and tells nothing to the one that closes itself', async () => {
