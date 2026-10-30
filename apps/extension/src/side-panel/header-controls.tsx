@@ -182,6 +182,12 @@ function HeaderMenu({
         />
         <DropdownMenuSeparator />
         <MenuSwitches
+          title={settingsLabels.pageGroup}
+          settings={settings}
+          keys={['pages.pageText']}
+        />
+        <DropdownMenuSeparator />
+        <MenuSwitches
           title={settingsLabels.videos}
           settings={settings}
           keys={['videos.zenbuCaptions']}

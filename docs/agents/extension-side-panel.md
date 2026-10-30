@@ -35,8 +35,8 @@ the panel, and Open Full Entry expands a card in place
   calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` when it starts
   (owner, 2026-10-28); if Chrome refuses, it reports `side-panel-behavior` once
   ([`extension-error-reports.md`](extension-error-reports.md)). The header's trailing side is
-  `HeaderControls`: the site switch and the menu, which has the reading aids, Zenbu Captions, and
-  Settings ([The header's site](#the-headers-site)).
+  `HeaderControls`: the site switch and the menu, which has the reading aids, Page Text, Zenbu
+  Captions, and Settings ([The header's site](#the-headers-site)).
 - **The `openPanel` message opens it, from a click.** `{ target: 'service-worker', openPanel:
   route }` reaches the service worker's handler. Since #1124 only the agent harness and the tests
   send it; nothing in the extension does. A sender sends it in the click handler itself, before
