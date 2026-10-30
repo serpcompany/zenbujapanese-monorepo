@@ -20,6 +20,17 @@ struct ProgressStats: Decodable, Hashable, Sendable {
     let learning: Int
     let markedKnownLast7: Int
     let addedLast7: Int
+    let addedLast30: Int
+  }
+
+  struct GoalMet: Decodable, Hashable, Sendable {
+    let met: Int
+    let days: Int
+  }
+
+  struct GoalMetDays: Decodable, Hashable, Sendable {
+    let last7: GoalMet
+    let last30: GoalMet
   }
 
   struct KnownOnDay: Decodable, Hashable, Sendable {
@@ -44,13 +55,14 @@ struct ProgressStats: Decodable, Hashable, Sendable {
   let bestStreak: Streak?
   let last7: [Day]
   let last30: [Day]
+  let goalMet: GoalMetDays
   let totals: Totals
   let knownOverTime: [KnownOnDay]
   let dailyAverage: DailyAverage
   let words: [Words]
 }
 
-private struct ProgressStatsRequest: Encodable, Sendable {
+struct ProgressStatsRequest: Encodable, Hashable, Sendable {
   let days: [String: ProgressLogDay]
   let goal: Int
   let today: String
@@ -62,10 +74,45 @@ extension ProgressLog {
     return await Self.answer(request, using: core)
   }
 
-  private nonisolated static func answer(
+  nonisolated static func answer(
     _ request: ProgressStatsRequest, using core: PresentationCore
   ) async -> ProgressStats? {
     guard let asked = try? JSONEncoder.localStore.encode(request) else { return nil }
     return try? core.answer("progressStats", String(decoding: asked, as: UTF8.self))
+  }
+}
+
+struct ProgressDaysRequest: Encodable, Sendable {
+  struct Change: Encodable, Sendable {
+    private enum CodingKeys: String, CodingKey { case day }
+
+    let change: ProgressLogChange
+    let day: String
+
+    init(_ change: ProgressLogChange, day: String) {
+      self.change = change
+      self.day = day
+    }
+
+    func encode(to encoder: Encoder) throws {
+      try change.encode(to: encoder)
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(day, forKey: .day)
+    }
+  }
+
+  let days: [String: ProgressLogDay]
+  let changes: [Change]
+  let goal: Int
+  let today: String
+  let totals: ProgressTotals
+}
+
+extension ProgressLog {
+  nonisolated static func filledDays(_ request: ProgressDaysRequest) async -> [String: ProgressLogDay]?
+  {
+    guard let asked = try? JSONEncoder.localStore.encode(request) else { return nil }
+    return try? PresentationCore.shared.answer(
+      "progressDays", String(decoding: asked, as: UTF8.self), decodedBy: .localStore)
   }
 }

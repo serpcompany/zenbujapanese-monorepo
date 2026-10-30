@@ -33,11 +33,11 @@ extension FakeAccountService {
     let text = { (name: String) -> String in
       (state == "unknown" ? nil : field(name)) ?? current?.data?[name] as? String ?? ""
     }
-    return save(
-      user, key,
-      [
-        "itemId": mutation.entityId, "headword": text("headword"), "reading": text("reading"),
-        "known": state == "known", "state": state,
-      ], version + 1, applied)
+    var word: [String: Any] = [
+      "itemId": mutation.entityId, "headword": text("headword"), "reading": text("reading"),
+      "known": state == "known", "state": state,
+    ]
+    word["stateChangedAt"] = field("stateChangedAt")
+    return save(user, key, word, version + 1, applied)
   }
 }

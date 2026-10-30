@@ -20,7 +20,7 @@ struct ProgressTotals: Codable, Hashable, Sendable {
 
 enum WordKnowledgeEvent: Sendable {
   case changed(KnownWordChange, previous: WordKnowledgeStatus, totals: ProgressTotals)
-  case synced(totals: ProgressTotals)
+  case synced([ProgressLogChange], totals: ProgressTotals)
 }
 
 struct ProgressLogChange: Codable, Hashable, Sendable {
@@ -58,11 +58,38 @@ enum DailyGoal {
   static let range = 1...200
 
   static func read(_ defaults: UserDefaults) -> Int {
-    guard let stored = defaults.object(forKey: key) as? Double, stored.isFinite else {
-      return standard
-    }
+    clamped(defaults.object(forKey: key) as? Double)
+  }
+
+  static func clamped(_ stored: Double?) -> Int {
+    guard let stored, stored.isFinite else { return standard }
     return Int(min(max(stored.rounded(), Double(range.lowerBound)), Double(range.upperBound)))
   }
+
+  static func write(_ goal: Int, to defaults: UserDefaults) {
+    defaults.set(Double(clamped(Double(goal))), forKey: key)
+  }
+
+  static func synced(_ value: SyncFieldValue) -> Int? {
+    let number: Double
+    switch value {
+    case .number(let whole): number = Double(whole)
+    case .decimal(let decimal): number = decimal
+    default: return nil
+    }
+    guard number >= Double(range.lowerBound), number <= Double(range.upperBound) else { return nil }
+    return clamped(number)
+  }
+
+  static let setting = SyncedSetting(
+    name: key, standard: .number(standard),
+    read: { defaults in
+      defaults.object(forKey: key) is Double ? .number(DailyGoal.read(defaults)) : nil
+    },
+    write: { defaults, value in
+      guard let goal = DailyGoal.synced(value) else { return }
+      DailyGoal.write(goal, to: defaults)
+    })
 }
 
 @MainActor
@@ -73,20 +100,29 @@ final class ProgressLog: LocalFileStore {
   private(set) var isLoaded = false
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
   private(set) var days: [String: ProgressLogDay] = [:]
+  private var readDay: String
   @ObservationIgnored let writes = LocalFileWriteQueue()
-  @ObservationIgnored var now: () -> Date = Date.init
+  @ObservationIgnored var now: () -> Date = Date.init {
+    didSet { readDay = day(of: now()) }
+  }
+  @ObservationIgnored var askForDays: @Sendable (ProgressDaysRequest) async -> [String: ProgressLogDay]? =
+    ProgressLog.filledDays
+  @ObservationIgnored var changeRecorded: ((KnownWordChange, WordKnowledgeStatus, String) -> Void)?
+  @ObservationIgnored private var unfilled: [ProgressLogChange] = []
   @ObservationIgnored private let writer: ProgressLogWriter
   @ObservationIgnored private let defaults: UserDefaults
   @ObservationIgnored private let calendar: Calendar
   @ObservationIgnored private var heardBeforeLoading: [WordKnowledgeEvent] = []
   @ObservationIgnored private var goalObserver: NSObjectProtocol?
+  @ObservationIgnored private var dayObserver: NSObjectProtocol?
   @ObservationIgnored private weak var knowledge: WordKnowledge?
   var canChange: Bool { isLoaded && readOnlyReason == nil }
   var goal: Int { DailyGoal.read(defaults) }
+  var today: String { readDay }
 
   init(
     fileURL: URL = ProgressLog.defaultFileURL, defaults: UserDefaults = .standard,
-    timeZone: TimeZone = .autoupdatingCurrent
+    timeZone: TimeZone = .autoupdatingCurrent, center: NotificationCenter = .default
   ) {
     let writer = ProgressLogWriter(fileURL: fileURL)
     self.writer = writer
@@ -94,6 +130,7 @@ final class ProgressLog: LocalFileStore {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = timeZone
     self.calendar = calendar
+    readDay = Self.day(of: Date(), in: calendar)
     writes.load { [self] in
       let (loaded, needsRewrite, readOnlyReason) = await writer.load()
       days = loaded
@@ -108,6 +145,10 @@ final class ProgressLog: LocalFileStore {
       forName: UserDefaults.didChangeNotification, object: defaults, queue: .main
     ) { [weak self] _ in
       MainActor.assumeIsolated { self?.keepTodaysGoal() }
+    }
+    dayObserver = center.addObserver(forName: .NSCalendarDayChanged, object: nil, queue: .main) {
+      [weak self] _ in
+      MainActor.assumeIsolated { self?.refreshDay() }
     }
   }
 
@@ -129,7 +170,16 @@ final class ProgressLog: LocalFileStore {
     return true
   }
 
+  func refreshDay() {
+    let current = day(of: now())
+    if current != readDay { readDay = current }
+  }
+
   func day(of time: Date) -> String {
+    Self.day(of: time, in: calendar)
+  }
+
+  nonisolated static func day(of time: Date, in calendar: Calendar) -> String {
     let parts = calendar.dateComponents([.year, .month, .day], from: time)
     return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
   }
@@ -140,42 +190,49 @@ final class ProgressLog: LocalFileStore {
     switch event {
     case .changed(let change, let previous, let totals):
       let time = change.changedAt ?? now()
-      let changed = day(of: time)
-      let today = day(of: now())
-      if changed < today {
-        movePastTotals(from: previous, to: change.status, since: changed, before: today, totals)
-      } else {
-        days[changed, default: ProgressLogDay(goal: goal, totals: totals)].totals = totals
-      }
-      days[changed]?.changes.append(
-        ProgressLogChange(
-          id: change.storedID, before: previous.stored, after: change.status.stored, at: time))
-      keepToday(totals)
-    case .synced(let totals):
-      keepToday(totals)
+      add(
+        [
+          ProgressLogChange(
+            id: change.storedID, before: previous.stored, after: change.status.stored, at: time)
+        ], totals: totals)
+      changeRecorded?(change, previous, min(day(of: time), day(of: now())))
+    case .synced(let changes, let totals):
+      add(changes, totals: totals)
     }
-    persist()
   }
 
-  private func keepToday(_ totals: ProgressTotals) {
+  private func add(_ changes: [ProgressLogChange], totals: ProgressTotals) {
+    let today = day(of: now())
+    let past = changes.filter { day(of: $0.at) < today }
+    keepToday(totals, adding: changes.filter { day(of: $0.at) >= today })
+    persist()
+    guard !past.isEmpty else { return }
+    unfilled.append(contentsOf: past)
+    fill()
+  }
+
+  private func keepToday(_ totals: ProgressTotals, adding changes: [ProgressLogChange]) {
     let today = day(of: now())
     days[today, default: ProgressLogDay(goal: goal, totals: totals)].totals = totals
     days[today]?.goal = goal
+    days[today]?.changes.append(contentsOf: changes)
   }
 
-  private func movePastTotals(
-    from before: WordKnowledgeStatus, to after: WordKnowledgeStatus, since changed: String,
-    before today: String, _ totals: ProgressTotals
-  ) {
-    if days[changed] == nil {
-      let earlier = days.filter { $0.key < changed }.max { $0.key < $1.key }?.value
-      days[changed] = ProgressLogDay(
-        goal: earlier?.goal ?? goal,
-        totals: earlier?.totals ?? totals.moving(from: after, to: before))
-    }
-    for key in days.keys where key >= changed && key < today {
-      guard let past = days[key]?.totals else { continue }
-      days[key]?.totals = past.moving(from: before, to: after)
+  private func fill() {
+    writes.queue { [self] in
+      guard canChange, !unfilled.isEmpty else { return }
+      let changes = unfilled
+      unfilled = []
+      let today = day(of: now())
+      let request = ProgressDaysRequest(
+        days: days, changes: changes.map { ProgressDaysRequest.Change($0, day: day(of: $0.at)) },
+        goal: goal, today: today,
+        totals: days[today]?.totals ?? knowledge?.totals ?? ProgressTotals(known: 0, learning: 0))
+      guard let filled = await askForDays(request), canChange else { return }
+      let past = filled.filter { $0.key < day(of: now()) }
+      guard !past.isEmpty else { return }
+      days.merge(past) { $1 }
+      persist()
     }
   }
 

@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import Testing
 
 @testable import SearchExperience
@@ -69,15 +70,19 @@ final class ProgressLogTests {
   private func share(
     _ id: LanguageReferenceID, _ headword: String, _ status: WordKnowledgeStatus, madeAt made: Date
   ) throws -> SharedChanges {
-    let inbox = SharedChanges(folder: folder.appending(path: "Inbox"))
-    try FileManager.default.createDirectory(at: inbox.folder, withIntermediateDirectories: true)
-    let name = String(
-      format: "%020llu-%010d-%@.json", UInt64(made.timeIntervalSince1970 * 1_000_000_000), 1,
-      UUID().uuidString)
-    let change = SharedChange.known(
-      KnownWordChange(storedID: id.rawValue, headword: headword, reading: headword, status: status))
-    try JSONEncoder.localStore.encode(change).write(to: inbox.folder.appending(path: name))
-    return inbox
+    try SharedChanges.holding(
+      KnownWordChange(storedID: id.rawValue, headword: headword, reading: headword, status: status),
+      madeAt: made, in: folder)
+  }
+
+  private func opened(applying inbox: SharedChanges, at time: Date) async -> (
+    WordKnowledge, ProgressLog
+  ) {
+    clock.now = time
+    let (knowledge, log) = await stores()
+    await inbox.apply(to: WordLists(fileURL: folder.appending(path: "word-lists.json")), knowledge)
+    await log.flush()
+    return (knowledge, log)
   }
 
   @Test("changes at 23:59 and at 00:01 fall on two days, each kept as it happened")
@@ -102,16 +107,60 @@ final class ProgressLogTests {
     #expect(reloaded.days["2026-10-28"]?.goal == DailyGoal.standard)
   }
 
+  private func todayAfter(
+    from start: Date, to later: Date, _ turn: (ProgressLog, NotificationCenter) async -> Void
+  ) async -> (before: String, heard: Bool, after: String) {
+    let center = NotificationCenter()
+    clock.now = start
+    let log = ProgressLog(fileURL: logURL, defaults: defaults, timeZone: tokyo, center: center)
+    log.now = { [clock] in clock.now }
+    await log.flush()
+    let (changes, change) = AsyncStream.makeStream(of: Void.self)
+    let before = withObservationTracking { log.today } onChange: { change.yield() }
+    clock.now = later
+    await turn(log, center)
+    change.finish()
+    var heard = false
+    for await _ in changes { heard = true }
+    return (before, heard, log.today)
+  }
+
+  @Test("the day turning while the app is open moves today, so Account asks for the new day's stats")
+  func dayTurns() async {
+    let turned = await todayAfter(from: october(27, 23, 59), to: october(28, 7, 0)) { _, center in
+      center.post(name: .NSCalendarDayChanged, object: nil)
+      await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
+    }
+    #expect(turned.before == "2026-10-27")
+    #expect(turned.heard)
+    #expect(turned.after == "2026-10-28")
+  }
+
+  @Test("the app becoming active on a new day moves today, with no day change posted")
+  func resumeOnANewDay() async {
+    let resumed = await todayAfter(from: october(27, 23, 59), to: october(28, 7, 0)) { log, _ in
+      log.refreshDay()
+    }
+    #expect(resumed.before == "2026-10-27")
+    #expect(resumed.heard)
+    #expect(resumed.after == "2026-10-28")
+  }
+
+  @Test("the app becoming active on the same day leaves today as it was")
+  func resumeOnTheSameDay() async {
+    let resumed = await todayAfter(from: october(27, 8, 0), to: october(27, 23, 0)) { log, _ in
+      log.refreshDay()
+    }
+    #expect(!resumed.heard)
+    #expect(resumed.after == "2026-10-27")
+  }
+
   @Test("a share sheet change made at 23:59 and applied the next morning falls on its own day")
   func shareSheetChangeKeepsItsDay() async throws {
     let made = october(27, 23, 59)
     let inbox = try share(eki, "駅", .learning, madeAt: made)
 
-    clock.now = october(28, 8, 0)
-    let (knowledge, log) = await stores()
-    let lists = WordLists(fileURL: folder.appending(path: "word-lists.json"))
-    await inbox.apply(to: lists, knowledge)
-    await log.flush()
+    let (_, log) = await opened(applying: inbox, at: october(28, 8, 0))
 
     #expect(ids(on: "2026-10-27", in: log) == [eki.rawValue])
     #expect(log.days["2026-10-27"]?.changes.first?.at == made)
@@ -150,15 +199,24 @@ final class ProgressLogTests {
     try Data(seeded.utf8).write(to: logURL)
     let inbox = try share(eki, "駅", .learning, madeAt: october(25, 23, 59))
 
-    clock.now = october(28, 8, 0)
-    let (knowledge, log) = await stores()
-    await inbox.apply(to: WordLists(fileURL: folder.appending(path: "word-lists.json")), knowledge)
-    await log.flush()
+    let (knowledge, log) = await opened(applying: inbox, at: october(28, 8, 0))
 
     #expect(log.days["2026-10-25"]?.totals == ProgressTotals(known: 0, learning: 1))
     #expect(log.days["2026-10-26"]?.totals == ProgressTotals(known: 2, learning: 4))
     #expect(log.days["2026-10-27"]?.totals == ProgressTotals(known: 2, learning: 4))
     #expect(log.days["2026-10-28"]?.totals == knowledge.totals)
+  }
+
+  @Test("two share sheet changes on two past days applied together each count once")
+  func twoShareSheetChangesOnTwoPastDays() async throws {
+    _ = try share(eki, "駅", .learning, madeAt: october(25, 12, 0))
+    let inbox = try share(taberu, "食べる", .learning, madeAt: october(27, 12, 0))
+
+    let (_, log) = await opened(applying: inbox, at: october(29, 8, 0))
+
+    #expect(log.days["2026-10-25"]?.totals == ProgressTotals(known: 0, learning: 1))
+    #expect(log.days["2026-10-27"]?.totals == ProgressTotals(known: 0, learning: 2))
+    #expect(log.days["2026-10-29"]?.totals == ProgressTotals(known: 0, learning: 2))
   }
 
   @Test("a synced change updates the day's totals and isn't recorded as a change")
@@ -314,10 +372,39 @@ final class ProgressLogTests {
     #expect(stats.today == ProgressStats.Day(day: "2026-10-28", added: 0, markedKnown: 0, goal: 3, met: false))
     #expect(stats.streak == 2)
     #expect(stats.bestStreak == ProgressStats.Streak(length: 2, first: "2026-10-26", last: "2026-10-27"))
-    #expect(stats.totals == ProgressStats.Totals(known: 1, learning: 2, markedKnownLast7: 1, addedLast7: 2))
+    #expect(stats.totals == ProgressStats.Totals(
+      known: 1, learning: 2, markedKnownLast7: 1, addedLast7: 2, addedLast30: 2))
+    #expect(stats.last7.map(\.added) == [0, 0, 0, 0, 1, 1, 0])
+    #expect(stats.goalMet.last7 == ProgressStats.GoalMet(met: 2, days: 2))
     #expect(stats.knownOverTime.map(\.known) == [0, 1, 1])
     #expect(stats.dailyAverage == ProgressStats.DailyAverage(average: 1, days: 2))
     #expect(stats.words.last == ProgressStats.Words(
       day: "2026-10-27", addedToLearning: [taberu.rawValue], markedKnown: ["kanji:語"]))
+  }
+
+  @Test("the app reads the words marked Known in a week through the bundle")
+  func knownByDateThroughTheBundle() async throws {
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let at = Int(october(20, 9, 0).timeIntervalSince1970 * 1000)
+    let seeded = """
+      {"version":1,"days":{
+      "2026-10-20":{"changes":[{"id":"\(miru.rawValue)","before":"learning","after":"known","at":\(at)}],"goal":1,"known":1,"learning":0},
+      "2026-10-27":{"changes":[{"id":"\(taberu.rawValue)","before":"learning","after":"known","at":\(at)},{"id":"kanji:語","before":"unknown","after":"known","at":\(at)}],"goal":1,"known":3,"learning":0}}}
+      """
+    try Data(seeded.utf8).write(to: logURL)
+    clock.now = october(28, 9, 0)
+    let log = await log()
+
+    let week = try #require(await log.knownByDate(week: 0))
+    #expect(week.days.map(\.count) == [0, 0, 0, 0, 0, 2, 0])
+    #expect(week.days[5] == KnownByDate.Day(day: "2026-10-27", markedKnown: [taberu.rawValue, "kanji:語"], count: 2))
+    #expect(week.total == 2)
+    #expect(week.change == 1)
+    #expect(week.hasEarlier && !week.hasLater)
+    #expect(week.firstDay == "2026-10-20")
+    let earlier = try #require(await log.knownByDate(week: 1))
+    #expect(earlier.total == 1)
+    #expect(earlier.change == nil)
+    #expect(!earlier.hasEarlier && earlier.hasLater)
   }
 }

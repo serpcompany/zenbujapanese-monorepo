@@ -13,6 +13,7 @@ struct AccountSyncTests {
     let fixture = Fixture()
     fixture.serve()
     await fixture.launch()
+    fixture.wordKnowledge.now = { Fixture.start }
     fixture.markKnown(Fixture.taberu)
     let anime = try #require(fixture.wordLists.createList(named: "Anime"))
     fixture.addMiru(to: anime.id)
@@ -33,6 +34,7 @@ struct AccountSyncTests {
     #expect(
       sent.mutations[0].fields == [
         "state": .string("known"), "headword": .string("食べる"), "reading": .string("たべる"),
+        "stateChangedAt": .string("2026-10-03T04:00:00.000Z"),
       ])
     #expect(sent.mutations[2].fields == ["name": .string("Anime"), "position": .number(1)])
     #expect(sent.mutations[3].fields == ["headword": .string("見る"), "reading": .string("みる")])

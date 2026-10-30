@@ -93,8 +93,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     let photo = waitFor(firstElement(identifiedBy: "media-library.item.", in: app))
     waitUntil(photo, mentions: "猫")
     goBack(in: app)
-    tap(reveal(find("account.reading-aids", in: app), in: app))
-    waitUntil(waitFor(find("reading-aids.show-romaji", in: app)), Self.switchedOn)
+    waitUntil(openReadingAids(showing: "show-romaji", in: app), Self.switchedOn)
     open(.search, in: app)
     waitUntil(waitFor(find("recent-search.0", in: app)), "label == '猫'")
   }
@@ -125,8 +124,9 @@ final class AccountSignedInUITests: ZenbuUITestCase {
   func testAReportOpensWithTheAccountsEmailFilledInAndSaysSo() {
     let app = launch(Self.standIns.merging(Self.problemReportStandIn) { $1 })
     signInWithApple(in: app)
-    tap(reveal(find("account.report-a-problem", in: app), in: app))
-    waitUntil(waitFor(find("problem-report.email", in: app)), "value == 'learner@example.com'")
+    let email = find("problem-report.email", in: app)
+    tapClearOfTheBars(find("account.report-a-problem", in: app), toShow: email, in: app)
+    waitUntil(email, "value == 'learner@example.com'")
     let note = reveal(find("problem-report.note", in: app), in: app)
     waitUntil(note, mentions: "Your Zenbu account's email is filled in")
     reveal(labeled("Account, Signed in", in: app), in: app)

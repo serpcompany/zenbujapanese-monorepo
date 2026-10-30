@@ -129,7 +129,9 @@ final class DictionaryCore {
     }
   }
 
-  func answer<Answer: Decodable>(_ method: String, _ argument: String) throws -> Answer {
+  func answer<Answer: Decodable>(
+    _ method: String, _ argument: String, decodedBy decoder: JSONDecoder = JSONDecoder()
+  ) throws -> Answer {
     let json = try asked(answerNowJSON, method, argument)
     guard let text = JSValueToStringCopy(context.jsGlobalContextRef, json, nil) else {
       throw DictionaryCoreError.failed("\(method) answered nothing")
@@ -140,7 +142,7 @@ final class DictionaryCore {
       JSStringGetUTF8CString(text, buffer.bindMemory(to: CChar.self).baseAddress, buffer.count)
     }
     bytes.count = max(written - 1, 0)
-    return try JSONDecoder().decode(Answer.self, from: bytes)
+    return try decoder.decode(Answer.self, from: bytes)
   }
 
   func flag(_ method: String, _ argument: String) throws -> Bool {
