@@ -189,6 +189,14 @@ describe("the website's code for the extension", () => {
       headers: { origin: 'https://elsewhere.example', cookie: `${websiteCookie}=${website}` }
     })
     expect(elsewhere).toMatchObject({ status: 403, body: { error: { code: 'invalid_origin' } } })
+    const extensionWithCookie = await ask({
+      ...fromExtension(),
+      headers: { ...fromExtension().headers, cookie: `${websiteCookie}=${website}` }
+    })
+    expect(extensionWithCookie).toMatchObject({
+      status: 403,
+      body: { error: { code: 'invalid_origin' } }
+    })
     expect(await codes()).toEqual(before)
   })
 

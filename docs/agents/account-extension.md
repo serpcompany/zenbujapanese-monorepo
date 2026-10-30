@@ -85,8 +85,9 @@ message is [ADR 0023](../adr/0023-hand-the-websites-sign-in-to-the-browser-exten
 - **The website asks for a code,** `POST /v1/auth/extension-code`, with its session cookie and
   `credentials: 'include'`, as its other account pages call. Only a website session gets one: an
   app's bearer session is refused `403 website_only`, no session `401 unauthorized`, and a cookie
-  from an origin the service doesn't trust `403 invalid_origin`. The code is 32 random bytes,
-  kept only as its SHA-256 in `verifications`, for 5 minutes, naming `zenbu-extension`.
+  from any origin but the website's, the extension's included, `403 invalid_origin`. The code is
+  32 random bytes, kept only as its SHA-256 in `verifications`, for 5 minutes, naming
+  `zenbu-extension`.
 - **It hands the code over by message,** `chrome.runtime.sendMessage('<id>', { type: 'sign-in',
   code })`, to the store item's ID alone. The extension must take it from its build's website
   alone: its `externally_connectable` lists only `https://zenbujapanese.com/*`, or staging's
