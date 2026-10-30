@@ -47,6 +47,13 @@ extension does it, #961's, is in In the extension, below.
   dropped (`tokens.test.ts`, "an access token that comes back after the session it was asked
   with ended"). A sign-in writes the session before it clears the access token, and a sign-out
   removes the session before the access token, so a late answer finds the new one.
+- **The store writes one at a time.** Every write to the account's keys goes through the one
+  `accountStore` the service worker makes (`channel.ts`), which runs them in turn, so no write
+  reads the account and writes it back over another's (a sign-in, a subscription, Subscribe…, a
+  token, or a sign-out); each checks the session token that asked when its turn comes. The
+  access token is kept with its session token's SHA-256, never the session token, and is
+  answered only for that session (`store.test.ts`, a sign-in to another account landing in the
+  middle of a write).
 - Never send `Authorization` on a sign-in: a sign-in with a session adds a way in to that account,
   which needs `account`.
 - No token, code, or email goes in an error report.
@@ -101,6 +108,8 @@ As the client guide's Deleting the account says. The extension has no `account`,
 through the return route, and sends that sign-in's `code` as `appleAuthorizationCode`, never
 `appleRedirectUri`. The service exchanges the code as the website's Services ID, with the return
 route's URL as `redirect_uri`, since that's where Apple sent it (`src/auth/apple-revoke.ts`).
+An Apple sign-in that answers no `code` sends no delete: the extension ends that session and
+answers `apple-again`, Continue with Apple again.
 
 ## In the extension
 

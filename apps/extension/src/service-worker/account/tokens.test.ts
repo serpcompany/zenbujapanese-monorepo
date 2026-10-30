@@ -21,7 +21,7 @@ describe('accessTokens', () => {
     await world.tokens.withAccess('session-earlier', { method: 'GET', path: '/v1/me/subscription' })
     expect(world.asked[0]?.headers.get('authorization')).toBe('Bearer session-earlier')
     expect(world.asked[1]?.headers.get('authorization')).toBe(`Bearer ${jwtWith(exp)}`)
-    expect(world.session.items.get(accessTokenKey)).toEqual({
+    expect(world.session.items.get(accessTokenKey)).toMatchObject({
       token: jwtWith(exp),
       expiresAt: exp * 1000
     })
@@ -31,7 +31,11 @@ describe('accessTokens', () => {
       'GET /v1/me/subscription',
       'GET /v1/me/subscription'
     ])
-    world.session.items.set(accessTokenKey, { token: 'old', expiresAt: now + 59_000 })
+    world.session.items.set(accessTokenKey, {
+      ...(world.session.items.get(accessTokenKey) as object),
+      token: 'old',
+      expiresAt: now + 59_000
+    })
     await world.tokens.withAccess('session-earlier', { method: 'GET', path: '/v1/me/subscription' })
     expect(world.routes().at(-2)).toBe('GET /v1/auth/token')
   })
@@ -78,7 +82,7 @@ describe('accessTokens', () => {
     const world = await signedInWorld({
       'GET /v1/auth/token': () => json(200, { token: 'access-1' })
     })
-    await world.store.forget()
+    await world.store.forgetSession('session-earlier')
     await expect(
       world.tokens.withAccess('session-earlier', { method: 'GET', path: '/v1/me/subscription' })
     ).resolves.toMatchObject({ status: 401 })

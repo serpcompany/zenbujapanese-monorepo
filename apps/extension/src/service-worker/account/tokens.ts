@@ -37,7 +37,7 @@ export function accessTokens(api: Api, store: AccountStore, now: () => number = 
   }
 
   async function keptAccessToken(sessionToken: string): Promise<string | null> {
-    const kept = await store.accessToken()
+    const kept = await store.accessToken(sessionToken)
     if (!kept || kept.expiresAt - refreshBeforeMs <= now()) return null
     return (await store.isCurrent(sessionToken)) ? kept.token : null
   }
@@ -47,7 +47,7 @@ export function accessTokens(api: Api, store: AccountStore, now: () => number = 
     if (typeof first !== 'string') return first
     const answer = await api({ ...call, bearer: first })
     if (answer.ok || answer.status !== 401) return answer
-    await store.forgetAccessToken()
+    await store.forgetAccessToken(sessionToken)
     const second = await newAccessToken(sessionToken)
     return typeof second === 'string' ? api({ ...call, bearer: second }) : second
   }

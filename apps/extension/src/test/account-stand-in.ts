@@ -15,21 +15,50 @@ export const origin = 'http://account-api.localhost'
 
 export const user = { id: 'user-1', email: 'learner@example.com' }
 
+type StorageCall = 'get' | 'set' | 'remove'
+
+type Hold = { reached: () => void; released: Promise<void> }
+
 export function storageArea() {
   const items = new Map<string, unknown>()
+  const holds = new Map<StorageCall, Hold>()
+  const waitIfHeld = async (call: StorageCall) => {
+    const hold = holds.get(call)
+    if (!hold) return
+    holds.delete(call)
+    hold.reached()
+    await hold.released
+  }
   const area: StorageArea = {
-    get: async keys =>
-      Object.fromEntries(
+    get: async keys => {
+      const answer = Object.fromEntries(
         keys.filter(key => items.has(key)).map(key => [key, structuredClone(items.get(key))])
-      ),
+      )
+      await waitIfHeld('get')
+      return answer
+    },
     set: async values => {
+      await waitIfHeld('set')
       Object.entries(values).map(([key, value]) => items.set(key, structuredClone(value)))
     },
     remove: async keys => {
+      await waitIfHeld('remove')
       keys.map(key => items.delete(key))
     }
   }
-  return { area, items }
+  const holdNext = (call: StorageCall) => {
+    let release = () => {}
+    let reached = () => {}
+    const released = new Promise<void>(resolve => {
+      release = resolve
+    })
+    const reaching = new Promise<void>(resolve => {
+      reached = resolve
+    })
+    holds.set(call, { reached, released })
+    return { reached: reaching, release }
+  }
+  return { area, items, holdNext }
 }
 
 export function json(status: number, value: unknown, headers: Record<string, string> = {}) {

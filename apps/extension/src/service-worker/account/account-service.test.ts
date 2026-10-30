@@ -168,6 +168,26 @@ describe('accountService', () => {
     expect(await world.store.keptAccount()).toBeNull()
   })
 
+  it("asks to continue with Apple again, and sends no delete, when Apple's sign-in gives no code", async () => {
+    const world = await signedInWorld(
+      {
+        'POST /v1/auth/sign-in/nonce': () => json(200, { nonce: 'nonce-2' }),
+        'POST /v1/auth/sign-in/social': () => signedInAnswer('session-apple'),
+        'POST /v1/auth/sign-out': () => json(200, {})
+      },
+      url => returnedFrom(url, { id_token: 'apple-id' })
+    )
+    const answer = await world.account.answer({ account: 'delete', with: { way: 'apple' } })
+    expect(answer).toMatchObject({ type: 'refused', refusal: 'apple-again' })
+    expect(world.routes()).toEqual([
+      'POST /v1/auth/sign-in/nonce',
+      'POST /v1/auth/sign-in/social',
+      'POST /v1/auth/sign-out'
+    ])
+    expect(world.asked.at(-1)?.headers.get('authorization')).toBe('Bearer session-apple')
+    expect(world.local.items.get(sessionTokenKey)).toBe('session-earlier')
+  })
+
   it("keeps the account's subscription through the fresh sign-in of a delete that doesn't finish", async () => {
     const world = await signedInWorld({
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),

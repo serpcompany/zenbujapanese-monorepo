@@ -68,7 +68,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
   async function signOut(): Promise<AccountAnswer> {
     const sessionToken = await store.sessionToken()
     if (sessionToken === null) {
-      await store.forget()
+      await store.forgetSession(null)
       return read()
     }
     await endSession(sessionToken)
@@ -110,12 +110,17 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     if (kept === null || earlier === null) return read()
     const fresh = await signIns.signIn(way)
     if (!fresh.ok) return fresh.refused
-    if (fresh.user.id !== kept.user.id || !(await store.isCurrent(earlier))) {
+    const refusal =
+      way.way === 'apple' && fresh.appleCode === null
+        ? refused('apple-again')
+        : fresh.user.id !== kept.user.id
+          ? refused('other-account')
+          : null
+    if (refusal !== null || !(await store.keepSignIn(fresh.sessionToken, fresh.user, earlier))) {
       await endSession(fresh.sessionToken)
-      return fresh.user.id === kept.user.id ? read() : refused('other-account')
+      return refusal ?? read()
     }
     await endSession(earlier)
-    await store.keepSignIn(fresh.sessionToken, fresh.user)
     return deleteNow(fresh.sessionToken, fresh.appleCode)
   }
 
@@ -124,7 +129,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     const sessionToken = await store.sessionToken()
     if (kept === null || sessionToken === null) return read()
     if (kept.wentToSubscribe) {
-      await store.keepWentToSubscribe(false)
+      await store.keepWentToSubscribe(sessionToken, false)
       await readSubscription()
     } else {
       await tokens.checkSession(sessionToken)
@@ -148,9 +153,11 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
         return signOut()
       case 'delete':
         return deleteAfterSignIn(request.with)
-      case 'went-to-subscribe':
-        await store.keepWentToSubscribe(true)
+      case 'went-to-subscribe': {
+        const sessionToken = await store.sessionToken()
+        if (sessionToken !== null) await store.keepWentToSubscribe(sessionToken, true)
         return read()
+      }
     }
   }
 
