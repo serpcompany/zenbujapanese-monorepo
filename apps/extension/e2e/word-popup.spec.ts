@@ -305,7 +305,7 @@ for (const { name, aids } of readingAidCases) {
       await expect(states).toHaveText(['Unknown', 'Learning', 'Known'])
       await expect(page.getByRole('menuitemradio', { name: 'Unknown' })).toBeChecked()
       await expect(page.getByRole('menuitem')).toHaveText(['Add to List…', 'Add Note'])
-      await page.getByRole('menuitemradio', { name: 'Known' }).click()
+      await page.getByRole('menuitemradio', { name: 'Known', exact: true }).click()
       const toast = popup.locator('[data-saving-toast="signed-out"]')
       await expect(toast).toContainText(saving.signedOut.title)
       await expect(toast.getByRole('button', { name: saving.signedOut.action })).toBeVisible()

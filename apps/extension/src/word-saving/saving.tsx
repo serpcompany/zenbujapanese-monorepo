@@ -86,8 +86,10 @@ export function SavingProvider({ port, children }: { port: SavingPort; children:
   const [views, setViews] = useState<Record<string, WordView>>({})
   const [noteFor, focusNote] = useState<string | null>(null)
   const { toast, show, dismiss } = useToast()
+  const asked = useRef(new Set<string>())
   const refresh = useCallback(
     async (item: string) => {
+      asked.current.add(item)
       const view = await port.ask(item)
       if (view) setViews(shown => ({ ...shown, [item]: view }))
     },
@@ -96,10 +98,11 @@ export function SavingProvider({ port, children }: { port: SavingPort; children:
   useEffect(
     () =>
       port.onRefused(({ refusal, page }) => {
+        for (const item of asked.current) void refresh(item)
         if (refusal === null) return dismiss()
         if (page === undefined || page === port.page()) show({ kind: refusal })
       }),
-    [port, show, dismiss]
+    [port, refresh, show, dismiss]
   )
   const saving = useMemo(
     () => ({ port, views, refresh, toast, show, dismiss, noteFor, focusNote }),

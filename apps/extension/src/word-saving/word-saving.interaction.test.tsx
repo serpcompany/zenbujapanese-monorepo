@@ -224,12 +224,17 @@ describe('Word Detail’s saving', () => {
 
 describe('a refusal told later', () => {
   it('shows for this page, not for another, and goes when the account changes', async () => {
+    saving.refuse('signed-out')
     await showPopup()
     act(() => saving.tell({ refusal: 'subscription-required', page: 'https://elsewhere.example/' }))
     expect(toast()).toBeNull()
     act(() => saving.tell({ refusal: 'subscription-required', page: 'https://example.com/' }))
     expect(toast()?.dataset.savingToast).toBe('subscription-required')
+    saving.refuse(null)
     act(() => saving.tell({ refusal: null }))
     expect(toast()).toBeNull()
+    await settle()
+    await click(byText(await openMenu(), '[role="menuitem"]', labels.addToList))
+    expect(byText(document, '[role="menuitemcheckbox"]', 'Favorites')).not.toBeNull()
   })
 })

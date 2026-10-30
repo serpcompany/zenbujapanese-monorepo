@@ -11,6 +11,7 @@ import { askSettings, isZenbuOn, onSettingsChanged } from '../shared/settings'
 import { servePagePopups } from '../word-popup/page-popup-server'
 import { wordPopupHost } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
+import { chromeSaving } from '../word-saving/saving'
 
 const alive = () => chrome.runtime?.id !== undefined
 
@@ -24,6 +25,7 @@ const started = startUnlessRunning(document, alive, () => {
     onSettingsChanged: listener => onSettingsChanged(listener),
     segment: text => segmentText(text),
     popupCard: (id, frequency) => lookUpPopupCard(id, frequency),
+    saving: chromeSaving,
     underlines: () => pageUnderlines(document),
     popup: settings => wordPopupHost({ settings, report }),
     report,
@@ -37,7 +39,8 @@ const started = startUnlessRunning(document, alive, () => {
     popup: settings =>
       wordPopupHost({
         report,
-        settings: () => popupSettings(settings(), { popupCard: lookUpPopupCard })
+        settings: () =>
+          popupSettings(settings(), { popupCard: lookUpPopupCard, saving: chromeSaving })
       })
   })
   const onMessage = (

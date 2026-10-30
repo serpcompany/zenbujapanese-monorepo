@@ -1,6 +1,7 @@
 import { isZenbuOn, type Settings } from '../shared/settings'
 import type { PopupHost, PopupSettings } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
+import type { SavingPort } from '../word-saving/saving'
 import type { Aids } from './annotate'
 import { type GlossLookUp, glossCache } from './glosses'
 import { anchorOf, type Found, pageRendering, type Rendering, wordIds } from './rendering'
@@ -16,6 +17,7 @@ export type PageLookupBrowser = {
   onSettingsChanged(listener: (settings: Settings) => void): () => void
   segment: Segment
   popupCard(languageReferenceID: string, frequency: readonly string[]): ReturnType<GlossLookUp>
+  saving: SavingPort
   underlines(): Underlines
   popup(settings: () => PopupSettings): PopupHost
   report(error: unknown): void

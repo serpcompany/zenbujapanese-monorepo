@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type Settings, settingDefaults } from '../shared/settings'
+import { savingStandIn } from '../test/saving-stand-in'
 import { popupAnswer, sentence, sentenceAnswer } from '../test/word-cards'
 import { startPageLookup } from './page-lookup'
 
@@ -45,6 +46,7 @@ function lookUpOn(changes: Partial<Settings>) {
     onSettingsChanged: () => () => {},
     segment,
     popupCard: async id => popupAnswer(id),
+    saving: savingStandIn().port,
     underlines: () => underlines,
     popup: () => ({ open: vi.fn(), close: vi.fn(), holds: () => false }),
     report: error => {

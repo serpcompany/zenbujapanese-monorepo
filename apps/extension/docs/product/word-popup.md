@@ -101,7 +101,8 @@ address and says "Link copied"; closing the sheet does nothing more.
   side panel's Account tab. Without the subscription, "Saving needs the subscription" shows with
   Subscribe…, which opens the account page on zenbujapanese.com in a new tab. Add to List… and
   Add Note say so before anything opens. The toast shows at the card's foot for 5 seconds, isn't
-  shown again while it's up, and goes when the account changes so that saving is allowed. A
+  shown again while it's up, and goes when the account changes so that saving is allowed, when an
+  open card saves again at once. A
   refusal the service worker learns later, when a sync is refused for the subscription, shows
   only on the page whose change it refused.
 - **Pronounce**, and a click on the pitch accent, speak the reading as the app does: in the best
