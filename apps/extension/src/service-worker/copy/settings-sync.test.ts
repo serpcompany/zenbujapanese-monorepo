@@ -158,6 +158,36 @@ describe("the copy's settings", () => {
     })
   })
 
+  it("takes the account's value when the learner changes a setting back after a pull for it waited behind their change", async () => {
+    const { gate, open } = gated()
+    let request = 0
+    const world = copyWorld(
+      answeringSync(async body => {
+        request += 1
+        if (request > 1) return json(200, syncAnswer(appliedTo(body)))
+        await gate
+        return json(200, syncAnswer(appliedTo(body), [setting('readingAids.romaji', true, 2)]))
+      })
+    )
+    await world.signIn()
+    const sending = world.settled()
+    await vi.waitFor(() => expect(world.syncs()).toHaveLength(1))
+    await world.settings.store.set({ 'readingAids.romaji': true })
+    const changed = world.copy.settingsChanged()
+    await vi.waitFor(() => expect(world.storage.meta()?.queue).toHaveLength(1))
+    await world.settings.store.set({ 'readingAids.romaji': false })
+    open()
+    await Promise.all([sending, changed])
+    await world.settled()
+    expect(world.settings.items).toMatchObject({ 'readingAids.romaji': true })
+    expect(world.storage.items.get('setting:readingAids.romaji')).toMatchObject({
+      version: 2,
+      data: { value: true }
+    })
+    expect(world.storage.meta()).toMatchObject({ deferred: [], queue: [] })
+    expect(settingsSent(world)).toEqual([])
+  })
+
   it('brings the translation language and source down, and never sends either', async () => {
     const world = copyWorld(
       answering(() => ({

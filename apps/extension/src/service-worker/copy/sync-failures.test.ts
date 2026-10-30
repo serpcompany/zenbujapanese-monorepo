@@ -247,6 +247,57 @@ describe("the copy's sync when the account service fails", () => {
     })
   })
 
+  it.each([
+    403, 404
+  ])("ends with the learner's last change after a %i, when changes came while it was on its way and during the wait", async status => {
+    const { gate, open } = gated()
+    let calls = 0
+    const world = copyWorld(
+      answeringSync(async body => {
+        calls += 1
+        if (calls > 1) return json(200, syncAnswer(appliedTo(body)))
+        await gate
+        return refusal(status, 'refused')
+      })
+    )
+    await world.markedAndSending()
+    await world.change({ change: 'clear', item: word.item })
+    open()
+    await world.stopped()
+    await world.change({ change: 'mark', ...word })
+    await world.stopped()
+    world.later(2_000)
+    for (const wait of world.waits) wait.run()
+    await vi.waitFor(() => expect(world.syncs().length).toBeGreaterThan(1))
+    await world.settled()
+    expect(world.sent().map(mutation => mutation.operation)).toEqual(['mark', 'mark', 'mark'])
+    await expect(world.read()).resolves.toMatchObject({ knownWords: [word], unsynced: 0 })
+  })
+
+  it('keeps the marks an earlier failure left, and clears only the ones that request set, after a 403', async () => {
+    let calls = 0
+    const world = copyWorld(
+      answeringSync(body => {
+        calls += 1
+        if (calls === 1) return refusal(503, 'unavailable')
+        if (calls === 2) return refusal(403, 'forbidden')
+        return json(200, syncAnswer(appliedTo(body)))
+      })
+    )
+    await markedIn(world)
+    await world.change({ change: 'mark', ...otherWord })
+    world.later(2_000)
+    world.waits[0]?.run()
+    await vi.waitFor(() => expect(world.syncs()).toHaveLength(2))
+    await world.stopped()
+    expect(
+      world.storage.meta()?.queue.map(queued => [queued.mutation.entityId, queued.sent])
+    ).toEqual([
+      [word.item, true],
+      [otherWord.item, false]
+    ])
+  })
+
   it('reports a second read of everything that the service will not start', async () => {
     const world = copyWorld(failingFirst(1, () => refusal(410, 'invalid_cursor')))
     await markedIn(world)

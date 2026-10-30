@@ -43,6 +43,7 @@ function batchOf(draft: Draft, atMost: number): Batch | null {
   const sent = meta.queue.filter(queued => queued.sent)
   const inBatch = new Set(sent.map(queuedKey))
   const mutations: Mutation[] = sent.map(queued => queued.mutation)
+  const marked = new Set<string>()
   let bytes = sizeOf(mutations)
   for (const queued of sendable(meta.queue)) {
     if (queued.sent || inBatch.has(queuedKey(queued))) continue
@@ -50,11 +51,12 @@ function batchOf(draft: Draft, atMost: number): Batch | null {
     const size = sizeOf(queued.mutation) + 1
     if (mutations.length > 0 && bytes + size > bytesAtOnce) break
     queued.sent = true
+    marked.add(queued.mutation.id)
     inBatch.add(queuedKey(queued))
     mutations.push(queued.mutation)
     bytes += size
   }
-  return { cursor: meta.cursor, mutations }
+  return { cursor: meta.cursor, mutations, marked }
 }
 
 const fresh = (lastSyncedAt: number | null, now: number) =>
@@ -100,7 +102,7 @@ export function accountSync(parts: SyncParts) {
     await copy.edit(draft => {
       for (const queued of draft.meta?.queue ?? []) {
         if (!ids.has(queued.mutation.id)) continue
-        queued.sent = false
+        if (batch.marked.has(queued.mutation.id)) queued.sent = false
         if (refusedWith !== undefined) queued.refusedWith = refusedWith
       }
     })
@@ -181,7 +183,8 @@ export function accountSync(parts: SyncParts) {
         ownedBy(draft, kept.user)
         parts.tell(null)
       }
-      reconcile(draft, browser, parts.newId)
+      const writes = reconcile(draft, browser, parts.newId)
+      if (Object.keys(writes).length > 0) await parts.settings.set(writes)
       return batchOf(draft, atMost)
     })
     if (batch === null) {
