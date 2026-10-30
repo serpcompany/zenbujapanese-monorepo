@@ -115,7 +115,7 @@ function Words({
   )
   if (group.every(token => token.ids.length === 0)) return words
   return (
-    <span className="whitespace-nowrap">
+    <span data-word-group className="whitespace-nowrap">
       {gloss ? (
         <>
           <span>{words}</span>

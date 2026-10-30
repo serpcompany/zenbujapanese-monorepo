@@ -51,7 +51,8 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   reading aids, nothing added to the page's styles, one `timedtext` request whatever the controls
   do, the speed menu in and out of fullscreen, a word's popup pausing the video, and a word
   meaning's contrast against the caption's band over a white frame, the brightest a video can
-  show, written to the test's `contrast.json` (`player-captions.spec.ts`); dragging the caption,
+  show, written to the test's `contrast.json`, and, on the stand-in's line of two neighbouring
+  words, each word's underline apart from the next's (`player-captions.spec.ts`); dragging the caption,
   its cursor, its edges, a line change mid-drag, and its place kept through a resize, fullscreen,
   and the next video (`caption-drag.spec.ts`), which puts the place back after each test since
   the browser and its storage last the worker. Both open the page
@@ -68,7 +69,13 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   real. It measures that no two meanings touch, each stays in its word's column, a line's first
   word has no indent, and the page doesn't scroll sideways, and each row's meaning contrast over
   its backgrounds (at least 4.5:1); a cut meaning's full text is its title and in the
-  accessibility tree. Each width's screenshots, light and dark, and `contrast.json` go to its
+  accessibility tree. With Word Meanings off and then on, each word's box, which carries its
+  underline, is the meanings' gap from the next on its line, at the same splits either way
+  (`e2e/word-underlines.ts`, which the caption's and the Translate tab's tests use too); each
+  state's screenshot goes to its test's folder. The Translate tab's test translates a source that
+  opens with an ellipsis and wraps at 360 pixels, and, with Word Meanings off and on, measures that
+  each wrapped line starts at its first word and the first word sits right after the ellipsis
+  (`side-panel-popup.spec.ts`). Each width's screenshots, light and dark, and `contrast.json` go to its
   test's folder under `e2e/results/` (`transcript-meanings.spec.ts`). Both contrast checks use
   `e2e/contrast.ts`.
 - **A page's word meanings:** `words.html` with Word Meanings on, light and dark, and a paragraph

@@ -147,7 +147,7 @@ type Local = {
 }
 
 const unsentFor = (draft: Draft, key: string) =>
-  draft.meta?.queue.find(queued => !queued.sent && queuedKey(queued) === key)
+  draft.meta?.queue.findLast(queued => !queued.sent && queuedKey(queued) === key)
 
 function queue(
   draft: Draft,

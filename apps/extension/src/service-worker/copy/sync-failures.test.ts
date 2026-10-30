@@ -25,6 +25,13 @@ async function markedIn(world: CopyWorld) {
   await world.stopped()
 }
 
+async function retriedAfterWait(world: CopyWorld) {
+  world.later(2_000)
+  world.waits[0]?.run()
+  await vi.waitFor(() => expect(world.syncs()).toHaveLength(2))
+  await world.stopped()
+}
+
 async function sentOnlyOnSyncNow(world: CopyWorld, waited = 0) {
   await world.change({ change: 'clear', item: word.item })
   world.later(waited)
@@ -224,10 +231,7 @@ describe("the copy's sync when the account service fails", () => {
     await world.change({ change: 'mark', ...otherWord })
     await world.stopped()
     expect(world.syncs()).toHaveLength(1)
-    world.later(2_000)
-    world.waits[0]?.run()
-    await vi.waitFor(() => expect(world.syncs()).toHaveLength(2))
-    await world.stopped()
+    await retriedAfterWait(world)
     expect(world.syncs()).toHaveLength(2)
     expect(
       world
@@ -240,6 +244,54 @@ describe("the copy's sync when the account service fails", () => {
       knownWords: [otherWord],
       unsynced: 0
     })
+  })
+
+  it.each([
+    403, 404
+  ])("ends with the learner's last change after a %i, when changes came while it was on its way and during the wait", async status => {
+    const { gate, open } = gated()
+    let calls = 0
+    const world = copyWorld(
+      answeringSync(async body => {
+        calls += 1
+        if (calls > 1) return json(200, syncAnswer(appliedTo(body)))
+        await gate
+        return refusal(status, 'refused')
+      })
+    )
+    await world.markedAndSending()
+    await world.change({ change: 'clear', item: word.item })
+    open()
+    await world.stopped()
+    await world.change({ change: 'mark', ...word })
+    await world.stopped()
+    world.later(2_000)
+    for (const wait of world.waits) wait.run()
+    await vi.waitFor(() => expect(world.syncs().length).toBeGreaterThan(1))
+    await world.settled()
+    expect(world.sent().map(mutation => mutation.operation)).toEqual(['mark', 'mark', 'mark'])
+    await expect(world.read()).resolves.toMatchObject({ knownWords: [word], unsynced: 0 })
+  })
+
+  it('keeps the marks an earlier failure left, and clears only the ones that request set, after a 403', async () => {
+    let calls = 0
+    const world = copyWorld(
+      answeringSync(body => {
+        calls += 1
+        if (calls === 1) return refusal(503, 'unavailable')
+        if (calls === 2) return refusal(403, 'forbidden')
+        return json(200, syncAnswer(appliedTo(body)))
+      })
+    )
+    await markedIn(world)
+    await world.change({ change: 'mark', ...otherWord })
+    await retriedAfterWait(world)
+    expect(
+      world.storage.meta()?.queue.map(queued => [queued.mutation.entityId, queued.sent])
+    ).toEqual([
+      [word.item, true],
+      [otherWord.item, false]
+    ])
   })
 
   it('reports a second read of everything that the service will not start', async () => {
@@ -311,6 +363,14 @@ function refusingWhen(refuses: (body: Sync) => Response | null) {
   return { sync, up }
 }
 
+type RefusedAlone = { up: string[]; marked: (typeof word)[]; refused?: string; status: number }
+
+async function expectRefusedAlone(world: CopyWorld, { up, marked, refused, status }: RefusedAlone) {
+  expect(world.failures).toEqual([`account-sync ${status}`])
+  expect(up.toSorted()).toEqual(marked.map(each => each.item).filter(item => item !== refused))
+  await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+}
+
 async function oneRefusedUntilFixed(marked: (typeof word)[], at: number) {
   const refused = marked[at]?.item
   let fixed = false
@@ -340,11 +400,7 @@ describe("the copy's sync when the service refuses a whole request", () => {
         : null
     )
     const world = await queuedWhileHeld(service.sync, marked)
-    expect(world.failures).toEqual(['account-sync 400'])
-    expect(service.up.toSorted()).toEqual(
-      marked.map(each => each.item).filter(item => item !== refused)
-    )
-    await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+    await expectRefusedAlone(world, { up: service.up, marked, refused, status: 400 })
     const asked = world.syncs().length
     await world.change({ change: 'mark', ...otherWord })
     await vi.waitFor(() => expect(world.syncs().length).toBeGreaterThan(asked))
@@ -387,6 +443,28 @@ describe("the copy's sync when the service refuses a whole request", () => {
     await world.stopped()
     expect(service.up).not.toContain(refused)
     await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+  })
+
+  it.each([
+    400, 413
+  ])('splits a %i after a failure that left every change marked, until it refuses one alone', async status => {
+    const marked = words(3)
+    const refused = marked[1]?.item
+    let unavailable = true
+    const service = refusingWhen(body => {
+      if (body.mutations.length === 0) return null
+      if (unavailable) {
+        unavailable = false
+        return refusal(503, 'unavailable')
+      }
+      const ids = body.mutations.map(mutation => mutation.entityId)
+      return ids.includes(refused ?? '') ? refusal(status, 'refused') : null
+    })
+    const world = await queuedWhileHeld(service.sync, marked)
+    expect(unavailable).toBe(false)
+    await world.settled()
+    expect(world.syncs().length).toBeLessThan(10)
+    await expectRefusedAlone(world, { up: service.up, marked, refused, status })
   })
 
   it('sends fewer at a time when the body is too large, until every change is up', async () => {
