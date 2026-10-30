@@ -114,7 +114,7 @@ service runs the same Sudachi, with the dictionary the app pins.
 - Source: `apps/ios/docs/product/results.md`, Discovered Words; `results/results.ts` in the core,
   which the app runs too; `JapaneseMorphologyClient.swift`;
   ADR 0009 (the owner's decision to build what the website couldn't analyze before).
-- Check: SSR, every field, for 342 sentences: the Discovered Words heading, each row with its chips,
+- Check: SSR, every field, for 350 sentences: the Discovered Words heading, each row with its chips,
   and the Example Sentences row; `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "a
   word the dictionary holds is still searched as itself".
 

@@ -98793,6 +98793,606 @@
           "surface" : "ませ"
         }
       ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "すこしおくれるかも",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "少し",
+          "id" : "bfcdf32dc7a6fd9802615271f98cdd5c",
+          "reading" : "すこし"
+        },
+        {
+          "headword" : "遅れる",
+          "id" : "1fde242cf2a82570567d7138cf3beff4",
+          "reading" : "おくれる"
+        }
+      ],
+      "searched" : [
+        "すこし",
+        "おくれる"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "すこし",
+          "end" : 3,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "少し",
+          "partOfSpeech" : [
+            "副詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "スコシ",
+          "surface" : "すこし"
+        },
+        {
+          "begin" : 3,
+          "dictionaryForm" : "おくれる",
+          "end" : 7,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "遅れる",
+          "partOfSpeech" : [
+            "動詞",
+            "非自立可能",
+            "*",
+            "*",
+            "下一段-ラ行",
+            "終止形-一般"
+          ],
+          "reading" : "オクレル",
+          "surface" : "おくれる"
+        },
+        {
+          "begin" : 7,
+          "dictionaryForm" : "か",
+          "end" : 8,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "か",
+          "partOfSpeech" : [
+            "助詞",
+            "副助詞",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "カ",
+          "surface" : "か"
+        },
+        {
+          "begin" : 8,
+          "dictionaryForm" : "も",
+          "end" : 9,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "も",
+          "partOfSpeech" : [
+            "助詞",
+            "係助詞",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "モ",
+          "surface" : "も"
+        }
+      ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "少し遅れるかも",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "少し",
+          "id" : "bfcdf32dc7a6fd9802615271f98cdd5c",
+          "reading" : "すこし"
+        },
+        {
+          "headword" : "遅れる",
+          "id" : "1fde242cf2a82570567d7138cf3beff4",
+          "reading" : "おくれる"
+        }
+      ],
+      "searched" : [
+        "少し",
+        "遅れる"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "少し",
+          "end" : 2,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "少し",
+          "partOfSpeech" : [
+            "副詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "スコシ",
+          "surface" : "少し"
+        },
+        {
+          "begin" : 2,
+          "dictionaryForm" : "遅れる",
+          "end" : 5,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "遅れる",
+          "partOfSpeech" : [
+            "動詞",
+            "非自立可能",
+            "*",
+            "*",
+            "下一段-ラ行",
+            "終止形-一般"
+          ],
+          "reading" : "オクレル",
+          "surface" : "遅れる"
+        },
+        {
+          "begin" : 5,
+          "dictionaryForm" : "か",
+          "end" : 6,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "か",
+          "partOfSpeech" : [
+            "助詞",
+            "副助詞",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "カ",
+          "surface" : "か"
+        },
+        {
+          "begin" : 6,
+          "dictionaryForm" : "も",
+          "end" : 7,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "も",
+          "partOfSpeech" : [
+            "助詞",
+            "係助詞",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "モ",
+          "surface" : "も"
+        }
+      ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "この本",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "この",
+          "id" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "reading" : "この"
+        },
+        {
+          "headword" : "本",
+          "id" : "6245b12a543fe049cb5c9e623e12fb75",
+          "reading" : "ほん"
+        }
+      ],
+      "searched" : [
+        "この",
+        "本"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "この",
+          "end" : 2,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "此の",
+          "partOfSpeech" : [
+            "連体詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "コノ",
+          "surface" : "この"
+        },
+        {
+          "begin" : 2,
+          "dictionaryForm" : "本",
+          "end" : 3,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "本",
+          "partOfSpeech" : [
+            "名詞",
+            "普通名詞",
+            "一般",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "ホン",
+          "surface" : "本"
+        }
+      ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "とてもおいしい",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "とても",
+          "id" : "fc45ab3c50b61351197aae6a325227e6",
+          "reading" : "とても"
+        },
+        {
+          "headword" : "美味しい",
+          "id" : "49672e3a6d236d70b983796905b9320d",
+          "reading" : "おいしい"
+        }
+      ],
+      "searched" : [
+        "とても",
+        "おいしい"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "とても",
+          "end" : 3,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "迚も",
+          "partOfSpeech" : [
+            "副詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "トテモ",
+          "surface" : "とても"
+        },
+        {
+          "begin" : 3,
+          "dictionaryForm" : "おいしい",
+          "end" : 7,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "美味しい",
+          "partOfSpeech" : [
+            "形容詞",
+            "一般",
+            "*",
+            "*",
+            "形容詞",
+            "終止形-一般"
+          ],
+          "reading" : "オイシイ",
+          "surface" : "おいしい"
+        }
+      ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "そして帰った",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "そして",
+          "id" : "3977172a68ce872d98a7704c06f77326",
+          "reading" : "そして"
+        },
+        {
+          "headword" : "帰る",
+          "id" : "4bd8cdefc834f5588c299866758cd048",
+          "reading" : "かえる"
+        }
+      ],
+      "searched" : [
+        "そして",
+        "帰る"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "そして",
+          "end" : 3,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "そして",
+          "partOfSpeech" : [
+            "接続詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "ソシテ",
+          "surface" : "そして"
+        },
+        {
+          "begin" : 3,
+          "dictionaryForm" : "帰る",
+          "end" : 5,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "帰る",
+          "partOfSpeech" : [
+            "動詞",
+            "一般",
+            "*",
+            "*",
+            "五段-ラ行",
+            "連用形-促音便"
+          ],
+          "reading" : "カエッ",
+          "surface" : "帰っ"
+        },
+        {
+          "begin" : 5,
+          "dictionaryForm" : "た",
+          "end" : 6,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "た",
+          "partOfSpeech" : [
+            "助動詞",
+            "*",
+            "*",
+            "*",
+            "助動詞-タ",
+            "終止形-一般"
+          ],
+          "reading" : "タ",
+          "surface" : "た"
+        }
+      ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "その小さな犬",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
+          "headword" : "小さな",
+          "id" : "70e43be36b6edd46c48373ff8681318e",
+          "reading" : "ちいさな"
+        },
+        {
+          "headword" : "犬",
+          "id" : "681bff8274391329f3ce9ca80a4e04b0",
+          "reading" : "いぬ"
+        }
+      ],
+      "searched" : [
+        "その",
+        "小さな",
+        "犬"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "その",
+          "end" : 2,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "其の",
+          "partOfSpeech" : [
+            "連体詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "ソノ",
+          "surface" : "その"
+        },
+        {
+          "begin" : 2,
+          "dictionaryForm" : "小さな",
+          "end" : 5,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "小さな",
+          "partOfSpeech" : [
+            "連体詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "チイサナ",
+          "surface" : "小さな"
+        },
+        {
+          "begin" : 5,
+          "dictionaryForm" : "犬",
+          "end" : 6,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "犬",
+          "partOfSpeech" : [
+            "名詞",
+            "普通名詞",
+            "一般",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "イヌ",
+          "surface" : "犬"
+        }
+      ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "遅れるかも",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "遅れる",
+          "id" : "1fde242cf2a82570567d7138cf3beff4",
+          "reading" : "おくれる"
+        }
+      ],
+      "searched" : [
+        "遅れる"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "遅れる",
+          "end" : 3,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "遅れる",
+          "partOfSpeech" : [
+            "動詞",
+            "非自立可能",
+            "*",
+            "*",
+            "下一段-ラ行",
+            "終止形-一般"
+          ],
+          "reading" : "オクレル",
+          "surface" : "遅れる"
+        },
+        {
+          "begin" : 3,
+          "dictionaryForm" : "か",
+          "end" : 4,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "か",
+          "partOfSpeech" : [
+            "助詞",
+            "副助詞",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "カ",
+          "surface" : "か"
+        },
+        {
+          "begin" : 4,
+          "dictionaryForm" : "も",
+          "end" : 5,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "も",
+          "partOfSpeech" : [
+            "助詞",
+            "係助詞",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "モ",
+          "surface" : "も"
+        }
+      ]
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "presentation" : "discoveredWords",
+      "query" : "ちょっとまって",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "ちょっと",
+          "id" : "852e48c814e60fc0602c9cbd8db7b73e",
+          "reading" : "ちょっと"
+        },
+        {
+          "headword" : "待つ",
+          "id" : "4695f3aa1165c3989791f9ff9515bd86",
+          "reading" : "まつ"
+        }
+      ],
+      "searched" : [
+        "ちょっと",
+        "まつ"
+      ],
+      "words" : [
+        {
+          "begin" : 0,
+          "dictionaryForm" : "ちょっと",
+          "end" : 4,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "一寸",
+          "partOfSpeech" : [
+            "副詞",
+            "*",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "チョット",
+          "surface" : "ちょっと"
+        },
+        {
+          "begin" : 4,
+          "dictionaryForm" : "まつ",
+          "end" : 6,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "待つ",
+          "partOfSpeech" : [
+            "動詞",
+            "一般",
+            "*",
+            "*",
+            "五段-タ行",
+            "連用形-促音便"
+          ],
+          "reading" : "マッ",
+          "surface" : "まっ"
+        },
+        {
+          "begin" : 6,
+          "dictionaryForm" : "て",
+          "end" : 7,
+          "isOutOfVocabulary" : false,
+          "normalizedForm" : "て",
+          "partOfSpeech" : [
+            "助詞",
+            "接続助詞",
+            "*",
+            "*",
+            "*",
+            "*"
+          ],
+          "reading" : "テ",
+          "surface" : "て"
+        }
+      ]
     }
   ],
   "formatVersion" : 1,

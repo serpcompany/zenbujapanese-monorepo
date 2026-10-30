@@ -55,7 +55,8 @@ const dictionary = [
   entry('c7', 36, 'とる', 'とる', ['godanVerb'], { senseCount: 3 }),
   entry('c8', 37, '取る', 'とる', ['godanVerb']),
   entry('c9', 38, '言える', 'いえる', ['ichidanVerb']),
-  entry('c10', 39, '言う', 'いう', ['godanVerb'])
+  entry('c10', 39, '言う', 'いう', ['godanVerb']),
+  entry('c11', 40, '亜', 'あ', ['noun'])
 ]
 
 function japaneseFormsDatabase() {
@@ -181,6 +182,14 @@ describe('phrases', () => {
       ['さん', 'さん', '接尾辞']
     ])
     expect(await headwords([{ ...name, isOutOfVocabulary: true }, suffix], '髙橋さん')).toEqual([])
+  })
+
+  test('one kana with a stray mark finds nothing, though the kana alone is a word', async () => {
+    const [kana, mark] = morphemes([
+      ['あ', 'あ', '感動詞', 'あー'],
+      ['゙', '゙', '名詞']
+    ])
+    expect(await headwords([kana, { ...mark, isOutOfVocabulary: true }], 'あ゙')).toEqual([])
   })
 
   test('a kana word takes the entry the analyzer names, not another spelled the same', async () => {

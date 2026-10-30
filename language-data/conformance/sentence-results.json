@@ -42922,6 +42922,532 @@
       ],
       "state" : "results",
       "voiceOverCount" : 2
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "すこしおくれるかも",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "179",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1348870"
+          ],
+          "headword" : "少し",
+          "languageReferenceID" : "bfcdf32dc7a6fd9802615271f98cdd5c",
+          "match" : "source=0 japanese readingExact",
+          "reading" : "すこし",
+          "retrievalOrder" : 0,
+          "summary" : "a little, a bit, a small amount, a few, some, slightly, somewhat"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,253",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1589040"
+          ],
+          "headword" : "遅れる",
+          "languageReferenceID" : "1fde242cf2a82570567d7138cf3beff4",
+          "match" : "source=1 japanese readingExact",
+          "reading" : "おくれる",
+          "retrievalOrder" : 1,
+          "summary" : "to be late, to be delayed, to fall behind schedule, to be overdue"
+        }
+      ],
+      "sections" : [
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 2
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "少し遅れるかも",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "179",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1348870"
+          ],
+          "headword" : "少し",
+          "languageReferenceID" : "bfcdf32dc7a6fd9802615271f98cdd5c",
+          "match" : "source=0 japanese writtenExact",
+          "reading" : "すこし",
+          "retrievalOrder" : 0,
+          "summary" : "a little, a bit, a small amount, a few, some, slightly, somewhat"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,253",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1589040"
+          ],
+          "headword" : "遅れる",
+          "languageReferenceID" : "1fde242cf2a82570567d7138cf3beff4",
+          "match" : "source=1 japanese writtenExact",
+          "reading" : "おくれる",
+          "retrievalOrder" : 1,
+          "summary" : "to be late, to be delayed, to fall behind schedule, to be overdue"
+        }
+      ],
+      "sections" : [
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 2
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "examples" : {
+        "count" : 51,
+        "title" : "View 50+ Example Sentences"
+      },
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "この本",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "33",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1582920"
+          ],
+          "headword" : "この",
+          "languageReferenceID" : "3235c8e2260b0a0b20f83d7469bfbfec",
+          "match" : "source=0 japanese readingExact",
+          "reading" : "この",
+          "retrievalOrder" : 0,
+          "summary" : "this"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "225",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1522150"
+          ],
+          "headword" : "本",
+          "languageReferenceID" : "6245b12a543fe049cb5c9e623e12fb75",
+          "match" : "source=1 japanese writtenExact",
+          "reading" : "ほん",
+          "retrievalOrder" : 1,
+          "summary" : "book, volume, script"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 2
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "examples" : {
+        "count" : 11,
+        "title" : "View 11 Example Sentences"
+      },
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "とてもおいしい",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "273",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1008630"
+          ],
+          "headword" : "とても",
+          "languageReferenceID" : "fc45ab3c50b61351197aae6a325227e6",
+          "match" : "source=0 japanese readingExact",
+          "reading" : "とても",
+          "retrievalOrder" : 0,
+          "summary" : "very, awfully, exceedingly"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "239",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1486650"
+          ],
+          "headword" : "美味しい",
+          "languageReferenceID" : "49672e3a6d236d70b983796905b9320d",
+          "match" : "source=1 japanese readingExact",
+          "reading" : "おいしい",
+          "retrievalOrder" : 1,
+          "summary" : "good(-tasting), nice, delicious, tasty"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 2
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "そして帰った",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "99",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1006730"
+          ],
+          "headword" : "そして",
+          "languageReferenceID" : "3977172a68ce872d98a7704c06f77326",
+          "match" : "source=0 japanese readingExact",
+          "reading" : "そして",
+          "retrievalOrder" : 0,
+          "summary" : "and, and then, thus, and now, and finally"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1221270"
+          ],
+          "headword" : "帰る",
+          "languageReferenceID" : "4bd8cdefc834f5588c299866758cd048",
+          "match" : "source=1 japanese writtenExact",
+          "reading" : "かえる",
+          "retrievalOrder" : 1,
+          "summary" : "to return, to come home, to go home, to go back"
+        }
+      ],
+      "sections" : [
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 2
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "examples" : {
+        "count" : 2,
+        "title" : "View 2 Example Sentences"
+      },
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "その小さな犬",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "366",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1006830"
+          ],
+          "headword" : "その",
+          "languageReferenceID" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "match" : "source=0 japanese readingExact",
+          "reading" : "その",
+          "retrievalOrder" : 0,
+          "summary" : "that, the"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,109",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2136180"
+          ],
+          "headword" : "小さな",
+          "languageReferenceID" : "70e43be36b6edd46c48373ff8681318e",
+          "match" : "source=1 japanese writtenExact",
+          "reading" : "ちいさな",
+          "retrievalOrder" : 1,
+          "summary" : "small, little, tiny"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,071",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1258330"
+          ],
+          "headword" : "犬",
+          "languageReferenceID" : "681bff8274391329f3ce9ca80a4e04b0",
+          "match" : "source=2 japanese writtenExact",
+          "reading" : "いぬ",
+          "retrievalOrder" : 2,
+          "summary" : "dog (Canis (lupus) familiaris), canine"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 3
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "examples" : {
+        "count" : 8,
+        "title" : "View 8 Example Sentences"
+      },
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "遅れるかも",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,253",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1589040"
+          ],
+          "headword" : "遅れる",
+          "languageReferenceID" : "1fde242cf2a82570567d7138cf3beff4",
+          "match" : "source=0 japanese writtenExact",
+          "reading" : "おくれる",
+          "retrievalOrder" : 0,
+          "summary" : "to be late, to be delayed, to fall behind schedule, to be overdue"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 1
+    },
+    {
+      "covers" : "#1120: a short phrase",
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "ちょっとまって",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "47",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1163940"
+          ],
+          "headword" : "ちょっと",
+          "languageReferenceID" : "852e48c814e60fc0602c9cbd8db7b73e",
+          "match" : "source=0 japanese readingExact",
+          "reading" : "ちょっと",
+          "retrievalOrder" : 0,
+          "summary" : "a little, a bit, slightly"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "170",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1410590"
+          ],
+          "headword" : "待つ",
+          "languageReferenceID" : "4695f3aa1165c3989791f9ff9515bd86",
+          "match" : "source=1 japanese readingExact",
+          "reading" : "まつ",
+          "retrievalOrder" : 1,
+          "summary" : "to wait"
+        }
+      ],
+      "sections" : [
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 2
     }
   ],
   "formatVersion" : 1,

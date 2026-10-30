@@ -88,5 +88,6 @@ word. A word takes the entry Sudachi names when one reads as the word: ちょっ
 not 松, and 休みをとった lists 取る, not the helper とる.
 
 Check: core `search/search.test.ts` ("phrases") and `search/morphology.test.ts` (which words a
-phrase lists); the recorded `SentenceSearchConformanceTests` and `SentenceResultsConformanceTests`;
-UI `SearchResultsUITests.testAShortPhraseListsItsAdverbAndItsVerb`.
+phrase lists, from a hand-built analysis); the recorded `SentenceSearchConformanceTests` and
+`SentenceResultsConformanceTests`, which run Sudachi on each phrase named here (休みをとった as
+彼は一週間休みをとった。); UI `SearchResultsUITests.testAShortPhraseListsItsAdverbAndItsVerb`.
