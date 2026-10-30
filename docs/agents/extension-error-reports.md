@@ -62,7 +62,8 @@ player caption draws; the follower and the watch-page code report none yet (#107
   `account-answer` when an account ask fails rather than being refused, such as storage that
   can't be read or written (`src/service-worker/account/channel.ts`). The account's copy
   reports `account-copy` when IndexedDB can't be read or written, `account-sync` when the service
-  answers a sync with something it can't read or a refusal it doesn't expect, and
+  answers a sync with something it can't read or a refusal it doesn't expect (tagged with the
+  status when a `400` or `413` refuses one change alone), and
   `account-sync-reread` when a read from the start is refused too
   (`src/service-worker/copy/sync-failures.test.ts`, `copy-channel.test.ts`). None holds a session
   token, an access token, an emailed code, an email, a word, or a note

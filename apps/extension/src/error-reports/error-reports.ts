@@ -124,6 +124,10 @@ export function receiveErrorReport(message: unknown): boolean {
   return false
 }
 
-export function reportFailure(code: string): void {
-  captureMessage(code, { level: 'error', fingerprint: ['handled-failure', code] })
+export function reportFailure(code: string, status?: number): void {
+  captureMessage(code, {
+    level: 'error',
+    fingerprint: ['handled-failure', code],
+    ...(status === undefined ? {} : { tags: { status: String(status) } })
+  })
 }

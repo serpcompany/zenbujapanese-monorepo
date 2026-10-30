@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { json, refusal, subscription } from '../../test/account-stand-in'
-import { appliedTo, syncAnswer } from '../../test/copy-stand-in'
+import { appliedTo, type Sync, syncAnswer } from '../../test/copy-stand-in'
 import {
   answeringSync,
   type CopyWorld,
@@ -200,7 +200,7 @@ describe("the copy's sync when the account service fails", () => {
 
   it.each([
     ['an answer it cannot read', () => json(200, { results: 'none' }), 'waiting'],
-    ['a refusal it does not expect', () => refusal(400, 'invalid_request'), 'failed']
+    ['a refusal it does not expect', () => refusal(403, 'not_allowed'), 'failed']
   ])('reports %s by its code alone', async (_, failure, state) => {
     const world = copyWorld(failingFirst(1, failure))
     await markedIn(world)
@@ -249,5 +249,75 @@ describe("the copy's sync when the account service fails", () => {
     await expect(world.change({ change: 'clear', item: word.item })).rejects.toThrow()
     world.storage.failSaves(false)
     await expect(world.read()).resolves.toMatchObject({ knownWords: [word], unsynced: 0 })
+  })
+})
+
+const words = (count: number) =>
+  Array.from({ length: count }, (_, at) => ({
+    ...word,
+    item: `${String(at).padStart(2, '0')}${word.item.slice(2)}`
+  }))
+
+async function queuedWhileSignedOut(world: CopyWorld, marked: (typeof word)[]) {
+  await world.signIn()
+  await world.settled()
+  await world.signOut()
+  for (const each of marked) await world.change({ change: 'mark', ...each })
+  await world.signIn()
+  await world.settled()
+}
+
+function refusingWhen(refuses: (body: Sync) => Response | null) {
+  const up: string[] = []
+  const sync = answeringSync(body => {
+    const refused = refuses(body)
+    if (refused) return refused
+    up.push(...body.mutations.map(mutation => mutation.entityId))
+    return json(200, syncAnswer(appliedTo(body)))
+  })
+  return { sync, up }
+}
+
+describe("the copy's sync when the service refuses a whole request", () => {
+  it('sends the other changes, and keeps out of later requests the one it refuses alone, reported once', async () => {
+    const marked = words(5)
+    const refused = marked[3]?.item
+    const service = refusingWhen(body =>
+      body.mutations.some(mutation => mutation.entityId === refused)
+        ? refusal(400, 'bad_request')
+        : null
+    )
+    const world = copyWorld(service.sync)
+    await queuedWhileSignedOut(world, marked)
+    expect(world.failures).toEqual(['account-sync 400'])
+    expect(service.up.toSorted()).toEqual(
+      marked.map(each => each.item).filter(item => item !== refused)
+    )
+    await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+    const asked = world.syncs().length
+    await world.change({ change: 'mark', ...otherWord })
+    await world.settled()
+    expect(world.syncs().length).toBeGreaterThan(asked)
+    expect(
+      world
+        .sent()
+        .slice(-1)
+        .map(mutation => mutation.entityId)
+    ).toEqual([otherWord.item])
+    expect(service.up.at(-1)).toBe(otherWord.item)
+    expect(world.failures).toEqual(['account-sync 400'])
+    await expect(world.read()).resolves.toMatchObject({ unsynced: 1 })
+  })
+
+  it('sends fewer at a time when the body is too large, until every change is up', async () => {
+    const marked = words(5)
+    const service = refusingWhen(body =>
+      body.mutations.length > 2 ? refusal(413, 'too_large') : null
+    )
+    const world = copyWorld(service.sync)
+    await queuedWhileSignedOut(world, marked)
+    expect(world.failures).toEqual([])
+    expect(service.up.toSorted()).toEqual(marked.map(each => each.item))
+    await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
   })
 })

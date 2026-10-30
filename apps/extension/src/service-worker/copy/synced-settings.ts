@@ -60,6 +60,7 @@ export function reconcile(draft: Draft, browser: Settings, newId: () => string):
       continue
     }
     if (unsent) {
+      if (unsent.mutation.fields?.value !== ours) delete unsent.refusedWith
       unsent.mutation = { ...unsent.mutation, fields: { value: ours } }
       continue
     }

@@ -11,7 +11,12 @@ export type Data = Record<string, unknown>
 
 export type Item = { entity: Entity; entityId: string; version: number; data: Data | null }
 
-export type Queued = { mutation: Mutation; sent: boolean; before: Item | null }
+export type Queued = {
+  mutation: Mutation
+  sent: boolean
+  before: Item | null
+  refusedWith?: number
+}
 
 export type Meta = {
   userId: string
@@ -38,6 +43,9 @@ export const itemKey = (item: { entity: string; entityId: string }) =>
   keyOf(item.entity, item.entityId)
 
 export const queuedKey = (queued: Queued) => itemKey(queued.mutation)
+
+export const sendable = (queue: readonly Queued[]) =>
+  queue.filter(queued => queued.refusedWith === undefined)
 
 export const freshMeta = (user: { id: string; email: string }): Meta => ({
   userId: user.id,

@@ -154,8 +154,10 @@ function queue(
     ...(local.fields ? { fields: local.fields } : {})
   }
   const earlier = unsentFor(draft, key)
-  if (earlier) earlier.mutation = merge ? merge(earlier.mutation) : mutation
-  else meta.queue.push({ mutation, sent: false, before })
+  if (earlier) {
+    earlier.mutation = merge ? merge(earlier.mutation) : mutation
+    delete earlier.refusedWith
+  } else meta.queue.push({ mutation, sent: false, before })
 }
 
 const shown = (draft: Draft, entity: Entity, entityId: string) =>

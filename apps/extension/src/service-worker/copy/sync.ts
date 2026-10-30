@@ -6,7 +6,7 @@ import type { AccountStore } from '../account/store'
 import type { AccessTokens } from '../account/tokens'
 import { applyAnswer, type Batch, syncAnswerOf } from './answer'
 import type { Draft, KeptCopy } from './kept'
-import { ownedBy, queuedKey } from './kept'
+import { ownedBy, queuedKey, sendable } from './kept'
 import { reconcile } from './synced-settings'
 
 export type Reason = 'change' | 'settings' | 'retry' | 'startup' | 'opened' | 'sync-now' | 'access'
@@ -20,7 +20,7 @@ export type SyncParts = {
   readSubscription(): Promise<boolean>
   settings: SettingsStore
   tell(known: Record<string, boolean> | null): void
-  reportFailure(code: CopyFailure): void
+  reportFailure(code: CopyFailure, status?: number): void
   later(run: () => void, wait: number): void
   now(): number
   random(): number
@@ -37,16 +37,16 @@ const longestWait = 5 * 60_000
 
 const sizeOf = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length
 
-function batchOf(draft: Draft): Batch | null {
+function batchOf(draft: Draft, atMost: number): Batch | null {
   const meta = draft.meta
   if (!meta) return null
   const sent = meta.queue.filter(queued => queued.sent)
   const inBatch = new Set(sent.map(queuedKey))
   const mutations: Mutation[] = sent.map(queued => queued.mutation)
   let bytes = sizeOf(mutations)
-  for (const queued of meta.queue) {
+  for (const queued of sendable(meta.queue)) {
     if (queued.sent || inBatch.has(queuedKey(queued))) continue
-    if (mutations.length >= mutationsAtOnce) break
+    if (mutations.length >= atMost) break
     const size = sizeOf(queued.mutation) + 1
     if (mutations.length > 0 && bytes + size > bytesAtOnce) break
     queued.sent = true
@@ -73,6 +73,7 @@ export function accountSync(parts: SyncParts) {
   let failures = 0
   let retryAt = 0
   let rereadInRun = false
+  let atMost = mutationsAtOnce
 
   function retryIn(wait: number) {
     const at = parts.now() + wait
@@ -92,6 +93,21 @@ export function accountSync(parts: SyncParts) {
     state = offline ? 'offline' : 'waiting'
     retryIn(wait)
     return 'stopped'
+  }
+
+  async function refusedBatch(status: number, batch: Batch): Promise<Step> {
+    const ids = new Set(batch.mutations.map(mutation => mutation.id))
+    const alone = batch.mutations.length === 1
+    await copy.edit(draft => {
+      for (const queued of draft.meta?.queue ?? []) {
+        if (!ids.has(queued.mutation.id)) continue
+        queued.sent = false
+        if (alone) queued.refusedWith = status
+      }
+    })
+    if (alone) parts.reportFailure('account-sync', status)
+    else atMost = Math.ceil(batch.mutations.length / 2)
+    return 'more'
   }
 
   async function failed(answer: Extract<Answered, { ok: false }>, batch: Batch): Promise<Step> {
@@ -130,6 +146,9 @@ export function accountSync(parts: SyncParts) {
       return 'stopped'
     }
     if (answer.status === 0 || answer.status >= 500) return backOff(answer.status === 0)
+    if ((answer.status === 400 || answer.status === 413) && batch.mutations.length > 0) {
+      return refusedBatch(answer.status, batch)
+    }
     parts.reportFailure('account-sync')
     state = 'failed'
     return 'stopped'
@@ -154,7 +173,7 @@ export function accountSync(parts: SyncParts) {
         parts.tell(null)
       }
       reconcile(draft, browser, parts.newId)
-      return batchOf(draft)
+      return batchOf(draft, atMost)
     })
     if (batch === null) {
       state = 'not-synced'
@@ -183,12 +202,19 @@ export function accountSync(parts: SyncParts) {
     })
     if (applied === null) return 'more'
     failures = 0
+    atMost = Math.min(atMost * 2, mutationsAtOnce)
     if (applied.known.size > 0) parts.tell(Object.fromEntries(applied.known))
     return applied.more ? 'more' : 'done'
   }
 
+  const doneState = async (): Promise<SyncState> =>
+    (await copy.look(draft => draft.meta?.queue.some(queued => queued.refusedWith !== undefined)))
+      ? 'failed'
+      : 'synced'
+
   async function runAll() {
     rereadInRun = false
+    atMost = mutationsAtOnce
     do {
       again = false
       let stepped: Step = 'more'
@@ -196,7 +222,7 @@ export function accountSync(parts: SyncParts) {
         stepped = await step()
       }
       if (stepped === 'stopped') return
-      state = stepped === 'done' ? 'synced' : 'not-synced'
+      state = stepped === 'done' ? await doneState() : 'not-synced'
     } while (again)
   }
 
@@ -227,7 +253,7 @@ export function accountSync(parts: SyncParts) {
     const meta = await copy.look(draft => draft.meta)
     const owner = (await store.keptAccount())?.user.id
     if (owner !== undefined && meta?.userId !== owner) return true
-    return meta !== null && (meta.queue.length > 0 || !fresh(meta.lastSyncedAt, now))
+    return meta !== null && (sendable(meta.queue).length > 0 || !fresh(meta.lastSyncedAt, now))
   }
 
   const needsSubscription = async () =>

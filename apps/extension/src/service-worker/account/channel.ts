@@ -39,7 +39,7 @@ type Parts = {
   onStartup: Events
   send?: Send
   copy: CopyParts
-  reportFailure(code: 'account-answer' | 'account-storage' | CopyFailure): void
+  reportFailure(code: 'account-answer' | 'account-storage' | CopyFailure, status?: number): void
 }
 
 const accessOnly = (answer: AccountAnswer): AccountAnswer =>

@@ -31,7 +31,7 @@ export type CopyParts = {
   readSubscription(): Promise<boolean>
   settings: SettingsStore
   tell(changed: KnownChanged): void
-  reportFailure(code: CopyFailure): void
+  reportFailure(code: CopyFailure, status?: number): void
   later?: (run: () => void, wait: number) => void
   now?: () => number
   random?: () => number

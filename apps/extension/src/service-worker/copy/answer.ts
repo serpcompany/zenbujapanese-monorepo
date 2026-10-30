@@ -1,7 +1,16 @@
 import type { Mutation, MutationResult, SyncedChange } from '@zenbu/account-rules/account-copy'
 import { fields } from '../../shared/messages'
 import type { Settings } from '../../shared/settings'
-import { type Draft, type Item, isEntity, itemKey, keyOf, type Queued, queuedKey } from './kept'
+import {
+  type Draft,
+  type Item,
+  isEntity,
+  itemKey,
+  keyOf,
+  type Queued,
+  queuedKey,
+  sendable
+} from './kept'
 import { browserWrites, isKeptSetting, reconcile } from './synced-settings'
 
 export type SyncAnswer = {
@@ -336,7 +345,7 @@ export function applyAnswer(
     browser
   )
   reconcile(draft, { ...browser, ...writes }, clock.newId)
-  const more = answer.hasMore || meta.queue.length > 0
+  const more = answer.hasMore || sendable(meta.queue).length > 0
   if (!more) meta.lastSyncedAt = clock.now()
   return { known: run.known, writes, more }
 }

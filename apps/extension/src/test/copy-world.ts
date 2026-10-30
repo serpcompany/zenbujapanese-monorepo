@@ -70,7 +70,8 @@ export function copyWorld(
     readSubscription: () => readSubscription(world.store, world.tokens),
     settings: settings.store,
     tell: changed => told.push(changed),
-    reportFailure: code => failures.push(code),
+    reportFailure: (code, status) =>
+      failures.push(status === undefined ? code : `${code} ${status}`),
     later: (run, wait) => waits.push({ run, wait }),
     now: () => now,
     random: () => 1,
