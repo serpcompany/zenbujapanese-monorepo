@@ -62,6 +62,7 @@ export const settingsLabels = {
   },
   menu: {
     open: 'Reading aids and settings',
+    resetCaptionPosition: 'Reset Caption Position',
     showWelcome: 'Show Welcome Tab'
   },
   sites: {

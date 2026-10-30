@@ -1,10 +1,12 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import type { PageToken } from '../page-lookup/words'
-import type { Settings } from '../shared/settings'
+import type { CaptionPlaceKey, Settings } from '../shared/settings'
 import { SourceLine, type SourceServices } from '../translate/source-words'
-import { type KeepPlace, useCaptionDrag } from './caption-drag'
-import { placeStyle } from './caption-place'
+import { CaptionBox, captionRoomClass } from './caption-box'
+import type { KeepPlace } from './caption-drag'
 import { type LineEnglish, useLineEnglish } from './line-english'
+
+export type KeepPlaces = Record<CaptionPlaceKey, KeepPlace>
 
 type Props = {
   lines: readonly Caption[]
@@ -13,11 +15,13 @@ type Props = {
   services: SourceServices
   english: LineEnglish
   pick(token: PageToken, word: HTMLElement): void
-  keepPlace: KeepPlace
+  keepPlace: KeepPlaces
 }
 
 const captionClass =
-  'pointer-events-auto absolute w-max max-w-[min(92%,48em)] cursor-grab touch-none select-none data-dragging:cursor-grabbing data-dragging:**:cursor-grabbing rounded-lg bg-black/75 px-[0.6em] py-[0.3em] text-center text-[clamp(16px,2.4cqw,34px)] text-white [&_[data-aid=romaji]]:text-[0.6em] [&_[data-aid=romaji]]:text-white/80 [&_[data-aid=meaning]]:text-white/70 [&_[data-source]]:text-white'
+  'px-[0.6em] py-[0.3em] [&_[data-aid=romaji]]:text-[0.6em] [&_[data-aid=romaji]]:text-white/80 [&_[data-aid=meaning]]:text-white/70 [&_[data-source]]:text-white'
+
+const translationClass = 'px-[0.7em] py-[0.32em] text-[0.7em] leading-snug'
 
 export function PlayerCaption({
   lines,
@@ -31,20 +35,26 @@ export function PlayerCaption({
   const text = lines[line].text
   const next = lines[line + 1]?.text ?? null
   const translation = useLineEnglish(english, text, next, settings['readingAids.translations'])
-  const drag = useCaptionDrag(keepPlace)
   return (
-    <div
-      data-player-caption
-      data-dragging={drag.moving ? '' : undefined}
-      style={placeStyle(drag.moving ?? settings['videos.captionPlace'])}
-      className={captionClass}
-      {...drag.handlers}
-    >
-      <SourceLine source={text} settings={settings} services={services} pick={pick} />
+    <div className={captionRoomClass}>
+      <CaptionBox
+        data-player-caption
+        place={settings['videos.captionPlace']}
+        keep={keepPlace['videos.captionPlace']}
+        className={captionClass}
+      >
+        <SourceLine source={text} settings={settings} services={services} pick={pick} />
+      </CaptionBox>
       {translation ? (
-        <p lang="en" data-aid="translation" className="text-[0.7em] leading-snug text-white/90">
+        <CaptionBox
+          data-player-translation
+          lang="en"
+          place={settings['videos.translationPlace']}
+          keep={keepPlace['videos.translationPlace']}
+          className={translationClass}
+        >
           {translation}
-        </p>
+        </CaptionBox>
       ) : null}
     </div>
   )

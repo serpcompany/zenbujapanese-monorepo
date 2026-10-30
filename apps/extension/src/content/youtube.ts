@@ -38,8 +38,7 @@ followYouTubePage(document, {
         popupCard,
         saving: chromeSaving,
         translate: request => translate(request),
-        keepCaptionPlace: place =>
-          void askToWriteSettings({ 'videos.captionPlace': place }).catch(report)
+        keepCaptionPlaces: places => void askToWriteSettings(places).catch(report)
       }
     })
   }

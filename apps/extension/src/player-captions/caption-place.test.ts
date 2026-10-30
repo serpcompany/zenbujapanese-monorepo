@@ -35,16 +35,13 @@ describe('the caption’s place', () => {
     expect(placeOf({ ...box, width: 600, height: 500 }, room)).toEqual({ x: 0.5, y: 0.5 })
   })
 
-  it('draws a place inside the room at any size, and the default place with none', () => {
+  it('draws a place inside the room at any size, and leaves a box with none in the stack', () => {
     expect(placeStyle({ x: 0.25, y: 1 })).toEqual({
+      position: 'absolute',
       left: '25%',
       top: '100%',
       translate: '-25% -100%'
     })
-    expect(placeStyle(null)).toEqual({
-      left: '50%',
-      bottom: 'max(64px, 12%)',
-      translate: '-50% 0'
-    })
+    expect(placeStyle(null)).toEqual({})
   })
 })

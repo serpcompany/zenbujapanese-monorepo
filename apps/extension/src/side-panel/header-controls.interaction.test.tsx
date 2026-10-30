@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { settingsLabels } from '../settings/labels'
 import { SettingsPage } from '../settings/settings-page'
-import { askSettings, onSettingsChanged, readingAidKeys } from '../shared/settings'
+import { askSettings, onSettingsChanged, readingAidKeys, writeSettings } from '../shared/settings'
 import { dictionary, resetDictionary } from '../test/dictionary'
 import {
   aidShownOn,
@@ -117,6 +118,27 @@ describe("the side panel's header", () => {
     await click(menuSwitch(menu, 'videos.zenbuCaptions'))
     expect(fake.items['videos.zenbuCaptions']).toBe(false)
     expect(isOn(switchFor(settings, 'videos.zenbuCaptions'))).toBe(false)
+  })
+
+  it('offers Reset Caption Position once either caption box has moved, and it puts both back', async () => {
+    const fake = startExtension({ tabs: [article], granted })
+    const reset = (menu: HTMLElement) =>
+      byText(menu, '[role="menuitem"]', settingsLabels.menu.resetCaptionPosition)
+    const unmoved = await openMenu(await drawHeader())
+    expect(reset(unmoved).hasAttribute('data-disabled')).toBe(true)
+    for (const page of opened) page.unmount()
+    opened = []
+    document.body.replaceChildren()
+
+    await writeSettings({
+      'videos.captionPlace': { x: 0.2, y: 0.1 },
+      'videos.translationPlace': { x: 0.5, y: 1 }
+    })
+    const menu = await openMenu(await drawHeader())
+    expect(reset(menu).hasAttribute('data-disabled')).toBe(false)
+    await click(reset(menu))
+    expect(fake.items['videos.captionPlace']).toBeNull()
+    expect(fake.items['videos.translationPlace']).toBeNull()
   })
 
   it("turns Page Text off and on from its menu, under Pages between Reading Aids and Videos, as Settings does, apart from the site's switch, and the open page hears it without a reload", async () => {
