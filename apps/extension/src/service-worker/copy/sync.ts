@@ -275,9 +275,15 @@ export function accountSync(parts: SyncParts) {
     if (!(await needsSubscription())) paywalled = false
   }
 
+  const tryRefusedAgain = () =>
+    copy.edit(draft => {
+      for (const queued of draft.meta?.queue ?? []) delete queued.refusedWith
+    })
+
   async function chance(reason: Reason): Promise<void> {
     const now = parts.now()
     await subscribedSince(reason)
+    if (reason === 'sync-now') await tryRefusedAgain()
     if (await due(reason, now)) await start()
     else if (running) await running
   }

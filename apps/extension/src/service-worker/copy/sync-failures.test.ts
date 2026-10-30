@@ -335,8 +335,8 @@ describe("the copy's sync when the service refuses a whole request", () => {
     await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
     const asked = world.syncs().length
     await world.change({ change: 'mark', ...otherWord })
-    await world.settled()
-    expect(world.syncs().length).toBeGreaterThan(asked)
+    await vi.waitFor(() => expect(world.syncs().length).toBeGreaterThan(asked))
+    await world.stopped()
     expect(
       world
         .sent()
@@ -346,6 +346,53 @@ describe("the copy's sync when the service refuses a whole request", () => {
     expect(service.up.at(-1)).toBe(otherWord.item)
     expect(world.failures).toEqual(['account-sync 400'])
     await expect(world.read()).resolves.toMatchObject({ unsynced: 1 })
+  })
+
+  it('tries a refused change again on each Sync Now, refused again alone without holding the others', async () => {
+    const marked = words(3)
+    const refused = marked[1]?.item
+    let fixed = false
+    const service = refusingWhen(body =>
+      !fixed && body.mutations.some(mutation => mutation.entityId === refused)
+        ? refusal(400, 'bad_request')
+        : null
+    )
+    const world = copyWorld(service.sync)
+    await queuedWhileSignedOut(world, marked)
+    await world.change({ change: 'mark', ...otherWord })
+    await world.settled()
+    expect(world.failures).toEqual(['account-sync 400', 'account-sync 400'])
+    expect(service.up).toContain(otherWord.item)
+    await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+    fixed = true
+    await world.settled()
+    expect(service.up.at(-1)).toBe(refused)
+    await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
+  })
+
+  it.each([
+    ['a change', (world: CopyWorld) => world.change({ change: 'mark', ...otherWord })],
+    ['a page opening', (world: CopyWorld) => world.ask({ copy: 'opened' })],
+    ['access', (world: CopyWorld) => world.copy.chance('access')]
+  ])('leaves a refused change out of a sync that %s starts', async (_, starts) => {
+    const marked = words(2)
+    const refused = marked[0]?.item
+    let fixed = false
+    const service = refusingWhen(body =>
+      !fixed && body.mutations.some(mutation => mutation.entityId === refused)
+        ? refusal(400, 'bad_request')
+        : null
+    )
+    const world = copyWorld(service.sync)
+    await queuedWhileSignedOut(world, marked)
+    fixed = true
+    world.later(3_600_000)
+    const asked = world.syncs().length
+    await starts(world)
+    await vi.waitFor(() => expect(world.syncs().length).toBeGreaterThan(asked))
+    await world.stopped()
+    expect(service.up).not.toContain(refused)
+    await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
   })
 
   it('sends fewer at a time when the body is too large, until every change is up', async () => {
