@@ -27,7 +27,7 @@ captions }`, to the extension's pages and to that tab. For this the manifest ask
 - **One request at a time.** Every request to YouTube goes through one queue, and each tab's
   requests through its own, so a tab never asks for a video it's already asking for.
 - **What it keeps,** in `chrome.storage.session`: each tab's video, its state, and whether the
-  Video tab asked (`captions.tab.<id>`), forgotten when the tab closes, and the wait after a 429
+  Player tab asked (`captions.tab.<id>`), forgotten when the tab closes, and the wait after a 429
   (`captions.rateLimit`), shared by every tab. Chrome stops the service worker when it's idle, so
   nothing lives only in memory but the requests in flight.
 - **The waits** (`backoff.ts`): 15, 30, then 60 minutes after each 429 in a row, each up to 20%
@@ -44,7 +44,7 @@ captions }`, to the extension's pages and to that tab. For this the manifest ask
 
 A page drives the video with `{ target: 'video', control }` sent to the tab (`controls.ts`): seek,
 play, pause, or a speed. The content script starts the `VideoFollower` on the first one, when
-a Video tab opens, or when the caption on the player shows, and stops it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
+a Player tab opens, or when the caption on the player shows, and stops it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
 `<video>`: it reports the time frame by frame only while the video plays and someone subscribes,
 holds the time and ignores the controls while the player has `ad-showing`, then puts the
 learner's speed back, and hides YouTube's own captions with an attribute on the player and one
@@ -55,9 +55,9 @@ during an ad); #964 added it (PR #1108, amending the interface) because the core
 line's end unclamped, so a last line can end after the video does. Netflix's follower
 (#966) implements the same interface.
 
-## The Video tab's port
+## The Player tab's port
 
-The side panel's Video tab follows a tab's playback on a port (`video-tab-port.ts`), straight to
+The side panel's Player tab follows a tab's playback on a port (`video-tab-port.ts`), straight to
 the tab's content script, with no service worker between:
 
 - **It opens** with `chrome.tabs.connect(tabId, { name: 'video-tab', frameId: 0 })` when the
@@ -67,7 +67,7 @@ the tab's content script, with no service worker between:
 - **The content script sends** `{ target: 'video-tab', playback }` on each open port, a
   `Playback` (`{ videoId, time, playing, rate, ad, ended }`) or `null` when the page has no video: once
   on connecting, then on each change while at least one port is open. It subscribes to the
-  follower only then, so nothing is sent, and no frame is read, while no Video tab is open, and
+  follower only then, so nothing is sent, and no frame is read, while no Player tab is open, and
   stops the follower when the last port closes.
 - **The throttle:** steady play, the same video at the same speed with no ad, is sent at most
   every 100 ms; a jump of a second or more, a pause, a speed change, an ad, or `null` goes at once.
@@ -75,13 +75,13 @@ the tab's content script, with no service worker between:
   script hasn't started, is tried again after 2 seconds, doubling up to 10, and the wait starts
   over on the next message. The panel reads `chrome.runtime.lastError` on each disconnect. A port
   that disconnects with a `lastError` before any message, which is what a tab without the content
-  script gives, is reported to the Video tab as `unreachable()` (`Following` in
+  script gives, is reported to the Player tab as `unreachable()` (`Following` in
   `video-tab-port.ts`), and the tab offers Reload (`chrome.tabs.reload`); any message after that
   clears it.
 
 A port, rather than two messages through the service worker, makes the close certain: Chrome
 disconnects it when the panel closes or the page goes, which a sent "closed" can't promise. The
-Video tab still asks for captions through the service worker (`captions`, `try-again`), with
+Player tab still asks for captions through the service worker (`captions`, `try-again`), with
 Zenbu Captions on or off, and seeks with a `video` control.
 
 ## The caption on the player
@@ -94,8 +94,8 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
   changes give for the video, so it asks for nothing more, and shows the caption while
   `videos.zenbuCaptions` is on, Zenbu is on for the page's host (`isZenbuOn`), and the video has
   lines: it hides the site's captions (`showSiteCaptions(false)`), then calls
-  `show(follower, { videoId, lines }, settings)`. Turning either off stops it and shows the site's captions again, and stops the follower unless a Video tab is
-  open; a Video tab closing leaves the follower running while the caption shows. A Video tab's
+  `show(follower, { videoId, lines }, settings)`. Turning either off stops it and shows the site's captions again, and stops the follower unless a Player tab is
+  open; a Player tab closing leaves the follower running while the caption shows. A Player tab's
   seek goes through the caption's `seek`, so Repeat moves with it.
 - **Where it draws** (`player-captions.tsx`): one host element, `data-zenbu-player-captions`, in
   `follower.captionHost()` once the follower has one, absolutely over the whole player with
@@ -137,7 +137,7 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
 - **The word popup** is the page lookup's (`wordPopupHost`, with `popupSettings` from
   `src/word-popup/popup-settings.ts`), and the words are Translate's `SourceLine` with a `pick`
   that opens it. `holdForPopups` (`popup-hold.ts`) hears `wordPopupEvents()` and pauses through
-  `popupPause` (`src/video/popup-pause.ts`), which the Video tab's transcript uses too: it plays
+  `popupPause` (`src/video/popup-pause.ts`), which the Player tab's transcript uses too: it plays
   again on close, or when the caption stops with the popup open, only if the video was playing, and a close during a pointer press waits for the
   press to end, so moving from word to word doesn't play it.
 - **English** (`line-english.ts`) asks `translate` for the line and the next one and keeps each
@@ -162,7 +162,7 @@ through a stand-in `fetch`.
   clock, Try again, and Zenbu Captions off (`captions-service.test.ts`).
 - **The watch page,** in happy-dom: asking once per video and nothing for seeking, line moves,
   Repeat, or speed, asking again only once the wait is over, and sending playback only to an open
-  Video tab (`youtube-page.interaction.test.tsx`, `video-tab-port.test.ts`); the follower's
+  Player tab (`youtube-page.interaction.test.tsx`, `video-tab-port.test.ts`); the follower's
   controls, ads, the learner's speed, and hiding YouTube's captions
   (`youtube-follower.interaction.test.tsx`).
 - **The caption on the player,** on a stand-in clock for the video: the line controls

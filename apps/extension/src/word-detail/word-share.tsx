@@ -1,9 +1,9 @@
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import type { WordDetail } from '@zenbu/dictionary-core/detail/word'
-import { wordPath } from '@zenbu/dictionary-core/detail/word-path'
+import { Button } from '@zenbu/ui/components/button'
 import { SavedItemActions } from '@zenbu/ui/dictionary/saved-item-actions'
-import { LinkIcon } from 'lucide-react'
-import { websiteOrigin } from '../shared/hosts'
+import { ExternalLinkIcon, LinkIcon } from 'lucide-react'
+import { wordAddress } from '../shared/word-address'
 import { wordDetailLabels } from './labels'
 import { useNotices } from './notice'
 
@@ -12,7 +12,7 @@ const closedShareSheet = () => undefined
 export function WordShare({ word }: { word: WordDetail }) {
   const labels = wordDetailLabels.share
   const { copy } = useNotices()
-  const url = `${websiteOrigin}${encodeURI(wordPath(word))}`
+  const url = wordAddress(word)
   const copyLink = () => void copy(url, labels.linkCopied)
   const share = () => {
     if (!navigator.share) return copyLink()
@@ -23,6 +23,28 @@ export function WordShare({ word }: { word: WordDetail }) {
       share={{ label: fill(labels.share, { name: word.headword }), onSelect: share }}
       moreActions={fill(labels.moreActions, { name: word.headword })}
       groups={[[{ id: 'copyLink', icon: LinkIcon, label: labels.copyLink, onSelect: copyLink }]]}
+    />
+  )
+}
+
+export function OpenOnWebsite({ word }: { word: WordDetail }) {
+  const label = wordDetailLabels.share.openOnWebsite
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      nativeButton={false}
+      render={
+        <a
+          href={wordAddress(word)}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={label}
+          title={label}
+        >
+          <ExternalLinkIcon />
+        </a>
+      }
     />
   )
 }

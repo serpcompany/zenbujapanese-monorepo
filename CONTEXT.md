@@ -63,8 +63,9 @@ Zenbu has (`apps/extension/src/content/page-lookup.ts`), registered at run time 
 _Avoid_: content script (alone, where the YouTube one or the test one could be meant)
 
 **Side panel**:
-The browser extension's panel beside the page, Chrome's side panel: a tab bar with Video,
-Translate, Images, Words, and Recent, each tab with its own pages, such as a word's.
+The browser extension's panel beside the page, Chrome's side panel: a tab bar with the app's
+Translate, Player, and Account, each tab with its own pages, such as a word's. It has no Look Up,
+since the extension has no dictionary search; the website has one (#1129, D3).
 _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)
 
 **Word popup**:
@@ -74,16 +75,22 @@ _Avoid_: word card (the Word card is the entry the popup draws, not the popup), 
 
 **Zenbu Captions**:
 The Japanese lines the browser extension gets for a YouTube video and shows itself, in the side
-panel's Video tab and as a caption on the player; also the switch that fetches them as soon as a
+panel's Player tab and as a caption on the player; also the switch that fetches them as soon as a
 video opens and draws them on the player in place of the site's. YouTube's own captions are the
 site's, which the extension hides while it draws its own.
 _Avoid_: subtitles, YouTube captions (for the extension's), Live Captions (heard speech, not built)
 
 **Transcript**:
-The side panel's Video tab in the browser extension: a YouTube video's Zenbu Captions, one row
+The side panel's Player tab in the browser extension: a YouTube video's Zenbu Captions, one row
 for each line with the time it starts, the line playing highlighted, and a row's click moving the
 video to it. The caption on the player shows one line at a time instead.
 _Avoid_: subtitles, captions (the lines themselves, or the player's caption)
+
+**Player tab**:
+The browser extension's side panel tab that holds the Transcript and Recent, which was its Video
+tab. Its code keeps the old name: `VideoTab`, `src/video-tab/`, `video-tab-port.ts`, the product
+doc `video-tab.md`, and the tests' "Video tab:" check names are all the Player tab.
+_Avoid_: Video tab (for the tab; the code's name only)
 
 **Caption on the player**:
 The line being heard that the browser extension draws on a site's video player, with its words,
@@ -94,11 +101,11 @@ _Avoid_: overlay, subtitles, the player's captions (the site's own)
 **Video follower**:
 The browser extension's view of the video on a page: its time, whether it plays, its speed, and
 whether an ad shows, with seek, play, pause, and speed. YouTube has one; Netflix's is to come.
-_Avoid_: player (the site's own, or the app's Player tab)
+_Avoid_: player (the site's own, or the Player tab in the app and the extension)
 
 **Translation module**:
 The browser extension's one way to translate (`apps/extension/src/translation/`), on Chrome's
-on-device Translator, which its Translate and Video tabs use and its other surfaces will. The app's
+on-device Translator, which its Translate and Player tabs use and its other surfaces will. The app's
 Translate uses Apple Translation instead.
 _Avoid_: translator (Chrome's Translator is the API under it), Translate (the tab)
 

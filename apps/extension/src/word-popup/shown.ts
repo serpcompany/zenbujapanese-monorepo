@@ -6,9 +6,7 @@ import {
 import { pitchAccent } from '@zenbu/dictionary-core/detail/pitch'
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { fill } from '@zenbu/dictionary-core/detail/template'
-import { wordPath } from '@zenbu/dictionary-core/detail/word-path'
 import type { ShownFrequency } from '@zenbu/ui/dictionary/frequency'
-import { websiteOrigin } from '../shared/hosts'
 import { wordDetailLabels } from '../word-detail/labels'
 
 export const cardRuby = (card: WordCard): RubySegment[] =>
@@ -40,8 +38,6 @@ export function cardBadges(card: WordCard, chosen: readonly string[]): ShownFreq
     return shown ? [badge(shown)] : []
   })
 }
-
-export const wordAddress = (card: WordCard) => `${websiteOrigin}${encodeURI(wordPath(card))}`
 
 export function shareText(card: WordCard): string {
   const heading =

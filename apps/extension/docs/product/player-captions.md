@@ -3,7 +3,7 @@
 On a YouTube watch page, with Zenbu Captions on, Zenbu draws the line being heard on YouTube's
 player, in place of YouTube's own captions, with the line controls at the player's top right. The
 lines come from the watch page, once per video ([`youtube-captions.md`](youtube-captions.md)); the
-words, their popup, and the English are the same as the Video tab's and Translate's
+words, their popup, and the English are the same as the Player tab's and Translate's
 ([`video-tab.md`](video-tab.md), [`word-popup.md`](word-popup.md)). YouTube's layout doesn't
 change. The text is in `src/player-captions/labels.ts`. How it's built is in
 [`extension-captions.md`](../../../../docs/agents/extension-captions.md), The caption on the player.
@@ -27,7 +27,7 @@ Chrome harness's stand-in watch page under `www.youtube.com`, which asks YouTube
 | Each word is underlined, with the reading aids turned on in Settings: furigana, a romaji line, and each word's short meaning. Turning one on or off changes the caption with no reload. | Caption: "underlines the line's words…", "follows the reading aids…"; Watch page: "passes each settings change to the caption"; Browser: "draws the line being heard…" |
 | A meaning is white at 70%, at least 4.5:1 against the band over the brightest frame, whatever the page's theme. | Browser: "draws word meanings on the caption at least 4.5:1…" |
 | The line's English is under it, from Chrome's Translator on this computer, asked for this line and the next only. With Translations off, no English and nothing asked. | Caption: "shows the line's English under it…", "shows no English and asks for none while Translations is off" |
-| Until Japanese to English is downloaded, the caption shows the Japanese and its romaji line, as the reading aids say, and no English; it never starts the download, which the Video tab offers. Once it is downloaded, the English shows. | Caption: "shows Japanese and romaji until the model is downloaded…" |
+| Until Japanese to English is downloaded, the caption shows the Japanese and its romaji line, as the reading aids say, and no English; it never starts the download, which the Player tab offers. Once it is downloaded, the English shows. | Caption: "shows Japanese and romaji until the model is downloaded…" |
 | While an ad plays, no caption and no controls show, and YouTube's own captions come back; after it, the caption and controls come back and YouTube's are hidden again. | Caption: "during an ad…" |
 | Clicks on the caption and the controls don't reach YouTube's player, so they don't pause the video. Of the keys, only Space and Enter on a focused control, and the speed menu's own keys while it is open, are kept from YouTube; every other key, such as f or an arrow after a click on Next, works YouTube's shortcuts, and Escape always reaches the page. | Caption: "keeps clicks, and the keys a control acts on, from the player…", "lets YouTube's own shortcuts reach the page after a mouse click…", "keeps the speed menu's own keys inside…" |
 
@@ -67,7 +67,7 @@ asks YouTube for anything (Browser: "draws the line being heard…").
 | Next and Previous seek to the line's start exactly. While it is paused, they play just that line and pause again at its end, also when the seek lands a little early or late, and on a last line that ends after the video, where the video ends. Before the first line, either goes to the first. | Lines: "while paused, play just that line…", "from before the first line…", "pause where the learner paused…", "a seek that lands off its target", "the last line of a video that ends before it" |
 | Repeat line plays the line again from its start each time it ends, once per end and never twice within 700 ms, at every speed and when a seek lands 200 ms early or late, until it is turned off. A last line that ends after the video repeats from where the video ends. Next, Previous, and a seek move it to that line. Turned on while paused, it goes to the line's start without playing. | Lines: "Repeat line" (each, with "seeks once per line end at…" and "loops a last line that ends after the video does…"); Controls: "move to the next and previous line, repeat a line…"; Browser: "draws the line being heard…" |
 | The speed menu offers 0.5×, 0.75×, 1×, 1.25×, and 1.5×, opens inside the player, also in fullscreen, and closes on a choice. The speed chosen stays across a line change, Repeat, and an ad. | Lines: "chosen while repeating, stays across a line change and an ad"; Controls: "choose a speed…"; Browser: "opens the speed menu inside the player…" |
-| A seek from the Video tab moves Repeat with it. | Watch page: "sends the Video tab's seeks through the caption…" |
+| A seek from the Player tab moves Repeat with it. | Watch page: "sends the Video tab's seeks through the caption…" |
 
 ## When the controls show
 

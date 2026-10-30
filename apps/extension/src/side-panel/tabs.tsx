@@ -1,15 +1,8 @@
-import {
-  BookMarked,
-  History,
-  Languages,
-  type LucideIcon,
-  MonitorPlay,
-  ScanText
-} from 'lucide-react'
+import { CircleUserRound, Languages, type LucideIcon, SquarePlay } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { TranslateTab } from '../translate/translate-tab'
 import { VideoTab } from '../video-tab/video-tab'
-import { emptyTab, SignUpButton } from './empty-tab'
+import { AccountTab } from './account-tab'
 import { labels } from './labels'
 import type { PanelTab, PanelTabProps } from './route'
 
@@ -22,33 +15,21 @@ export type PanelTabDefinition = {
 
 export const tabs: PanelTabDefinition[] = [
   {
-    id: 'video',
-    label: labels.tabs.video,
-    icon: MonitorPlay,
-    Content: VideoTab
-  },
-  {
     id: 'translate',
     label: labels.tabs.translate,
     icon: Languages,
     Content: TranslateTab
   },
   {
-    id: 'images',
-    label: labels.tabs.images,
-    icon: ScanText,
-    Content: emptyTab(ScanText, labels.empty.images)
+    id: 'player',
+    label: labels.tabs.player,
+    icon: SquarePlay,
+    Content: VideoTab
   },
   {
-    id: 'words',
-    label: labels.tabs.words,
-    icon: BookMarked,
-    Content: emptyTab(BookMarked, labels.empty.words, SignUpButton)
-  },
-  {
-    id: 'recent',
-    label: labels.tabs.recent,
-    icon: History,
-    Content: emptyTab(History, labels.empty.recent, SignUpButton)
+    id: 'account',
+    label: labels.tabs.account,
+    icon: CircleUserRound,
+    Content: AccountTab
   }
 ]

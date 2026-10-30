@@ -1,7 +1,7 @@
 # YouTube captions and playback
 
 On a YouTube watch page, the extension gets the video's Japanese captions and follows the video,
-so the side panel's Video tab ([`video-tab.md`](video-tab.md)) and the caption on the player
+so the side panel's Player tab ([`video-tab.md`](video-tab.md)) and the caption on the player
 ([`player-captions.md`](player-captions.md)) can show them and drive it. How it's built is in
 [`docs/agents/extension.md`](../../../../docs/agents/extension.md), Captions and the video.
 
@@ -19,7 +19,7 @@ a page. No other YouTube page, and no other site, is followed.
 | A track is only ever asked for on `www.youtube.com`, and never translated. | `src/captions/youtube-requests.test.ts` |
 | A failure has its reason: the video didn't open, YouTube couldn't be reached, it refused the captions, they couldn't be read, Zenbu couldn't get ready to ask, in which case nothing is asked, or Zenbu couldn't keep the captions it got. A failed video is asked for again only by Try again. | `src/captions/youtube-requests.test.ts`, `src/captions/captions-service.test.ts` |
 | A request YouTube leaves unanswered for 15 seconds fails as YouTube not reached, and the other tabs' requests go on. | `src/captions/youtube-requests.test.ts`, `src/captions/captions-service.test.ts` |
-| With Zenbu Captions off in Settings, opening a video asks nothing until the Video tab asks for its captions, and each next video in that tab waits, too, until the Video tab asks for it. Turning them on asks for each video still open. | `src/captions/captions-service.test.ts`, `src/video/youtube-page.interaction.test.tsx` |
+| With Zenbu Captions off in Settings, opening a video asks nothing until the Player tab asks for its captions, and each next video in that tab waits, too, until the Player tab asks for it. Turning them on asks for each video still open. | `src/captions/captions-service.test.ts`, `src/video/youtube-page.interaction.test.tsx` |
 
 ## When YouTube says no
 
@@ -33,14 +33,14 @@ minutes." Then:
 | Once the wait is over, the open video is asked for again, and one tab's request answers for every tab waiting. Nothing is asked for a tab whose video was closed. | `src/captions/captions-service.test.ts`, `src/video/youtube-page.interaction.test.tsx` |
 | Try again asks once, at any time. | `src/captions/captions-service.test.ts` |
 | The waits last for the browser session, also when Chrome stops the service worker. | `src/captions/captions-service.test.ts` |
-| With Zenbu Captions off, a watch page the Video tab hasn't asked about is given no wait, and asks nothing more once a wait is over, also one that began while they were on. | `src/captions/captions-service.test.ts`, `src/video/youtube-page.interaction.test.tsx` |
+| With Zenbu Captions off, a watch page the Player tab hasn't asked about is given no wait, and asks nothing more once a wait is over, also one that began while they were on. | `src/captions/captions-service.test.ts`, `src/video/youtube-page.interaction.test.tsx` |
 
 ## Following the video
 
 | Behavior | Check |
 | --- | --- |
-| The extension starts following the video only when a Video tab opens for the tab, something asks it to control the video, or the caption on the player shows, and stops on leaving it. While the caption shows, it keeps following after the last Video tab closes. | `src/video/youtube-page.interaction.test.tsx`, `src/video/youtube-page-captions.interaction.test.tsx` |
-| While a Video tab is open for the tab, the page sends it the video's playback, at most ten times a second while it plays and at once on any other change, and nothing once the last one closes. On leaving a video it says there is none, then sends the next video's. | `src/video/youtube-page.interaction.test.tsx`, `src/video/video-tab-port.test.ts` |
+| The extension starts following the video only when a Player tab opens for the tab, something asks it to control the video, or the caption on the player shows, and stops on leaving it. While the caption shows, it keeps following after the last Player tab closes. | `src/video/youtube-page.interaction.test.tsx`, `src/video/youtube-page-captions.interaction.test.tsx` |
+| While a Player tab is open for the tab, the page sends it the video's playback, at most ten times a second while it plays and at once on any other change, and nothing once the last one closes. On leaving a video it says there is none, then sends the next video's. | `src/video/youtube-page.interaction.test.tsx`, `src/video/video-tab-port.test.ts` |
 | It knows the time, whether the video plays, and its speed, and seeks, plays, pauses, and sets the speed of YouTube's own video. | `src/video/youtube-follower.interaction.test.tsx` |
 | It knows which line is playing, from its start up to its end, and that none is between lines. | `src/video/follower.test.ts` |
 | While an ad shows, no line is playing, the time holds where the video was, nothing plays, and the controls do nothing. After the ad, the learner's speed, such as 0.75×, comes back. | `src/video/follower.test.ts`, `src/video/youtube-follower.interaction.test.tsx` |

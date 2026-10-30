@@ -30,6 +30,12 @@ A box, "Type or paste Japanese or English", then **Use Selection** and **Clear**
 | **Clear** | Empties the box and removes the result. Emptying the box by hand removes it too. |
 | **Translate** | Translates the box. Text that is neither Japanese nor English, such as only numbers, gets "Type Japanese or English to translate." and nothing is sent. |
 
+Under the buttons, an **Image** row, as the app's Translate holds Image Search, opens Image Search
+over the tab. Reading text in pictures isn't built yet, so the page says "Reading text in pictures
+is coming soon", with no button, and Back finds Translate as it was
+(`src/side-panel/panel.interaction.test.tsx`, "opens Image Search from the Image row on
+Translate"; `e2e/side-panel-tabs.spec.ts`).
+
 Check: the tab's test, "takes in the selection with Use Selection…", the two selection notices,
 "removes the result on Clear…", "removes the result when the box is emptied", and "asks for
 Japanese or English…"; `src/translate/selection.test.ts` for where the selection comes from.
@@ -65,7 +71,7 @@ reader reads. Until the dictionary is ready, the text is plain; the tab asks aga
 each time as page lookup does, and links the words once it is ready.
 
 Check: `src/translate/source-words.interaction.test.tsx`, and the tab's test, "links the words of
-a Japanese source…". The spacing, colour and tooltip are checked in the Video tab's transcript,
+a Japanese source…". The spacing, colour and tooltip are checked in the Player tab's transcript,
 which draws the same line (`e2e/transcript-meanings.spec.ts`).
 
 ## Downloading and unavailable

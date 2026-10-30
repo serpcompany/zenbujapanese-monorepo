@@ -11,7 +11,7 @@ export type PanelState = {
 export function startState(tab: PanelTab): PanelState {
   return {
     tab,
-    stacks: { video: [], translate: [], images: [], words: [], recent: [] },
+    stacks: { translate: [], player: [], account: [] },
     nextKey: 0
   }
 }

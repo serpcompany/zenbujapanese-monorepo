@@ -305,6 +305,23 @@ describe('Word Detail', () => {
     expect(link.startsWith(websiteOrigin)).toBe(true)
   })
 
+  test('Open on zenbujapanese.com opens the word’s page in a new tab', async () => {
+    await show({ page: 'word', entSeq: iru })
+    const label = wordDetailLabels.share.openOnWebsite
+    expect(label).toBe('Open on zenbujapanese.com')
+    const link = container.querySelector<HTMLAnchorElement>(`a[aria-label="${label}"]`)
+    expect(link?.title).toBe(label)
+    expect(link?.getAttribute('href')).toBe(
+      `${websiteOrigin}/dictionary/%E8%A6%81%E3%82%8B-1546640/`
+    )
+    expect(link?.target).toBe('_blank')
+    expect(link?.rel).toBe('noreferrer')
+    expect(link?.querySelector('svg.lucide-external-link')).not.toBeNull()
+    expect(
+      link?.nextElementSibling?.querySelector('button[aria-label="Share 要る"]')
+    ).not.toBeNull()
+  })
+
   test('Share without a share sheet copies the link', async () => {
     Object.defineProperty(navigator, 'share', { value: undefined, configurable: true })
     await show({ page: 'word', entSeq: iru })
@@ -418,9 +435,9 @@ describe('Word Detail', () => {
 describe('Word Detail in the side panel', () => {
   const host = (page: PanelPage): PanelHost => ({
     windowId: async () => 1,
-    readLastTab: async () => 'words',
+    readLastTab: async () => 'account',
     saveLastTab: () => undefined,
-    readRoute: async () => ({ tab: 'words', page }),
+    readRoute: async () => ({ tab: 'account', page }),
     clearRoute: () => undefined,
     watchRoutes: () => () => undefined
   })

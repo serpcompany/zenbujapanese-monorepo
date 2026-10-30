@@ -1,8 +1,18 @@
-import { isPanelRoute, isPanelTab, type PanelRoute, type PanelTab } from './route'
+import { isPanelRoute, isPanelTab, type PanelRoute, type PanelTab, panelTabs } from './route'
 
 const lastTabKey = 'sidePanel.lastTab'
 
-const firstTab: PanelTab = 'video'
+const firstTab: PanelTab = panelTabs[0]
+
+const movedTabs = new Map<unknown, PanelTab>([
+  ['video', 'player'],
+  ['recent', 'player'],
+  ['images', 'translate'],
+  ['words', 'account']
+])
+
+const keptTab = (stored: unknown): PanelTab =>
+  isPanelTab(stored) ? stored : (movedTabs.get(stored) ?? firstTab)
 
 const routeKey = (windowId: number) => `sidePanel.route.${windowId}`
 
@@ -10,7 +20,7 @@ const ignoreFailure = () => undefined
 
 export function readLastTab(): Promise<PanelTab> {
   return chrome.storage.local.get(lastTabKey).then(
-    items => (isPanelTab(items[lastTabKey]) ? items[lastTabKey] : firstTab),
+    items => keptTab(items[lastTabKey]),
     () => firstTab
   )
 }

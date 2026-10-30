@@ -1,7 +1,8 @@
 import type { Locator, Page } from '@playwright/test'
 import { fill } from '@zenbu/dictionary-core/detail/template'
+import { wordDetailLabels } from '../src/word-detail/labels.ts'
 import { wordPopupLabels as labels } from '../src/word-popup/labels.ts'
-import { type Extension, expect, test } from './fixtures.ts'
+import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
 import {
   changeSettings,
   clickWord,
@@ -272,6 +273,37 @@ for (const { name, aids } of readingAidCases) {
     })
   })
 }
+
+test('Word Detail’s Open on zenbujapanese.com opens the word’s page in a new tab and keeps the panel', async ({
+  extension,
+  outsideRequests,
+  page
+}) => {
+  await readyPage(page, extension)
+  await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
+  await page.evaluate(async () => {
+    const { id } = await chrome.windows.getCurrent()
+    await chrome.storage.session.set({
+      [`sidePanel.route.${id}`]: { page: { page: 'word', entSeq: 1546640 } }
+    })
+  })
+  await page.reload()
+  const address = 'https://zenbujapanese.com/dictionary/%E8%A6%81%E3%82%8B-1546640/'
+  expect(address).toBe(wordUrl('要る', 'いる', 1546640))
+  await extension.context.route(address, route => route.fulfill({ body: 'word page' }))
+  const link = page.getByRole('button', { name: wordDetailLabels.share.openOnWebsite })
+  await expect(link).toHaveAttribute('title', wordDetailLabels.share.openOnWebsite)
+  const opened = extension.context.waitForEvent('page')
+  await link.click()
+  const tab = await opened
+  await expect.poll(() => tab.url()).toBe(address)
+  await tab.close()
+  await extension.context.unroute(address)
+  await expect(page.getByRole('heading', { level: 1, name: '要る' })).toBeVisible()
+  expect(page.url()).toBe(extensionUrl(extension, 'pages/side-panel.html'))
+  expect(outsideRequests).toEqual([address])
+  outsideRequests.length = 0
+})
 
 test('a click on the furigana over a word in a link opens the word’s popup and leaves the address alone', async ({
   extension,
