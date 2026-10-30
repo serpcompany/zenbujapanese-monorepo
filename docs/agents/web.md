@@ -445,9 +445,9 @@ and the word-detail suite's 見る and 学校 at run time.
 
 ## Account pages
 
-`/login/`, `/register/`, `/forgot-password/`, and `/account/` sign a learner in to their Zenbu
-account and manage it (#468; the [product docs](../../apps/web/docs/product/account.md)), against
-the account service ([`account-api.md`](account-api.md); the website's side of it is
+`/login/`, `/register/`, `/forgot-password/`, `/account/`, and `/account/extension/` (#1130) sign a
+learner in and manage the account (#468; [product docs](../../apps/web/docs/product/account.md)),
+against the account service ([`account-api.md`](account-api.md); the website's side of it is
 [`account-clients.md`](account-clients.md), The website).
 
 - **The learner's browser calls the service, never the Worker.** Bot Fight Mode challenges the

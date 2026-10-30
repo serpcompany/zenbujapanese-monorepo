@@ -35,9 +35,10 @@ interface Landed {
   email: string
 }
 
+export type Unloaded = { kind: 'loading' } | { kind: 'unreachable'; failure: Failure }
+
 type View =
-  | { kind: 'loading' }
-  | { kind: 'unreachable'; failure: Failure }
+  | Unloaded
   | { kind: 'signed-out'; notice: string | null }
   | { kind: 'deleted'; appStoreSubscriptionContinues: boolean }
   | { kind: 'signed-in'; account: SignedInAccount; landed: Landed | null }
@@ -69,6 +70,36 @@ export function SignedOut({ notice, locale, text }: Words & { notice: string | n
       </div>
     </div>
   )
+}
+
+export function Unreachable({
+  problem,
+  text,
+  onRetry
+}: {
+  problem: string
+  text: AccountText
+  onRetry: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <FormMessage problem={problem} />
+      <Button type="button" variant="outline" className="self-start" onClick={onRetry}>
+        {text.view.tryAgain}
+      </Button>
+    </div>
+  )
+}
+
+export function NotLoaded({
+  view,
+  locale,
+  text,
+  onRetry
+}: Words & { view: Unloaded; onRetry: () => void }) {
+  if (view.kind === 'loading') return <Notice>{text.view.loading}</Notice>
+  const problem = failureMessage(view.failure, text.messages, locale)
+  return <Unreachable problem={problem} text={text} onRetry={onRetry} />
 }
 
 const madeWithinMs = 60_000
@@ -177,16 +208,8 @@ export function AccountView({
     return stopFollowing
   }, [shownInitials, signedOut])
 
-  if (view.kind === 'loading') return <Notice>{text.view.loading}</Notice>
-  if (view.kind === 'unreachable') {
-    return (
-      <div className="flex flex-col gap-3">
-        <FormMessage problem={failureMessage(view.failure, text.messages, locale)} />
-        <Button type="button" variant="outline" className="self-start" onClick={() => void load()}>
-          {text.view.tryAgain}
-        </Button>
-      </div>
-    )
+  if (view.kind === 'loading' || view.kind === 'unreachable') {
+    return <NotLoaded view={view} locale={locale} text={text} onRetry={() => void load()} />
   }
   if (view.kind === 'signed-out') {
     return <SignedOut notice={view.notice} locale={locale} text={text} />

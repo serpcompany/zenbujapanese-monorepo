@@ -48,8 +48,10 @@ learner in to their Zenbu account and manage it; [Account pages](account.md) des
 [The subscription](subscription.md) the account page's subscription: Stripe Checkout, the Customer
 Portal, and one bought in the App Store, and [What an account syncs](synced-data.md) the pages
 under `/account/` where a subscriber sees and changes their known words, lists, notes, and the rest
-the apps sync. They are `noindex` and in no sitemap, and where they're closed, in a build whose
-environment names no account service, nothing links to them.
+the apps sync. [Signing the Chrome extension in](extension-sign-in.md) describes
+`/account/extension/`, which signs the Chrome extension in to the account in one click. They are
+`noindex` and in no sitemap, and where they're closed, in a build whose environment names no
+account service, nothing links to them.
 
 Every page's title and description fit a search result, and a shared link shows the site's image;
 [Titles, descriptions, and sharing](snippets.md) says how each kind of page builds them.
@@ -106,7 +108,7 @@ its app source and planned check, and is then built with its check in the same P
 
 Each behavior in [Dictionary](dictionary.md), [Site-wide](site-wide.md), [Account pages](account.md),
 [The subscription](subscription.md), [What an account syncs](synced-data.md),
-[Languages](languages.md), [Privacy Policy](privacy.md), and
+[Signing the Chrome extension in](extension-sign-in.md), [Languages](languages.md), [Privacy Policy](privacy.md), and
 [Kanji to Furigana](kanji-to-furigana.md) names its automated check, or says "No
 automated check yet". The checks come in
 five kinds:
