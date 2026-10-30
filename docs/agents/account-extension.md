@@ -109,9 +109,10 @@ handed by message is [ADR 0023](../adr/0023-hand-the-websites-sign-in-to-the-bro
   website session has since signed out or run out, is `401 invalid_code`, one over 5 minutes old `401 code_expired`, and another app's
   `403 client_mismatch`; each of these spends it. No client header is `400 unknown_client`,
   which doesn't. The session counts as signed in when the website's did, so it is no fresher.
-- **The website hears only whether it worked:** `{ signedIn: true }`, or `{ signedIn: false,
-  refusal }`, `signed-in-already` (a browser signed in already keeps its account and redeems
-  nothing), `wait`, or `try-again`. Never the email or a token.
+- **The website hears only whether it worked:** `{ signedIn: true }` once the session is kept,
+  even when the subscription read after it fails (reported as `account-answer`), or
+  `{ signedIn: false, refusal }`, `signed-in-already` (a browser signed in already keeps its
+  account and redeems nothing), `wait`, or `try-again`. Never the email or a token.
 - **The code goes nowhere else:** it isn't logged, reported, put in a URL, or kept by the
   website, and the extension's error reports carry only `account-answer`.
 - **Signing out of either leaves the other signed in:** they are two sessions.

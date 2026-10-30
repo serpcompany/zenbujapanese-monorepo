@@ -21,6 +21,8 @@ const handedOver = { type: 'sign-in', code: 'website-code' }
 
 const redeem = 'POST /v1/auth/sign-in/extension-code'
 
+const readFails = () => expect.unreachable('the subscription read failed')
+
 function listening(reply: Promise<WebsiteReply> = Promise.resolve({ signedIn: true })) {
   const signInFromWebsite = vi.fn(() => reply)
   const reportFailure = vi.fn()
@@ -69,7 +71,7 @@ describe('answerWebsite', () => {
       keeps: true,
       reply: { signedIn: true }
     })
-    expect(signInFromWebsite).toHaveBeenCalledWith('website-code')
+    expect(signInFromWebsite).toHaveBeenCalledWith('website-code', expect.any(Function))
   })
 
   it('leaves every message from another origin, and every other message, unanswered', async () => {
@@ -112,7 +114,7 @@ describe("the account's sign-in from the website", () => {
       'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
       'GET /v1/me/subscription': () => json(200, subscription)
     })
-    await expect(world.account.signInFromWebsite('website-code')).resolves.toEqual({
+    await expect(world.account.signInFromWebsite('website-code', readFails)).resolves.toEqual({
       signedIn: true
     })
     expect(world.asked[0]?.body).toEqual({ code: 'website-code' })
@@ -127,9 +129,26 @@ describe("the account's sign-in from the website", () => {
     })
   })
 
+  it('answers Signed in once the session is kept, and reports a failed subscription read', async () => {
+    const world = accountWorld({
+      [redeem]: () => signedInAnswer('session-website'),
+      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
+      'GET /v1/me/subscription': () => json(200, subscription)
+    })
+    world.session.area.set = () => Promise.reject(new Error('storage failed'))
+    const reportFailure = vi.fn()
+    const listener = answerWebsite(world.account, production, reportFailure)
+    const reply = await new Promise(resolve =>
+      listener(handedOver, { origin: 'https://zenbujapanese.com' }, resolve)
+    )
+    expect(reply).toEqual({ signedIn: true })
+    expect(world.local.items.get(sessionTokenKey)).toBe('session-website')
+    expect(reportFailure.mock.calls).toEqual([['account-answer']])
+  })
+
   it('keeps the session it has when it is signed in already, and redeems nothing', async () => {
     const world = await signedInWorld({ [redeem]: () => signedInAnswer('session-website') })
-    await expect(world.account.signInFromWebsite('website-code')).resolves.toEqual({
+    await expect(world.account.signInFromWebsite('website-code', readFails)).resolves.toEqual({
       signedIn: false,
       refusal: 'signed-in-already'
     })
@@ -148,7 +167,7 @@ describe("the account's sign-in from the website", () => {
     const world = accountWorld({ [redeem]: () => answers.shift() ?? json(500, {}) })
     const replies = []
     for (let each = 0; each < 5; each++) {
-      replies.push(await world.account.signInFromWebsite('website-code'))
+      replies.push(await world.account.signInFromWebsite('website-code', readFails))
     }
     expect(replies).toEqual([
       { signedIn: false, refusal: 'wait' },

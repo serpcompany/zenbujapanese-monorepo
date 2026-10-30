@@ -35,10 +35,12 @@ export function answerWebsite(
     if (!isTheWebsite(sender.origin, websites)) return false
     const code = codeOf(message)
     if (code === null) return false
-    service.signInFromWebsite(code).then(respond, () => {
-      reportFailure('account-answer')
-      respond({ signedIn: false, refusal: 'try-again' })
-    })
+    service
+      .signInFromWebsite(code, () => reportFailure('account-answer'))
+      .then(respond, () => {
+        reportFailure('account-answer')
+        respond({ signedIn: false, refusal: 'try-again' })
+      })
     return true
   }
 }

@@ -72,14 +72,20 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
 
   const signIn = async (way: SignInWay) => keep(await signIns.signIn(way))
 
-  async function signInFromWebsite(code: string): Promise<WebsiteReply> {
+  async function signInFromWebsite(code: string, readFailed: () => void): Promise<WebsiteReply> {
     if ((await store.sessionToken()) !== null) {
       return { signedIn: false, refusal: 'signed-in-already' }
     }
-    const answer = await keep(await signIns.withWebsiteCode(code))
-    if (answer.type === 'account' && answer.account.signedIn) return { signedIn: true }
-    const wait = answer.type === 'refused' && answer.refusal === 'wait'
-    return { signedIn: false, refusal: wait ? 'wait' : 'try-again' }
+    const signedIn = await signIns.withWebsiteCode(code)
+    if (!signedIn.ok) {
+      return {
+        signedIn: false,
+        refusal: signedIn.refused.refusal === 'wait' ? 'wait' : 'try-again'
+      }
+    }
+    await store.keepSignIn(signedIn.sessionToken, signedIn.user)
+    await readSubscription().catch(readFailed)
+    return { signedIn: true }
   }
 
   async function signOut(): Promise<AccountAnswer> {
