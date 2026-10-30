@@ -18,6 +18,15 @@ const pages = `chrome-extension://${extensionId}`
 
 const other = { id: 'user-2', email: 'other@example.com' }
 
+const syncing = {
+  'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
+  'GET /v1/me/subscription': () => json(200, subscribed),
+  'POST /v1/sync': asked => json(200, syncAnswer(appliedTo(asked.body as Sync)))
+} satisfies Parameters<typeof startAccountOn>[1]
+
+const signInByCode = (email: string) =>
+  askAccount({ account: 'sign-in', with: { way: 'code', email, code: '123456' } })
+
 function answering(copy: Partial<AccountCopy> = {}) {
   const reportFailure = vi.fn()
   const answer = vi.fn(async (): Promise<CopyAnswer> => ({ type: 'opened' }))
@@ -82,14 +91,9 @@ describe("the copy's messages", () => {
     const fake = startExtension({ tabs: [{ id: 4, url: 'https://www.youtube.com/watch?v=x' }] })
     startAccountOn(fake, {
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-1'),
-      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
-      'GET /v1/me/subscription': () => json(200, subscribed),
-      'POST /v1/sync': asked => json(200, syncAnswer(appliedTo(asked.body as Sync)))
+      ...syncing
     })
-    await askAccount({
-      account: 'sign-in',
-      with: { way: 'code', email: user.email, code: '123456' }
-    })
+    await signInByCode(user.email)
     const tab = fake.inTab(4)
     const heard: unknown[] = []
     onKnownChanged(known => heard.push(known), tab.onMessage)
@@ -108,15 +112,10 @@ describe("the copy's messages", () => {
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-other', other),
       'POST /v1/auth/sign-in/extension-code': () => signedInAnswer('session-website'),
       'POST /v1/auth/sign-out': () => json(200, {}),
-      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
-      'GET /v1/me/subscription': () => json(200, subscribed),
-      'POST /v1/sync': asked => json(200, syncAnswer(appliedTo(asked.body as Sync)))
+      ...syncing
     })
     const syncs = () => service.asked.filter(asked => asked.route === 'POST /v1/sync')
-    await askAccount({
-      account: 'sign-in',
-      with: { way: 'code', email: other.email, code: '123456' }
-    })
+    await signInByCode(other.email)
     await askCopy({ copy: 'change', change: { change: 'mark', ...word } })
     await vi.waitFor(() => expect(syncs().length).toBeGreaterThan(0))
     await askAccount({ account: 'sign-out' })
