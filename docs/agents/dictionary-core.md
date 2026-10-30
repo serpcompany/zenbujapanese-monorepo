@@ -75,10 +75,10 @@ The app asks `embedded/` for each of these; [The app's side](#the-apps-side) say
   `tokenize` does: `word_position` is 1-based, in UTF-16 code units, as the app's `NSRange` reads
   it. Every client's is the core's own ([The tokenizer](#the-tokenizer)): the service builds it
   from the files it read and passes it, and the app hands the embedded host the files.
-- `morphology` is an analyzer such as the app's Sudachi (a 217 MB dictionary). It answers its own
-  morphemes, ranged in code points: Mode C `words`, which search looks up (`lookupSegments`), and
-  the app's Mode A `pieces`, nested in them to link (`analyzedWords`). Tags go most general first
-  (名詞, 動詞), `*` or an empty `dictionaryForm` is none, and an analysis that throws finds no words.
+- `morphology` is an analyzer such as the app's Sudachi (217 MB). Its morphemes, in code points, are
+  Mode C `words`, which search looks up as Discovered Words (`lookedUpWords`, `isOneWordPhrase`,
+  `namedItem`), and Mode A `pieces`, nested in them to link (`analyzedWords`). Tags go most general
+  first, `*` or an empty `dictionaryForm` is none, and an analysis that throws finds no words.
 
 ## Embedded
 

@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { interruptedSearch } from './database'
 import { deinflect } from './deinflect'
-import { lookupSegments, type MorphologyAnalysis } from './morphology'
+import { lookupSegments, type Morpheme, type MorphologyAnalysis } from './morphology'
 import { morphemes } from './morphology.fixture'
 import { DictionarySearch, type SearchDatabase } from './search'
 
@@ -45,7 +45,18 @@ const dictionary = [
   entry('a2', 2, '勉強', 'べんきょう', ['noun', 'takesSuru']),
   entry('a3', 3, 'する', 'する', ['suruVerb']),
   entry('b2', 20, '閻魔', 'えんま', ['noun'], { fingerprint: 'enma', senseCount: 3 }),
-  entry('b1', 10, '閻魔', 'えんま', ['noun'], { fingerprint: 'enma' })
+  entry('b1', 10, '閻魔', 'えんま', ['noun'], { fingerprint: 'enma' }),
+  entry('c1', 30, '少し', 'すこし', ['adverb']),
+  entry('c2', 31, '遅れる', 'おくれる', ['ichidanVerb']),
+  entry('c3', 32, 'ちょっと', 'ちょっと', ['adverb']),
+  entry('c4', 33, '松', 'まつ', ['noun'], { senseCount: 3 }),
+  entry('c5', 34, '待つ', 'まつ', ['godanVerb']),
+  entry('c6', 35, 'さん', 'さん', ['suffix']),
+  entry('c7', 36, 'とる', 'とる', ['godanVerb'], { senseCount: 3 }),
+  entry('c8', 37, '取る', 'とる', ['godanVerb']),
+  entry('c9', 38, '言える', 'いえる', ['ichidanVerb']),
+  entry('c10', 39, '言う', 'いう', ['godanVerb']),
+  entry('c11', 40, '亜', 'あ', ['noun'])
 ]
 
 function japaneseFormsDatabase() {
@@ -133,6 +144,78 @@ describe('capabilities', () => {
 
   test('the website picks the words the app picks', () => {
     expect(lookupSegments(words)).toEqual(['日本語', '勉強', 'する'])
+  })
+})
+
+describe('phrases', () => {
+  const analyzing = (words: Morpheme[]) =>
+    new DictionarySearch(japaneseFormsDatabase().db, {
+      morphology: { analyze: async () => ({ words }) }
+    })
+  const headwords = async (words: Morpheme[], query: string) =>
+    (await analyzing(words).search(query)).items.map(item => item.entry.headword)
+
+  test('a phrase lists its adverb beside its verb, as Discovered Words', async () => {
+    const words = morphemes([
+      ['すこし', 'すこし', '副詞', '少し'],
+      ['おくれる', 'おくれる', '動詞', '遅れる'],
+      ['か', 'か', '助詞'],
+      ['も', 'も', '助詞']
+    ])
+    const results = await analyzing(words).search('すこしおくれるかも')
+    expect(results.items.map(item => item.entry.headword)).toEqual(['少し', '遅れる'])
+    expect(results).toMatchObject({ presentation: 'discoveredWords', resolution: 'analyzed' })
+  })
+
+  test('a phrase of one word and its particles lists that word', async () => {
+    const words = morphemes([
+      ['遅れる', '遅れる', '動詞'],
+      ['か', 'か', '助詞'],
+      ['も', 'も', '助詞']
+    ])
+    expect(await headwords(words, '遅れるかも')).toEqual(['遅れる'])
+  })
+
+  test('a lone suffix beside a name the analyzer didn’t know finds nothing', async () => {
+    const [name, suffix] = morphemes([
+      ['髙橋', '髙橋', '名詞'],
+      ['さん', 'さん', '接尾辞']
+    ])
+    expect(await headwords([{ ...name, isOutOfVocabulary: true }, suffix], '髙橋さん')).toEqual([])
+  })
+
+  test('one kana with a stray mark finds nothing, though the kana alone is a word', async () => {
+    const [kana, mark] = morphemes([
+      ['あ', 'あ', '感動詞', 'あー'],
+      ['゙', '゙', '名詞']
+    ])
+    expect(await headwords([kana, { ...mark, isOutOfVocabulary: true }], 'あ゙')).toEqual([])
+  })
+
+  test('a kana word takes the entry the analyzer names, not another spelled the same', async () => {
+    const words = morphemes([
+      ['ちょっと', 'ちょっと', '副詞'],
+      ['まっ', 'まつ', '動詞', '待つ'],
+      ['て', 'て', '助詞']
+    ])
+    expect(await headwords(words, 'ちょっとまって')).toEqual(['ちょっと', '待つ'])
+  })
+
+  test('a kana verb takes the entry the analyzer names, over a kana entry spelled the same', async () => {
+    const words = morphemes([
+      ['ちょっと', 'ちょっと', '副詞'],
+      ['とっ', 'とる', '動詞', '取る'],
+      ['た', 'た', '助動詞']
+    ])
+    expect(await headwords(words, 'ちょっととった')).toEqual(['ちょっと', '取る'])
+  })
+
+  test('a word keeps its own entry when the analyzer names one read another way', async () => {
+    const words = morphemes([
+      ['ちょっと', 'ちょっと', '副詞'],
+      ['言える', '言える', '動詞', '言う']
+    ])
+    expect(await headwords(words, 'ちょっと言える')).toEqual(['ちょっと', '言える'])
   })
 })
 

@@ -1207,16 +1207,35 @@
     "代名詞",
     "接頭辞",
     "接尾辞",
-    "感動詞"
+    "感動詞",
+    "副詞",
+    "連体詞",
+    "接続詞"
   ]);
+  var grammarPartsOfSpeech = /* @__PURE__ */ new Set(["助詞", "助動詞", "補助記号"]);
+  var affixPartsOfSpeech = /* @__PURE__ */ new Set(["接頭辞", "接尾辞"]);
+  var leadingPartOfSpeech = (word) => word.partOfSpeech[0] ?? "";
+  function isLookedUp(word) {
+    return isJapaneseOnly(normalizeQuery(word.surface)) && linkablePartsOfSpeech.has(leadingPartOfSpeech(word)) && !word.isOutOfVocabulary;
+  }
+  function lookupForm(word) {
+    const form = word.dictionaryForm === "*" || word.dictionaryForm === "" ? word.surface : word.dictionaryForm;
+    return normalizeQuery(form);
+  }
+  function lookedUpWords(words) {
+    return words.filter(isLookedUp);
+  }
   function lookupSegments(words) {
-    return words.flatMap((word) => {
-      if (!isJapaneseOnly(normalizeQuery(word.surface)) || !linkablePartsOfSpeech.has(word.partOfSpeech[0] ?? "") || word.isOutOfVocabulary) {
-        return [];
-      }
-      const form = word.dictionaryForm === "*" || word.dictionaryForm === "" ? word.surface : word.dictionaryForm;
-      return [normalizeQuery(form)];
-    });
+    return lookedUpWords(words).map(lookupForm);
+  }
+  function isOneWordPhrase(words) {
+    const lookedUp = lookedUpWords(words);
+    if (lookedUp.length !== 1 || affixPartsOfSpeech.has(leadingPartOfSpeech(lookedUp[0]))) {
+      return false;
+    }
+    return words.every(
+      (word) => word === lookedUp[0] || !word.isOutOfVocabulary && grammarPartsOfSpeech.has(leadingPartOfSpeech(word))
+    );
   }
 
   // src/sources/credits.ts
@@ -3395,6 +3414,11 @@
   }
 
   // src/search/search.ts
+  function namedItem(items, word) {
+    const form = lookupForm(word);
+    const named = (item) => item.entry.headword === word.normalizedForm;
+    return items.find((item) => named(item) && item.entry.reading === form) ?? items.find((item) => item.entry.headword === form) ?? items.find(named);
+  }
   function searchFeatures(capabilities) {
     return { sentenceSearch: capabilities.morphology !== void 0 };
   }
@@ -3476,8 +3500,8 @@
         return { ...directResults, usesPrimaryEntryExamples: true };
       }
       if (directResults.items.length > 0) return directResults;
-      const analyzed = await this.analyzedItems(query);
-      if (analyzed.length > 1 || isMixedScript(query) && analyzed.length > 0) {
+      const { items: analyzed, oneWordPhrase } = await this.analyzedItems(query);
+      if (analyzed.length > 1 || (oneWordPhrase || isMixedScript(query)) && analyzed.length > 0) {
         return {
           ...composing(
             analyzed.map((item) => [item]),
@@ -3534,19 +3558,21 @@
     }
     async analyzedItems(query) {
       const morphology = this.capabilities.morphology;
-      if (!morphology || query === "") return [];
+      const none2 = { items: [], oneWordPhrase: false };
+      if (!morphology || query === "") return none2;
       let words;
       try {
         words = (await morphology.analyze(query)).words;
       } catch {
-        return [];
+        return none2;
       }
-      const segments = lookupSegments(words);
-      const results = await Promise.all(segments.map((segment) => this.searchOnce(segment)));
-      return results.flatMap(({ items }, index) => {
-        const item = items.find((candidate2) => candidate2.entry.headword === segments[index]) ?? items[0];
+      const lookedUp = lookedUpWords(words);
+      const results = await Promise.all(lookedUp.map((word) => this.searchOnce(lookupForm(word))));
+      const items = results.flatMap(({ items: items2 }, index) => {
+        const item = namedItem(items2, lookedUp[index]) ?? items2[0];
         return item ? [item] : [];
       });
+      return { items, oneWordPhrase: isOneWordPhrase(words) };
     }
     async japaneseDeinflectedSources(query) {
       const candidates = deinflect(query).map((candidate2) => ({
@@ -5956,7 +5982,7 @@ ${sense.noteText}` : sense.meaning
     };
   }
   var grouped = remembered2(groupInflections);
-  var isLookedUp = remembered2(
+  var isLookedUp2 = remembered2(
     (candidate2) => isJapaneseOnly(normalizeQuery(candidate2.surface))
   );
   var lookupForms = remembered2(formsToLookUp);
@@ -6002,7 +6028,7 @@ ${sense.noteText}` : sense.meaning
     const forms2 = highlighted ? highlightedForms(highlighted) : null;
     const words = grouped(candidates);
     const counted2 = words.flatMap((_, index) => numberWithCounterAt(words, index)?.word ?? []);
-    return [...words, ...counted2].filter((candidate2) => !isWrittenAs(candidate2, forms2) && isLookedUp(candidate2)).map(lookupForms);
+    return [...words, ...counted2].filter((candidate2) => !isWrittenAs(candidate2, forms2) && isLookedUp2(candidate2)).map(lookupForms);
   }
   function linkedTokens(text2, candidates, highlighted, lookup) {
     if (candidates === null) {
@@ -6023,7 +6049,7 @@ ${sense.noteText}` : sense.meaning
       if (highlighted && isWrittenAs(candidate2, forms2)) {
         return { entry: highlighted.entry, candidates: [highlighted.entry], lookupForm: null };
       }
-      if (!isLookedUp(candidate2)) {
+      if (!isLookedUp2(candidate2)) {
         return { entry: null, candidates: [], lookupForm: null };
       }
       for (const form of lookupForms(candidate2)) {

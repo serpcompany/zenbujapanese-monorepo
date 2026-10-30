@@ -35,6 +35,14 @@ final class SearchResultsUITests: ZenbuUITestCase {
     assertResultsDrawnOnceWithChips(in: app)
   }
 
+  func testAShortPhraseListsItsAdverbAndItsVerb() {
+    let app = launch()
+    search("すこしおくれるかも", in: app)
+    waitFor(labeled("Discovered Words", in: app))
+    assertOnScreen(waitFor(find("result.bfcdf32dc7a6fd9802615271f98cdd5c", in: app)), in: app)
+    assertOnScreen(waitFor(find("result.1fde242cf2a82570567d7138cf3beff4", in: app)), in: app)
+  }
+
   private func assertResultsDrawnOnceWithChips(
     in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
   ) {
