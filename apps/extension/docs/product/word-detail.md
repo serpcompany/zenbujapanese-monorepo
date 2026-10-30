@@ -9,7 +9,8 @@ Open Full Entry opens a word's ([`word-popup.md`](word-popup.md)).
 
 Every check below is in `src/word-detail/`, in happy-dom, on the dictionary core's fixtures
 answered through a fixture source in the test, with Back drawn by the side panel itself: `word-detail-page.interaction.test.tsx` (word) and
-`kanji-and-form-pages.interaction.test.tsx` (kanji and form).
+`kanji-and-form-pages.interaction.test.tsx` (kanji and form). A check marked Chrome is a
+browser test in `e2e/word-popup.spec.ts`, on the side panel page in a tab with the fixture release.
 
 ## The word
 
@@ -23,6 +24,7 @@ answered through a fixture source in the test, with Back drawn by the side panel
 | Each meaning has a menu: Speak reads it in the best US English voice on this computer, or another English one when it has none, chosen as Pronounce chooses a Japanese one, at the same rate, or says "This browser can’t speak English." when the computer has only online ones or Chrome lists none, and Copy puts it on the clipboard and says "Meaning copied". | word: a meaning's Speak; a meaning's Copy |
 | A page's notices, such as "Meaning copied", "Link copied", a browser that can't speak, or a related word not found, show as a toast over the side panel, where they're seen however far the page is scrolled. The toast is a live region. One Toaster, `@zenbu/ui`'s shadcn Sonner, sits in the side panel. | word: a meaning's Copy; Share without a share sheet; a browser that can't speak; a related word with no target |
 | Share sends the word's zenbujapanese.com page to the system's share sheet; Copy Link, under •••, copies it. Without a share sheet, Share copies the link and says "Link copied". | word: Share and Copy Link; Share without a share sheet |
+| Open on zenbujapanese.com, an icon button beside Share with Share's size and look, opens the word's zenbujapanese.com page, the address Share gives, in a new tab; the side panel stays on the word. Its label is its accessible name and its tooltip. The extension has no dictionary search, so this is how a learner goes on to the website. | word: Open on zenbujapanese.com opens the word's page in a new tab; Chrome: Word Detail's Open on zenbujapanese.com |
 | Examples show 25 sentences; Load more examples fetches the next 25. When that fails, the button says Try again, and Try again fetches them. | word: Load More; Load More that fails |
 | A linked word in a sentence, a kanji, an alternative kanji, or a related word opens its own page. A Kanji or Alternative Kanji row opens the kanji's page (on the website, a row with no details stays plain text). | word: an example's word; Back through the pages; いる's Alternative Kanji row |
 | Back, in the side panel, returns to each page as it was left: the side panel keeps it drawn, so it isn't asked again. | word: Back through the pages |
@@ -47,6 +49,8 @@ answered through a fixture source in the test, with Back drawn by the side panel
 | A word or kanji the dictionary doesn't have says it isn't in the dictionary. | kanji: outside the dictionary |
 
 ## Not built yet
+
+A kanji's page and a form's page have no link to the website; only a word's has.
 
 Checks in Chrome on the whole dictionary (食べる, 食, and で) wait for the extension's final check
 in Chrome.

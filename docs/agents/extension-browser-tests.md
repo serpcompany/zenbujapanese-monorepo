@@ -28,7 +28,10 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   and taken back with `chrome.developerPrivate` from a `chrome://extensions` page, and the popup's
   card, choice, placement, closing, its More menu over it with one Escape each for the menu and
   the popup, links, Open Full Entry, Share, and Copy Link; the More menu also over a caption
-  word's popup on the YouTube stand-in, in and out of fullscreen (`word-popup.spec.ts`). The
+  word's popup on the YouTube stand-in, in and out of fullscreen; and Word Detail on the side
+  panel page in a tab, opened by its pending route, whose Open on zenbujapanese.com opens the
+  word's page in a new tab, fulfilled by `context.route` and taken off `outsideRequests`
+  (`word-popup.spec.ts`). The
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
@@ -75,7 +78,8 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
 The local server (`e2e/local-server.ts`) serves the test pages and a fixture release in the
 bucket's layout, which `e2e/fixture-release.ts` builds when the tests start: every first- and
 later-set file the installer names, tiny, with SQLite files from `node:sqlite` carrying the
-metadata the installer checks, laid out by `src/test/publish-release.ts` (the unit tests' fake
+metadata the installer checks, and the fixture words' entries with empty example tables, so a word's page answers, laid out
+by `src/test/publish-release.ts` (the unit tests' fake
 bucket uses it too) as `releases.json`, the manifest, `compressed.json`, and gzipped parts.
 Nothing is read from Git LFS, and no binary is committed. A failed run keeps its trace and screenshot in
 `e2e`'s `results` folder, which Git ignores.
