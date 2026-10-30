@@ -7,14 +7,14 @@ import { HeadwordRuby } from '@zenbu/ui/dictionary/headword-ruby'
 import { PitchAccent } from '@zenbu/ui/dictionary/pitch-accent'
 import { type OnUnsupported, PronounceButton } from '@zenbu/ui/dictionary/pronounce-button'
 import { RomajiLine } from '@zenbu/ui/dictionary/reading-aid-lines'
-import { SavedItemActions } from '@zenbu/ui/dictionary/saved-item-actions'
-import { LinkIcon, Maximize2Icon } from 'lucide-react'
+import { Maximize2Icon } from 'lucide-react'
+import { WordMenu } from '../word-saving/word-menu'
 import { wordPopupLabels } from './labels'
 import { cardBadges, cardPitch, cardRuby } from './shown'
 
 export type CardActions = {
   share(card: WordCard): void
-  copyLink(card: WordCard): void
+  addNote(card: WordCard): void
   openFullEntry(card: WordCard): void
   onUnsupported: OnUnsupported
 }
@@ -80,22 +80,18 @@ export function WordCardView({
           <RomajiLine romaji={romaji} className="text-sm text-muted-foreground" />
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <SavedItemActions
+          <WordMenu
+            word={{
+              item: card.languageReferenceID,
+              headword: card.headword,
+              reading: card.reading
+            }}
             share={{
               label: fill(labels.share, { name: card.headword }),
               onSelect: () => actions.share(card)
             }}
             moreActions={fill(labels.moreActions, { name: card.headword })}
-            groups={[
-              [
-                {
-                  id: 'copyLink',
-                  icon: LinkIcon,
-                  label: labels.copyLink,
-                  onSelect: () => actions.copyLink(card)
-                }
-              ]
-            ]}
+            addNote={() => actions.addNote(card)}
           />
           <OpenFullEntry onSelect={() => actions.openFullEntry(card)} />
         </div>

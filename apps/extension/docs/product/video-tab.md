@@ -104,8 +104,8 @@ tab: "in a tab with no content script, says to reload it…"). How it's built is
 ## Not built yet
 
 The share of the video's words the learner knows, beside the title, is #965's, and No Japanese
-Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing: nothing marks a word
-known. One browser test opens the Player tab on the stand-in watch page, for a word's card
+Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing: the ••• menu marks a
+word Known, but the captions and transcript don't follow it yet (#1187). One browser test opens the Player tab on the stand-in watch page, for a word's card
 (`e2e/transcript-card-on-page.spec.ts`); the rest of the tests above run in happy-dom. The agent
 Chrome harness's stand-in watch page is where the rest is checked in Chrome
 ([`tech-debt.md`](../../../../docs/tech-debt.md)).

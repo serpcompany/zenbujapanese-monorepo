@@ -6,7 +6,16 @@ import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { settingDefaults } from '../shared/settings'
 import { wordAddress } from '../shared/word-address'
-import { byText, click, find, openMenu, type Rendered, render, settle } from '../test/render'
+import {
+  byText,
+  click,
+  find,
+  type Rendered,
+  render,
+  settle,
+  stubIntersectionObserver
+} from '../test/render'
+import { savingStandIn } from '../test/saving-stand-in'
 import { openFullEntryButton, popupAnswer, youkyuu } from '../test/word-cards'
 import { wordDetailLabels } from '../word-detail/labels'
 import type { Sharing } from './copy'
@@ -40,13 +49,7 @@ const buttonNames = (popup: HTMLElement) =>
   )
 
 beforeEach(() => {
-  vi.stubGlobal(
-    'IntersectionObserver',
-    class {
-      observe() {}
-      disconnect() {}
-    }
-  )
+  stubIntersectionObserver()
 })
 
 afterEach(() => {
@@ -68,6 +71,7 @@ async function showPopup(
         ids={ids}
         lookUp={lookUp}
         settings={settingDefaults}
+        saving={savingStandIn().port}
         sharing={sharing}
       />
     </PronounceWithoutLocalVoice>
@@ -218,16 +222,12 @@ describe('the word popup', () => {
     expect(closed.popup.querySelector('[data-notice]')).toBeNull()
   })
 
-  it('copies the word’s address where there is no share sheet, and from Copy Link', async () => {
+  it('copies the word’s address where there is no share sheet', async () => {
     const writeText = vi.fn(async (_text: string) => {})
     const { popup } = await showPopup('要求', ['youkyuu'], { sharing: { writeText } })
     await click(shareButton(popup))
-    expect(writeText).toHaveBeenLastCalledWith(address)
+    expect(writeText).toHaveBeenCalledExactlyOnceWith(address)
     expect(find(popup, '[data-notice]').textContent).toBe(labels.share.linkCopied)
-
-    const menu = await openMenu(popup)
-    await click(byText(menu, '[role="menuitem"]', labels.share.copyLink))
-    expect(writeText).toHaveBeenCalledTimes(2)
   })
 
   it('says the copy failed when nothing can copy', async () => {

@@ -16,6 +16,7 @@ import { followVideoPage, type VideoSitePage } from '../video/video-page'
 import { servePagePopups } from '../word-popup/page-popup-server'
 import { wordPopupHost } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
+import { chromeSaving } from '../word-saving/saving'
 
 const popupCard = (id: string, frequency: readonly string[]) => lookUpPopupCard(id, frequency)
 
@@ -35,6 +36,7 @@ export function startVideoContent(site: VideoSitePage): void {
           segment: text => segmentText(text),
           wait: afterTimeout,
           popupCard,
+          saving: chromeSaving,
           translate: request => translate(request),
           keepCaptionPlace: place =>
             void askToWriteSettings({ 'videos.captionPlace': place }).catch(report)
@@ -53,7 +55,7 @@ export function startVideoContent(site: VideoSitePage): void {
       wordPopupHost({
         report,
         prepare: keptInside,
-        settings: () => popupSettings(settings(), { popupCard })
+        settings: () => popupSettings(settings(), { popupCard, saving: chromeSaving })
       })
   })
 }

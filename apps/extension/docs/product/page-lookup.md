@@ -110,7 +110,8 @@ goes; `src/page-lookup/hand-over.test.ts` for one running copy per page.
 
 ## Not built yet
 
-Hide Furigana on Known Words and Sentence Translations draw nothing on a page yet: nothing marks a
-word known, and pages have no sentence translations. Text with an emoji or another character
+Hide Furigana on Known Words and Sentence Translations draw nothing on a page yet: the ••• menu
+marks a word Known, but pages don't follow it yet (#1187), and pages have no sentence
+translations. Text with an emoji or another character
 outside the basic plane comes back unlinked
 ([`tech-debt.md`](../../../../docs/tech-debt.md)).

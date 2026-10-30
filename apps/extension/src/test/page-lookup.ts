@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { type PageLookup, startPageLookup } from '../page-lookup/page-lookup'
 import type { PageSettings, Settings } from '../shared/settings'
+import { savingStandIn } from './saving-stand-in'
 import { popupAnswer, sentenceAnswer } from './word-cards'
 
 export const later = () => new Promise<void>(done => setTimeout(done, 20))
@@ -23,6 +24,7 @@ export function pageLookupOn(settings: PageSettings, host = 'example.test') {
     onSettingsChanged: listener => settings.onChanged(listener),
     segment,
     popupCard: async id => popupAnswer(id),
+    saving: savingStandIn().port,
     underlines: () => underlines,
     popup: () => ({ open: vi.fn(), close: vi.fn(), holds: () => false }),
     report: error => {
