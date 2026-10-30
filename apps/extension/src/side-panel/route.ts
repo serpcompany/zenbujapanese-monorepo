@@ -6,8 +6,6 @@ export type PanelPage = { page: 'image-search' } | { page: 'test'; text: string 
 
 export type PanelRoute = { tab?: PanelTab; page?: PanelPage }
 
-export type OpenPanel = { target: 'service-worker'; openPanel: PanelRoute }
-
 export type MovePanel = { target: 'side-panel'; windowId: number; route: PanelRoute }
 
 export type PanelTabProps = { open(page: PanelPage): void; shown?: boolean }
@@ -15,15 +13,6 @@ export type PanelTabProps = { open(page: PanelPage): void; shown?: boolean }
 export type PanelPageProps<P extends PanelPage = PanelPage> = {
   page: P
   open(page: PanelPage): void
-}
-
-type Sender = { sendMessage(message: OpenPanel): Promise<unknown> }
-
-export function openPanel(route: PanelRoute, sender: Sender = chrome.runtime): Promise<void> {
-  return sender.sendMessage({ target: 'service-worker', openPanel: route }).then(
-    () => undefined,
-    () => undefined
-  )
 }
 
 type Fields = Record<string, unknown>

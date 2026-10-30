@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { goBack, goTo, openPage, selectTab, startState } from './navigation'
-import { isPanelRoute, type OpenPanel, openPanel, type PanelPage, routeForWindow } from './route'
+import { isPanelRoute, type PanelPage, routeForWindow } from './route'
 
 afterEach(() => vi.unstubAllEnvs())
 
@@ -48,24 +48,6 @@ describe('routeForWindow', () => {
     expect(routeForWindow(7, { ...move, target: 'offscreen' })).toBeNull()
     expect(routeForWindow(7, { ...move, route: { tab: 'history' } })).toBeNull()
     expect(routeForWindow(7, 'side-panel')).toBeNull()
-  })
-})
-
-describe('openPanel', () => {
-  it('asks the service worker to open the panel on the route', async () => {
-    const sendMessage = vi.fn(async (_message: OpenPanel) => ({ type: 'opened' }))
-    await expect(
-      openPanel({ tab: 'account', page: testPage }, { sendMessage })
-    ).resolves.toBeUndefined()
-    expect(sendMessage).toHaveBeenCalledWith({
-      target: 'service-worker',
-      openPanel: { tab: 'account', page: testPage }
-    })
-  })
-
-  it('settles quietly when the service worker cannot be reached', async () => {
-    const sendMessage = () => Promise.reject(new Error('Extension context invalidated.'))
-    await expect(openPanel({ page: imageSearch }, { sendMessage })).resolves.toBeUndefined()
   })
 })
 

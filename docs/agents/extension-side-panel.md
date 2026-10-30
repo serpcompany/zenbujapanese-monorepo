@@ -34,9 +34,10 @@ card on the page through a `word-popup` port, and Open Full Entry expands a card
   ([`extension-error-reports.md`](extension-error-reports.md)). The header's trailing side is
   `HeaderControls`: the site switch and the menu, which has the reading aids, Zenbu Captions, and
   Settings ([The header's site](#the-headers-site)).
-- **`openPanel(route)` opens it, from a click.** Nothing in the extension calls it since #1124;
-  the agent harness's `openPanel` message uses the same path. An extension page or a content
-  script calls it in the click handler itself, before any `await`. Chrome opens a side panel only
+- **The `openPanel` message opens it, from a click.** `{ target: 'service-worker', openPanel:
+  route }` reaches the service worker's handler. Since #1124 only the agent harness and the tests
+  send it; nothing in the extension does. A sender sends it in the click handler itself, before
+  any `await`. Chrome opens a side panel only
   in response to a user gesture, and the gesture lasts through one message only if the service
   worker calls `chrome.sidePanel.open` before it awaits anything: checked in Chrome 156 on
   2026-10-28 from a content script, an extension page in a tab, and a toolbar popup, and refused after
@@ -134,7 +135,7 @@ a granted origin covers it or the toolbar icon was clicked on that tab, and its 
   and icons, each tab's screen (Player's transcript is checked in `src/video-tab/`), Translate's
   Image row, the arrow keys, pages over a tab and Back, focus after each, the last tab and the
   five tabs' ids read as the three's, the sign-up links, the dictionary progress on every tab but Translate and on a
-  page over Translate, Try again, and `openPanel` through a fake Chrome to the panel, closed and
+  page over Translate, Try again, and the `openPanel` message through a fake Chrome to the panel, closed and
   open. A word's card on the page: `src/word-popup/page-popup.test.ts` (the panel's side) and
   `page-popup-server.test.ts` (the page's), with a fake port. The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)
   lists, with the test content script beside it on one fake Chrome. The browser tests open
@@ -143,7 +144,7 @@ a granted origin covers it or the toolbar icon was clicked on that tab, and its 
   transcript word's card on the stand-in watch page
   ([`extension-browser-tests.md`](extension-browser-tests.md)).
 - **In Chrome,** with the `verify-extension` skill ([`extension.md`](extension.md), Checks): open the
-  side panel from the toolbar icon and with `openPanel` from a click, closed and open, and check
+  side panel from the toolbar icon and with the `openPanel` message from a click, closed and open, and check
   that nothing scrolls sideways at 320 px. Check it in the side panel itself: in a background tab,
   `side-panel.html` waits for the tab to come to the front before it hides the tab it left.
   For the header: a click on the toolbar icon gives `activeTab` and the tab's address; Allow's
