@@ -6,7 +6,7 @@ import {
   neverMadeCode,
   signInCodePath
 } from './host-checks.ts'
-import { hosts } from './hosts.ts'
+import { hosts, stagingPassword } from './hosts.ts'
 
 function answering(page: Response | Error, code: Response | Error): Fetch {
   return async url => {
@@ -120,5 +120,41 @@ describe('hostProblems', () => {
       'content-type': 'application/json'
     })
     expect(seen[1]?.init?.body).toBe(JSON.stringify({ code: neverMadeCode }))
+  })
+
+  it("sends staging's password on the website request only", async () => {
+    const seen: { url: string; init?: RequestInit }[] = []
+    await hostProblems('staging', async (url, init) => {
+      seen.push({ url, init })
+      return url.endsWith(signInCodePath) ? invalid() : ok()
+    })
+    expect(seen[0]?.init?.headers).toEqual({
+      Authorization: `Basic ${btoa(`zenbu:${stagingPassword}`)}`
+    })
+    expect(stagingPassword).toBe('stagingpassword')
+    expect(seen[1]?.init?.headers).toEqual({
+      'X-Zenbu-Client': 'zenbu-extension',
+      'content-type': 'application/json'
+    })
+  })
+
+  it('says staging refused the password when its website answers 401', async () => {
+    const problems = await hostProblems(
+      'staging',
+      answering(new Response('', { status: 401 }), invalid())
+    )
+    expect(problems).toEqual([
+      `GET ${hosts.staging.website}/account/extension/ answered 401: staging refused the password.`
+    ])
+  })
+
+  it('does not say a password was refused for production', async () => {
+    const problems = await hostProblems(
+      'production',
+      answering(new Response('', { status: 401 }), invalid())
+    )
+    expect(problems).toEqual([
+      `GET ${hosts.production.website}/account/extension/ answered 401, not 200: the website has no handover page for the extension's sign-in.`
+    ])
   })
 })

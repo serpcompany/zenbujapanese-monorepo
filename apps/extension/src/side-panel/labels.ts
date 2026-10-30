@@ -17,6 +17,10 @@ export const labels = {
       title: 'No recent videos',
       description: 'A Zenbu account keeps the videos you watch on all your devices.'
     },
+    recentSignedIn: {
+      title: 'No recent videos',
+      description: 'The videos you watch show here, on all your devices.'
+    },
     words: {
       title: 'No words yet',
       description: 'The words you know and the lists you keep show here.'
