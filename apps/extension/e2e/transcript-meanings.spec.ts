@@ -4,6 +4,7 @@ import { labels } from '../src/side-panel/labels.ts'
 import { videoTabLabels } from '../src/video-tab/labels.ts'
 import { textContrast } from './contrast.ts'
 import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
+import { expectWordsApartWithMeaningsOffAndOn } from './word-underlines.ts'
 import { changeSettings, tones } from './words-page.ts'
 
 const videoId = 'zenbuJa0624'
@@ -109,11 +110,16 @@ function standInVideo(page: Page) {
   )
 }
 
-async function openTranscript(page: Page, extension: Extension, width: number) {
+async function openTranscript(
+  page: Page,
+  extension: Extension,
+  width: number,
+  wordMeanings = true
+) {
   await changeSettings(extension, {
     'readingAids.furigana': true,
     'readingAids.romaji': false,
-    'readingAids.wordMeanings': true,
+    'readingAids.wordMeanings': wordMeanings,
     'readingAids.translations': false
   })
   await page.setViewportSize({ width, height: 720 })
@@ -121,7 +127,8 @@ async function openTranscript(page: Page, extension: Extension, width: number) {
   await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
   await page.getByRole('tab', { name: labels.tabs.player }).click()
   const transcript = page.getByRole('list', { name: videoTabLabels.transcript })
-  await expect(transcript.locator('[data-aid="meaning"]')).toHaveCount(9)
+  const shown = wordMeanings ? '[data-aid="meaning"]' : '[data-word]'
+  await expect(transcript.locator(shown)).toHaveCount(9)
   await expect(transcript.locator('[data-line="1"][data-current]')).toBeVisible()
   return transcript
 }
@@ -206,4 +213,13 @@ test('gives a cut word meaning its full text as a tooltip and to a screen reader
   expect(await transcript.locator('[data-line="1"]').ariaSnapshot()).toContain(
     'indicates direct object of action'
   )
+})
+
+test('gives each word in the transcript its own underline, apart from the next, with Word Meanings off and on', async ({
+  extension,
+  page
+}) => {
+  const transcript = await openTranscript(page, extension, narrowestPanel, false)
+  const eachWord = lines.map(line => line.tokens.map(token => token.text))
+  await expectWordsApartWithMeaningsOffAndOn(extension, transcript, eachWord)
 })
