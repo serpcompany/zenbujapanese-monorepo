@@ -4,10 +4,9 @@ import { accountLabels } from '../account/labels'
 import { AccountTab } from '../side-panel/account-tab'
 import {
   json,
-  jwtWith,
+  keptSessionRoutes,
   signedInAnswer,
   startAccountOn,
-  subscription,
   user
 } from '../test/account-stand-in'
 import { dictionary, resetDictionary } from '../test/dictionary'
@@ -203,9 +202,7 @@ describe('Settings', () => {
     startAccountOn(fake, {
       'POST /v1/auth/email-otp/send-verification-otp': () => json(200, { success: true }),
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-1'),
-      'GET /v1/auth/token': () => json(200, { token: jwtWith(Date.now() / 1000 + 3600) }),
-      'GET /v1/me/subscription': () => json(200, subscription),
-      'POST /v1/auth/sign-out': () => json(200, { success: true })
+      ...keptSessionRoutes
     })
     const settings = await openSettings('#account')
     panel = render(<AccountTab />)

@@ -109,7 +109,7 @@ export function watching({
   pagePopup,
   site: videoSite
 }: Options = {}) {
-  startExtension()
+  const extension = startExtension()
   happyDOM.setURL(url)
   const video = followerStandIn()
   const page = watchedTab({
@@ -168,6 +168,7 @@ export function watching({
     await settle()
   }
   return {
+    extension,
     page,
     video,
     services,

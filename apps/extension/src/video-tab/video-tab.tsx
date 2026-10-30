@@ -2,6 +2,7 @@ import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { Button } from '@zenbu/ui/components/button'
 import { CaptionsOff, History, MonitorPlay } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useAccount } from '../account/use-account'
 import { captionLabels } from '../captions/labels'
 import type { CaptionsAnswer } from '../captions/messages'
 import type { Settings } from '../shared/settings'
@@ -20,15 +21,24 @@ import { useCaptions, usePlayback } from './use-video'
 
 type Shared = { services: VideoTabServices; open: PanelTabProps['open'] }
 
+function NoRecent({ select }: Pick<PanelTabProps, 'select'>) {
+  const account = useAccount()
+  if (account === null) return null
+  if (account.signedIn) return <EmptyState icon={History} text={panelLabels.empty.recentSignedIn} />
+  return (
+    <EmptyState icon={History} text={panelLabels.empty.recent}>
+      <SignUpButton select={select} />
+    </EmptyState>
+  )
+}
+
 function NoVideo({ select }: Pick<PanelTabProps, 'select'>) {
   return (
     <div className="flex flex-col">
       <EmptyState icon={MonitorPlay} text={panelLabels.empty.video} />
       <section data-recent className="border-t">
         <h2 className="px-4 pt-4 font-heading text-base font-medium">{panelLabels.recent}</h2>
-        <EmptyState icon={History} text={panelLabels.empty.recent}>
-          <SignUpButton select={select} />
-        </EmptyState>
+        <NoRecent select={select} />
       </section>
     </div>
   )

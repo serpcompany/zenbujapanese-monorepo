@@ -25,6 +25,8 @@ export const hosts: Record<Environment, Hosts> = {
   }
 }
 
+export const stagingPassword = 'stagingpassword'
+
 const websiteServicesId = 'com.zenbujapanese.website'
 
 export const signInIds: Record<Environment, SignInIds> = {
