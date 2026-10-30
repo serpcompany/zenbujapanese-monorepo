@@ -112,7 +112,7 @@ function Lines({
   ...shared
 }: Shared & { lines: Caption[]; video: WatchedVideo; shown: boolean; settings: Settings | null }) {
   const translations = settings?.['readingAids.translations'] === true
-  const { english, failed, translator, download, retry } = useEnglish(
+  const { translating, english, failed, translator, download, retry } = useEnglish(
     lines,
     translations,
     shared.services
@@ -121,7 +121,7 @@ function Lines({
   const notices = (
     <div className="flex flex-col gap-3 px-4 py-2 empty:hidden">
       {unreachable && <ReloadNotice reload={() => shared.services.reload(video.tabId)} />}
-      {translations && <ModelNotice model={translator} download={download} text={englishText} />}
+      {translating && <ModelNotice model={translator} download={download} text={englishText} />}
     </div>
   )
   return (

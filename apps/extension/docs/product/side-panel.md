@@ -17,7 +17,7 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
   search (#1129, D3). A click chooses a tab.
   The arrow keys move along the bar and choose the tab they land on, wrapping at the ends
   (`panel.interaction.test.tsx`; `e2e/side-panel-tabs.spec.ts`).
-- **Player on the transcript** of the YouTube video in the tab the learner is on:
+- **Player on the transcript** of the YouTube or Netflix video in the tab the learner is on:
   [`video-tab.md`](video-tab.md). On a tab with no video, its empty state, with Recent under it;
   Recent shows only then.
 - **Translate on its box,** to translate Japanese or English, with an Image row that opens Image

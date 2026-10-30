@@ -60,7 +60,7 @@ _Avoid_: extension (alone, where the Share extension could be meant), plugin, ad
 **Page script**:
 The browser extension's content script that underlines words and opens the Word popup on a site
 Zenbu has (`apps/extension/src/content/page-lookup.ts`), registered at run time for those sites.
-_Avoid_: content script (alone, where the YouTube one or the test one could be meant)
+_Avoid_: content script (alone, where the YouTube, Netflix, or test one could be meant)
 
 **Side panel**:
 The browser extension's panel beside the page, Chrome's side panel: a tab bar with Player,
@@ -84,17 +84,17 @@ page, with a handle to full height and an X that plays the video again (#1172).
 _Avoid_: Word popup (the popup is over a page; the sheet is in the panel), drawer, bottom sheet
 
 **Zenbu Captions**:
-The Japanese lines the browser extension gets for a YouTube video and shows itself, in the side
+The Japanese lines the browser extension gets for a YouTube or Netflix video and shows itself, in the side
 panel's Player tab and as a caption on the player; also the switch that fetches them as soon as a
-video opens and draws them on the player in place of the site's. YouTube's own captions are the
-site's, which the extension hides while it draws its own.
-_Avoid_: subtitles, YouTube captions (for the extension's), Live Captions (heard speech, not built)
+video opens and draws them on the player in place of the site's. A site's own captions are
+the site's, which the extension hides while it draws its own.
+_Avoid_: subtitles, YouTube captions or Netflix subtitles (for the extension's), Live Captions (heard speech, not built)
 
 **Transcript**:
-The side panel's Player tab in the browser extension: a YouTube video's Zenbu Captions under a
-control bar, one card for each line with its time range, the line playing marked, a card's click
-playing from its line, and a word's click opening the Word sheet. The caption on the player shows
-one line at a time instead.
+The side panel's Player tab in the browser extension: a YouTube or Netflix video's Zenbu Captions
+under a control bar, one card for each line with its time range, the line playing marked, a card's
+click playing from its line, and a word's click opening the Word sheet. The caption on the player
+shows one line at a time instead.
 _Avoid_: subtitles, captions (the lines themselves, or the player's caption)
 
 **Player tab**:
@@ -111,7 +111,7 @@ _Avoid_: overlay, subtitles, the player's captions (the site's own)
 
 **Video follower**:
 The browser extension's view of the video on a page: its time, whether it plays, its speed, and
-whether an ad shows, with seek, play, pause, and speed. YouTube has one; Netflix's is to come.
+whether an ad shows, with seek, play, pause, and speed. YouTube and Netflix each have one.
 _Avoid_: player (the site's own, or the Player tab in the app and the extension)
 
 **Translation module**:

@@ -1,7 +1,7 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { describe, expect, it } from 'vitest'
 import { currentLine, type Playback, playingLine } from './follower'
-import { watchedVideoId } from './watch-page'
+import { watchedVideo } from './watch-page'
 
 const line = (id: number, start: number, end: number): Caption => ({
   id,
@@ -52,19 +52,30 @@ describe('playingLine', () => {
   })
 })
 
-describe('watchedVideoId', () => {
-  it("reads the video of a YouTube watch page and nothing else's", () => {
-    expect(watchedVideoId('https://www.youtube.com/watch?v=zenbuJa0001&t=42s')).toBe('zenbuJa0001')
+describe('watchedVideo', () => {
+  it("reads the video of a YouTube or Netflix watch page and nothing else's", () => {
+    expect(watchedVideo('https://www.youtube.com/watch?v=zenbuJa0001&t=42s')).toEqual({
+      site: 'youtube',
+      videoId: 'zenbuJa0001'
+    })
+    expect(watchedVideo('https://www.netflix.com/watch/81234567?trackId=14170286')).toEqual({
+      site: 'netflix',
+      videoId: '81234567'
+    })
     for (const url of [
       'https://www.youtube.com/',
       'https://www.youtube.com/results?search_query=japanese',
       'https://www.youtube.com/watch?v=short',
       'https://www.youtube.com/watch',
       'https://www.example.com/watch?v=zenbuJa0001',
+      'https://www.netflix.com/browse',
+      'https://www.netflix.com/title/81234567',
+      'https://www.netflix.com/watch/zenbu',
+      'https://www.example.com/watch/81234567',
       'not a url',
       undefined
     ]) {
-      expect(watchedVideoId(url)).toBeNull()
+      expect(watchedVideo(url)).toBeNull()
     }
   })
 })

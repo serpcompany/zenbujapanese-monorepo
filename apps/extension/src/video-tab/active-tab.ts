@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react'
-import { watchedVideoId } from '../video/watch-page'
+import { type VideoSite, watchedVideo } from '../video/watch-page'
 import type { ActiveTab, VideoTabServices } from './services'
 
 export type WatchedVideo = { tabId: number; videoId: string; title: string | null }
 
 const unreadCount = /^\(\d+\)\s+/
 
-const siteName = 'YouTube'
+const siteNames: Record<VideoSite, string> = { youtube: 'YouTube', netflix: 'Netflix' }
 
-const siteSuffix = ` - ${siteName}`
-
-function titleOf(title: string | undefined): string | null {
+function titleOf(title: string | undefined, site: VideoSite): string | null {
+  const siteName = siteNames[site]
+  const siteSuffix = ` - ${siteName}`
   const plain = (title ?? '').replace(unreadCount, '').trim()
   const shown = plain.endsWith(siteSuffix) ? plain.slice(0, -siteSuffix.length).trim() : plain
   return shown === '' || shown === siteName ? null : shown
 }
 
 export function watchedIn(tab: ActiveTab | null): WatchedVideo | null {
-  const videoId = watchedVideoId(tab?.url)
-  if (!tab || videoId === null) return null
-  return { tabId: tab.id, videoId, title: titleOf(tab.title) }
+  const watched = watchedVideo(tab?.url)
+  if (!tab || watched === null) return null
+  return { tabId: tab.id, videoId: watched.videoId, title: titleOf(tab.title, watched.site) }
 }
 
 export function useActiveTab(

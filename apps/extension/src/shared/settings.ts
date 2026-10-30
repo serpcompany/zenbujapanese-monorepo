@@ -16,11 +16,29 @@ export const settingDefaults = {
   'pages.pageText': true,
   'videos.zenbuCaptions': true,
   'videos.captionPlace': null as CaptionPlace | null,
+  'videos.translationPlace': null as CaptionPlace | null,
   'crashReports.send': true
 }
 
 export type Settings = typeof settingDefaults
 export type SettingKey = keyof Settings
+
+export const captionPlaceKeys = [
+  'videos.captionPlace',
+  'videos.translationPlace'
+] as const satisfies SettingKey[]
+
+export type CaptionPlaceKey = (typeof captionPlaceKeys)[number]
+
+export type CaptionPlaces = Partial<Pick<Settings, CaptionPlaceKey>>
+
+export const captionPlacesReset: CaptionPlaces = {
+  'videos.captionPlace': null,
+  'videos.translationPlace': null
+}
+
+export const captionsMoved = (settings: Settings) =>
+  captionPlaceKeys.some(key => settings[key] !== null)
 
 export const readingAidKeys = [
   'readingAids.furigana',
@@ -74,10 +92,11 @@ function sameKind(value: unknown, fallback: unknown): boolean {
   return typeof value === typeof fallback
 }
 
+const isPlaceKey = (key: string): key is CaptionPlaceKey =>
+  (captionPlaceKeys as readonly string[]).includes(key)
+
 const fits = (key: SettingKey, value: unknown) =>
-  key === 'videos.captionPlace'
-    ? value === null || isCaptionPlace(value)
-    : sameKind(value, settingDefaults[key])
+  isPlaceKey(key) ? value === null || isCaptionPlace(value) : sameKind(value, settingDefaults[key])
 
 export function settingFrom<K extends SettingKey>(key: K, value: unknown): Settings[K] {
   return fits(key, value) ? (value as Settings[K]) : settingDefaults[key]

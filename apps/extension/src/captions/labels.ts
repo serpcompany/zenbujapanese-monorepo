@@ -17,5 +17,10 @@ export const captionLabels = {
     refused: "YouTube didn't send this video's captions.",
     unreadable: "This video's captions couldn't be read.",
     unsaved: "Zenbu couldn't keep this video's captions."
+  },
+  netflix: {
+    unavailable: "Zenbu couldn't read Netflix's player.",
+    unreachable: "Zenbu couldn't reach Netflix.",
+    refused: "Netflix didn't send this video's captions."
   }
 }

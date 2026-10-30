@@ -47,11 +47,15 @@ export function hostsOf(variant: Variant, environment: Environment): Hosts {
   return variant === 'test' ? { ...own, languageData: testLanguageDataHost, api: testApiHost } : own
 }
 
-const youTube = 'https://www.youtube.com'
+const videoSites = [
+  'https://www.youtube.com',
+  'https://www.netflix.com',
+  'https://*.oca.nflxvideo.net'
+]
 
 export function ownHostPatterns(variant: Variant, environment: Environment): string[] {
   const { languageData, api } = hostsOf(variant, environment)
-  return [languageData, api, youTube].map(origin => `${origin}/*`)
+  return [languageData, api, ...videoSites].map(origin => `${origin}/*`)
 }
 
 export function websitesOf(variant: Variant, environment: Environment): string[] {

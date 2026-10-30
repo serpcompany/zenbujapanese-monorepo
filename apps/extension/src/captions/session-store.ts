@@ -1,3 +1,4 @@
+import type { SiteVideo } from '../video/watch-page'
 import type { RateLimit } from './backoff'
 import type { CaptionsState } from './messages'
 
@@ -7,7 +8,7 @@ export type SessionStorage = {
   remove(key: string): Promise<void>
 }
 
-export type TabCaptions = { videoId: string; asked: boolean; captions: CaptionsState | null }
+export type TabCaptions = SiteVideo & { asked: boolean; captions: CaptionsState | null }
 
 const rateLimitKey = 'captions.rateLimit'
 

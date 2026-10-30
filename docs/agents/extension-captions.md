@@ -1,16 +1,23 @@
 # The extension's captions and video
 
-How the browser extension gets a YouTube video's captions and follows the video on the page. The
-rest of the extension's guide is in [`extension.md`](extension.md).
+How the browser extension gets a YouTube or Netflix video's captions and follows the video on the
+page. The rest of the extension's guide is in [`extension.md`](extension.md); Netflix's own parts
+are under Netflix, below.
 
-The YouTube content script (`followYouTubePage`) reads the video from the URL at start, on
-YouTube's `yt-navigate-finish`, and on `popstate`, and sends `{ type: 'video-opened', videoId }`
+Each site's content script (`src/content/youtube.ts`, `netflix.ts`) gives `startVideoContent` its
+`VideoSitePage` (`src/video/video-sites.ts`): its name, its follower, the event that says it moved
+to another video (YouTube's `yt-navigate-finish`, Netflix's Navigation API
+`currententrychange`), and, for Netflix, where the tracks come from. `followVideoPage`
+(`video-page.ts`) does the rest for both: it reads the video from the URL (`watchedVideo`) at
+start, on that event, and on `popstate`, and sends `{ type: 'video-opened', site, videoId }`
 through `askCaptions`. A page asks for a tab's captions with `{ type: 'captions', tabId }` and
 `{ type: 'try-again', tabId }`. The service worker answers each with a `CaptionsState`, `{ state:
 'no-video' }` when the tab's URL (`chrome.tabs.get`, through the host permission) isn't a watch
 page, or a Failure, and announces each change of a tab's state as `{ target: 'captions', tabId,
 captions }`, to the extension's pages and to that tab. For this the manifest asks for `storage`,
-`declarativeNetRequestWithHostAccess`, and `https://www.youtube.com/*`.
+`declarativeNetRequestWithHostAccess`, `https://www.youtube.com/*`, `https://www.netflix.com/*`,
+and Netflix's track servers, `https://*.oca.nflxvideo.net/*`. The tab's stored video carries its
+site, and only YouTube's requests take the queue, the 429 waits, and the `Origin` rule below.
 
 - **YouTube's two requests** go from the service worker: the `ANDROID` player request to
   `/youtubei/v1/player`, then the Japanese track's `timedtext`, with `fmt` and `tlang` dropped,
@@ -44,16 +51,18 @@ captions }`, to the extension's pages and to that tab. For this the manifest ask
 
 A page drives the video with `{ target: 'video', control }` sent to the tab (`controls.ts`): seek,
 play, pause, or a speed. The content script starts the `VideoFollower` on the first one, when
-a Player tab opens, or when the caption on the player shows, and stops it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
-`<video>`: it reports the time frame by frame only while the video plays and someone subscribes,
+a Player tab opens, or when the caption on the player shows, and stops it when the video changes.
+Both sites' followers are `elementFollower` (`element-follower.ts`) with a `PlayerSite`: the
+player's selector, the style rule that hides the site's captions, an ad class, and the controls.
+YouTube's (`youtube-follower.ts`) follows `#movie_player`'s `<video>` and sets its time and speed;
+Netflix's controls go through Netflix's player (Netflix, below). The follower reports the time frame by frame only while the video plays and someone subscribes,
 holds the time and ignores the controls while the player has `ad-showing`, then puts the
-learner's speed back, and hides YouTube's own captions with an attribute on the player and one
-style rule. `currentLine` (`follower.ts`) finds the line playing at a time, and `playingLine` the
+learner's speed back, also when the site puts its own back after a seek, and hides the site's
+own captions with an attribute on the player and one style rule. `currentLine` (`follower.ts`) finds the line playing at a time, and `playingLine` the
 line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. Every
 consumer of a follower uses `playingLine`. `ended` is the `<video>` element's `ended` (false
 during an ad); #964 added it (PR #1108, amending the interface) because the core leaves the last
-line's end unclamped, so a last line can end after the video does. Netflix's follower
-(#966) implements the same interface.
+line's end unclamped, so a last line can end after the video does.
 
 ## The Player tab's port
 
@@ -86,11 +95,11 @@ Zenbu Captions on or off, and seeks with a `video` control.
 
 ## The caption on the player
 
-`src/content/youtube.ts` gives `followYouTubePage` a `captions` option: the settings (`askSettings`
+`startVideoContent` (`src/content/video-content.ts`) gives `followVideoPage` a `captions` option: the settings (`askSettings`
 until it answers, asked again on the next video if it failed, then `onSettingsChanged`) and
 `playerCaptions(...)`, which shows a video's lines.
 
-- **When it shows** (`youtube-page.ts`): the page keeps the first `lines` state the captions
+- **When it shows** (`video-page.ts`): the page keeps the first `lines` state the captions
   changes give for the video, so it asks for nothing more, and shows the caption while
   `videos.zenbuCaptions` is on, Zenbu is on for the page's host (`isZenbuOn`), and the video has
   lines: it hides the site's captions (`showSiteCaptions(false)`), then calls
@@ -100,7 +109,7 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
 - **Where it draws** (`player-captions.tsx`): one host element, `data-zenbu-player-captions`, in
   `follower.captionHost()` once the follower has one, absolutely over the whole player with
   `pointer-events: none`, holding `mountInShadowRoot`. It knows no site's selectors, so Netflix's
-  follower (#966) can give it a host. The speed menu portals into the surface inside it, so it
+  follower gives it a host too. The speed menu portals into the surface inside it, so it
   opens inside a fullscreen player. The host (`kept-inside.ts`) stops clicks and pointer and
   mouse presses from reaching the page, and of the keys only Space and Enter, which a focused
   control acts on, and while the speed menu is open its arrow, Home, End, Page, and typed keys.
@@ -108,21 +117,34 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
   always does. The word popup's host gets the same (`wordPopupHost`'s `prepare`), since in
   fullscreen it sits inside the player. While an ad shows it gives the site's captions back
   (`showSiteCaptions(!ad)`).
-- **Moving it** (`caption-place.ts`, `caption-drag.ts`): the caption box sits in a layer
-  `inset-x-4 inset-y-0` over the player. Its place, the `videos.captionPlace` setting, is `null`
-  for the default (centred, `bottom: max(64px, 12%)`) or `{ x, y }`, each a share from 0 to 1 of
-  the free room, the layer's size less the box's. It draws as `left: x%; top: y%; translate: -x%
-  -y%`, so the box stays wholly inside at any player or box size with no measuring at draw time.
-  `useCaptionDrag` takes a primary-button press on the box but not on a `[data-word]`, captures
-  the pointer and where in the box it holds it (the grip), and after 3 pixels measures the box
-  and the layer on every move and places the box under the pointer by its grip
-  (`caption-place.ts`'s `followed`), so a line of another size that runs straight into the last
-  one mid-drag doesn't jump. On release, cancel, lost capture, or the caption unmounting
-  mid-drag, it keeps the place through `keepPlace`; a double-click on the background keeps
-  `null`. `player-captions.tsx`'s `keepPlace` puts it in its settings at once and calls the
-  services' `keepCaptionPlace`, which `youtube.ts` gives `writeSettings`; the echo comes back as
-  `settingsChanged`. The host stops presses, so YouTube's player hears none, but `pointermove`
-  reaches it, so the controls and the popup's pause act as on a hover.
+- **Moving it** (`caption-box.tsx`, `caption-place.ts`, `caption-drag.ts`): the caption and its
+  English are two `CaptionBox`es in one layer, `captionRoomClass`, `inset-x-4 inset-y-0` over the
+  player: a flex column at the bottom, with an `::after` spacer that puts the boxes at
+  `bottom: max(64px, 12%)`, the English under the caption. Each box has its own place, the
+  `videos.captionPlace` and `videos.translationPlace` settings (`captionPlaceKeys`), `null` for
+  that spot in the column or `{ x, y }`, each a share from 0 to 1 of the free room, the layer's
+  size less the box's. A placed box draws `position: absolute; left: x%; top: y%; translate: -x%
+  -y%`, so it stays wholly inside at any player or box size with no measuring at draw time, and
+  both stay children of the same layer, so a drag that starts never remounts the box. The
+  layer and the boxes know no site's selectors, so Netflix's follower gets them too.
+  `useCaptionDrag` is a press and hold: a primary-button press marks the box `data-pressed` and
+  starts a 280 ms timer (`holdTime`); a move of more than 6 pixels, a leave, or a release first
+  lets it go, so a quick click still reaches a word. When the timer fires the box lifts
+  (`data-dragging`). It captures the pointer only once the pointer is more than 6 pixels from
+  the press, or leaves the box, since Chrome sends the click after a captured release to the
+  box, not the word under it; from then every move measures the box and the layer and places the
+  box under the pointer by its grip (`caption-place.ts`'s `followed`), so a line of another size
+  that runs straight into the last one mid-drag doesn't jump. The click that ends a drag that
+  moved the box is eaten, so a hold on a word drags without opening its popup, and a hold that
+  never moved it is a click, however long. On release, cancel, the box's own lost capture, or
+  the box unmounting mid-drag, it keeps the place through its `keep`; a double-click on a box's
+  background keeps `null` for that box.
+  `player-captions.tsx` has one stable keeper per key, which puts the place in its settings at
+  once and calls the services' `keepCaptionPlaces`, which `video-content.ts`
+  gives `askToWriteSettings`; the service worker takes only `captionPlaceKeys` from a content script.
+  The side panel header's **Reset Caption Position** writes `captionPlacesReset` and is disabled
+  while `captionsMoved` is false. The host stops presses, so YouTube's player hears none, but
+  `pointermove` reaches it, so the controls and the popup's pause act as on a hover.
 - **The line controls** (`line-controls.ts`) are the one module for Previous, Next, Repeat, Play,
   and the speed, on a `VideoFollower` only. The first playback after one of its own seeks is that
   seek's landing, however far from the target it lands, as is any within 700 ms and 1 s of the
@@ -151,6 +173,41 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
   and `e2e/player-captions.spec.ts` checks the watch page's `<head>` gets only the follower's one
   rule.
 
+## Netflix
+
+Netflix's tracks and controls live in its page's own JavaScript, which an isolated content script
+can't reach, so Netflix has two content scripts that talk through `CustomEvent`s on `document`
+with JSON-string details (`netflix-protocol.ts`).
+
+- **`netflix-player.js`** runs in the page's MAIN world at `document_start`
+  (`src/video/netflix-player.ts`). It finds the watched video's session in
+  `netflix.appContext.state.playerApp.getAPI().videoPlayer` by `getMovieId`, and answers a tracks
+  request: the Japanese and English tracks chosen from `getTimedTextTrackList()` (text only,
+  subtitles before closed captions, never forced or none tracks), and each one's file URL, found
+  in the session's player in `cadmiumPlayerRepository.playersById`, reading own data properties
+  only, never a getter, and first in the object where it last found a track. A track Netflix hasn't
+  loaded is turned on with `setTimedTextTrack`, read, and the learner's track put back, or Netflix's
+  none track when it showed none. It applies the
+  controls with the player's `seek`, `play`, `pause`, and `setPlaybackRate`, never the video's
+  `currentTime`, which stops Netflix with M7375. It waits 10 seconds for the player and 5 for a
+  track, and reads Netflix's objects only, through `safely`.
+- **`netflix.js`** is the isolated content script (`src/content/netflix.ts`): `netflixBridge`
+  (`netflix-bridge.ts`) sends the requests and waits 25 seconds for an answer, and the follower
+  hides `.player-timedtext` inside `.watch-video--player-view`.
+- **The tracks flow:** the service worker asks the tab's top frame with `{ target:
+  'captions-tracks', videoId }` (`askTabTracks`), up to 20 times every 500 ms while the content
+  script isn't there yet or hasn't opened the video, as when the Player tab asks before
+  `document_idle`. `fetchNetflixCaptions` (`netflix-requests.ts`) then fetches each file once,
+  without cookies, only from `*.oca.nflxvideo.net`, reads it (`netflix-ttml.ts`), and pairs the
+  English through the core's rules (`captions/netflix.ts`). Netflix gets no queue and no 429 wait.
+- **English:** a line Netflix's English covers carries it as `translation`; the Player tab and the
+  caption show it and ask the Translator only for the lines without, so the model's download is
+  offered only when a line needs it.
+- **Stand-in:** the agent Chrome harness serves a stand-in Netflix page under `www.netflix.com`
+  and the track files under a `*.oca.nflxvideo.net` host, with no request to Netflix
+  ([`README.md`](../../apps/extension/agent-chrome/README.md)). The live check on a Netflix title
+  is #987's.
+
 ## Checks
 
 The unit tests never reach the network: YouTube's answers come from `src/captions/fixtures/`
@@ -165,9 +222,17 @@ through a stand-in `fetch`.
   Player tab (`youtube-page.interaction.test.tsx`, `video-tab-port.test.ts`); the follower's
   controls, ads, the learner's speed, and hiding YouTube's captions
   (`youtube-follower.interaction.test.tsx`).
+- **Netflix,** in happy-dom with a stand-in Netflix player (`src/test/netflix-player-stand-in.ts`)
+  and saved track files (`src/captions/fixtures/netflix-*.xml`): the tracks chosen and loaded and
+  the controls (`netflix-player.interaction.test.tsx`), the follower
+  (`netflix-follower.interaction.test.tsx`), the page end to end
+  (`netflix-page.interaction.test.tsx`), the requests and the file (`netflix-requests.test.ts`,
+  `netflix-ttml.test.ts`), the retry (`serve-captions.test.ts`), and the Player tab
+  (`src/video-tab/netflix.interaction.test.tsx`).
 - **The caption on the player,** on a stand-in clock for the video: the line controls
-  (`line-controls.test.ts`), the caption's place (`caption-place.test.ts`), the caption, moving
-  it, its popup's pause, ads, and the controls' showing
+  (`line-controls.test.ts`), the boxes' places (`caption-place.test.ts`), the caption and its
+  English's box, the press-and-hold drag of each (`caption-drag.interaction.test.tsx`, on fake
+  timers), its popup's pause, ads, and the controls' showing
   (`src/player-captions/*.interaction.test.tsx`), and when the watch page shows it
   (`youtube-page-captions.interaction.test.tsx`). In the browser, `e2e/player-captions.spec.ts`
   and `e2e/caption-drag.spec.ts` on the stand-in watch page, through `e2e/watch-page.ts`

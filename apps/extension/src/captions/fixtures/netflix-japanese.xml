@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:tts="http://www.w3.org/ns/ttml#styling" ttp:profile="http://www.w3.org/ns/ttml/profile/imsc1.1/text" ttp:tickRate="10000000" ttp:timeBase="media" xml:lang="ja">
+  <head>
+    <styling>
+      <style xml:id="style_0" tts:color="white" tts:fontSize="100%" tts:textAlign="center"/>
+      <style xml:id="ruby_container" tts:ruby="container" tts:rubyPosition="outside"/>
+      <style xml:id="ruby_base" tts:ruby="base"/>
+      <style xml:id="ruby_text" tts:ruby="text" tts:fontSize="50%"/>
+      <style xml:id="ruby_text_small" style="style_0 ruby_text"/>
+    </styling>
+    <layout>
+      <region xml:id="region_0" tts:origin="10% 80%" tts:extent="80% 15%" tts:displayAlign="after"/>
+    </layout>
+  </head>
+  <body style="style_0">
+    <div>
+      <p begin="12000000t" end="31000000t" region="region_0" xml:id="subtitle1">（鳥の声）</p>
+      <p begin="35000000t" end="52500000t" region="region_0" xml:id="subtitle2"><span style="ruby_container"><span style="ruby_base">今日</span><span style="ruby_text">きょう</span></span>は<br/>いい天気ですね</p>
+      <p begin="00:00:05.500" end="00:00:08.250" region="region_0" xml:id="subtitle3"><span tts:ruby="container"><span tts:ruby="base">散歩</span><span tts:ruby="text">さんぽ</span></span>に行きましょう</p>
+      <p begin="90000000t" dur="2s" region="region_0" xml:id="subtitle4"><span tts:ruby="container"><span tts:ruby="base">海</span><span tts:ruby="textContainer"><span tts:ruby="delimiter">（</span><span tts:ruby="text">うみ</span><span tts:ruby="delimiter">）</span></span></span>へ</p>
+      <p begin="110000000t" end="125000000t" region="region_0" xml:id="subtitle5"><span style="ruby_container"><span>部屋</span><span style="ruby_text_small">へや</span></span>に入る</p>
+    </div>
+  </body>
+</tt>

@@ -6,7 +6,7 @@ check that one arrives.
 
 Every part reports its errors to Sentry's `zenbujapanese-extension` in `serpcompany`, the
 extension's own project, set up as the app's is ([`ios-crash-reports.md`](ios-crash-reports.md)),
-with one difference below. The YouTube content script reports only the errors thrown while the
+with one difference below. The YouTube and Netflix content scripts report only the errors thrown while the
 player caption draws; the follower and the watch-page code report none yet (#1075). There are no usage analytics. The decision is ADR
 0018's amendment for the extension ([`0018`](../adr/0018-report-the-apps-crashes-and-freezes-to-sentry.md)).
 

@@ -9,13 +9,15 @@ import {
   DropdownMenuTrigger
 } from '@zenbu/ui/components/dropdown-menu'
 import { Switch } from '@zenbu/ui/components/switch'
-import { BookOpenIcon, SettingsIcon, SlidersHorizontalIcon } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { BookOpenIcon, RotateCcwIcon, SettingsIcon, SlidersHorizontalIcon } from 'lucide-react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { settingsLabels } from '../settings/labels'
 import { type SwitchKey, waitsForFurigana } from '../settings/setting-switch'
 import { openWelcomeTab } from '../shared/dictionary'
 import { useDataState } from '../shared/dictionary-progress'
 import {
+  captionPlacesReset,
+  captionsMoved,
   isZenbuOn,
   readingAidKeys,
   type Settings,
@@ -135,11 +137,13 @@ function SwitchItem({ setting, settings }: { setting: SwitchKey; settings: Setti
 function MenuSwitches({
   title,
   settings,
-  keys
+  keys,
+  children
 }: {
   title: string
   settings: Settings
   keys: readonly SwitchKey[]
+  children?: ReactNode
 }) {
   return (
     <DropdownMenuGroup>
@@ -147,6 +151,7 @@ function MenuSwitches({
       {keys.map(setting => (
         <SwitchItem key={setting} setting={setting} settings={settings} />
       ))}
+      {children}
     </DropdownMenuGroup>
   )
 }
@@ -191,7 +196,15 @@ function HeaderMenu({
           title={settingsLabels.videos}
           settings={settings}
           keys={['videos.zenbuCaptions']}
-        />
+        >
+          <DropdownMenuItem
+            disabled={!captionsMoved(settings)}
+            onClick={() => writeSettings(captionPlacesReset)}
+          >
+            <RotateCcwIcon />
+            {settingsLabels.menu.resetCaptionPosition}
+          </DropdownMenuItem>
+        </MenuSwitches>
         <DropdownMenuSeparator />
         {data?.state === 'downloading' ? (
           <DropdownMenuItem onClick={() => openWelcomeTab()}>

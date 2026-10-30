@@ -1,9 +1,9 @@
 import { failure } from '../shared/messages'
 import { readSettings, watchSettings } from '../shared/settings'
-import { watchedVideoId } from '../video/watch-page'
+import { watchedVideo } from '../video/watch-page'
 import { type CaptionsService, captionsService } from './captions-service'
 import { captionLabels } from './labels'
-import { type CaptionsAnswer, isCaptionsEnvelope } from './messages'
+import { askTabTracks, type CaptionsAnswer, isCaptionsEnvelope } from './messages'
 import { youTubeiURL } from './youtube-requests'
 
 type Sender = { tab?: { id?: number } }
@@ -71,9 +71,10 @@ export function serveCaptions(): void {
     prepareRequests: originRemover(),
     tabVideo: tabId =>
       chrome.tabs.get(tabId).then(
-        tab => watchedVideoId(tab.url),
+        tab => watchedVideo(tab.url),
         () => null
       ),
+    askTracks: (tabId, videoId, wanted) => askTabTracks(tabId, videoId, wanted),
     captionsOn: () => readSettings().then(settings => settings['videos.zenbuCaptions']),
     announce: change => {
       chrome.runtime.sendMessage(change).catch(ignore)

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:tts="http://www.w3.org/ns/ttml#styling" ttp:profile="http://www.w3.org/ns/ttml/profile/imsc1.1/text" ttp:tickRate="10000000" ttp:timeBase="media" xml:lang="en">
+  <head>
+    <styling>
+      <style xml:id="style_0" tts:color="white" tts:fontSize="100%"/>
+    </styling>
+  </head>
+  <body style="style_0">
+    <div>
+      <p begin="12000000t" end="31000000t">[birds chirping]</p>
+      <p begin="35000000t" end="52500000t">The weather's nice<br/>today.</p>
+      <p begin="55000000t" end="82500000t">Let's go for a walk.</p>
+      <p begin="90000000t" end="110000000t">To the sea.</p>
+      <p begin="110000000t" end="125000000t">Into the room.</p>
+    </div>
+  </body>
+</tt>

@@ -16,7 +16,7 @@ export const labels = {
     tryAgain: 'Try again',
     firstSteps: 'First steps',
     steps: [
-      'Open a Japanese page, or a YouTube video with Japanese captions.',
+      'Open a Japanese page, or a YouTube or Netflix video with Japanese captions.',
       'Click an underlined word to see what it means.',
       'Pin Zenbu to the toolbar to open it on any tab.'
     ],

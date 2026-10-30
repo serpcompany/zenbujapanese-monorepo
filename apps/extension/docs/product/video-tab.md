@@ -1,25 +1,26 @@
 # Player tab
 
-The side panel's Player tab, its first, is the transcript of the YouTube video in the tab the
-learner is on ([`side-panel.md`](side-panel.md)), in the iPhone app's Player design: the owner
-approved the canvas on #1172. On a tab with no video it shows that there is none, with Recent under
-it; Recent shows only then, never under a transcript. The transcript is a control bar, then a card
-for each line, with the line playing lit; a click on a card plays from its line, and a click on a
-word opens its card in a sheet over the lower half of the tab. The lines and the video come from
-the watch page ([`youtube-captions.md`](youtube-captions.md)); the words, their card, and the
-English are Translate's ([`translate.md`](translate.md), [`word-popup.md`](word-popup.md)). The
-text is in `src/video-tab/labels.ts`. The tests named here are in `src/video-tab/` unless a path
-says otherwise: `video-tab.interaction.test.tsx` (Video tab), `control-bar.interaction.test.tsx`
-(Control bar), `transcript.interaction.test.tsx` (Transcript) and
-`known-words.interaction.test.tsx` (Known words), in happy-dom, with a stand-in
-YouTube, the real captions service and watch page, a stand-in for YouTube's video, and a stand-in
-Translator; and the browser tests in `e2e/`.
+The side panel's Player tab, its first, is the transcript of the YouTube or Netflix video in the
+tab the learner is on ([`side-panel.md`](side-panel.md)), in the iPhone app's Player design: the
+owner approved the canvas on #1172. On a tab with no video it shows that there is none, with Recent
+under it; Recent shows only then, never under a transcript. The transcript is a control bar, then a
+card for each line, with the line playing lit; a click on a card plays from its line, and a click
+on a word opens its card in a sheet over the lower half of the tab. The lines and the video come
+from the watch page ([`youtube-captions.md`](youtube-captions.md), [`netflix.md`](netflix.md));
+the words, their card, and the English are Translate's ([`translate.md`](translate.md),
+[`word-popup.md`](word-popup.md)). The text is in `src/video-tab/labels.ts`. The tests named here
+are in `src/video-tab/` unless a path says otherwise: `video-tab.interaction.test.tsx` (Video tab),
+`control-bar.interaction.test.tsx` (Control bar), `transcript.interaction.test.tsx` (Transcript),
+`known-words.interaction.test.tsx` (Known words) and `netflix.interaction.test.tsx` (Netflix), in
+happy-dom, with a stand-in YouTube or Netflix, the real captions service and watch page, a
+stand-in for the site's video, and a stand-in Translator; and the browser tests in `e2e/`.
 
 ## What a learner sees
 
 | Behavior | Check |
 | --- | --- |
 | On a YouTube watch page, the video's title, taken from the tab's own title without YouTube's count of notifications and " - YouTube", then a card for each caption line, with the time it runs at its top right, such as 0:05 – 0:09. Nothing is fetched for the title. | Video tab: "shows the video's title over a card for each line…" |
+| On a Netflix watch page, the tab's own title without " - Netflix", and the cards as on YouTube. A click on a card plays from its line through Netflix's player, and a click on a word opens its sheet and pauses the video, as on YouTube. | Netflix: "takes the title from the tab without Netflix's name, and plays from a card's line…", "opens a word's sheet from a click on it…" |
 | It follows the tab the learner is on: another tab, or a YouTube page that isn't a video, shows "No video on this tab", and coming back shows the video again. | Video tab: "follows the active tab…", "shows No video on this tab…" |
 | The card of the line playing is lit, with a blue ring on a blue tint: the first before the first line, and the last one played between lines. | Video tab: "lights the card of the line playing…" |
 | The card playing is kept in view, in the middle of the list. | Transcript: "keeps the playing card in view…" |
@@ -95,7 +96,8 @@ video only once it is shown").
 ## English
 
 Each line's English is under it, from Chrome's Translator on this computer, one line at a time, as
-in Translate; nothing is sent anywhere. Translations off in Settings hides it and asks the
+in Translate; nothing is sent anywhere. On Netflix a line's English is Netflix's own, where its
+English track has a line over it, and the Translator is asked only for the lines without. Translations off in Settings hides it and asks the
 Translator nothing.
 
 | Behavior | Check |
@@ -107,6 +109,8 @@ Translator nothing.
 | Where Chrome reports its download already under way (`downloading`), as when the welcome tab's is still going: "Chrome is downloading its Japanese translation…" with no Download, checked again every 2 seconds, then each line's English. Chrome 156 reports `downloadable` during a download, so there the tab shows Download, and its click joins the running download. | Transcript: "while Chrome is already downloading, says so with no Download…" |
 | On a computer that can't translate Japanese: "Translate isn't available on this computer." | Transcript: "says so when this computer can't translate Japanese" |
 | A line the Translator didn't answer for says "Translate didn't answer." under it, with Try again, which asks for that line again. | Transcript: "shows Try again on a line Translate didn't answer…" |
+| On Netflix, Netflix's English for each line it covers, and the Translator's for a line it doesn't. | Netflix: "shows a Netflix video's lines with Netflix's own English, asking the Translator only for a line without" |
+| When Netflix's English covers every line, no download is offered and the Translator is asked nothing. | Netflix: "doesn't offer Chrome's model when Netflix gives every line English" |
 | With Translations off, no English, and no request to the Translator. | Transcript: "hides the English with Translations off…" |
 
 ## Following the video
@@ -134,10 +138,10 @@ the player: the ••• menu marks a word Known, and the transcript follows it
 yet (#1187). Where the Player tab differs from the canvas:
 
 - The video's title stays in the tab, not the header, which is #1184's.
-- No scrubber and no length: Playback has no duration, and #1186 is changing the follower.
+- No scrubber and no length: Playback has no duration.
 - Furigana is 12 pixels, the smallest the extension draws (`furigana` in `@zenbu/ui`'s theme), not
-  the canvas's .62em.
-- A press outside the sheet doesn't close it.
+  the canvas's .62em (#1206).
+- A press outside the sheet, other than on a word or a card, doesn't close it (#1205).
 
 The browser tests open the Player tab on the stand-in watch page for the sheet
 (`e2e/transcript-word-sheet.spec.ts`), and on a stand-in transcript for meanings and long lines

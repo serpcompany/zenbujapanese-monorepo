@@ -19,7 +19,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, Zenbu's icons, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
+| `pnpm build` | The release build, in `dist/`: the manifest, Zenbu's icons, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube and Netflix content scripts. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port, the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
@@ -92,9 +92,9 @@ can read a tab with no page script, which `activeTab` reaches after a click on t
 | `src/word-popup/` | The word popup, its card and choice, its shadow-root host and settings (`popup-settings.ts`), and a panel word's card on the page (`page-popup.ts`). |
 | `src/word-saving/` | A word's ••• menus and toast, and its part of the copy they save to. |
 | `src/worker/` | The dictionary worker, a dedicated module worker: it downloads the language data, opens it in sqlite-wasm, and answers from the core (`answer.ts`; [`extension-language-data.md`](extension-language-data.md)). |
-| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`, and `page-lookup.ts`, the page script). |
-| `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
-| `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), the watch page's side (`youtube-page.ts`), the Player tab's port (`video-tab-port.ts`), and the pause while a word popup is open (`popup-pause.ts`). |
+| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`, `netflix*.ts`, and `page-lookup.ts`, the page script). |
+| `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), Netflix's (`netflix-*.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds the sites' answers and a stand-in `fetch` for the tests. |
+| `src/video/` | The follower (`follower.ts`) and controls (`controls.ts`), each site's on `element-follower.ts`, Netflix's player (`netflix-*.ts`), the watch page (`video-page.ts`, `video-sites.ts`), the Player tab's port (`video-tab-port.ts`), and the popup's pause (`popup-pause.ts`). |
 | `src/player-captions/` | The caption on the player and its line controls ([`extension-captions.md`](extension-captions.md#the-caption-on-the-player)). |
 | `src/video-tab/` | The side panel's Player tab, a video's transcript and Recent ([`extension-side-panel.md`](extension-side-panel.md)). |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
@@ -125,10 +125,10 @@ waiting on, since Chrome stops it when it's idle.
 
 ### Captions, the video, and translation
 
-How the service worker gets a YouTube video's captions and the content script follows the video
-is in [`extension-captions.md`](extension-captions.md). How any surface translates through the
-offscreen document, and how a page downloads Chrome's model from a click, is in
-[`extension-translation.md`](extension-translation.md).
+How the service worker gets a YouTube or Netflix video's captions and the content script
+follows the video is in [`extension-captions.md`](extension-captions.md). How any surface
+translates through the offscreen document, and how a page downloads Chrome's model from a click, is
+in [`extension-translation.md`](extension-translation.md).
 
 ### Drawing on a page
 
@@ -171,8 +171,8 @@ and the theme's own token names set to other values), and `tailwind.html`, built
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
 Dialog, and Test error, which throws while drawing so the content script reports it. The release
-build declares only the YouTube content script, and registers the page script at run time;
-`build/manifest.test.ts` checks that. How each part reports its errors is in
+build declares only YouTube's and Netflix's content scripts, and registers the page script at run
+time; `build/manifest.test.ts` checks that. How each part reports its errors is in
 [`extension-error-reports.md`](extension-error-reports.md).
 
 ## Layers

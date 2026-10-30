@@ -1,5 +1,6 @@
 import { type Failure, failure } from '../shared/messages'
 import {
+  captionPlaceKeys,
   fittingChanges,
   isSettingsRequest,
   isSettingsWrite,
@@ -19,7 +20,7 @@ type Written = { type: 'written' }
 
 type Sender = { origin?: string }
 
-const pageWritable: ReadonlySet<string> = new Set(['videos.captionPlace'])
+const pageWritable: ReadonlySet<string> = new Set(captionPlaceKeys)
 
 function changesFrom(changes: Record<string, unknown>, fromPages: boolean): Partial<Settings> {
   const refused = Object.keys(changes).filter(key => !pageWritable.has(key))

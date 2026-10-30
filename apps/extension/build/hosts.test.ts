@@ -36,11 +36,15 @@ async function bundledHosts(environment: Environment): Promise<string> {
 }
 
 describe("the extension's own hosts", () => {
-  it.each(environments)('hold the data, account service, and YouTube hosts in %s', environment => {
+  it.each(
+    environments
+  )('hold the data, account service, YouTube, and Netflix hosts in %s', environment => {
     expect(ownHostPatterns('release', environment)).toEqual([
       `${hosts[environment].languageData}/*`,
       `${hosts[environment].api}/*`,
-      'https://www.youtube.com/*'
+      'https://www.youtube.com/*',
+      'https://www.netflix.com/*',
+      'https://*.oca.nflxvideo.net/*'
     ])
     expect(ownHostPatterns('test', environment)).toContain(`${testApiHost}/*`)
   })
