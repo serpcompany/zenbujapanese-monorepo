@@ -1,9 +1,10 @@
 # Word popup
 
 The word popup opens from a click on an underlined word on a page
-([`page-lookup.md`](page-lookup.md)), and on a word of the side panel's Japanese, in Translate
-([`translate.md`](translate.md)) and the Player tab's transcript ([`video-tab.md`](video-tab.md)),
-where a click opens it on the page beside the panel and Enter or Space opens it in the panel. It is the word's card, as in the app: drawn with `@zenbu/ui`'s
+([`page-lookup.md`](page-lookup.md)), on a word of Translate's Japanese in the side panel
+([`translate.md`](translate.md)), where a click opens it on the page beside the panel and Enter or
+Space opens it in the panel, and on a word of the Player tab's transcript, where it opens in a sheet
+over the tab ([`video-tab.md`](video-tab.md)). It is the word's card, as in the app: drawn with `@zenbu/ui`'s
 word components in Zenbu's look, whatever the page's styles, light or dark as the system is set.
 The text is in `src/word-popup/labels.ts` and Word Detail's labels.
 
@@ -45,14 +46,19 @@ uses.
 
 ## A word's card from the side panel
 
-A click on a word in the side panel, in Translate's Japanese or the Player tab's transcript,
-opens its card on the page in the tab the learner is on, as this popup: beside the panel's edge,
+A click on a word of Translate's Japanese in the side panel opens its card on the page in the tab the learner is on, as this popup: beside the panel's edge,
 at the right of the page with the panel on the right and at its left with the panel on the left,
 level with the word clicked as far as the window allows. It stays there while the page scrolls.
 The panel shows no card. A click on another word puts that word's card in its place. Escape, in
 the panel or on the page, a press outside it in the panel, and Escape or a click outside it on
 the page close it. A page shows one popup: a click on a word on the page puts that word's card in
 the place of the panel's, and a panel word's in the place of the page's.
+
+A word in the Player tab's transcript opens its card in a sheet over the lower half of the tab
+instead, from a click or a key, and none on the page, as the iPhone app's Player does (#1172,
+[`video-tab.md`](video-tab.md), A word's sheet). The sheet holds the page's one card: opening it
+takes down a card the page shows, a word clicked on the page puts the sheet away, and a video
+paused for either stays paused until the last closes.
 
 A word opened from the keyboard, with Enter or Space, shows its card in the panel instead, under
 the word's line, with focus in the card, and opens none on the page; this is the one exception to
@@ -73,7 +79,8 @@ anywhere closes only the menu. A card never shows on the page and in the panel a
 How it's built: the panel connects a `word-popup` port to the tab's content script
 (`src/word-popup/page-popup.ts`), whose popup host shows the card
 (`src/word-popup/page-popup-server.ts`); a tab that answers nothing before the card shows is one
-that can't. A press keeps the card open when it lands in the card or in a layer the card opened,
+that can't. The Player tab's sheet asks the page only to hold the card's place, with `inPanel`
+(`src/video-tab/use-word-sheet.ts`). A press keeps the card open when it lands in the card or in a layer the card opened,
 such as its More menu or the conjugation table's sheet, which Base UI draws in a portal outside
 the card, on the page's shadow root and in the panel (`src/word-popup/open-layer.ts`).
 
@@ -152,19 +159,16 @@ shutting, the host's layer, a card at the panel's edge, one card on a page, and 
 press in a layer it opened…", and
 `src/word-popup/position.test.ts`.
 
-A word's card from the side panel: `e2e/transcript-card-on-page.spec.ts`, "a word clicked in the
-transcript opens its card on the watch page, beside the panel and level with its row, with none
-in the panel", on the YouTube stand-in with the panel page following that tab;
-`src/word-popup/page-popup.test.ts` (the panel's side: the panel's edge, shown and closed, a tab
+A word's card from the side panel: `src/word-popup/page-popup.test.ts` (the panel's side: the panel's edge, shown and closed, a tab
 that can't, one card replacing another, a card left on a tab the learner left, and a card ended
 by another or by the next's failure told it closed) and
 `src/word-popup/page-popup-server.test.ts` (the page's side: where it shows, what it refuses,
 closing either way, one answer with both content scripts in a frame, and a card replaced by
-another part's, by hand-over or across a press); `e2e/transcript-card-on-page.spec.ts`, "with
-Every Site given, one card answers a transcript word on YouTube, and Escape in the panel closes
-it", "a transcript word opened with Enter or Space shows its card in the panel, with focus
-in it…", and "a transcript word opened with Enter takes a caption word's card off the page, a
-caption word clicked takes the panel's card away…"; the page holding the place of a card the panel
+another part's, by hand-over or across a press); the Player tab's sheet and the page's card in
+`e2e/transcript-word-sheet.spec.ts`, on the YouTube stand-in with the panel page following that
+tab ("a transcript word takes a caption word's card off the page, a caption word clicked puts the
+sheet away…", with and without Every Site given), and in
+`src/video-tab/transcript.interaction.test.tsx` ("a word's sheet and the page"); the page holding the place of a card the panel
 shows itself, in `page-popup.test.ts` ("asks the page to hold the place…") and
 `page-popup-server.test.ts` ("takes the page's card down for a card the panel shows itself…",
 "hands the panel's card's place to the next card on the page…", "passes a card's pause on…"); in
@@ -174,8 +178,7 @@ of the word when the page closes its card…", "shows the card under the line…
 can't show one", "shows a word's card in the panel, with focus in it, when Enter opens it…", the
 same for Space, and "opens a word's card on the page from a click after a key opened one in the
 panel…", and "asks the page to take its card down for a card a key opens in the panel…"), the
-keyboard's card for the transcript and Translate in
-`src/video-tab/transcript.interaction.test.tsx` and
+keyboard's card for Translate in
 `src/translate/translate-tab.interaction.test.tsx` ("…when a key opens it"), and `e2e/side-panel-popup.spec.ts`, "where the page can't show a word's card,
 its popup opens in the side panel and stays inside it at its narrowest width".
 The voice: `packages/ui/src/dictionary/voice.test.ts` (the order above, and each surface's rule

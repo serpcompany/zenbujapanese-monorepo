@@ -10,6 +10,7 @@ import {
 import { click } from '../test/render'
 import { lineText, watching } from '../test/video-tab-harness'
 import { netflixPage } from '../video/video-sites'
+import { videoTabLabels } from './labels'
 
 const lastLine = netflixLines[3]
 
@@ -63,10 +64,26 @@ describe('the Video tab on Netflix', () => {
     expect(shown.text('[data-translation-model]')).toBeUndefined()
   })
 
-  it("takes the title from the tab without Netflix's name, and seeks to a row's start from its click", async () => {
+  it("takes the title from the tab without Netflix's name, and plays from a card's line from its click", async () => {
     const shown = await onNetflix('散歩の日 - Netflix')
     expect(shown.text('[data-video-title]')).toBe('散歩の日')
     await click(shown.row(netflixLines[1])?.querySelector('button'))
-    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'seek', time: 5.5 }]))
+    await vi.waitFor(() =>
+      expect(shown.video.controls).toEqual([{ type: 'seek', time: 5.5 }, { type: 'play' }])
+    )
+  })
+
+  it("opens a word's sheet from a click on it, pausing the video, and plays again once it closes", async () => {
+    const shown = await onNetflix('Netflix')
+    await shown.playsAt(6)
+    await click(document.querySelector<HTMLElement>('[data-line] [data-source] [data-word="散歩"]'))
+    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    const sheet = document.querySelector('[data-word-sheet]')
+    expect(sheet?.querySelector('[data-word-popup]')).not.toBeNull()
+    await click(sheet?.querySelector(`button[aria-label="${videoTabLabels.closeWord}"]`))
+    expect(document.querySelector('[data-word-sheet]')).toBeNull()
+    await vi.waitFor(() =>
+      expect(shown.video.controls).toEqual([{ type: 'pause' }, { type: 'play' }])
+    )
   })
 })

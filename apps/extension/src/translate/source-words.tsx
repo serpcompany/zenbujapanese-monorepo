@@ -37,7 +37,7 @@ const sourceClass = 'whitespace-pre-wrap text-muted-foreground'
 const wordClass =
   'cursor-pointer rounded-sm underline decoration-blue-600 decoration-2 underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:decoration-blue-400'
 
-function useFound(source: string, { segment, wait }: SourceServices): Found | null {
+export function useFound(source: string, { segment, wait }: SourceServices): Found | null {
   const [found, setFound] = useState<Found | null>(null)
   useEffect(() => {
     let live = true
@@ -63,10 +63,10 @@ function useFound(source: string, { segment, wait }: SourceServices): Found | nu
   return found
 }
 
-export const lineGlosses = (services: SourceServices): GlossCache =>
+const lineGlosses = (services: SourceServices): GlossCache =>
   glossCache(id => services.popupCard(id, []))
 
-function useGlosses(
+export function useGlosses(
   found: Found | null,
   on: boolean,
   services: SourceServices,

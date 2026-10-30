@@ -102,7 +102,7 @@ test('shows furigana, romaji and word meanings when each is turned on, and takes
 })
 
 for (const tone of tones) {
-  test(`spaces word meanings by the transcript's gap and mutes them, readable on a ${tone} page`, async ({
+  test(`spaces word meanings by Translate's gap and mutes them, readable on a ${tone} page`, async ({
     extension,
     page
   }) => {

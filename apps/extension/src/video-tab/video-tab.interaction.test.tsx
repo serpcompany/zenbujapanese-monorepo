@@ -9,7 +9,7 @@ import {
 import { captionLabels } from '../captions/labels'
 import { labels as panelLabels } from '../side-panel/labels'
 import type { PanelTabProps } from '../side-panel/route'
-import { click, settle } from '../test/render'
+import { click, keyClick, settle } from '../test/render'
 import { lineText, tabId, watching, watchURL } from '../test/video-tab-harness'
 import { videoTabLabels } from './labels'
 import { VideoTab } from './video-tab'
@@ -23,6 +23,9 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const playButton = (row: HTMLElement | undefined) =>
+  row?.querySelector<HTMLElement>('[data-play-line]')
+
 async function showing(options?: Parameters<typeof watching>[0]) {
   tab = watching(options)
   await tab.show(true)
@@ -35,52 +38,63 @@ describe('the Video tab', () => {
     expect(content).toBe(VideoTab)
   })
 
-  it('shows the video’s title over its lines, each with the time it starts', async () => {
+  it('shows the video’s title over a card for each line, each with the time it runs', async () => {
     const shown = await showing()
     await shown.lines()
     expect(shown.text('[data-video-title]')).toBe('散歩の日')
     expect(shown.rows().map(lineText)).toEqual(japaneseLines)
-    expect(shown.rows().map(row => row.querySelector('button')?.textContent)).toEqual([
-      '0:00',
-      '0:05',
-      '0:11'
+    expect(shown.rows().map(row => playButton(row)?.textContent)).toEqual([
+      '0:00 – 0:03',
+      '0:05 – 0:08',
+      '0:11 – 0:13'
     ])
     expect(shown.services.askCaptions).toHaveBeenCalledExactlyOnceWith({ type: 'captions', tabId })
   })
 
-  it('highlights the row of the line playing, and follows the line as it plays', async () => {
+  it('lights the card of the line playing: the first before the first line, and the last one between lines', async () => {
     const shown = await showing()
     await shown.lines()
-    expect(shown.current()).toBeUndefined()
+    expect(shown.current()).toBe('おはようございます')
     await shown.playsAt(1)
     expect(shown.current()).toBe('おはようございます')
     await shown.playsAt(6)
     expect(shown.current()).toBe('今日は"いい天気"ですね')
     await shown.playsAt(9.5)
-    expect(shown.current()).toBeUndefined()
+    expect(shown.current()).toBe('今日は"いい天気"ですね')
     await shown.playsAt(12)
     expect(shown.current()).toBe('散歩に行きましょう')
   })
 
-  it('seeks the video to a row’s start from a click on the row', async () => {
+  it('plays the video from a card’s line from a click on the card', async () => {
     const shown = await showing()
     await shown.lines()
-    await click(shown.row('散歩に行きましょう')?.querySelector('button'))
-    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'seek', time: 11.2 }]))
+    await click(playButton(shown.row('散歩に行きましょう')))
+    await vi.waitFor(() =>
+      expect(shown.video.controls).toEqual([{ type: 'seek', time: 11.2 }, { type: 'play' }])
+    )
     await vi.waitFor(() => expect(shown.current()).toBe('散歩に行きましょう'))
-    expect(
-      shown.row('散歩に行きましょう')?.querySelector('button')?.getAttribute('aria-label')
-    ).toBe(videoTabLabels.goTo(11.2))
+    expect(playButton(shown.row('散歩に行きましょう'))?.getAttribute('aria-label')).toBe(
+      videoTabLabels.playFrom(11.2)
+    )
   })
 
-  it('during an ad, highlights no row and a row’s click does nothing', async () => {
+  it('plays from a card’s line from Enter or Space on the card', async () => {
+    const shown = await showing()
+    await shown.lines()
+    await keyClick(playButton(shown.row('今日は"いい天気"ですね')), ' ')
+    await vi.waitFor(() =>
+      expect(shown.video.controls).toEqual([{ type: 'seek', time: 5.4 }, { type: 'play' }])
+    )
+  })
+
+  it('during an ad, lights no card and a card’s click does nothing', async () => {
     const shown = await showing()
     await shown.lines()
     await shown.playsAt(6)
     await act(async () => shown.video.adStarts())
     await settle()
     expect(shown.current()).toBeUndefined()
-    await click(shown.row('おはようございます')?.querySelector('button'))
+    await click(playButton(shown.row('おはようございます')))
     expect(shown.services.control).not.toHaveBeenCalled()
     await act(async () => shown.video.adEnds())
     await settle()

@@ -1,35 +1,52 @@
 # Player tab
 
-The side panel's Player tab, which was its Video tab, is the transcript of the YouTube or Netflix
-video in the tab the learner is on ([`side-panel.md`](side-panel.md)). On a tab with no video it
-shows that there is none, with Recent under it; Recent shows only then, never under a transcript.
-The transcript is its lines, the line playing, each line's words and English, and a click to go to
-a line. The lines and the video come from the watch page
-([`youtube-captions.md`](youtube-captions.md), [`netflix.md`](netflix.md)); the words, their
-popup, and the English are Translate's ([`translate.md`](translate.md),
+The side panel's Player tab, its first, is the transcript of the YouTube or Netflix video in the
+tab the learner is on ([`side-panel.md`](side-panel.md)), in the iPhone app's Player design: the
+owner approved the canvas on #1172. On a tab with no video it shows that there is none, with Recent
+under it; Recent shows only then, never under a transcript. The transcript is a control bar, then a
+card for each line, with the line playing lit; a click on a card plays from its line, and a click
+on a word opens its card in a sheet over the lower half of the tab. The lines and the video come
+from the watch page ([`youtube-captions.md`](youtube-captions.md), [`netflix.md`](netflix.md));
+the words, their card, and the English are Translate's ([`translate.md`](translate.md),
 [`word-popup.md`](word-popup.md)). The text is in `src/video-tab/labels.ts`. The tests named here
 are in `src/video-tab/` unless a path says otherwise: `video-tab.interaction.test.tsx` (Video tab),
-`transcript.interaction.test.tsx` (Transcript), and `netflix.interaction.test.tsx` (Netflix), in
+`control-bar.interaction.test.tsx` (Control bar), `transcript.interaction.test.tsx` (Transcript),
+`known-words.interaction.test.tsx` (Known words) and `netflix.interaction.test.tsx` (Netflix), in
 happy-dom, with a stand-in YouTube or Netflix, the real captions service and watch page, a
-stand-in for the site's video, and a stand-in Translator.
+stand-in for the site's video, and a stand-in Translator; and the browser tests in `e2e/`.
 
 ## What a learner sees
 
 | Behavior | Check |
 | --- | --- |
-| On a YouTube watch page, the video's title, taken from the tab's own title without YouTube's count of notifications and " - YouTube", then one row for each caption line, with the time it starts, such as 0:05. Nothing is fetched for the title. | Video tab: "shows the video's title over its lines…" |
-| On a Netflix watch page, the tab's own title without " - Netflix", and the rows as on YouTube. A click on a row seeks through Netflix's player. | Netflix: "takes the title from the tab without Netflix's name, and seeks to a row's start from its click" |
+| On a YouTube watch page, the video's title, taken from the tab's own title without YouTube's count of notifications and " - YouTube", then a card for each caption line, with the time it runs at its top right, such as 0:05 – 0:09. Nothing is fetched for the title. | Video tab: "shows the video's title over a card for each line…" |
+| On a Netflix watch page, the tab's own title without " - Netflix", and the cards as on YouTube. A click on a card plays from its line through Netflix's player, and a click on a word opens its sheet and pauses the video, as on YouTube. | Netflix: "takes the title from the tab without Netflix's name, and plays from a card's line…", "opens a word's sheet from a click on it…" |
 | It follows the tab the learner is on: another tab, or a YouTube page that isn't a video, shows "No video on this tab", and coming back shows the video again. | Video tab: "follows the active tab…", "shows No video on this tab…" |
-| The row of the line playing is highlighted, and the highlight follows the video, with none between lines. | Video tab: "highlights the row of the line playing…" |
-| The row playing is kept in view, in the middle of the list. While a word's popup is open, the list stays where it is. | Transcript: "keeps the playing row in view…" |
-| A click on a row moves the video to the start of its line. Its time is a button named for it, such as "Go to 0:11". | Video tab: "seeks the video to a row's start…" |
-| While an ad plays, no row is highlighted and a click on a row does nothing; after it, the highlight comes back. | Video tab: "during an ad…" |
+| The card of the line playing is lit, with a blue ring on a blue tint: the first before the first line, and the last one played between lines. | Video tab: "lights the card of the line playing…" |
+| The card playing is kept in view, in the middle of the list. | Transcript: "keeps the playing card in view…" |
+| A click on a card, or Enter or Space on it, plays the video from the start of its line. The card is a button named for it, such as "Play from 0:11". | Video tab: "plays the video from a card's line from a click on the card", "plays from a card's line from Enter or Space on the card" |
+| While an ad plays, no card is lit and a click on a card does nothing; after it, the light comes back. | Video tab: "during an ad…" |
+| A long line wraps inside its card onto as many rows as it needs, breaking a row only where the next word doesn't fit, with no sideways scroll at 320 or 500 pixels, Word Meanings off or on, and no furigana over the line above. | `e2e/transcript-long-lines.spec.ts`: "wraps short and long captions inside their cards…" |
+
+## The control bar
+
+Above the cards, as on the iPhone: the time the video is at, Previous, Play or Pause, Next, Repeat
+line, and the speed. Its repeat is the panel's own, apart from the one on the video (#1173's).
+
+| Behavior | Check |
+| --- | --- |
+| It sits over the transcript with the time the video is at. | Control bar: "sits over the transcript with the time the video is at" |
+| Play or Pause plays and pauses the video, and its name says which it will do. | Control bar: "plays and pauses the video…" |
+| Next and Previous go to the next and previous lines while the video plays; paused, Next plays one line. | Control bar: "goes to the next and previous lines…", "paused, plays one line from Next" |
+| Repeat line repeats the line until it is clicked again, and shows pressed until then. | Control bar: "repeats the line from Repeat line…" |
+| The speed, 0.5× to 1.5×, is set in its menu. | Control bar: "sets the speed from 0.5× to 1.5×…" |
+| While an ad plays, it does nothing. | Control bar: "does nothing during an ad" |
 
 ## The lines' states
 
 The tab asks for a video's lines only while it is shown: once it is shown, and once for each next
 video it shows. With Zenbu Captions off, a video the tab moves to while it is hidden or closed is
-asked for only once the tab is shown on it. A row's click, the reading aids, and the English ask
+asked for only once the tab is shown on it. A card's click, the reading aids, and the English ask
 YouTube nothing: the lines come once per video ([`youtube-captions.md`](youtube-captions.md)).
 
 | State | What the tab shows | Check |
@@ -53,16 +70,28 @@ video only once it is shown").
 
 | Behavior | Check |
 | --- | --- |
-| Each word of a line is underlined, as in Translate, with the reading aids turned on in Settings: furigana, a romaji line, and each word's short meaning. Turning one on or off changes the rows with no reload. | Transcript: "follows the reading aids in the settings" |
-| Each word has its own underline, half a rem from the word before it, so two neighbouring words' underlines never join, with Word Meanings off or on; turning Word Meanings on or off doesn't change where one word ends and the next begins. | `e2e/transcript-meanings.spec.ts`: "gives each word in the transcript its own underline…" |
-| A meaning never touches its neighbour's: it is half a rem from the word before it, at 380 pixels and at the narrowest panel, 360. It is in the muted foreground, and the foreground on the line being played, at least 4.5:1 against the row in light and dark. One wider than its column is cut with an ellipsis, and its sense's full text is its tooltip and what a screen reader reads. | `e2e/transcript-meanings.spec.ts`: "spaces long neighbouring word meanings apart…", "gives a cut word meaning its full text…" |
-| A click on a word opens its card on the watch page, as the word popup, beside the side panel's edge and level with the word's row as far as the page allows, and the video pauses; the panel shows no card ([`word-popup.md`](word-popup.md), A word's card from the side panel). A click on another word, in the transcript or the caption on the player, puts its card in the first one's place, and the video stays paused. Once the page closes the last card, with Escape, a click outside it, or Escape in the panel, the video plays again, only if it was playing. So does a card asked for on another tab, or one the page can't show, taking the row's card away. | Transcript: "opens a word's card on the page with no card in the panel, pausing the video until the page closes the last one", "plays the video again when a card asked for on another tab takes a row's card off the tab the learner left", "leaves a video paused before the card paused…", "plays the video again when a card that can't be shown on the page takes a row's card off it", "keeps the video paused when a word in another row is clicked before the page shows the first card", "keeps the video paused while another card on the page takes the place of a word's card…" and "keeps the video paused when a press on the page closes a word's card and opens another"; `e2e/transcript-card-on-page.spec.ts`: "a word clicked in the transcript opens its card on the watch page, beside the panel and level with its row, with none in the panel" and "a caption word clicked over a transcript word's card takes its place, and the video stays paused until that card closes" |
-| A word opened from the keyboard, with Enter or Space, shows its card under the word's line in the panel instead, with focus in it, and the video pauses; it opens none on the page, since focus can't move from the panel into the page (the owner's decision on #1124). Escape closes it, gives focus back to the word, and plays the video again, only if it was playing. It takes down a card the page shows, such as a caption word's, and a click on a word afterwards, in the transcript or the caption, opens its card on the page and puts the panel's away: one card shows at a time (#1185), and the video stays paused until the last closes. | Transcript: "shows a word's card in the panel, with focus in it and the video paused, when a key opens it, and a click still opens one on the page"; `e2e/transcript-card-on-page.spec.ts`: "a transcript word opened with Enter or Space shows its card in the panel, with focus in it…" and "a transcript word opened with Enter takes a caption word's card off the page, a caption word clicked takes the panel's card away, and the video stays paused until the last card closes" |
-| Where the watch page can't show a card, as in a tab with no Zenbu in it, the card opens under the word's line in the panel at the popup's size or the line's width where that is narrower, and the video pauses. Closing it, with Escape or a press outside it, plays the video again, only if it was playing. | Transcript: "opens a word's popup and pauses the video…", "closes the popup on a press outside it…", "leaves a paused video paused…" |
-| One card is open at a time: a word in another row closes the first, and the video plays again only when the last closes. | Transcript: "keeps one popup open at a time…" |
-| Closing the transcript with a popup open, by closing the panel or moving to another video, counts as closing the popup: a video that was playing plays again. | Transcript: "plays the video again when the transcript closes with a popup open" |
-| A word's short meaning is looked up once for the whole transcript, however many rows it is in. | Transcript: "looks up a word's meaning once for the whole transcript" |
-| The card's Open Full Entry expands it in place into the word's full entry, on the page or, where the page can't show the card, in the panel; it opens no page over the Player tab. | Transcript: "expands the popup in place into the word's full entry where the page can't show the card"; on the page, `e2e/word-popup.spec.ts`: "Open Full Entry expands the popup in place…" |
+| Each word of a line is underlined, as in Translate, with the reading aids turned on in Settings: furigana, a romaji line, and each word's short meaning. Turning one on or off changes the cards with no reload. | Transcript: "follows the reading aids in the settings" |
+| Each word has its own underline, apart from the next, with Word Meanings off or on. A word stays together under furigana wider than it, centred under it as on the canvas, rather than spread apart. | `e2e/transcript-meanings.spec.ts`: "gives each word in the transcript its own underline…"; `e2e/transcript-long-lines.spec.ts` |
+| A particle has no meaning, and with Word Meanings on stays with the word before it. A particle is a word whose dictionary entry's parts of speech are only particles. | Transcript: "puts no meaning under a particle…"; `e2e/transcript-meanings.spec.ts` |
+| A known word has no underline and no meaning, and with Hide Furigana on Known Words, no furigana. A word a failed request missed is asked for again once the known words next change. | Known words: "gives a known word no underline and no meaning…", "asks again for the known words a failed request missed…" |
+| A meaning never touches its neighbour's, at 380 pixels and at 360. It is blue, at least 4.5:1 against the card in light and dark. One wider than 8em is cut with an ellipsis, and its sense's full text is its tooltip and what a screen reader reads. | `e2e/transcript-meanings.spec.ts`: "spaces long neighbouring word meanings apart…", "gives a cut word meaning its full text…" |
+| A word's short meaning is looked up once for the whole transcript, however many cards it is in. | Transcript: "looks up a word's meaning once for the whole transcript" |
+
+## A word's sheet
+
+| Behavior | Check |
+| --- | --- |
+| A click on a word pauses the video and opens the word's card in a sheet over the lower half of the tab, with the word in blue. Its line's card moves to the middle of the space above the sheet, and the notices above the cards, such as the English download, are put away while the sheet shows, so the line fits. No card opens on the watch page. | Transcript: "opens over the lower half of the tab from a click on a word…", "keeps the playing card in view, and moves the card of a word opened…", "puts the notices above the cards away while it shows…"; `e2e/transcript-word-sheet.spec.ts`: "a word clicked in the transcript pauses the video and opens its card in a sheet…" |
+| Its X, or Esc, closes it and plays the video again, only if it was playing. Esc pressed while another tab shows leaves it open and the video paused. | Transcript: "closes from its X…", "closes from Esc…", "leaves a paused video paused when it closes", "stays open, and keeps the video paused, through Esc pressed while the Player tab is hidden"; `e2e/transcript-word-sheet.spec.ts` |
+| Its card is the Word popup's, with the same ••• menu: Status, Add to List… and Add Note save to the account, and signed out, Known says to sign in, in the sheet. | `e2e/transcript-word-sheet.spec.ts`: "a transcript word's sheet offers the ••• menu's Status…" |
+| Its handle switches it between half and full height. | Transcript: "goes to full height from its handle, and back to half"; `e2e/transcript-word-sheet.spec.ts` |
+| Another word shows in the same sheet, at the same height, and the video plays again only once the sheet closes. | Transcript: "shows another word in the same sheet…" |
+| A click on a card closes the sheet with no play of its own, and plays from that card's line. | Transcript: "closes with no play of its own from a click on a card…"; `e2e/transcript-word-sheet.spec.ts`: "a card clicked while a word's sheet is open…" |
+| A word opened with Enter or Space puts focus in the card, and closing the sheet gives focus back to the word. | Transcript: "takes focus when a key opens it…"; `e2e/transcript-word-sheet.spec.ts`: "a transcript word opened with Enter shows its sheet…" |
+| The card's Open Full Entry expands it in place into the word's full entry; it opens no page over the Player tab. | Transcript: "expands the card in place into the word's full entry" |
+| Closing the transcript with the sheet open, by closing the panel or moving to another video, counts as closing the sheet: a video that was playing plays again. | Transcript: "plays the video again when the transcript closes with the sheet open" |
+| One word card shows at a time (#1185). Opening the sheet takes down a word card the watch page shows, such as a caption word's, keeping the video paused. A caption word clicked while the sheet shows puts the sheet away, and the video stays paused until the page's last card closes, then plays once, only if it was playing. A word opened again takes the place back. | Transcript ("a word's sheet and the page"): "asks the page to take any word card down…", "goes away when a word card on the page takes its place…", "takes the place back from the page's card…"; `e2e/transcript-word-sheet.spec.ts`: "a transcript word takes a caption word's card off the page…", with and without Every Site given |
+| A card asked for on another tab closes the sheet, and the video plays again. On a tab whose page can't hold a card, such as one with no Zenbu in it, the sheet still opens. | Transcript: "closes, and plays the video again, when a card asked for on another tab ends its hold", "stays open on a tab whose page can't hold a card" |
 
 ## English
 
@@ -73,7 +102,7 @@ Translator nothing.
 
 | Behavior | Check |
 | --- | --- |
-| Each row has its own English, asked for one line at a time. | Transcript: "gives each row its own English…" |
+| Each card has its own English, asked for one line at a time. | Transcript: "gives each row its own English…" |
 | Once Chrome's Japanese translation is on this computer, from the welcome tab or anywhere else, no ask: each line's English. | `src/shared/welcome-translation.interaction.test.tsx`: "the Video tab and Translate translate both ways, and neither asks to download" |
 | Before it is: "To see each line in English, download Chrome's own Japanese translation. It's apart from Zenbu's dictionary." and Download. Only the click starts it, as on the welcome tab's Download; then "Downloading Chrome's Japanese translation… 42%" with a progress bar, then each line's English. | Transcript: "before the download, starts it only from a click on Download…" |
 | A download that fails says "The download didn't finish. Try again.", and Download starts it again. | Transcript: "says so when the download fails…" |
@@ -104,11 +133,18 @@ tab: "in a tab with no content script, says to reload it…"). How it's built is
 ## Not built yet
 
 The share of the video's words the learner knows, beside the title, is #965's, and No Japanese
-Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing: the ••• menu marks a
-word Known, but the captions and transcript don't follow it yet (#1187). One browser test opens the Player tab on the stand-in watch page, for a word's card
-(`e2e/transcript-card-on-page.spec.ts`); the rest of the tests above run in happy-dom. The agent
-Chrome harness's stand-in watch page is where the rest is checked in Chrome
-([`tech-debt.md`](../../../../docs/tech-debt.md)).
+Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing on the caption on
+the player: the ••• menu marks a word Known, and the transcript follows it, but the caption doesn't
+yet (#1187). Where the Player tab differs from the canvas:
 
-A word's card on the watch page can't be reached from the keyboard: focus stays in the panel,
-where Escape closes the card.
+- The video's title stays in the tab, not the header, which is #1208's.
+- No scrubber and no length: Playback has no duration (#1207).
+- Furigana is 12 pixels, the smallest the extension draws (`furigana` in `@zenbu/ui`'s theme), not
+  the canvas's .62em (#1206).
+- A press outside the sheet, other than on a word or a card, doesn't close it (#1205).
+
+The browser tests open the Player tab on the stand-in watch page for the sheet
+(`e2e/transcript-word-sheet.spec.ts`), and on a stand-in transcript for meanings and long lines
+(`e2e/transcript-meanings.spec.ts`, `e2e/transcript-long-lines.spec.ts`). The agent Chrome
+harness's stand-in watch page is where the rest is checked in Chrome
+([`tech-debt.md`](../../../../docs/tech-debt.md)).

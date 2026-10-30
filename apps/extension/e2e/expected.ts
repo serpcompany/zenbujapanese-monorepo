@@ -1,6 +1,6 @@
 import { settingsLabels } from '../src/settings/labels.ts'
 import { labels } from '../src/shared/labels.ts'
-import { translateLabels } from '../src/translate/labels.ts'
+import { labels as panelLabels } from '../src/side-panel/labels.ts'
 
 export type ExtensionPage = {
   name: string
@@ -20,7 +20,7 @@ export const extensionPages: ExtensionPage[] = [
     documentTitle: labels.name,
     heading: labels.name,
     headingDrawn: false,
-    text: translateLabels.useSelection
+    text: panelLabels.empty.video.title
   },
   {
     name: 'settings',

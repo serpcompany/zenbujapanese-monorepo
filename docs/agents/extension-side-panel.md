@@ -13,7 +13,8 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 it. Every tab's `Content` stays mounted, so a tab that reads Chrome or follows something does it
 only while `shown`. A page is a kind in `PanelPage` (`route.ts`) and a line in
 `pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
-The tabs are the app's Translate, Player, and Account, in its order (#1129). The app's Look Up
+The tabs are Player, Translate, and Account (#1129), with Player first since it took the iPhone
+app's Player design (#1172). The app's Look Up
 has no tab: the extension has no dictionary search. Translate's `Content` is `TranslateTab` (`src/translate/translate-tab.tsx`,
 [`translate.md`](../../apps/extension/docs/product/translate.md)), whose Image row opens
 `{ page: 'image-search' }` (`src/translate/image-search-page.tsx`). Account's is `AccountTab`
@@ -26,10 +27,10 @@ state only, when no video is open; the code keeps the Video tab's names. It read
 (`chrome.tabs.query`, then `tabs.onActivated` and `tabs.onUpdated`) once it is first shown, asks
 for the video's captions, and follows the video on its port
 ([`extension-captions.md`](extension-captions.md#the-player-tabs-port)) only while shown. The
-panel has no Word Detail pages (#1124): a word clicked in Translate or the transcript opens its
-card on the page through a `word-popup` port, one opened from the keyboard shows its card in
-the panel, and Open Full Entry expands a card in place
-([A word's card on the page](#a-words-card-on-the-page)).
+panel has no Word Detail pages (#1124): a word clicked in Translate opens its card on the page
+through a `word-popup` port, one opened from the keyboard shows its card in the panel, a word in
+the transcript opens its card in a sheet over the Player tab, and Open Full Entry expands a card
+in place ([A word's card on the page](#a-words-card-on-the-page)).
 
 - **The toolbar icon opens it.** The manifest's `action` has no popup, and the service worker
   calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` when it starts
@@ -53,10 +54,10 @@ the panel, and Open Full Entry expands a card in place
   panel doesn't reload it. When Chrome refuses to open the panel, the service worker removes the
   key and answers `{ type: 'failed', reason }`.
 - **The last tab** is `sidePanel.lastTab` in `chrome.storage.local` (the manifest asks for
-  `storage`), `translate`, the first tab, until a tab is chosen. A tab id from the five tabs before #1129 is read as
-  the tab that took it over (`movedTabs` in `panel-storage.ts`): `video` and `recent` as
-  `player`, `images` as `translate`, and `words` as `account`; anything else, `lookUp` included, as
-  `translate`. The
+  `storage`), `player`, the first tab, until a tab is chosen. A tab id from the five tabs before
+  #1129 is read as the tab that took it over (`movedTabs` in `panel-storage.ts`): `video` and
+  `recent` as `player`, `images`, `lookUp`, and `settings` as `translate`, and `words` as
+  `account`; anything else as `player`. The
   panel saves the tab it opens on, so the old id is gone after one open. Nothing syncs.
 - **The test page** (`{ page: 'test' }`) is the test build's: `isPanelRoute` refuses it unless
   `import.meta.env.MODE` is `test`, as it is in Vitest and `pnpm build:test`.
@@ -78,8 +79,7 @@ the panel, and Open Full Entry expands a card in place
 
 ## A word's card on the page
 
-A word clicked in the panel (`src/translate/source-words.tsx`, which the transcript draws too)
-asks `services.pagePopup`, `popupOnActiveTab()` in `src/word-popup/page-popup.ts`, to show the
+A word clicked in Translate (`src/translate/source-words.tsx`) asks `services.pagePopup`, `popupOnActiveTab()` in `src/word-popup/page-popup.ts`, to show the
 card on the active tab. It connects `chrome.tabs.connect(tabId, { name: 'word-popup', frameId: 0 })`
 and posts `{ target: 'word-popup', show: { text, ids, fromBottom, side } }`: `fromBottom` is the
 word's distance from the panel's bottom, and `side` is `chrome.sidePanel.getLayout()`'s, read only
@@ -101,7 +101,7 @@ disconnects the port; the panel disconnecting closes it.
   One shown on the same tab is left for the page to replace: the server lets the old port go when
   the next panel card shows. Only the latest request's close or failure ends the rest. A request
   ended by another, or by the latest's failure, hears `closed`, a microtask later so a row's card
-  closing and the next row's opening don't play the video between them; the owner's own close
+  closing and the next row's opening on Translate don't play the video between them; the owner's own close
   tells it nothing. A page
   keeps one popup across its hosts (`Symbol.for('zenbujapanese.shown-word-popup')`), handed over
   without a close and open between, so the video doesn't play for a moment between two cards.
@@ -110,8 +110,9 @@ disconnects the port; the panel disconnecting closes it.
   keeps the port until the page's last card closes (the `close` event of `wordPopupEvents`). A
   card closed during a press counts as replaced too, since a click on another word closes the
   card on `pointerdown` and opens the next on `click`: the server waits for the press to end and
-  lets the port go then only if no card is open. So the transcript keeps the video paused while
-  any Zenbu card is open, and plays it when the last closes, if it was playing.
+  lets the port go then only if no card is open. So the video stays paused while any card on the
+  page is open, and plays when the last closes, if it was playing. The Player tab's words open in
+  its sheet, not on the page (below).
 - **A card the panel shows itself holds the page's place.** A word opened with Enter or Space
   posts `show` with `inPanel: true`: the server hands over the page's card without opening one,
   keeps its pause, holds the shown slot, and answers `shown`. A card on the page taking the slot
@@ -126,11 +127,20 @@ disconnects the port; the panel disconnecting closes it.
   into the page, so a card there is out of a keyboard user's reach (the owner's decision on
   #1124, 2026-10-30). Enter and Space on a button fire a `click` whose `detail` is 0, and a
   pointer's has its click count, 1 or more, so `Words` passes `event.detail === 0` to `pick`,
-  which then draws the card inline, asks the page for none, and closes any the page shows for
-  the panel. `WordPopup` focuses its card when it mounts, keyed by each pick, and Escape gives
+  which then draws the card inline and posts `show` with `inPanel: true`, so the page hands its
+  card over and holds the place, as the bullet above says. `WordPopup` focuses its card when it mounts, keyed by each pick, and Escape gives
   focus back to the word. A screen reader's activation is a `click` with `detail` 0 too, so it
   gets the inline card as well. The caption on the player passes its own `pick`, which ignores
   the flag: its words are on the page.
+- **The Player tab's sheet holds the page's place too.** A transcript word, from a click or a
+  key, opens its card in the tab's sheet (`src/video-tab/word-sheet.tsx`), never on the page, as
+  the iPhone app's Player does (#1172). `useWordSheet` (`use-word-sheet.ts`) posts `show` with
+  `inPanel: true` once while the sheet shows any word: the page takes down a card it shows and
+  keeps its pause. `replaced` hides the sheet and keeps the pause the sheet owes; `closed` ends
+  it and plays the video, if it was playing; a tab that can't hold a card leaves the sheet open.
+  A word opened again after `replaced` asks again and takes the place back. Escape closes the sheet
+  only while the Player tab shows: from a hidden Player tab it leaves the sheet open and the video
+  paused.
 
 ## The header's site
 
@@ -170,8 +180,8 @@ a granted origin covers it or the toolbar icon was clicked on that tab, and its 
   `page-popup-server.test.ts` (the page's), with a fake port. The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)
   lists, with the test content script beside it on one fake Chrome. The browser tests open
   `side-panel.html` with no popup, and `e2e/side-panel-tabs.spec.ts` its three tabs, each tab's
-  screen, and the old ids read as the three's, and `e2e/transcript-card-on-page.spec.ts` a
-  transcript word's card on the stand-in watch page
+  screen, and the old ids read as the three's, and `e2e/transcript-word-sheet.spec.ts` a
+  transcript word's sheet beside the stand-in watch page, and the page's one card
   ([`extension-browser-tests.md`](extension-browser-tests.md)).
 - **In Chrome,** with the `verify-extension` skill ([`extension.md`](extension.md), Checks): open the
   side panel from the toolbar icon and with the `openPanel` message from a click, closed and open, and check

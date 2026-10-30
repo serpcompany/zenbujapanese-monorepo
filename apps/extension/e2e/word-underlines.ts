@@ -57,6 +57,29 @@ export async function expectWordsApartWithMeaningsOffAndOn(
   await surface.screenshot({ path: test.info().outputPath('word-meanings-on.png') })
 }
 
+export function ownUnderlines(line: Locator) {
+  return line.evaluate(source => {
+    const words: string[] = []
+    let narrowestGap = Number.POSITIVE_INFINITY
+    let before: { left: number; right: number; top: number; bottom: number } | null = null
+    for (const word of source.querySelectorAll<HTMLElement>('[data-word]')) {
+      const text = word.firstElementChild ?? word
+      const box = text.getBoundingClientRect()
+      const mark = getComputedStyle(text, '::after')
+      const left = box.left + Number.parseFloat(mark.left)
+      const right = box.right - Number.parseFloat(mark.right)
+      const under = { left, right, top: box.top, bottom: box.bottom }
+      const sameRow = before !== null && under.top < before.bottom && under.bottom > before.top
+      const gap = before && sameRow ? Math.round((left - before.right) * 10) / 10 : null
+      if (gap !== null) narrowestGap = Math.min(narrowestGap, gap)
+      if (right - left > 0 && Number.parseFloat(mark.height) > 0)
+        words.push(word.dataset.word ?? '')
+      before = under
+    }
+    return { words, narrowestGap }
+  })
+}
+
 type LineStart = { word: string; after: 'line start' | 'text'; lead: number }
 
 export function wordsStartingALineOrAfterText(line: Locator) {

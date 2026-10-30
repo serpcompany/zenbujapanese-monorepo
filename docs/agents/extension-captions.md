@@ -59,8 +59,9 @@ Netflix's controls go through Netflix's player (Netflix, below). The follower re
 holds the time and ignores the controls while the player has `ad-showing`, then puts the
 learner's speed back, also when the site puts its own back after a seek, and hides the site's
 own captions with an attribute on the player and one style rule. `currentLine` (`follower.ts`) finds the line playing at a time, and `playingLine` the
-line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. Every
-consumer of a follower uses `playingLine`. `ended` is the `<video>` element's `ended` (false
+line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. The Player
+tab follows with `currentCard` (`panel-line-controls.ts`), not `playingLine`: it keeps the card the
+learner moved to, and the first card before the first line starts. `ended` is the `<video>` element's `ended` (false
 during an ad); #964 added it (PR #1108, amending the interface) because the core leaves the last
 line's end unclamped, so a last line can end after the video does.
 
@@ -159,9 +160,9 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
 - **The word popup** is the page lookup's (`wordPopupHost`, with `popupSettings` from
   `src/word-popup/popup-settings.ts`), and the words are Translate's `SourceLine` with a `pick`
   that opens it. `holdForPopups` (`popup-hold.ts`) hears `wordPopupEvents()` and pauses through
-  `popupPause` (`src/video/popup-pause.ts`), which the Player tab's transcript uses too: it plays
-  again on close, or when the caption stops with the popup open, only if the video was playing, and a close during a pointer press waits for the
-  press to end, so moving from word to word doesn't play it.
+  `popupPause` (`src/video/popup-pause.ts`): it plays again on close, or when the caption stops
+  with the popup open, only if the video was playing, and a close during a pointer press waits for
+  the press to end, so moving from word to word doesn't play it.
 - **English** (`line-english.ts`) asks `translate` for the line and the next one and keeps each
   answer; `not-available` shows none. The content script never calls `downloadTranslator`.
 - **When the controls show** (`presence.ts`): the pointer moving over the player, with a 3-second

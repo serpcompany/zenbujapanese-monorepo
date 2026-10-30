@@ -50,6 +50,11 @@ const minute = 60_000
 
 const noteClass = 'text-sm text-muted-foreground'
 
+const sectionClass =
+  'relative flex h-full min-h-0 flex-col [--player-hover:color-mix(in_oklab,var(--muted),var(--foreground)_4%)]'
+
+const titleClass = 'shrink-0 truncate px-4 pt-3 pb-2 font-heading text-sm font-medium'
+
 const noEnglish: ReadonlyMap<string, string> = new Map()
 
 const noFailures: ReadonlySet<string> = new Set()
@@ -113,23 +118,43 @@ function Lines({
     shared.services
   )
   const { playback, unreachable } = usePlayback(shared.services, video, shown)
-  return (
-    <>
+  const notices = (
+    <div className="flex flex-col gap-3 px-4 py-2 empty:hidden">
       {unreachable && <ReloadNotice reload={() => shared.services.reload(video.tabId)} />}
       {translating && <ModelNotice model={translator} download={download} text={englishText} />}
-      <Transcript
-        lines={lines}
-        english={translations ? english : noEnglish}
-        failed={translations ? failed : noFailures}
-        retry={retry}
-        playback={playback}
-        tabId={video.tabId}
-        shown={shown}
-        settings={settings}
-        services={shared.services}
-      />
-    </>
+    </div>
   )
+  return (
+    <Transcript
+      lines={lines}
+      english={translations ? english : noEnglish}
+      failed={translations ? failed : noFailures}
+      retry={retry}
+      playback={playback}
+      watched={video}
+      shown={shown}
+      settings={settings}
+      services={shared.services}
+      notices={notices}
+    />
+  )
+}
+
+function CaptionsState({ answer, tryAgain }: { answer: CaptionsAnswer | null; tryAgain(): void }) {
+  if (answer === null || !('state' in answer))
+    return answer === null ? (
+      <p className={noteClass}>{videoTabLabels.loading}</p>
+    ) : (
+      <Notice text={videoTabLabels.noAnswer} tryAgain={tryAgain} />
+    )
+  switch (answer.state) {
+    case 'rate-limited':
+      return <RateLimited retryAt={answer.retryAt} tryAgain={tryAgain} />
+    case 'failed':
+      return <Notice text={answer.reason} tryAgain={tryAgain} />
+    default:
+      return <p className={noteClass}>{videoTabLabels.loading}</p>
+  }
 }
 
 function CaptionsView({
@@ -143,22 +168,13 @@ function CaptionsView({
   shown: boolean
   settings: Settings | null
 }) {
-  if (answer === null || !('state' in answer))
-    return answer === null ? (
-      <p className={noteClass}>{videoTabLabels.loading}</p>
-    ) : (
-      <Notice text={videoTabLabels.noAnswer} tryAgain={tryAgain} />
-    )
-  switch (answer.state) {
-    case 'lines':
-      return <Lines lines={answer.lines} {...lines} />
-    case 'rate-limited':
-      return <RateLimited retryAt={answer.retryAt} tryAgain={tryAgain} />
-    case 'failed':
-      return <Notice text={answer.reason} tryAgain={tryAgain} />
-    default:
-      return <p className={noteClass}>{videoTabLabels.loading}</p>
-  }
+  if (answer && 'state' in answer && answer.state === 'lines')
+    return <Lines lines={answer.lines} {...lines} />
+  return (
+    <div className="flex flex-col gap-3 px-4 pt-1 pb-4">
+      <CaptionsState answer={answer} tryAgain={tryAgain} />
+    </div>
+  )
 }
 
 function VideoCaptions({
@@ -173,9 +189,9 @@ function VideoCaptions({
   if (answer && 'state' in answer && answer.state === 'no-japanese-captions')
     return <NoJapaneseCaptions open={shared.open} />
   return (
-    <section data-video-tab className="flex flex-col gap-3 p-4">
+    <section data-video-tab className={sectionClass}>
       {video.title && (
-        <h2 data-video-title className="font-heading text-base font-medium">
+        <h2 data-video-title title={video.title} className={titleClass}>
           {video.title}
         </h2>
       )}

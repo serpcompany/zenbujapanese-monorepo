@@ -8,6 +8,8 @@ const movedTabs = new Map<unknown, PanelTab>([
   ['video', 'player'],
   ['recent', 'player'],
   ['images', 'translate'],
+  ['lookUp', 'translate'],
+  ['settings', 'translate'],
   ['words', 'account']
 ])
 

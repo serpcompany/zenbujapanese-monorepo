@@ -123,6 +123,7 @@ export function watching({
   const english = translation ? translatingWith(translation) : translatorStandIn(translator)
   const tabWatchers = new Set<() => void>()
   const site: { tab: ActiveTab | null } = { tab: { id: tabId, url, title } }
+  const knownWatchers = new Set<(known: Record<string, boolean> | null) => void>()
   const services = {
     ...english.services,
     segment: vi.fn<VideoTabServices['segment']>(async text => ({
@@ -133,6 +134,11 @@ export function watching({
     wait: vi.fn<VideoTabServices['wait']>(() => new Promise(() => {})),
     popupCard: vi.fn<VideoTabServices['popupCard']>(async id => popupAnswer(id)),
     ...(pagePopup ? { pagePopup } : {}),
+    knownWords: vi.fn<VideoTabServices['knownWords']>(async () => ({})),
+    watchKnown: (heard: (known: Record<string, boolean> | null) => void) => {
+      knownWatchers.add(heard)
+      return () => void knownWatchers.delete(heard)
+    },
     activeTab: vi.fn(async () => site.tab),
     watchActiveTab: (changed: () => void) => {
       tabWatchers.add(changed)
@@ -188,6 +194,12 @@ export function watching({
       await settle()
     },
     move,
+    async knows(known: Record<string, boolean> | null) {
+      await act(async () => {
+        for (const watcher of [...knownWatchers]) watcher(known)
+      })
+      await settle()
+    },
     async navigate(videoId: string) {
       const to = watchURL(videoId)
       happyDOM.setURL(to)
