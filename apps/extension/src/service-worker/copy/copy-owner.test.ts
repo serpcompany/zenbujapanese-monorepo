@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { json, user } from '../../test/account-stand-in'
 import { appliedTo, type Sync, syncAnswer } from '../../test/copy-stand-in'
-import { answeringSync, copyWorld, gated, otherWord, word } from '../../test/copy-world'
+import { answeringSync, copyWorld, gated, otherWord, subscribed, word } from '../../test/copy-world'
 
 const other = { id: 'user-2', email: 'other@example.com' }
 
@@ -50,6 +50,35 @@ describe("the copy's owner", () => {
     expect((world.syncs().at(-1)?.body as Sync).cursor).toBeNull()
     expect(world.sent()).toEqual([])
     await expect(world.read()).resolves.toMatchObject({ knownWords: [otherWord] })
+  })
+
+  it.each([
+    [
+      'a change',
+      (world: ReturnType<typeof copyWorld>) => world.change({ change: 'mark', ...otherWord })
+    ],
+    ['Sync Now', (world: ReturnType<typeof copyWorld>) => world.settled()]
+  ])('takes the copy over for an account kept without its copy, on %s', async (_, first) => {
+    const world = copyWorld()
+    await world.signIn()
+    await world.settled()
+    await world.signOut()
+    await world.change({ change: 'mark', ...word })
+    await world.store.keepSignIn('session-user-2', other)
+    await world.store.keepSubscription('session-user-2', subscribed)
+    const told = world.told.length
+    await first(world)
+    expect(world.told.slice(told)).toContainEqual({ target: 'known', known: null })
+    await world.change({ change: 'mark', ...otherWord })
+    await world.settled()
+    expect(world.sent().map(sent => sent.entityId)).toEqual([otherWord.item])
+    expect((world.syncs().at(-1)?.body as Sync).cursor).toBe('cursor-1')
+    await expect(world.read()).resolves.toMatchObject({
+      owner: other.email,
+      knownWords: [otherWord],
+      unsynced: 0,
+      sync: 'synced'
+    })
   })
 
   it("keeps the learner's words when the account is deleted, and forgets only that account's sync", async () => {

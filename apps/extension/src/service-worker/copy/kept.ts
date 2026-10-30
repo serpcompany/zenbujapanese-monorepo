@@ -51,6 +51,15 @@ export const freshMeta = (user: { id: string; email: string }): Meta => ({
   queue: []
 })
 
+export function ownedBy(draft: Draft, user: { id: string; email: string }): boolean {
+  if (draft.meta?.userId === user.id) {
+    draft.meta.email = user.email
+    return false
+  }
+  draft.replace(freshMeta(user))
+  return true
+}
+
 type Kept = { items: Map<string, Item>; meta: Meta | null }
 
 export class Draft {

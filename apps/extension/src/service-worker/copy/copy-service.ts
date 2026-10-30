@@ -12,7 +12,15 @@ import { readSettings, type SettingsStore } from '../../shared/settings'
 import type { AccountStore, User } from '../account/store'
 import type { AccessTokens } from '../account/tokens'
 import { applyChange, changeOf, studyChanges } from './copy-changes'
-import { type CopyStorage, type Draft, freshMeta, type Item, keptCopy, keyOf } from './kept'
+import {
+  type CopyStorage,
+  type Draft,
+  freshMeta,
+  type Item,
+  keptCopy,
+  keyOf,
+  ownedBy
+} from './kept'
 import { accountSync, type CopyFailure, type Reason } from './sync'
 import { accountSettingsOf, reconcile } from './synced-settings'
 
@@ -117,15 +125,12 @@ export function accountCopy(parts: CopyParts) {
   }
 
   async function signedIn(user: User): Promise<void> {
-    const replaced = await copy.edit(draft => {
-      if (draft.meta?.userId === user.id) {
-        draft.meta.email = user.email
-        return false
-      }
-      draft.replace(freshMeta(user))
-      return true
-    })
-    if (replaced) parts.tell({ target: 'known', known: null })
+    if (await copy.edit(draft => ownedBy(draft, user))) parts.tell({ target: 'known', known: null })
+  }
+
+  async function keptUser(): Promise<User | null> {
+    if ((await parts.store.sessionToken()) === null) return null
+    return (await parts.store.keptAccount())?.user ?? null
   }
 
   async function settingsChanged(): Promise<void> {
@@ -142,7 +147,9 @@ export function accountCopy(parts: CopyParts) {
     const asked = changeOf(raw)
     if (asked === null) return { type: 'refused', refusal: 'invalid' }
     const word = asked.change === 'mark' || asked.change === 'clear' ? asked.item : null
-    const outcome = await copy.edit(draft => {
+    const outcome = await copy.edit(async draft => {
+      const user = await keptUser()
+      if (user && ownedBy(draft, user)) parts.tell({ target: 'known', known: null })
       if (draft.meta === null) return 'no-copy' as const
       const was = word !== null && knownIn(draft, word)
       if (!applyChange(draft, asked, clock)) return 'invalid' as const

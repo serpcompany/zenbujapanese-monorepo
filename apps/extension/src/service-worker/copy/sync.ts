@@ -6,7 +6,7 @@ import type { AccountStore } from '../account/store'
 import type { AccessTokens } from '../account/tokens'
 import { applyAnswer, type Batch, syncAnswerOf } from './answer'
 import type { Draft, KeptCopy } from './kept'
-import { queuedKey } from './kept'
+import { ownedBy, queuedKey } from './kept'
 import { reconcile } from './synced-settings'
 
 export type Reason = 'change' | 'settings' | 'retry' | 'startup' | 'opened' | 'sync-now' | 'access'
@@ -19,7 +19,7 @@ export type SyncParts = {
   tokens: AccessTokens
   readSubscription(): Promise<boolean>
   settings: SettingsStore
-  tell(known: Record<string, boolean>): void
+  tell(known: Record<string, boolean> | null): void
   reportFailure(code: CopyFailure): void
   later(run: () => void, wait: number): void
   now(): number
@@ -147,8 +147,12 @@ export function accountSync(parts: SyncParts) {
       return 'stopped'
     }
     const browser = await readSettings(parts.settings)
-    const batch = await copy.edit(draft => {
-      if (draft.meta?.userId !== kept.user.id) return null
+    const batch = await copy.edit(async draft => {
+      if (draft.meta?.userId !== kept.user.id) {
+        if ((await store.keptAccount())?.user.id !== kept.user.id) return null
+        ownedBy(draft, kept.user)
+        parts.tell(null)
+      }
       reconcile(draft, browser, parts.newId)
       return batchOf(draft)
     })
@@ -221,6 +225,8 @@ export function accountSync(parts: SyncParts) {
     if (paywalled || now < backedOffUntil) return false
     if (reason !== 'startup' && reason !== 'opened') return true
     const meta = await copy.look(draft => draft.meta)
+    const owner = (await store.keptAccount())?.user.id
+    if (owner !== undefined && meta?.userId !== owner) return true
     return meta !== null && (meta.queue.length > 0 || !fresh(meta.lastSyncedAt, now))
   }
 
