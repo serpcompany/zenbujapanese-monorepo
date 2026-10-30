@@ -1,13 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { askAccount } from '../shared/account'
 import { labels as panelLabels } from '../side-panel/labels'
-import {
-  json,
-  jwtWith,
-  signedInAnswer,
-  startAccountOn,
-  subscription
-} from '../test/account-stand-in'
+import { keptSessionRoutes, signedInAnswer, startAccountOn } from '../test/account-stand-in'
 import { settle } from '../test/render'
 import { watching } from '../test/video-tab-harness'
 
@@ -31,9 +25,7 @@ describe("Player's Recent, on a tab with no video", () => {
     tab = watching({ url: 'https://www.youtube.com/results?search_query=japanese' })
     startAccountOn(tab.extension, {
       'POST /v1/auth/sign-in/extension-code': () => signedInAnswer('session-website'),
-      'GET /v1/auth/token': () => json(200, { token: jwtWith(Date.now() / 1000 + 3600) }),
-      'GET /v1/me/subscription': () => json(200, subscription),
-      'POST /v1/auth/sign-out': () => json(200, { success: true })
+      ...keptSessionRoutes
     })
     await tab.show(true)
     await settle()
@@ -51,5 +43,17 @@ describe("Player's Recent, on a tab with no video", () => {
     await settle()
     expect(offers(tab)).toEqual([panelLabels.signUp])
     expect(explains(tab)).toBe(panelLabels.empty.recent.description)
+  })
+
+  it('shows neither the signed-out text nor the sign-in offer while the account is still loading', async () => {
+    tab = watching({ url: 'https://www.youtube.com/results?search_query=japanese' })
+    tab.extension.chrome.runtime.onMessage.addListener(message =>
+      (message as { account?: unknown }).account ? true : undefined
+    )
+    await tab.show(true)
+    await settle()
+    expect(recent(tab)?.querySelector('h2')?.textContent).toBe(panelLabels.recent)
+    expect(offers(tab)).toEqual([])
+    expect(explains(tab)).toBeUndefined()
   })
 })

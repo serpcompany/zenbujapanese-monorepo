@@ -116,6 +116,12 @@ export const subscription: KeptSubscription = {
   cloudAccess: 'subscription_required'
 }
 
+export const keptSessionRoutes: Record<string, Route> = {
+  'GET /v1/auth/token': () => json(200, { token: jwtWith(Date.now() / 1000 + 3600) }),
+  'GET /v1/me/subscription': () => json(200, subscription),
+  'POST /v1/auth/sign-out': () => json(200, { success: true })
+}
+
 export function returnedFrom(launched: URL, values: Record<string, string>) {
   const state = launched.searchParams.get('state') ?? ''
   const at =

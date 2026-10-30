@@ -23,11 +23,11 @@ type Shared = { services: VideoTabServices; open: PanelTabProps['open'] }
 
 function NoRecent({ select }: Pick<PanelTabProps, 'select'>) {
   const account = useAccount()
-  if (account?.signedIn)
-    return <EmptyState icon={History} text={panelLabels.empty.recentSignedIn} />
+  if (account === null) return null
+  if (account.signedIn) return <EmptyState icon={History} text={panelLabels.empty.recentSignedIn} />
   return (
     <EmptyState icon={History} text={panelLabels.empty.recent}>
-      {account && <SignUpButton select={select} />}
+      <SignUpButton select={select} />
     </EmptyState>
   )
 }
