@@ -89,8 +89,21 @@ the card, on the page's shadow root and in the panel (`src/word-popup/open-layer
 - **Share** opens the system's share sheet with the word, its meanings, and its address on
   zenbujapanese.com. Where there is no share sheet, or the system refuses one, it copies the
 address and says "Link copied"; closing the sheet does nothing more.
-- **Copy Link** copies the word's address on zenbujapanese.com, and says "Link copied". Where
-  nothing can copy: "Couldn't copy. Try again."
+- **More actions (•••)** saves the word to the learner's Zenbu account, as the app's Word Detail
+  does, and has no Copy Link: Share copies where there is no share sheet. **Status** comes first,
+  Unknown, Learning, or Known, with the word's state checked; a choice saves it and closes the
+  menu. Known says "要求 is known" with Undo, which puts back the state it had. **Add to List…**
+  turns the menu to a page with Back and the lists, Favorites first, each checked when it holds
+  the word: a click adds or removes it at once, and New List asks a name and makes a list with
+  the word in it. **Add Note** expands the card into Word Detail with the word's note focused.
+  Word Detail's own ••• is the same menu ([`word-detail.md`](word-detail.md), Saving).
+- Signed out, nothing saves: a choice shows "Sign in to save words" with Sign In, which opens the
+  side panel's Account tab. Without the subscription, "Saving needs the subscription" shows with
+  Subscribe…, which opens the account page on zenbujapanese.com in a new tab. Add to List… and
+  Add Note say so before anything opens. The toast shows at the card's foot for 5 seconds, isn't
+  shown again while it's up, and goes when the account changes so that saving is allowed. A
+  refusal the service worker learns later, when a sync is refused for the subscription, shows
+  only on the page whose change it refused.
 - **Pronounce**, and a click on the pitch accent, speak the reading as the app does: in the best
   Japanese voice on this computer, at 0.82 of the default rate. A premium voice comes first,
   then an enhanced one, then any other on this computer, with Apple's Eloquence voices (Eddy, Flo,
@@ -115,8 +128,9 @@ the popup in place into the full entry, which scrolls inside the card, and opens
 "several entries open on a choice, the one the sentence links first, and the full entry offers
 them all", "the popup stays inside the window for a word at each edge, and follows the page as it
 scrolls until its word is gone", "closes on Escape and a click outside, with no Close
-button…", "a word in a link opens the popup…", and "Share and Copy Link put the word's address
-on the clipboard…"; the first also checks the popup's font loads. Once: "the expanded card's Open on
+button…", "a word in a link opens the popup…", "Share puts the word's address on the
+clipboard where there is no share sheet", and "••• offers Status, Add to List… and Add Note, and
+signed out Known says to sign in and saves nothing"; the first also checks the popup's font loads. Once: "the expanded card's Open on
 zenbujapanese.com opens the word's page in a new tab and keeps the card", and, on a light page, "opens
 the More menu over the popup, and one Escape closes the menu, the next the popup", and on the
 YouTube stand-in "opens the More menu over a caption word's popup on YouTube, in and out of
@@ -124,6 +138,8 @@ fullscreen", each checking the menu's item is the topmost element where it is dr
 DOM tests: `src/word-popup/word-popup.interaction.test.tsx` ("expands in place into the
 word's full entry…", "shows Word Detail's own header actions in the expanded card…", "asks which
 word is meant…, and offers them all in the full entry"),
+`src/word-saving/word-saving.interaction.test.tsx` for the ••• menu, its toasts, lists, and
+notes, against a stand-in for the service worker,
 `src/word-popup/popup-host.interaction.test.tsx` for the fullscreen element, the bare video,
 the open and close events, closing when the More menu shuts, Escape with the menu open and
 shutting, the host's layer, a card at the panel's edge, one card on a page, and "stays open for a

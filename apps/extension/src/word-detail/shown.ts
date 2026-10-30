@@ -20,7 +20,7 @@ import type { ShownKanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
 import type { ShownWordSections } from '@zenbu/ui/dictionary/word-sections'
 import { wordDetailLabels } from './labels'
 
-const leftOutSections = new Set(['conjugations'])
+const leftOutKanjiSections = new Set(['lists', 'notes'])
 
 function conjugatedForm({ sharedSpellings, ...form }: ConjugationRow): ShownConjugationRow {
   return {
@@ -69,7 +69,7 @@ export function shownWordSections(
   return {
     sections: detail.sections.filter(
       section =>
-        !leftOutSections.has(section.kind) &&
+        section.kind !== 'conjugations' &&
         (section.kind !== 'frequency' || frequencyRows.length > 0)
     ),
     senses: detail.senses.map(sense => ({
@@ -100,7 +100,7 @@ export function shownKanjiDetails(detail: KanjiDetail, strokesReady: boolean): S
   const strokeOrder = strokesReady ? detail.strokeOrder : null
   return {
     ...detail,
-    sections: detail.sections.filter(section => !leftOutSections.has(section.kind)),
+    sections: detail.sections.filter(section => !leftOutKanjiSections.has(section.kind)),
     components: detail.components.map(character => ({ character })),
     strokeOrder,
     strokeLabels: strokeOrder

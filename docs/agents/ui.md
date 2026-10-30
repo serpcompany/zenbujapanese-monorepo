@@ -13,7 +13,7 @@ Run every command below from `packages/ui`, after `pnpm install` at the reposito
 | Folder | What it holds |
 | --- | --- |
 | `src/components/` | The stock shadcn primitives (style `base-nova`, base colour neutral), as the CLI wrote them but for one edit (below). Add one with `pnpm dlx shadcn@latest add <name>` here; `components.json` points the CLI at this package. |
-| `src/dictionary/` | The word components: the word header, the word page's sections (`WordSections`), kanji details, example lists and their paging, conjugations, frequency, source credits, and the pieces they share, such as furigana, pitch, and the pronounce button, which speaks in the voice `voice.ts` chooses (below). |
+| `src/dictionary/` | The word components: the word header, with a tag under the reading the client may give, the word page's sections (`WordSections`), kanji details, example lists and their paging, conjugations, frequency, source credits, Share and the ••• menu (`SavedItemActions`, whose groups of actions may follow a Status choice and open a page of choices with Back, as the extension's Add to List… does), and the pieces they share, such as furigana, pitch, and the pronounce button, which speaks in the voice `voice.ts` chooses (below). |
 | `src/styles/theme.css` | The theme: the shadcn tokens on `:root`, `.dark` redefining them, and the utilities `muted-surface`, `meaning-clamp`, and `furigana`. |
 | `src/lib/`, `src/hooks/` | `Fill`, which puts components into a template's slots; `PortalContainer`, which sends menus and dialogs into a shadow root; and `useMediaQuery`. |
 

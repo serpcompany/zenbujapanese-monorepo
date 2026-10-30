@@ -69,14 +69,17 @@ const kanjiPage = (lookups: WordLookups) =>
   )
 
 describe('Kanji detail', () => {
-  it('shows 要’s readings, meanings and stroke order', async () => {
+  it('shows 要’s readings, meanings and stroke order, and no Lists or Notes before kanji save', async () => {
     const page = await kanjiPage(
       answering(async () => ({ type: 'kanji', rows: kaname, strokes: 'ready' }))
     )
     const detail = kanjiDetail(kaname)
     expect(page.querySelector('[data-kanji-details="要"]')).not.toBeNull()
     expect(page.textContent).toContain(detail.meanings.join(', '))
-    expect([...page.querySelectorAll('h3')].map(title => title.textContent)).toContain('Readings')
+    const titles = [...page.querySelectorAll('h2, h3')].map(title => title.textContent)
+    expect(titles).toContain('Readings')
+    expect(titles).not.toContain('Lists')
+    expect(titles).not.toContain('Notes')
     expect(page.querySelector('button[aria-label="Show stroke order for 要"]')).not.toBeNull()
     expect(page.querySelector('[data-strokes]')).toBeNull()
   })
