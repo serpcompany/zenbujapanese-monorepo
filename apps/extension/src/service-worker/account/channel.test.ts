@@ -113,7 +113,7 @@ describe('startAccount', () => {
     const listener = answerAccount(
       {
         answer: () => Promise.reject(new Error(user.email)),
-        readSubscription: async () => undefined
+        readSubscription: async () => false
       },
       reportFailure,
       `chrome-extension://${extensionId}`

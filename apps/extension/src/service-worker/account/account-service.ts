@@ -43,14 +43,16 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     account: accountOf(await store.keptAccount())
   })
 
-  async function readSubscription(): Promise<void> {
+  async function readSubscription(): Promise<boolean> {
     const sessionToken = await store.sessionToken()
-    if (sessionToken === null || (await store.keptAccount()) === null) return
+    if (sessionToken === null || (await store.keptAccount()) === null) return false
     const answer = await tokens.withAccess(sessionToken, {
       method: 'GET',
       path: '/v1/me/subscription'
     })
-    if (answer.ok) await store.keepSubscription(sessionToken, subscriptionOf(answer.value))
+    if (!answer.ok) return false
+    await store.keepSubscription(sessionToken, subscriptionOf(answer.value))
+    return true
   }
 
   async function endSession(sessionToken: string): Promise<Answered> {
@@ -76,11 +78,6 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     return read()
   }
 
-  async function goneAfterLostAnswer(sessionToken: string): Promise<boolean> {
-    const answer = await tokens.newAccessToken(sessionToken)
-    return typeof answer !== 'string' && !answer.ok && answer.status === 401
-  }
-
   async function deleteNow(
     sessionToken: string,
     appleAuthorizationCode: string | null
@@ -98,9 +95,6 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
       }
     }
     if (answer.code === 'apple_authorization_needed') return { type: 'apple-needed' }
-    if (answer.code === 'network' && (await goneAfterLostAnswer(sessionToken))) {
-      return { type: 'deleted', appStoreSubscriptionContinues: false }
-    }
     return refusedFor(answer)
   }
 
@@ -129,8 +123,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     const sessionToken = await store.sessionToken()
     if (kept === null || sessionToken === null) return read()
     if (kept.wentToSubscribe) {
-      await store.keepWentToSubscribe(sessionToken, false)
-      await readSubscription()
+      if (await readSubscription()) await store.keepWentToSubscribe(sessionToken, false)
     } else {
       await tokens.checkSession(sessionToken)
     }

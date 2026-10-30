@@ -76,6 +76,29 @@ describe('accountService', () => {
     expect(world.routes()).toEqual(['GET /v1/auth/token', 'GET /v1/me/subscription'])
   })
 
+  it('keeps reading the subscription each time the account opens after Subscribe…, until the service answers', async () => {
+    let reads = 0
+    const subscribed = {
+      ...subscription,
+      status: 'active',
+      active: true,
+      cloudAccess: 'subscribed'
+    }
+    const world = await signedInWorld({
+      'GET /v1/auth/token': token,
+      'GET /v1/me/subscription': () =>
+        ++reads === 1 ? new Response('down', { status: 503 }) : json(200, subscribed)
+    })
+    await world.account.answer({ account: 'went-to-subscribe' })
+    await world.account.answer({ account: 'opened' })
+    expect(await world.store.keptAccount()).toMatchObject({ wentToSubscribe: true })
+    const answer = await world.account.answer({ account: 'opened' })
+    expect(answer).toMatchObject({ account: { subscription: { cloudAccess: 'subscribed' } } })
+    expect(await world.store.keptAccount()).toMatchObject({ wentToSubscribe: false })
+    await world.account.answer({ account: 'opened' })
+    expect(reads).toBe(2)
+  })
+
   it('asks for an access token once when the account opens without one, and shows Not signed in when the service has ended the session', async () => {
     const world = await signedInWorld({ 'GET /v1/auth/token': () => refusal(401, 'unauthorized') })
     await expect(world.account.answer({ account: 'opened' })).resolves.toEqual({
@@ -202,19 +225,35 @@ describe('accountService', () => {
     expect(await world.store.keptAccount()).toMatchObject({ user, subscription: kept })
   })
 
-  it('takes a lost answer to a delete for done once the service refuses the session', async () => {
+  it('never takes a lost answer to a delete for done: it asks to try again, forgets nothing, and asks nothing more', async () => {
+    const world = await signedInWorld({
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
+      'POST /v1/auth/sign-out': () => json(200, {}),
+      'GET /v1/auth/token': token,
+      'DELETE /v1/me': () => new Response('gateway', { status: 504 })
+    })
+    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toMatchObject({
+      type: 'refused',
+      refusal: 'try-again'
+    })
+    expect(world.routes().at(-1)).toBe('DELETE /v1/me')
+    expect(world.local.items.get(sessionTokenKey)).toBe('session-fresh')
+    expect(await world.store.keptAccount()).toMatchObject({ user })
+  })
+
+  it('asks to sign in again, and never says deleted, when a delete is refused for a session the service has ended', async () => {
     let tokens = 0
     const world = await signedInWorld({
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
       'POST /v1/auth/sign-out': () => json(200, {}),
       'GET /v1/auth/token': () => (++tokens === 1 ? token() : refusal(401, 'unauthorized')),
-      'DELETE /v1/me': () => new Response('gateway', { status: 504 })
+      'DELETE /v1/me': () => refusal(401, 'unauthorized')
     })
-    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toEqual({
-      type: 'deleted',
-      appStoreSubscriptionContinues: false
+    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toMatchObject({
+      type: 'refused',
+      refusal: 'sign-in-again'
     })
-    expect(await world.store.keptAccount()).toBeNull()
+    expect(world.routes().slice(-2)).toEqual(['DELETE /v1/me', 'GET /v1/auth/token'])
   })
 
   it('keeps the account and asks to try again when a delete gets no answer but the session still works', async () => {

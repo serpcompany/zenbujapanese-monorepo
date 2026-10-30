@@ -9,9 +9,11 @@ What the `Extension` workflow runs and why. Every workflow and what starts it is
 rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
 extension, `packages/ui`, which draws it, the core, `assets/brand`, whose mark the side panel
 shows ([`extension.md`](extension.md)), or the account service (`apps/account-api` and its
-packages `account-rules` and `node-service`), which the browser tests sign in against. On the same pull requests, `Extension packages` builds and
-checks the staging and Chrome Web Store packages ([`ci-deploys.md`](ci-deploys.md)). It filters by
-`paths`, so it isn't a check to require.
+packages `account-rules` and `node-service`), which the browser tests sign in against.
+`Extension packages` builds and checks the staging and Chrome Web Store packages on the pull
+requests that change what they bundle: the extension, `packages/ui`, the core, `account-rules`,
+or `assets/brand`, not the rest of the account service ([`ci-deploys.md`](ci-deploys.md)). It
+filters by `paths`, so it isn't a check to require.
 
 Its `browser` job starts once `check` passes, under a 20-minute limit. It loads the test build in
 Playwright's Chromium and runs the browser tests (`pnpm test:browser`,

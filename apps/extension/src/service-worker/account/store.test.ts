@@ -3,10 +3,12 @@ import {
   json,
   signedInAnswer,
   signedInWorld,
+  storageArea,
   subscription,
   user
 } from '../../test/account-stand-in'
-import { accessTokenKey } from './token-keys'
+import { accountStore, type StorageArea } from './store'
+import { accessTokenKey, sessionTokenKey } from './token-keys'
 
 const other = { id: 'user-2', email: 'other@example.com' }
 
@@ -21,7 +23,17 @@ type Asked = { headers: Headers }
 
 const bearerOf = (asked: Asked) => asked.headers.get('authorization')?.slice(7) ?? ''
 
-const aWhile = () => new Promise(resolve => setTimeout(resolve, 20))
+type World = Awaited<ReturnType<typeof signedInWorld>>
+
+function signInReachesStore(world: World): Promise<void> {
+  const keepSignIn = world.store.keepSignIn
+  return new Promise(resolve => {
+    world.store.keepSignIn = (...kept) => {
+      resolve()
+      return keepSignIn(...kept)
+    }
+  })
+}
 
 function worldOfTwo(onSubscription: () => void = () => {}) {
   return signedInWorld({
@@ -46,9 +58,9 @@ describe('accountStore, when a sign-in to another account lands in the middle of
     await vi.waitFor(() => expect(holds).toHaveLength(1))
     const held = holds[0]
     await held?.reached
+    const queued = signInReachesStore(world)
     const signingIn = world.account.answer(signInToOther)
-    await vi.waitFor(() => expect(world.routes()).toContain('POST /v1/auth/sign-in/email-otp'))
-    await aWhile()
+    await queued
     held?.release()
     await reading
     await expect(signingIn).resolves.toEqual({
@@ -63,9 +75,9 @@ describe('accountStore, when a sign-in to another account lands in the middle of
     const held = world.local.holdNext('get')
     const going = world.account.answer({ account: 'went-to-subscribe' })
     await held.reached
+    const queued = signInReachesStore(world)
     const signingIn = world.account.answer(signInToOther)
-    await vi.waitFor(() => expect(world.routes()).toContain('POST /v1/auth/sign-in/email-otp'))
-    await aWhile()
+    await queued
     held.release()
     await going
     await signingIn
@@ -102,5 +114,30 @@ describe('accountStore, when a sign-in to another account lands in the middle of
     })
     await expect(world.store.accessToken('session-other')).resolves.toBeNull()
     expect(await world.store.keptAccount()).toMatchObject({ user })
+  })
+})
+
+describe('accountStore', () => {
+  it('answers an access token kept with no session mark, as an earlier build kept it, as not kept', async () => {
+    const world = await signedInWorld({})
+    world.session.items.set(accessTokenKey, {
+      token: 'access-unmarked',
+      expiresAt: Date.now() + 3_600_000
+    })
+    await expect(world.store.accessToken('session-earlier')).resolves.toBeNull()
+  })
+
+  it('goes on with the next write after one that is refused', async () => {
+    const local = storageArea()
+    let refusals = 1
+    const refusingOnce: StorageArea = {
+      ...local.area,
+      set: items =>
+        refusals-- > 0 ? Promise.reject(new Error('Quota exceeded.')) : local.area.set(items)
+    }
+    const store = accountStore({ local: refusingOnce, session: storageArea().area })
+    await expect(store.keepSignIn('session-1', user)).rejects.toThrow('Quota exceeded.')
+    await expect(store.keepSignIn('session-2', user)).resolves.toBe(true)
+    expect(local.items.get(sessionTokenKey)).toBe('session-2')
   })
 })

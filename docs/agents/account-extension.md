@@ -132,10 +132,14 @@ answers `apple-again`, Continue with Apple again.
   the account or comes back into view (`opened`), the service worker asks `GET /v1/auth/token`
   once if no access token is kept that has more than a minute left, so a session ended
   elsewhere shows signed out then. The subscription is read again when a page comes back into
-  view after Subscribe… or Manage Subscription; `cloudAccess` is kept with it, for saving (#962).
+  view after Subscribe… or Manage Subscription, and again each time until a read is kept;
+  `cloudAccess` is kept with it, for saving (#962).
 - **Deleting** asks for a fresh sign-in to the same account, which keeps the subscription it
   had. When the service needs Apple, Continue with Apple signs in with Apple again, so the delete
   goes with that fresh session and its `code`, never an earlier session over 10 minutes old.
+  A delete whose answer is lost is never taken for done: the service names no code for an
+  account that no longer exists, and `401 unauthorized` from `GET /v1/auth/token` also means a
+  session that ended. It asks the learner to try again, forgets nothing, and asks nothing more.
 - **The account component,** `src/account/`, is the one the side panel's Account tab and
   Settings' Account page both draw ([product docs](../../apps/extension/docs/product/account.md)).
   It shows each answer's problem inline, by the field or the button it belongs to, with no toast.

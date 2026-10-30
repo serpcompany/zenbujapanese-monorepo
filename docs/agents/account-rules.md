@@ -61,6 +61,10 @@ and the service's `website-copy.test.ts` against the service.
   and shows the rule's sentence when one fails, the same words the service's refusal carries; its
   code field's pattern is `signInCode.typedPattern`. `account-rules.interaction.test.tsx`
   replays the name, username, and code cases through the forms.
+- **The extension** takes only the sign-in code rule: its code field's pattern is
+  `signInCode.typedPattern`, and it sends what `signInCodeOf` makes of the typed code, or nothing.
+  `apps/extension/src/account/account-rules.interaction.test.tsx` replays the code cases through
+  the account component's code field, against a stand-in service.
 - **The app** asks the rules' own JavaScriptCore bundle
   (`apps/ios/Modules/Sources/SearchExperience/Resources/AccountRules/account-rules.js`) through
   `AccountRules` (`AccountRules.swift`): Profile's name and username, the code's Sign In button,
