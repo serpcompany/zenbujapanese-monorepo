@@ -5,14 +5,15 @@ import { SavedItemActions } from '@zenbu/ui/dictionary/saved-item-actions'
 import { LinkIcon } from 'lucide-react'
 import { websiteOrigin } from '../shared/hosts'
 import { wordDetailLabels } from './labels'
-import { copyText } from './notice'
+import { useNotices } from './notice'
 
 const closedShareSheet = () => undefined
 
 export function WordShare({ word }: { word: WordDetail }) {
   const labels = wordDetailLabels.share
+  const { copy } = useNotices()
   const url = `${websiteOrigin}${encodeURI(wordPath(word))}`
-  const copyLink = () => void copyText(url, labels.linkCopied)
+  const copyLink = () => void copy(url, labels.linkCopied)
   const share = () => {
     if (!navigator.share) return copyLink()
     navigator.share({ title: word.headword, text: word.shareText, url }).catch(closedShareSheet)

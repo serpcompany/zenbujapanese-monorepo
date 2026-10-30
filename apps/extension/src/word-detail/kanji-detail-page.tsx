@@ -3,14 +3,14 @@ import type { KanjiRows } from '@zenbu/dictionary-core/detail/rows'
 import { KanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
 import { useCallback, useMemo } from 'react'
 import type { KanjiAnswer } from '../shared/answers'
-import type { PanelPage } from '../side-panel/route'
+import type { EntryPage, OpenEntry } from './entry-page'
 import { wordDetailLabels } from './labels'
 import { dictionaryLookups, useLookup, type WordLookups } from './lookups'
-import { type FramedProps, framed, NotFound, UnansweredLookup } from './page-states'
+import { type EntryPageProps, NotFound, UnansweredLookup } from './page-states'
 import { shownKanjiDetails } from './shown'
 import { useWordLinks } from './word-links'
 
-type KanjiPage = Extract<PanelPage, { page: 'kanji' }>
+type KanjiPage = Extract<EntryPage, { page: 'kanji' }>
 
 const noLearnerPrompt = () => null
 const strokesDownloading = (answer: KanjiAnswer) => answer.strokes === 'downloading'
@@ -23,7 +23,7 @@ function KanjiView({
 }: {
   rows: KanjiRows
   downloading: boolean
-  open: (page: PanelPage) => void
+  open: OpenEntry
   lookups: WordLookups
 }) {
   const renderWordLink = useWordLinks(open, lookups.resolveWord)
@@ -50,7 +50,11 @@ function KanjiView({
   )
 }
 
-function KanjiDetailContent({ page, open, lookups = dictionaryLookups }: FramedProps<KanjiPage>) {
+export function KanjiDetailPage({
+  page,
+  open,
+  lookups = dictionaryLookups
+}: EntryPageProps<KanjiPage>) {
   const { lookUpKanji } = lookups
   const lookup = useCallback(() => lookUpKanji(page.character), [lookUpKanji, page.character])
   const [result, retry] = useLookup(lookup, strokesDownloading)
@@ -61,5 +65,3 @@ function KanjiDetailContent({ page, open, lookups = dictionaryLookups }: FramedP
     <KanjiView rows={rows} downloading={strokes === 'downloading'} open={open} lookups={lookups} />
   )
 }
-
-export const KanjiDetailPage = framed(KanjiDetailContent)

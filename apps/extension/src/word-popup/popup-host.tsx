@@ -1,13 +1,25 @@
 import { type ReactNode, useLayoutEffect, useRef } from 'react'
 import { mountInShadowRoot, type ShadowMount } from '../content/shadow-mount'
-import { hasOpenMenu } from './open-menu'
-import { wordPopupEvents } from './popup-events'
-import { outOfWindow, popupPlacement } from './position'
+import { hasOpenLayer } from './open-layer'
+import { type HandedOver, shownWordPopup, wordPopupEvents } from './popup-events'
+import {
+  type Edge,
+  edgePlacement,
+  outOfWindow,
+  type Placement,
+  popupPlacement,
+  type Size
+} from './position'
 import { WordPopup, type WordPopupProps } from './word-popup'
 
 const popupHostAttribute = 'data-zenbu-word-popup'
 
-type PopupTarget = Pick<WordPopupProps, 'text' | 'ids'> & { anchor: () => DOMRect }
+type Where = { anchor: () => DOMRect } | { edge: Edge }
+
+export type PopupTarget = Pick<WordPopupProps, 'text' | 'ids'> &
+  Where & {
+    closed?: () => void
+  }
 
 export type PopupSettings = Omit<WordPopupProps, 'text' | 'ids'>
 
@@ -26,6 +38,16 @@ type Options = {
   report?: (error: unknown) => void
 }
 
+type Placing = { place(popup: Size, window: Size): Placement; lost(window: Size): boolean }
+
+const placing = (where: Where): Placing =>
+  'edge' in where
+    ? { place: (popup, window) => edgePlacement(where.edge, popup, window), lost: () => false }
+    : {
+        place: (popup, window) => popupPlacement(where.anchor(), popup, window),
+        lost: window => outOfWindow(where.anchor(), window)
+      }
+
 const hostStyle = 'position:fixed;top:0;left:0;z-index:2147483647;'
 
 function windowSize(doc: Document, view: Window) {
@@ -37,14 +59,14 @@ function windowSize(doc: Document, view: Window) {
 }
 
 function Placed({
-  anchor,
+  at,
   doc,
   view,
   held,
   gone,
   children
 }: {
-  anchor: () => DOMRect
+  at: Placing
   doc: Document
   view: Window
   held: () => boolean
@@ -59,7 +81,7 @@ function Placed({
     const place = () => {
       frame = 0
       const size = { width: element.offsetWidth, height: element.offsetHeight }
-      const placed = popupPlacement(anchor(), size, windowSize(doc, view))
+      const placed = at.place(size, windowSize(doc, view))
       element.style.left = `${placed.left}px`
       element.style.top = `${placed.top}px`
       element.dataset.side = placed.side
@@ -75,7 +97,7 @@ function Placed({
     })
     function moved() {
       frame = 0
-      if (!outOfWindow(anchor(), windowSize(doc, view))) place()
+      if (!at.lost(windowSize(doc, view))) place()
       else if (!held()) gone()
       else
         released.observe(root, { childList: true, subtree: true, attributeFilter: ['data-open'] })
@@ -92,7 +114,7 @@ function Placed({
       view.removeEventListener('scroll', later, { capture: true })
       view.removeEventListener('resize', later)
     }
-  }, [anchor, doc, view, held, gone])
+  }, [at, doc, view, held, gone])
   return (
     <div ref={box} style={{ position: 'fixed', left: 0, top: 0 }}>
       {children}
@@ -113,15 +135,16 @@ export function wordPopupHost({
   prepare,
   report
 }: Options): PopupHost {
-  let shown: { mount: ShadowMount; returnTo: Element | null } | null = null
+  let shown: { mount: ShadowMount; returnTo: Element | null; closed?: () => void } | null = null
   const events = wordPopupEvents()
+  const page = shownWordPopup()
 
   const holds = (event: Event) => shown !== null && event.composedPath().includes(shown.mount.host)
 
-  const menuOpen = () => (shown ? hasOpenMenu(shown.mount.shadowRoot) : false)
+  const layerOpen = () => (shown ? hasOpenLayer(shown.mount.shadowRoot) : false)
 
   const onKey = (event: KeyboardEvent) => {
-    if (event.key !== 'Escape' || menuOpen()) return
+    if (event.key !== 'Escape' || layerOpen()) return
     event.stopPropagation()
     close()
   }
@@ -132,24 +155,45 @@ export function wordPopupHost({
     if (shown) shownIn(doc).append(shown.mount.host)
   }
 
-  function close() {
-    if (!shown) return
-    const { mount: mounted, returnTo } = shown
+  function listen() {
+    doc.addEventListener('keydown', onKey, true)
+    doc.addEventListener('pointerdown', onPointer, true)
+    doc.addEventListener('fullscreenchange', onFullscreen)
+  }
+
+  function takeDown(): HandedOver | null {
+    if (!shown) return null
+    const { mount: mounted, returnTo, closed } = shown
     shown = null
+    if (page.current === self) page.current = null
     doc.removeEventListener('keydown', onKey, true)
     doc.removeEventListener('pointerdown', onPointer, true)
     doc.removeEventListener('fullscreenchange', onFullscreen)
     mounted.unmount()
+    closed?.()
+    return { returnTo }
+  }
+
+  const self = { handOver: takeDown }
+
+  function close() {
+    const taken = takeDown()
+    if (!taken) return
+    const { returnTo } = taken
     if (returnTo?.isConnected) (returnTo as HTMLElement).focus?.({ preventScroll: true })
     events.dispatchEvent(new Event('close'))
   }
 
   function open(target: PopupTarget) {
-    const wasOpen = shown !== null
-    const returnTo = shown ? shown.returnTo : doc.activeElement
-    shown?.mount.unmount()
+    const previous = shown
+    const handed = previous ? null : (page.current?.handOver() ?? null)
+    const returnTo = previous ? previous.returnTo : handed ? handed.returnTo : doc.activeElement
+    if (previous) {
+      previous.mount.unmount()
+      previous.closed?.()
+    }
     const mounted = mount(
-      <Placed anchor={target.anchor} doc={doc} view={view} held={menuOpen} gone={close}>
+      <Placed at={placing(target)} doc={doc} view={view} held={layerOpen} gone={close}>
         <WordPopup {...settings()} text={target.text} ids={target.ids} />
       </Placed>,
       { document: doc, report }
@@ -158,12 +202,11 @@ export function wordPopupHost({
     mounted.host.setAttribute('style', hostStyle)
     prepare?.(mounted)
     shownIn(doc).append(mounted.host)
-    shown = { mount: mounted, returnTo }
-    if (wasOpen) return
-    doc.addEventListener('keydown', onKey, true)
-    doc.addEventListener('pointerdown', onPointer, true)
-    doc.addEventListener('fullscreenchange', onFullscreen)
-    events.dispatchEvent(new Event('open'))
+    shown = { mount: mounted, returnTo, closed: target.closed }
+    page.current = self
+    if (previous) return
+    listen()
+    if (!handed) events.dispatchEvent(new Event('open'))
   }
 
   return { open, close, holds }

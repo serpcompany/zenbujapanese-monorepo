@@ -70,7 +70,7 @@ export function playerCaptions({
       view,
       report,
       prepare: keptInside,
-      settings: () => popupSettings(settings, services, popup.close)
+      settings: () => popupSettings(settings, services)
     })
     const pick = (token: PageToken, word: HTMLElement) =>
       popup.open({ text: token.text, ids: token.ids, anchor: () => word.getBoundingClientRect() })

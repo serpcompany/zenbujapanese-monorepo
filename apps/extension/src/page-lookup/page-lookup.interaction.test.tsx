@@ -45,7 +45,6 @@ function lookUpOn(changes: Partial<Settings>) {
     onSettingsChanged: () => () => {},
     segment,
     popupCard: async id => popupAnswer(id),
-    openPanel: () => {},
     underlines: () => underlines,
     popup: () => ({ open: vi.fn(), close: vi.fn(), holds: () => false }),
     report: error => {

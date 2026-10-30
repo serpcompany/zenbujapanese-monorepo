@@ -2,8 +2,11 @@ import type { WordCard } from '@zenbu/dictionary-core/cards/card'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { Button } from '@zenbu/ui/components/button'
 import { ChevronLeftIcon } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import type { PanelPage } from '../side-panel/route'
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react'
+import type { Settings } from '../shared/settings'
+import type { EntryPage } from '../word-detail/entry-page'
+import { FullEntry } from '../word-detail/full-entry'
+import type { Notices } from '../word-detail/notice'
 import { copyText, type Sharing } from './copy'
 import { wordPopupLabels } from './labels'
 import { shareText, wordAddress } from './shown'
@@ -14,15 +17,20 @@ export type WordPopupProps = {
   text: string
   ids: readonly string[]
   lookUp: WordLookUp
-  frequency: readonly string[]
-  romaji: boolean
-  openFullEntry(page: PanelPage): void
+  settings: Settings
   sharing?: Sharing
 }
 
 const dismissed = (error: unknown) => error instanceof DOMException && error.name === 'AbortError'
 
 const labels = wordPopupLabels
+
+const frameClass =
+  'flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-popover text-popover-foreground shadow-lg outline-none'
+
+const cardClass = `${frameClass} max-h-[min(32rem,calc(100vh-1rem))] gap-3 overflow-y-auto p-4`
+
+const expandedClass = `${frameClass} h-[calc(100vh-1rem)] overflow-hidden`
 
 function Status({ looked }: { looked: Looked | undefined }) {
   const message =
@@ -93,7 +101,7 @@ function entryPage(
   card: WordCard,
   ids: readonly string[],
   cards: Record<string, Looked>
-): PanelPage {
+): EntryPage {
   if (ids.length < 2) return { page: 'word', entSeq: card.entSeq }
   const entries = ids.flatMap(id => {
     const looked = cards[id]
@@ -102,31 +110,39 @@ function entryPage(
   return { page: 'word', entSeq: card.entSeq, entries }
 }
 
-export function WordPopup({
-  text,
-  ids,
-  lookUp,
-  frequency,
-  romaji,
-  openFullEntry,
-  sharing
-}: WordPopupProps) {
+function usePopupNotices(frame: RefObject<HTMLDivElement | null>, sharing?: Sharing) {
+  const [notice, setNotice] = useState<string | null>(null)
+  const notices = useMemo<Notices>(
+    () => ({
+      notify(message, clearWhen) {
+        setNotice(message)
+        clearWhen?.(() => setNotice(shown => (shown === message ? null : shown)))
+      },
+      async copy(text, copied) {
+        const root = frame.current?.getRootNode() ?? document
+        setNotice((await copyText(text, root, sharing)) ? copied : labels.copyFailed)
+      }
+    }),
+    [frame, sharing]
+  )
+  return { notice, notices }
+}
+
+export function WordPopup({ text, ids, lookUp, settings, sharing }: WordPopupProps) {
   const cards = useCards(ids, lookUp)
   const [chosen, setChosen] = useState<string | null>(ids.length === 1 ? ids[0] : null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<EntryPage | null>(null)
   const frame = useRef<HTMLDivElement>(null)
+  const { notice, notices } = usePopupNotices(frame, sharing)
   const looked = chosen ? cards[chosen] : undefined
   const card = looked?.type === 'card' ? looked.card : null
   useEffect(() => {
-    frame.current?.focus({ preventScroll: true })
-  }, [])
-  const copyLink = async (shown: WordCard) => {
-    const root = frame.current?.getRootNode() ?? document
-    const copied = await copyText(wordAddress(shown), root, sharing)
-    setNotice(copied ? labels.share.linkCopied : labels.copyFailed)
-  }
+    if (!expanded) frame.current?.focus({ preventScroll: true })
+  }, [expanded])
+  const copyLink = (shown: WordCard) =>
+    void notices.copy(wordAddress(shown), labels.share.linkCopied)
   const actions: CardActions = {
-    copyLink: shown => void copyLink(shown),
+    copyLink,
     share(shown) {
       const share = sharing?.share ?? navigator.share?.bind(navigator)
       if (!share) return void copyLink(shown)
@@ -136,21 +152,45 @@ export function WordPopup({
         }
       )
     },
-    openFullEntry: shown => openFullEntry(entryPage(shown, ids, cards)),
-    onUnsupported(message, clearWhen) {
-      setNotice(message)
-      clearWhen(() => setNotice(shown => (shown === message ? null : shown)))
-    }
+    openFullEntry: shown => setExpanded(entryPage(shown, ids, cards)),
+    onUnsupported: notices.notify
   }
   const name = card ? card.headword : text
+  const label = fill(chosen ? labels.word : labels.choose, { name })
+  if (expanded) {
+    return (
+      <div
+        ref={frame}
+        role="dialog"
+        tabIndex={-1}
+        aria-label={label}
+        data-word-popup
+        data-expanded
+        className={expandedClass}
+      >
+        <FullEntry
+          first={expanded}
+          settings={settings}
+          notices={notices}
+          backLabel={labels.back}
+          back={() => setExpanded(null)}
+        />
+        {notice ? (
+          <output className="block border-t px-4 py-2 text-sm text-muted-foreground" data-notice>
+            {notice}
+          </output>
+        ) : null}
+      </div>
+    )
+  }
   return (
     <div
       ref={frame}
       role="dialog"
       tabIndex={-1}
-      aria-label={fill(chosen ? labels.word : labels.choose, { name })}
+      aria-label={label}
       data-word-popup
-      className="flex max-h-[min(32rem,calc(100vh-1rem))] w-[22rem] max-w-[calc(100vw-1rem)] flex-col gap-3 overflow-y-auto rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg outline-none"
+      className={cardClass}
     >
       {chosen && ids.length > 1 ? (
         <div>
@@ -165,8 +205,8 @@ export function WordPopup({
       ) : card ? (
         <WordCardView
           card={card}
-          romaji={romaji && looked?.type === 'card' ? looked.romaji : null}
-          frequency={frequency}
+          romaji={settings['readingAids.romaji'] && looked?.type === 'card' ? looked.romaji : null}
+          frequency={settings['frequencyDictionaries.chosen']}
           actions={actions}
         />
       ) : (

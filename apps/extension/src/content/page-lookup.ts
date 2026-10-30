@@ -8,7 +8,6 @@ import { selectedPageText } from '../page-lookup/selection'
 import { pageUnderlines } from '../page-lookup/underline'
 import { lookUpPopupCard, segmentText } from '../shared/dictionary'
 import { askSettings, onSettingsChanged } from '../shared/settings'
-import { openPanel } from '../side-panel/route'
 import { wordPopupHost } from '../word-popup/popup-host'
 
 const alive = () => chrome.runtime?.id !== undefined
@@ -23,7 +22,6 @@ const started = startUnlessRunning(document, alive, () => {
     onSettingsChanged: listener => onSettingsChanged(listener),
     segment: text => segmentText(text),
     popupCard: (id, frequency) => lookUpPopupCard(id, frequency),
-    openPanel: route => void openPanel(route),
     underlines: () => pageUnderlines(document),
     popup: settings => wordPopupHost({ settings, report }),
     report,

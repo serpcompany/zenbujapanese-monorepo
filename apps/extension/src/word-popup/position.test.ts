@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { outOfWindow, popupPlacement } from './position'
+import { edgePlacement, outOfWindow, popupPlacement } from './position'
 
 const window = { width: 1000, height: 800 }
 const popup = { width: 320, height: 300 }
@@ -46,5 +46,24 @@ describe('where the word popup sits', () => {
     expect(outOfWindow(word(-40, 100), window)).toBe(true)
     expect(outOfWindow(word(100, -19), window)).toBe(false)
     expect(outOfWindow(word(100, 799), window)).toBe(false)
+  })
+})
+
+describe('a card beside the side panel', () => {
+  it('sits at the page’s right edge, level with the row, for a panel on the right', () => {
+    expect(edgePlacement({ side: 'right', top: 300 }, popup, window)).toEqual({
+      side: 'beside',
+      left: 672,
+      top: 300
+    })
+  })
+
+  it('sits at the page’s left edge for a panel on the left', () => {
+    expect(edgePlacement({ side: 'left', top: 300 }, popup, window).left).toBe(8)
+  })
+
+  it('keeps inside the window when the row is lower than the card fits, or above the page', () => {
+    expect(edgePlacement({ side: 'right', top: 700 }, popup, window).top).toBe(492)
+    expect(edgePlacement({ side: 'right', top: -50 }, popup, window).top).toBe(8)
   })
 })
