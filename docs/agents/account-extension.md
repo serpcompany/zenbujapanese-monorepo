@@ -185,7 +185,7 @@ answers `apple-again`, Continue with Apple again.
   version 0, and the account's values are written to `chrome.storage.local`.
 - **Whose copy:** a sign-in to the same user resumes it; another user's drops it, tells pages and
   tabs `{ target: 'known', known: null }`, and reads that account from the start. Sign-out keeps
-  it, and a deleted account's is dropped.
+  it; deleting the account keeps it too, and forgets that account's queue and cursor.
 - **Asking it** (`copy-channel.ts`, `src/shared/account-copy.ts`): a page sends `askCopy()`
   (`{ target: 'service-worker', copy }`) to read it, change it, sync now, or say it opened. A
   content script may only ask `known` for at most 1,000 items, and hears `{ target: 'known' }`

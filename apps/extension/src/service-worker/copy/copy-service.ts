@@ -177,8 +177,9 @@ export function accountCopy(parts: CopyParts) {
   }
 
   async function forget(): Promise<void> {
-    await copy.edit(draft => draft.replace(null))
-    parts.tell({ target: 'known', known: null })
+    await copy.edit(draft => {
+      if (draft.meta) draft.meta = freshMeta({ id: draft.meta.userId, email: draft.meta.email })
+    })
   }
 
   const chance = (reason: Reason) => void sync.chance(reason)

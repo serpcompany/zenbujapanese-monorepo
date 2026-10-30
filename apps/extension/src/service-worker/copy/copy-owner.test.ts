@@ -52,17 +52,26 @@ describe("the copy's owner", () => {
     await expect(world.read()).resolves.toMatchObject({ knownWords: [otherWord] })
   })
 
-  it('drops the copy and its changes when the account is deleted, and tells pages to ask again', async () => {
-    const world = copyWorld()
+  it("keeps the learner's words when the account is deleted, and forgets only that account's sync", async () => {
+    const world = copyWorld(
+      answeringSync(body => json(200, syncAnswer(appliedTo(body), [theirWord])))
+    )
     await world.signIn()
     await world.settled()
     await world.signOut()
     await world.change({ change: 'mark', ...word })
+    const told = world.told.length
     await world.copy.forget()
-    expect(world.told.at(-1)).toEqual({ target: 'known', known: null })
-    expect(world.storage.meta()).toBeNull()
-    expect(world.storage.items.size).toBe(0)
-    await expect(world.read()).resolves.toMatchObject({ owner: null, knownWords: [], unsynced: 0 })
+    expect(world.told).toHaveLength(told)
+    expect(world.storage.meta()).toMatchObject({ cursor: null, queue: [], lastSyncedAt: null })
+    await expect(world.read()).resolves.toMatchObject({
+      knownWords: [otherWord, word],
+      unsynced: 0
+    })
+    await expect(world.ask({ copy: 'known', items: [word.item] })).resolves.toEqual({
+      type: 'known',
+      known: { [word.item]: true }
+    })
   })
 
   it('applies nothing from an answer that comes back after its account signed out, and sends it again', async () => {
