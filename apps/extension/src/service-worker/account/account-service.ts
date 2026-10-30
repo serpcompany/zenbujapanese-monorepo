@@ -7,12 +7,24 @@ import {
 } from '../../shared/account'
 import { fields } from '../../shared/messages'
 import type { Answered, Api } from './api'
-import type { SignInResult, SignIns } from './sign-in'
+import type { SignedIn, SignIns } from './sign-in'
 import { refusedFor } from './sign-in'
-import { type AccountStore, accountOf } from './store'
+import { type AccountStore, accountOf, type User } from './store'
 import type { AccessTokens } from './tokens'
 
-type Parts = { api: Api; store: AccountStore; tokens: AccessTokens; signIns: SignIns }
+export type CopyHooks = {
+  signedIn(user: User): Promise<void>
+  forget(): Promise<void>
+  chance(reason: 'access'): void
+}
+
+type Parts = {
+  api: Api
+  store: AccountStore
+  tokens: AccessTokens
+  signIns: SignIns
+  copy: CopyHooks
+}
 
 export type WebsiteReply =
   | { signedIn: true }
@@ -41,36 +53,48 @@ const subscriptionOf = (value: Record<string, unknown>): KeptSubscription => ({
   cloudAccess: value.cloudAccess as KeptSubscription['cloudAccess']
 })
 
-export function accountService({ api, store, tokens, signIns }: Parts) {
+export async function readSubscription(store: AccountStore, tokens: AccessTokens) {
+  const sessionToken = await store.sessionToken()
+  if (sessionToken === null || (await store.keptAccount()) === null) return false
+  const answer = await tokens.withAccess(sessionToken, {
+    method: 'GET',
+    path: '/v1/me/subscription'
+  })
+  if (!answer.ok) return false
+  await store.keepSubscription(sessionToken, subscriptionOf(answer.value))
+  return true
+}
+
+export function accountService({ api, store, tokens, signIns, copy }: Parts) {
   const read = async (): Promise<AccountAnswer> => ({
     type: 'account',
     account: accountOf(await store.keptAccount())
   })
 
-  async function readSubscription(): Promise<boolean> {
-    const sessionToken = await store.sessionToken()
-    if (sessionToken === null || (await store.keptAccount()) === null) return false
-    const answer = await tokens.withAccess(sessionToken, {
-      method: 'GET',
-      path: '/v1/me/subscription'
-    })
-    if (!answer.ok) return false
-    await store.keepSubscription(sessionToken, subscriptionOf(answer.value))
-    return true
-  }
+  const subscription = () => readSubscription(store, tokens)
 
   async function endSession(sessionToken: string): Promise<Answered> {
     return api({ method: 'POST', path: '/v1/auth/sign-out', bearer: sessionToken, body: {} })
   }
 
-  async function keep(signedIn: SignInResult): Promise<AccountAnswer> {
-    if (!signedIn.ok) return signedIn.refused
-    await store.keepSignIn(signedIn.sessionToken, signedIn.user)
-    await readSubscription()
-    return read()
+  async function startCopy(user: User): Promise<void> {
+    await copy.signedIn(user)
+    await subscription()
+    copy.chance('access')
   }
 
-  const signIn = async (way: SignInWay) => keep(await signIns.signIn(way))
+  async function keep({ sessionToken, user }: SignedIn, readFailed?: () => void): Promise<void> {
+    await store.keepSignIn(sessionToken, user)
+    const started = startCopy(user)
+    await (readFailed ? started.catch(readFailed) : started)
+  }
+
+  async function signIn(way: SignInWay): Promise<AccountAnswer> {
+    const signedIn = await signIns.signIn(way)
+    if (!signedIn.ok) return signedIn.refused
+    await keep(signedIn)
+    return read()
+  }
 
   async function signInFromWebsite(code: string, readFailed: () => void): Promise<WebsiteReply> {
     if ((await store.sessionToken()) !== null) {
@@ -83,8 +107,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
         refusal: signedIn.refused.refusal === 'wait' ? 'wait' : 'try-again'
       }
     }
-    await store.keepSignIn(signedIn.sessionToken, signedIn.user)
-    await readSubscription().catch(readFailed)
+    await keep(signedIn, readFailed)
     return { signedIn: true }
   }
 
@@ -110,6 +133,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     })
     if (answer.ok) {
       await store.forgetSession(sessionToken)
+      await copy.forget()
       return {
         type: 'deleted',
         appStoreSubscriptionContinues: answer.value.appStoreSubscriptionContinues === true
@@ -152,7 +176,10 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     const sessionToken = await store.sessionToken()
     if (kept === null || sessionToken === null) return read()
     if (kept.wentToSubscribe) {
-      if (await readSubscription()) await store.keepWentToSubscribe(sessionToken, false)
+      if (await subscription()) {
+        await store.keepWentToSubscribe(sessionToken, false)
+        copy.chance('access')
+      }
     } else {
       await tokens.checkSession(sessionToken)
     }
@@ -184,7 +211,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     }
   }
 
-  return { answer, readSubscription, signInFromWebsite }
+  return { answer, readSubscription: subscription, signInFromWebsite }
 }
 
 export type AccountService = ReturnType<typeof accountService>

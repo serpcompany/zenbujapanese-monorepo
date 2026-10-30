@@ -1,7 +1,18 @@
 import { type AccountAnswer, isAccountEnvelope } from '../../shared/account'
 import { apiOrigin, appleServicesId, googleClientId, signInWebsites } from '../../shared/hosts'
 import { failure } from '../../shared/messages'
-import { type AccountService, accountService, type WebsiteReply } from './account-service'
+import type { SettingsStore } from '../../shared/settings'
+import { answerCopy, tellKnown } from '../copy/copy-channel'
+import { accountCopy } from '../copy/copy-service'
+import type { CopyStorage } from '../copy/kept'
+import type { CopyFailure } from '../copy/sync'
+import { isSyncedSetting } from '../copy/synced-settings'
+import {
+  type AccountService,
+  accountService,
+  readSubscription,
+  type WebsiteReply
+} from './account-service'
 import { accountApi, type Send } from './api'
 import type { Identity } from './identity'
 import { signIns } from './sign-in'
@@ -12,6 +23,13 @@ import { answerWebsite } from './website-sign-in'
 type Events = { addListener(listener: () => void): void }
 
 type Sender = { origin?: string }
+
+type CopyParts = {
+  storage: CopyStorage
+  settings: SettingsStore
+  tabs: Parameters<typeof tellKnown>[0]
+  pages: Parameters<typeof tellKnown>[1]
+}
 
 type Messages<Answer> = {
   addListener(
@@ -25,11 +43,12 @@ type Parts = {
   }
   identity: Identity
   extensionId: string
-  onMessage: Messages<AccountAnswer>
+  onMessage: Messages<unknown>
   onMessageExternal: Messages<WebsiteReply>
   onStartup: Events
   send?: Send
-  reportFailure(code: 'account-answer' | 'account-storage'): void
+  copy: CopyParts
+  reportFailure(code: 'account-answer' | 'account-storage' | CopyFailure, status?: number): void
 }
 
 const accessOnly = (answer: AccountAnswer): AccountAnswer =>
@@ -69,20 +88,39 @@ export function startAccount(parts: Parts): void {
     .catch(() => parts.reportFailure('account-storage'))
   const api = accountApi(apiOrigin, parts.send)
   const store = accountStore(parts.storage)
+  const tokens = accessTokens(api, store)
+  const copy = accountCopy({
+    storage: parts.copy.storage,
+    store,
+    tokens,
+    readSubscription: () => readSubscription(store, tokens),
+    settings: parts.copy.settings,
+    tell: tellKnown(parts.copy.tabs, parts.copy.pages),
+    reportFailure: parts.reportFailure
+  })
   const service = accountService({
     api,
     store,
-    tokens: accessTokens(api, store),
+    tokens,
     signIns: signIns(api, parts.identity, {
       apiOrigin,
       googleClientId,
       appleServicesId,
       extensionId: parts.extensionId
-    })
+    }),
+    copy
   })
-  parts.onMessage.addListener(
-    answerAccount(service, parts.reportFailure, `chrome-extension://${parts.extensionId}`)
-  )
+  const pagesOrigin = `chrome-extension://${parts.extensionId}`
+  parts.onMessage.addListener(answerAccount(service, parts.reportFailure, pagesOrigin))
+  parts.onMessage.addListener(answerCopy(copy, parts.reportFailure, pagesOrigin))
+  parts.copy.settings.onChanged.addListener(changes => {
+    if (!Object.keys(changes).some(isSyncedSetting)) return
+    void copy.settingsChanged().catch(() => parts.reportFailure('account-copy'))
+  })
+  parts.onStartup.addListener(() => {
+    void readSubscription(store, tokens)
+      .catch(() => undefined)
+      .then(() => copy.chance('startup'))
+  })
   parts.onMessageExternal.addListener(answerWebsite(service, signInWebsites, parts.reportFailure))
-  parts.onStartup.addListener(() => void service.readSubscription().catch(() => undefined))
 }

@@ -31,6 +31,24 @@ Each check is in `src/account/account-view.interaction.test.tsx` unless it names
 | Each line shows in full, wrapping rather than cut short, down to the side panel's narrowest, 360 pixels. | `e2e/account.spec.ts`, at the side panel's narrowest |
 | Delete Account asks first, in a dialog that says what deleting removes and that an App Store subscription goes on billing, or that a website one ends. Keep My Account keeps it. Delete My Account asks for a fresh sign-in to the same account, then deletes it, says so, and shows "Not signed in". For an account that signs in with Apple, Continue with Apple signs in with Apple once more, so the delete goes with a fresh session and Apple's code; when Apple gives no code, it deletes nothing and says to continue with Apple again. A sign-in to another account deletes nothing, and a delete that doesn't finish keeps the subscription shown. A delete whose answer is lost says to try again and keeps the account shown. Trying again first asks the service whether the kept session is still good, before Send Code emails a code or a sign-in starts: when the delete had gone through and the session is gone, it shows "Not signed in", with no code sent and no sign-in, so no new account is made; while the session is good, it signs in afresh and deletes as before. | `warns that an App Store subscription goes on…`; `asks for Apple when the service needs Apple…`; `deletes nothing when the fresh sign-in is to another account`; `shows Not signed in, with no code sent and no sign-in, when a retried delete had gone through`; `signs in afresh and deletes when a retried delete finds the session still good`; `account-service.test.ts`, "signs in with Apple again…", "asks to continue with Apple again…", "keeps the account's subscription through the fresh sign-in…", "never takes a lost answer to a delete for done…", "ends a retried delete that went through at Not signed in…", and "signs in afresh and deletes on a retry…"; `e2e/account.spec.ts`, deleting an email account |
 
+## In step with the account
+
+The extension keeps its own copy of the account's known words and kanji, lists with Favorites,
+the words in each list, and notes, with the changes not yet synced, in IndexedDB on the
+extension's own origin; only the service worker opens it (`src/service-worker/copy/`). Nothing in
+the extension saves a word yet (#962): the copy holds what the account syncs. Each check is in
+`src/service-worker/copy/` unless it names another; `e2e/account-sync.spec.ts` syncs with the
+account service from the checkout.
+
+| What happens | Check |
+| --- | --- |
+| A change goes into the copy at once and syncs right after, and what changed on the learner's other devices comes down with it. Words, kanji, a list with a word, a note, and the synced settings changed in one browser reach a second browser signed in to the same account, and a change made there comes back. | `copy-changes.test.ts`; `sync.test.ts`; `e2e/account-sync.spec.ts`, words, kanji, a list with a word |
+| It syncs after a change, when Chrome starts, when the side panel opens or comes back into view with changes waiting or no sync for 15 minutes, when cloud access comes back, and on Sync Now. Nothing syncs on a timer. | `copy-owner.test.ts`, "when it syncs"; `src/side-panel/sync-when-opened.interaction.test.tsx` |
+| Furigana, Romaji, Word Meanings, Translations, no furigana over known words, and the chosen frequency dictionaries go to the account; on a first sign-in, only those changed from their defaults, and the account's win. The translation language and source come down from the account and are never sent. Underlines, the sites Zenbu is off on, and the rest stay in this browser. | `settings-sync.test.ts`; `e2e/account-sync.spec.ts`, the translation language and source |
+| The account wins a conflict. A note changed here and elsewhere keeps both notes. | `sync.test.ts` |
+| Signing out keeps the copy and its waiting changes, and signing in to the same account sends them, even one made while the service was out of reach. Signed out with changes waiting, the Account says how many aren't synced to the account that made them, and that signing in to another account removes them. Another account's sign-in replaces the copy with that account's, whether it signs in here or from the website. Deleting the account keeps the copy's words, lists and notes in this browser, and drops only that account's waiting changes and where its sync had got to. | `copy-owner.test.ts`; `copy-channel.test.ts`, "hands the copy to the account the website signs in…"; `src/account/unsynced-warning.interaction.test.tsx`; `e2e/account-sync.spec.ts`, another account, and a change queued while the service is out of reach |
+| When the service can't be reached, or answers with something that isn't JSON, the changes wait and it tries again after 2 seconds, twice as long each time after, at most 5 minutes. Too many requests waits as long as the service says. Without cloud access nothing is sent and the changes wait; a sync refused for it reads the subscription again and waits for Sync Now. A refused access token is asked for once more; a session the service has ended signs out, keeping the copy. A change the service refuses stays here, unsynced, and goes again on Sync Now or when it's changed again; the other changes still go. | `sync-failures.test.ts`; `e2e/account-sync.spec.ts`, a change queued while the service is out of reach, and no cloud access |
+
 ## Kept from the page
 
 Every call to the account service goes through the extension's service worker, and the tokens
@@ -39,11 +57,15 @@ stay there: a page or a content script reads none of them
 token). A content script can read only whether the learner is signed in and the subscription's
 cloud access, never the email or the rest of the subscription, and can't sign in or out, or
 delete the account (`channel.test.ts`, "answers a content script only a read…" and "answers a
-content script's read of a signed-in account…"). How the extension signs in is in
+content script's read of a signed-in account…"). It can ask whether words or kanji are known,
+and hears when that changes, but never opens the copy, and the page it runs on holds none
+(`src/service-worker/copy/copy-channel.test.ts`; `e2e/account-sync.spec.ts`, a content script).
+How the extension signs in is in
 [`account-extension.md`](../../../../docs/agents/account-extension.md).
 
 ## Not built yet
 
-Saving words is #962, and syncing them #979. Google and Apple are checked against stand-ins: a
-real sign-in with each is #987. The website's handover is checked locally, with the website and
-the account service from the checkout; on staging it waits on #960.
+Saving words, and the Account tab's view of the copy and Sync Now, are #962. Watched videos
+sync with #965. Google and Apple are checked against stand-ins: a real sign-in with each is #987.
+The website's handover is checked locally, with the website and the account service from the
+checkout; on staging it waits on #960.

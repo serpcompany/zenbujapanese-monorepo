@@ -29,7 +29,7 @@ export type AccountService = {
   providers: SignInProviders
   mailTo(email: string): Promise<number>
   codeFor(email: string, sentBefore: number): Promise<string>
-  call(path: string, sessionToken: string, method?: string): Promise<Answer>
+  call(path: string, bearer: string, method?: string, body?: unknown): Promise<Answer>
   websiteCode(email: string): Promise<string>
   close(): Promise<void>
 }
@@ -114,14 +114,19 @@ export async function startAccountService(website: string): Promise<AccountServi
     throw new Error('No new code reached the dev mailbox.')
   }
 
-  async function call(path: string, sessionToken: string, method = 'GET'): Promise<Answer> {
+  async function call(
+    path: string,
+    bearer: string,
+    method = 'GET',
+    body: unknown = {}
+  ): Promise<Answer> {
     const answer = await fetch(`${local}${path}`, {
       method,
       headers: {
-        authorization: `Bearer ${sessionToken}`,
+        authorization: `Bearer ${bearer}`,
         ...(method === 'GET' ? {} : { 'content-type': 'application/json' })
       },
-      body: method === 'GET' ? undefined : '{}'
+      body: method === 'GET' ? undefined : JSON.stringify(body)
     })
     return {
       status: answer.status,

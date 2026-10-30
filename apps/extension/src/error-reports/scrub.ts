@@ -1,6 +1,8 @@
 import type { ErrorEvent, Exception, StackFrame } from '@sentry/browser'
 
-const keptTags = ['part'] as const
+const keptTags = ['part', 'status'] as const
+
+const httpStatus = /^\d{3}$/
 
 const keptContexts = ['browser', 'os', 'runtime', 'device', 'trace'] as const
 
@@ -29,6 +31,12 @@ function pick<V>(
   keys: readonly string[]
 ): Record<string, V> {
   return Object.fromEntries(Object.entries(source ?? {}).filter(([key]) => keys.includes(key)))
+}
+
+function scrubTags(tags: ErrorEvent['tags']): ErrorEvent['tags'] {
+  const kept = pick(tags, keptTags)
+  if (kept.status !== undefined && !httpStatus.test(String(kept.status))) delete kept.status
+  return kept
 }
 
 function scrubLocation(location: string | undefined): string | undefined {
@@ -80,7 +88,7 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
       logentry?.message === undefined ? undefined : { message: scrubText(logentry.message) },
     exception: exception && { values: exception.values?.map(scrubException) },
     request: Object.keys(headers).length > 0 ? { headers } : undefined,
-    tags: pick(tags, keptTags),
+    tags: scrubTags(tags),
     contexts: pick(contexts, keptContexts),
     debug_meta: debug_meta && {
       images: debug_meta.images?.filter(image =>

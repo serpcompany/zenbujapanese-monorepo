@@ -1,6 +1,7 @@
 import { mountInShadowRoot } from '../src/content/shadow-mount'
 import { contentScriptErrorReports } from '../src/error-reports/error-reports'
 import { toServiceWorker } from '../src/error-reports/forwarding'
+import { KnownStates } from './known-states'
 import { followSettings, ReadingAidStates } from './settings-follower'
 import { TestSurface } from './test-surface'
 
@@ -11,6 +12,7 @@ followSettings(settings =>
     <>
       <TestSurface />
       <ReadingAidStates settings={settings} />
+      <KnownStates />
     </>,
     { report }
   )

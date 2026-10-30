@@ -32,6 +32,10 @@ export const accountLabels = {
     cannot: "That way of signing in doesn't work here yet. Use another way.",
     'try-again': "That didn't work. Try again."
   } satisfies Record<Refusal, string>,
+  unsynced: (count: number, owner: string) =>
+    count === 1
+      ? `1 change in this browser isn't synced to ${owner} yet. Sign in to that account to keep it: signing in to another account removes it.`
+      : `${count} changes in this browser aren't synced to ${owner} yet. Sign in to that account to keep them: signing in to another account removes them.`,
   waitFor: (seconds: number) => `Too many tries. Try again in ${seconds} seconds.`,
   subscription: {
     heading: 'Subscription',

@@ -5,6 +5,7 @@ import {
   startSendingErrorReports
 } from '../error-reports/error-reports'
 import { startAccount } from './account/channel'
+import { indexedStorage } from './copy/indexed-storage'
 import { keepLanguageDataCurrent } from './language-data-updates'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { keepPageScriptRegistered } from './page-scripts'
@@ -22,6 +23,12 @@ startAccount({
   onMessage: chrome.runtime.onMessage,
   onMessageExternal: chrome.runtime.onMessageExternal,
   onStartup: chrome.runtime.onStartup,
+  copy: {
+    storage: indexedStorage(),
+    settings: chrome.storage.local,
+    tabs: chrome.tabs,
+    pages: chrome.runtime
+  },
   reportFailure
 })
 

@@ -1,4 +1,4 @@
-import { accountService } from '../service-worker/account/account-service'
+import { accountService, type CopyHooks } from '../service-worker/account/account-service'
 import { accountApi, type Send } from '../service-worker/account/api'
 import { startAccount } from '../service-worker/account/channel'
 import type { Identity } from '../service-worker/account/identity'
@@ -6,6 +6,7 @@ import { signIns } from '../service-worker/account/sign-in'
 import { accountStore, type StorageArea } from '../service-worker/account/store'
 import { accessTokens } from '../service-worker/account/tokens'
 import type { KeptSubscription } from '../shared/account'
+import { copyStorage } from './copy-stand-in'
 import type { FakeExtension } from './extension'
 import { extensionId } from './fake-chrome'
 
@@ -151,6 +152,12 @@ export function accountWorld(
   const api = accountApi(origin, service.send)
   const store = accountStore({ local: local.area, session: session.area })
   const tokens = accessTokens(api, store, now)
+  const copyAsked: string[] = []
+  const copy: CopyHooks = {
+    signedIn: async signedIn => void copyAsked.push(`signed in ${signedIn.id}`),
+    forget: async () => void copyAsked.push('forget'),
+    chance: reason => void copyAsked.push(reason)
+  }
   const account = accountService({
     api,
     store,
@@ -160,9 +167,10 @@ export function accountWorld(
       googleClientId: 'zenbu-extension-test.apps.googleusercontent.com',
       appleServicesId: 'com.zenbujapanese.website',
       extensionId
-    })
+    }),
+    copy
   })
-  return { ...service, local, session, launched, identity, api, store, tokens, account }
+  return { ...service, local, session, launched, identity, api, store, tokens, account, copyAsked }
 }
 
 export async function signedInWorld(routes: Record<string, Route>, authorize?: Authorize) {
@@ -179,6 +187,7 @@ export function startAccountOn(
   const service = standInService(routes)
   const { identity, launched } = standInIdentity(authorize)
   const failures: string[] = []
+  const copy = copyStorage()
   startAccount({
     storage: fake.chrome.storage,
     identity,
@@ -187,7 +196,13 @@ export function startAccountOn(
     onMessageExternal: fake.chrome.runtime.onMessageExternal,
     onStartup: { addListener: () => undefined },
     send: service.send,
+    copy: {
+      storage: copy.storage,
+      settings: fake.chrome.storage.local,
+      tabs: fake.chrome.tabs,
+      pages: fake.chrome.runtime
+    },
     reportFailure: code => failures.push(code)
   })
-  return { ...service, launched, failures }
+  return { ...service, launched, failures, copy }
 }

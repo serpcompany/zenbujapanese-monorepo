@@ -126,6 +126,7 @@ describe("the account's sign-in from the website", () => {
     expect(world.local.items.get(sessionTokenKey)).toBe('session-website')
     expect(world.local.items.get(accountKey)).toMatchObject({ user })
     expect(world.session.items.get(accessTokenKey)).toMatchObject({ token: 'access-1' })
+    expect(world.copyAsked).toEqual(['signed in user-1', 'access'])
     await expect(world.account.answer({ account: 'read' })).resolves.toEqual({
       type: 'account',
       account: { signedIn: true, email: user.email, subscription }

@@ -16,6 +16,7 @@ import { DeleteAccount, type Deleted } from './delete-account'
 import { accountLabels } from './labels'
 import { SignInWays } from './sign-in-ways'
 import { subscriptionView } from './subscription'
+import { UnsyncedWarning } from './unsynced-warning'
 import { useAccount } from './use-account'
 
 type SignedIn = Extract<Account, { signedIn: true }>
@@ -149,6 +150,7 @@ export function AccountView({ className }: { className?: string }) {
     <section data-account="signed-out" className={className}>
       <EmptyState icon={CircleUserRound} text={accountLabels.signedOut} className="p-0">
         {deleted && <DeletedNotice deleted={deleted} />}
+        <UnsyncedWarning />
         <SignInWays purpose="sign-in" />
       </EmptyState>
     </section>

@@ -52,10 +52,30 @@ function sessionArea() {
   }
 }
 
+export function keptItems(items: Record<string, unknown>) {
+  return {
+    get: (keys: string[]) =>
+      Promise.resolve(
+        Object.fromEntries(
+          keys.filter(key => key in items).map(key => [key, structuredClone(items[key])])
+        )
+      ),
+    write: (next: Record<string, unknown>) => {
+      const changes: Changes = {}
+      for (const [key, value] of Object.entries(next)) {
+        changes[key] = { oldValue: items[key], newValue: value }
+        items[key] = structuredClone(value)
+      }
+      return changes
+    }
+  }
+}
+
 export const allSites = ['http://*/*', 'https://*/*']
 
 export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}) {
   const items: Record<string, unknown> = {}
+  const kept = keptItems(items)
   const changed = chromeEvent<ChangeListener>()
   const messages = chromeEvent<MessageListener>()
   const external = chromeEvent<MessageListener>()
@@ -81,18 +101,9 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
   const chrome = {
     storage: {
       local: {
-        get: (keys: string[]) =>
-          Promise.resolve(
-            Object.fromEntries(
-              keys.filter(key => key in items).map(key => [key, structuredClone(items[key])])
-            )
-          ),
+        get: kept.get,
         set: (next: Record<string, unknown>) => {
-          const changes: Changes = {}
-          for (const [key, value] of Object.entries(next)) {
-            changes[key] = { oldValue: items[key], newValue: value }
-            items[key] = structuredClone(value)
-          }
+          const changes = kept.write(next)
           queueMicrotask(() => {
             for (const listener of [...changed.listeners]) listener(changes)
           })

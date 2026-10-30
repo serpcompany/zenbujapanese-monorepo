@@ -49,36 +49,40 @@ player caption draws; the follower and the watch-page code report none yet (#107
   switch is on the Settings page; the key's default and how a stored value reads are
   `settings.ts`'s. Sentry keeps an event for the project's retention, which is set in Sentry (see the
   owner steps).
-- **Handled failures.** When the service worker answers a dictionary or translation request with
-  a failure, it reports it once with `reportFailure(code)`, a message holding only the code and
+- **Handled failures.** When the service worker answers a dictionary or translation request with a
+  failure, it reports it once with `reportFailure(code)`, a message holding only the code and
   grouped by it: `offscreen-document` (the document couldn't be opened), `offscreen-message` (it
   couldn't be reached), `dictionary-answer` (it answered with a failure, such as a worker that
   failed or didn't answer), or `translation-answer` (the Translator failed or didn't answer in
-  time). It reports `side-panel-behavior` when Chrome refuses, as the service worker starts, to
-  open the side panel from the toolbar icon (`src/service-worker/side-panel.test.ts`), and
-  `page-script` when registering or injecting the page script fails
-  (`src/service-worker/page-scripts.test.ts`). The account reports `account-storage` when Chrome
-  refuses, as the service worker starts, to close `chrome.storage.local` to content scripts, and
-  `account-answer` when an account ask fails rather than being refused, such as storage that
-  can't be read or written (`src/service-worker/account/channel.ts`). Neither holds a session
-  token, an access token, an emailed code, or an email
-  (`src/service-worker/account/failure-reports.test.ts`). A translator that isn't available is an answer, not
-  a failure. Never the failure's text,
-  the request, the selected text, or the translation. A code that fails again and again is
-  reported once per service-worker life: `dedupeIntegration` drops an event that repeats the one
-  before it.
+  time). It reports `side-panel-behavior` when Chrome refuses, as the service worker starts, to open
+  the side panel from the toolbar icon (`src/service-worker/side-panel.test.ts`), and `page-script`
+  when registering or injecting the page script fails (`src/service-worker/page-scripts.test.ts`).
+  The account reports `account-storage` when Chrome refuses, as the service worker starts, to close
+  `chrome.storage.local` to content scripts, and `account-answer` when an account ask fails rather
+  than being refused, such as storage that can't be read or written
+  (`src/service-worker/account/channel.ts`). The account's copy reports `account-copy` when
+  IndexedDB can't be read or written, `account-sync` when the service answers a sync with something
+  it can't read or a refusal it doesn't expect, tagged with the HTTP status when a `400` or `413`
+  refuses one change alone or a `403` or `404` refuses the sync, and `account-sync-reread` when a
+  read from the start is refused too (`src/service-worker/copy/sync-failures.test.ts`,
+  `copy-channel.test.ts`). None holds a session token, an access token, an emailed code, an email, a
+  word, or a note (`src/service-worker/account/failure-reports.test.ts`). A translator that isn't
+  available is an answer, not a failure. Never the failure's text, the request, the selected text,
+  or the translation. A code that fails again and again is reported once per service-worker life:
+  `dedupeIntegration` drops an event that repeats the one before it.
 - **What an event holds.** Only the integrations that find a fault run: event filters, function
   names, linked errors, dedupe, the `User-Agent` header, and, outside content scripts, the global
   handlers. Breadcrumbs, sessions, client reports, cookies, query strings, frame variables, and
   context lines are off, and Sentry is asked not to infer an IP address (`userInfo: false`).
-  `scrubEvent` (`src/error-reports/scrub.ts`), the `beforeSend`, then drops breadcrumbs, extras,
-  the user, the server name, the transaction, and the request's URL, keeps only the `part` tag and
-  the `browser`, `os`, `runtime`, `device`, and `trace` contexts, and turns any frame or debug
-  image that isn't the extension's own (`chrome-extension://`) into `<page>`. In every message
-  and exception value it removes quoted text (`"…"`, `“…”`, `「…」`, `『…』`), URLs, and kana
-  and kanji, including kanji outside the BMP such as 𩸽. It can't tell unquoted romaji or English
-  from the code's own words, so it leaves them; that's why the code builds a message from codes
-  and never puts a learner's text in one.
+  `scrubEvent` (`src/error-reports/scrub.ts`), the `beforeSend`, then drops breadcrumbs, extras, the
+  user, the server name, the transaction, and the request's URL, keeps only the `part` tag, a
+  `status` tag that is an HTTP status (three digits, `scrub.test.ts`), and the `browser`, `os`,
+  `runtime`, `device`, and `trace` contexts, and turns any frame or debug image that isn't the
+  extension's own (`chrome-extension://`) into `<page>`. In every message and exception value it
+  removes quoted text (`"…"`, `“…”`, `「…」`, `『…』`), URLs, and kana and kanji, including kanji
+  outside the BMP such as 𩸽. It can't tell unquoted romaji or English from the code's own words, so
+  it leaves them; that's why the code builds a message from codes and never puts a learner's text in
+  one.
 - **Source maps.** Both builds write hidden source maps (no `sourceMappingURL`) beside their
   scripts. `pnpm upload-source-maps [folder]` (`build/upload-source-maps.ts`, `dist` by default)
   installs a pinned `@sentry/cli` and adds debug IDs to the scripts and maps
