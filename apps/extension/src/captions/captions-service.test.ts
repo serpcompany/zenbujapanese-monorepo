@@ -33,7 +33,8 @@ function harness({ captionsOn = true, storage = memoryStorage() } = {}) {
   const netflix = netflixStandIn()
   const urls = new Map<number, SiteVideo>()
   const asked: [number, string][] = []
-  const tracks = { answer: netflixTracks as CaptionTracks }
+  const wanted: (() => boolean)[] = []
+  const tracks = { answer: netflixTracks as CaptionTracks | Promise<CaptionTracks> }
   const clock = { now: startedAt, random: 0.5, captionsOn, unprepared: null as Error | null }
   const service = captionsService({
     storage,
@@ -42,8 +43,9 @@ function harness({ captionsOn = true, storage = memoryStorage() } = {}) {
       if (clock.unprepared) throw clock.unprepared
     },
     tabVideo: async tabId => urls.get(tabId) ?? null,
-    askTracks: async (tabId, videoId) => {
+    askTracks: async (tabId, videoId, stillWanted) => {
       asked.push([tabId, videoId])
+      wanted.push(stillWanted)
       return tracks.answer
     },
     captionsOn: async () => clock.captionsOn,
@@ -57,6 +59,7 @@ function harness({ captionsOn = true, storage = memoryStorage() } = {}) {
     youTube,
     netflix,
     asked,
+    wanted,
     tracks,
     storage,
     clock,
@@ -395,6 +398,18 @@ describe('captions service', () => {
         reason: captionLabels.netflix.unavailable
       })
       expect(page.netflix.sent).toEqual([])
+    })
+
+    it('stops wanting the tracks once the tab closes or opens another video', async () => {
+      const page = harness()
+      page.tracks.answer = new Promise(() => undefined)
+      await page.open(1, netflixVideo, 'netflix')
+      await page.open(2, netflixVideo, 'netflix')
+      const [closed, moved] = page.wanted
+      expect([closed?.(), moved?.()]).toEqual([true, true])
+      await page.service.tabClosed(1)
+      await page.open(2, '81234568', 'netflix')
+      expect([closed?.(), moved?.()]).toEqual([false, false])
     })
   })
 })

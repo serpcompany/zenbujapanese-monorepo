@@ -57,7 +57,7 @@ export function watchedTab({
       fetch: (url, init) => (url.includes(trackHost) ? netflix : youTube).fetch(url, init),
       prepareRequests: async () => undefined,
       tabVideo: async () => watchedVideo(location.href),
-      askTracks: (asked, videoId) => askTabTracks(asked, videoId, tabs),
+      askTracks: (asked, videoId, wanted) => askTabTracks(asked, videoId, wanted, tabs),
       captionsOn: async () => settings.captionsOn,
       announce: change => {
         announced.push(change.captions.state)

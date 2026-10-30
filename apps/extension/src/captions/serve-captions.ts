@@ -74,7 +74,7 @@ export function serveCaptions(): void {
         tab => watchedVideo(tab.url),
         () => null
       ),
-    askTracks: (tabId, videoId) => askTabTracks(tabId, videoId),
+    askTracks: (tabId, videoId, wanted) => askTabTracks(tabId, videoId, wanted),
     captionsOn: () => readSettings().then(settings => settings['videos.zenbuCaptions']),
     announce: change => {
       chrome.runtime.sendMessage(change).catch(ignore)

@@ -99,6 +99,7 @@ const afterTabStep = () => new Promise<void>(resolve => setTimeout(resolve, tabS
 export function askTabTracks(
   tabId: number,
   videoId: string,
+  wanted: () => boolean,
   tabs: TabSender = chrome.tabs,
   wait: () => Promise<void> = afterTabStep
 ): Promise<CaptionTracks> {
@@ -108,7 +109,8 @@ export function askTabTracks(
       .catch(() => undefined)
       .then(answer => {
         if (answer !== undefined) return isCaptionTracks(answer) ? answer : noPlayer
-        return left > 1 ? wait().then(() => ask(left - 1)) : noPlayer
+        if (left <= 1) return noPlayer
+        return wait().then(() => (wanted() ? ask(left - 1) : noPlayer))
       })
   return ask(tabTries)
 }

@@ -21,7 +21,7 @@ export type CaptionsDependencies = {
   fetch: Fetch
   prepareRequests(): Promise<void>
   tabVideo(tabId: number): Promise<SiteVideo | null>
-  askTracks(tabId: number, videoId: string): Promise<CaptionTracks>
+  askTracks(tabId: number, videoId: string, wanted: () => boolean): Promise<CaptionTracks>
   captionsOn(): Promise<boolean>
   announce(change: CaptionsChange): void
   now(): number
@@ -98,9 +98,10 @@ export function captionsService(dependencies: CaptionsDependencies) {
   }
 
   const fromNetflix = (tabId: number, videoId: string) =>
-    fetchNetflixCaptions(dependencies.askTracks(tabId, videoId), dependencies.fetch).then(
-      (fetched): CaptionsState => ({ ...fetched, videoId })
-    )
+    fetchNetflixCaptions(
+      dependencies.askTracks(tabId, videoId, () => fetching.get(tabId) === videoId),
+      dependencies.fetch
+    ).then((fetched): CaptionsState => ({ ...fetched, videoId }))
 
   function requestCaptions(tabId: number, video: SiteVideo, mode: Mode): Promise<CaptionsState> {
     const { videoId } = video

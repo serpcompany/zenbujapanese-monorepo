@@ -81,6 +81,8 @@ describe('askTabTracks', () => {
 
   const noWait = async () => undefined
 
+  const always = () => true
+
   function tab(...answers: (() => Promise<unknown>)[]) {
     const sent: unknown[] = []
     return {
@@ -94,7 +96,7 @@ describe('askTabTracks', () => {
 
   it("asks the tab's top frame for a video's tracks, and takes a wrong answer as no player", async () => {
     const asked = tab(async () => tracks)
-    expect(await askTabTracks(4, '81234567', asked, noWait)).toEqual(tracks)
+    expect(await askTabTracks(4, '81234567', always, asked, noWait)).toEqual(tracks)
     expect(asked.sent).toEqual([
       [4, { target: 'captions-tracks', videoId: '81234567' }, { frameId: 0 }]
     ])
@@ -103,6 +105,7 @@ describe('askTabTracks', () => {
         await askTabTracks(
           4,
           '81234567',
+          always,
           tab(async () => answer),
           noWait
         )
@@ -119,11 +122,28 @@ describe('askTabTracks', () => {
       async () => undefined,
       async () => tracks
     )
-    expect(await askTabTracks(4, '81234567', late, noWait)).toEqual(tracks)
+    expect(await askTabTracks(4, '81234567', always, late, noWait)).toEqual(tracks)
     expect(late.sent).toHaveLength(3)
     const never = tab()
-    expect(await askTabTracks(4, '81234567', never, noWait)).toEqual({ state: 'no-player' })
+    expect(await askTabTracks(4, '81234567', always, never, noWait)).toEqual({ state: 'no-player' })
     expect(never.sent).toHaveLength(20)
+  })
+
+  it('stops asking once the tab is no longer wanted, such as when it closed', async () => {
+    const closed = () => Promise.reject(new Error('No tab with id: 4.'))
+    const gone = tab(closed, closed, closed)
+    let open = true
+    const asking = askTabTracks(
+      4,
+      '81234567',
+      () => open,
+      gone,
+      async () => {
+        open = gone.sent.length < 2
+      }
+    )
+    expect(await asking).toEqual({ state: 'no-player' })
+    expect(gone.sent).toHaveLength(2)
   })
 })
 
