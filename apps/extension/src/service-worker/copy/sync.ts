@@ -71,14 +71,16 @@ export function accountSync(parts: SyncParts) {
   let rateLimitedUntil = 0
   let backedOffUntil = 0
   let failures = 0
-  let retrying = false
+  let retryAt = 0
   let rereadInRun = false
 
   function retryIn(wait: number) {
-    if (retrying) return
-    retrying = true
+    const at = parts.now() + wait
+    if (at <= retryAt) return
+    retryAt = at
     parts.later(() => {
-      retrying = false
+      if (retryAt !== at) return
+      retryAt = 0
       void chance('retry')
     }, wait)
   }

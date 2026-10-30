@@ -100,6 +100,30 @@ describe("the copy's sync when the account service fails", () => {
     await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
   })
 
+  it('keeps the longer wait when the service asks for one while a retry is waiting', async () => {
+    let calls = 0
+    const world = copyWorld(
+      answeringSync(body => {
+        calls += 1
+        if (calls === 1) return refusal(503, 'unavailable')
+        if (calls === 2) return refusal(429, 'rate_limited', { 'retry-after': '120' })
+        return json(200, syncAnswer(appliedTo(body)))
+      })
+    )
+    await markedIn(world)
+    await world.settled()
+    expect(world.waits.map(each => each.wait)).toEqual([2_000, 120_000])
+    world.later(2_000)
+    world.waits[0]?.run()
+    await world.stopped()
+    expect(world.syncs()).toHaveLength(2)
+    world.later(118_000)
+    world.waits[1]?.run()
+    await vi.waitFor(() => expect(world.syncs()).toHaveLength(3))
+    await world.stopped()
+    await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
+  })
+
   it('keeps the changes and stops, reading the subscription again, when the account has no access', async () => {
     const world = copyWorld(failingFirst(1, () => refusal(402, 'subscription_required')))
     await markedIn(world)
