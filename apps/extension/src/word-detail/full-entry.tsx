@@ -31,16 +31,28 @@ export type FullEntryProps = {
   settings: Settings
   notices: Notices
   backLabel: string
+  entryLabel: string
   back(): void
   lookups?: WordLookups
 }
 
-export function FullEntry({ first, settings, notices, backLabel, back, lookups }: FullEntryProps) {
+const scrollerClass =
+  'min-h-0 flex-1 overflow-y-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset'
+
+export function FullEntry({
+  first,
+  settings,
+  notices,
+  backLabel,
+  entryLabel,
+  back,
+  lookups
+}: FullEntryProps) {
   const [stack, setStack] = useState<Stacked[]>([{ key: 0, page: first }])
   const top = stack[stack.length - 1] as Stacked
-  const backButtons = useRef(new Map<number, HTMLButtonElement>())
+  const scrollers = useRef(new Map<number, HTMLElement>())
   useEffect(() => {
-    backButtons.current.get(top.key)?.focus({ preventScroll: true })
+    scrollers.current.get(top.key)?.focus({ preventScroll: true })
   }, [top.key])
   const open = useCallback(
     (page: EntryPage) =>
@@ -51,11 +63,11 @@ export function FullEntry({ first, settings, notices, backLabel, back, lookups }
     if (stack.length > 1) setStack(current => current.slice(0, -1))
     else back()
   }
-  const backButton = (key: number) => (button: HTMLButtonElement | null) => {
-    if (!button) return
-    backButtons.current.set(key, button)
+  const scroller = (key: number) => (element: HTMLElement | null) => {
+    if (!element) return
+    scrollers.current.set(key, element)
     return () => {
-      backButtons.current.delete(key)
+      scrollers.current.delete(key)
     }
   }
   return (
@@ -68,16 +80,21 @@ export function FullEntry({ first, settings, notices, backLabel, back, lookups }
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="border-b px-2 py-1">
-            <Button ref={backButton(key)} variant="ghost" size="sm" onClick={goBack}>
+            <Button variant="ghost" size="sm" onClick={goBack}>
               <ChevronLeftIcon data-icon="inline-start" />
               {backLabel}
             </Button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <section
+            ref={scroller(key)}
+            aria-label={entryLabel}
+            tabIndex={0}
+            className={scrollerClass}
+          >
             <ReadingAids settings={settings} className="flex flex-col gap-4 p-4">
               <PageView page={page} open={open} settings={settings} lookups={lookups} />
             </ReadingAids>
-          </div>
+          </section>
         </section>
       ))}
     </NoticesProvider>

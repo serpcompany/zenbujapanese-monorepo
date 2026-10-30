@@ -126,6 +126,7 @@ async function show(first: EntryPage) {
         settings={settingsNow()}
         notices={notices.notices}
         backLabel={backLabel}
+        entryLabel={entryLabel}
         back={back}
         lookups={lookups}
       />
@@ -156,6 +157,7 @@ const named = (selector: string, text: string, within: ParentNode = container) =
 const shown = (element: Element | null) =>
   element !== null && getComputedStyle(element).display !== 'none'
 const backLabel = 'Back to the card'
+const entryLabel = 'Full entry for 要る'
 const top = () => container.querySelector<HTMLElement>('section[data-entry-page]:not([hidden])')
 const opened = () =>
   all('section[data-entry-page]')
@@ -423,18 +425,19 @@ describe('The full entry’s pages', () => {
   const headword = () => visible('h1[aria-label]').map(title => title.getAttribute('aria-label'))
   const backButton = () => named('button', backLabel, top() ?? container)
   const goBack = () => click(backButton())
+  const scroller = () => top()?.querySelector(`section[aria-label="${entryLabel}"]`)
 
   test('Back returns through the pages each link opened, each as it was left, then leaves', async () => {
     await show({ page: 'word', entSeq: iru })
     expect(headword()).toEqual(['要る'])
     await click(visible('button[data-opens="kanji:要"]')[0])
     expect(visible('[data-kanji-details="要"]')).toHaveLength(1)
-    expect(document.activeElement).toBe(backButton())
+    expect(document.activeElement).toBe(scroller())
     await click(visible('button[data-opens="word:1546680"]')[0])
     expect(headword()).toEqual(['要求'])
     await goBack()
     expect(visible('[data-kanji-details="要"]')).toHaveLength(1)
-    expect(document.activeElement).toBe(backButton())
+    expect(document.activeElement).toBe(scroller())
     expect(lookups.lookUpKanji).toHaveBeenCalledOnce()
     await goBack()
     expect(headword()).toEqual(['要る'])

@@ -112,7 +112,12 @@ describe('the word popup', () => {
     expect(find(entry, '.overflow-y-auto').contains(find(entry, 'h1'))).toBe(true)
     expect(find(entry, 'h1').getAttribute('aria-label')).toBe('要求')
     expect(find(entry, 'h1 [class*="text-"]').className).toContain('text-4xl')
-    expect(document.activeElement?.textContent).toBe(labels.back)
+    const scroller = find(entry, 'section[aria-label]')
+    expect(document.activeElement).toBe(scroller)
+    expect(scroller.getAttribute('aria-label')).toBe(fill(labels.entry, { name: '要求' }))
+    expect(scroller.tabIndex).toBe(0)
+    expect(scroller.contains(find(entry, 'h1'))).toBe(true)
+    expect(find(entry, 'button').textContent).toBe(labels.back)
 
     await click(byText(entry, 'button', labels.back))
     expect(currentPopup().hasAttribute('data-expanded')).toBe(false)

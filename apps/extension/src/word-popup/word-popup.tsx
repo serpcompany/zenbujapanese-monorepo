@@ -174,6 +174,7 @@ export function WordPopup({ text, ids, lookUp, settings, sharing }: WordPopupPro
           settings={settings}
           notices={notices}
           backLabel={labels.back}
+          entryLabel={fill(labels.entry, { name })}
           back={() => setExpanded(null)}
         />
         {notice ? (

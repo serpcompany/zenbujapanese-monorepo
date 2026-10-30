@@ -76,7 +76,7 @@ the card, on the page's shadow root and in the panel (`src/word-popup/open-layer
   it. The entry's header has Word Detail's own actions, Open on zenbujapanese.com, Share and More
   actions, and its headword is the side panel's size. A word, kanji or form opened inside it opens
   over it, Back returns through each, and the last Back folds the entry back into the card. Focus
-  goes to Back. Its notices, such as "Link copied", show in a line at the card's foot. From a
+  goes to the entry, so the arrow and Page keys scroll it, and Shift-Tab reaches Back. Its notices, such as "Link copied", show in a line at the card's foot. From a
   choice, the entry has every word written the same way, as tabs, starting on the one chosen. It
   opens nothing in the side panel.
 - **Share** opens the system's share sheet with the word, its meanings, and its address on
