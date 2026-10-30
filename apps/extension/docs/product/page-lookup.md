@@ -42,11 +42,13 @@ so the page's boxes, colours, and links stay as they are. On a page whose text i
 is lighter, whatever colour space the page writes it in, such as `oklch()`. Zenbu underlines
 what a learner reads, and leaves alone text boxes, buttons, labels, summaries, select menus,
 editable text, navigation, the page's own ARIA buttons, tabs, menu items, checkboxes, switches,
-radios and options, fixed and sticky bars, and its own popup. Text on screen goes
-first; text the page adds later, such as the next page of a feed, is underlined as it comes,
-ahead of whatever the first scan of a long page has still to read. The first scan has no cap: on
-a page the size of a long Wikipedia article, tens of thousands of words, it can take minutes, and
-each word drawn costs more as the count grows.
+radios and options, fixed and sticky bars, and its own popup. YouTube's and Netflix's own
+captions on the player get no underlines or reading aids, with Zenbu Captions on or off
+(`leaves Netflix's own captions unmarked…` in `src/page-lookup/page-lookup.interaction.test.tsx`).
+Text on screen goes first; text the page adds later, such as the next page of a feed, is
+underlined as it comes, ahead of whatever the first scan of a long page has still to read. The
+first scan has no cap: on a page the size of a long Wikipedia article, tens of thousands of words,
+it can take minutes, and each word drawn costs more as the count grows.
 
 Until the dictionary is ready, nothing is underlined and a click does what the page does. Once
 it is, the open pages underline with no reload.

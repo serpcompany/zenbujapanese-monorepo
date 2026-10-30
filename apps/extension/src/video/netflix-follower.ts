@@ -1,19 +1,12 @@
-import {
-  elementFollower,
-  type Frames,
-  type PlayerSite,
-  siteCaptionsAttribute
-} from './element-follower'
+import { elementFollower, type Frames, type PlayerSite } from './element-follower'
 import type { VideoFollower } from './follower'
 import type { NetflixBridge } from './netflix-bridge'
 
-const player = '.watch-video--player-view'
-
-const siteCaptions = '.player-timedtext'
+export const netflixCaptions = '.player-timedtext'
 
 const netflixPlayer = (videoId: string, bridge: NetflixBridge): PlayerSite => ({
-  player,
-  siteCaptionsRule: `${player}[${siteCaptionsAttribute}="hidden"] ${siteCaptions} { display: none !important; }`,
+  player: '.watch-video--player-view',
+  siteCaptions: netflixCaptions,
   holdsRateThroughSeeks: true,
   controls: () => ({
     seek: time => bridge.control(videoId, { type: 'seek', time }),

@@ -2,8 +2,7 @@ import {
   elementFollower,
   type Frames,
   type PlayerControls,
-  type PlayerSite,
-  siteCaptionsAttribute
+  type PlayerSite
 } from './element-follower'
 import type { VideoFollower } from './follower'
 
@@ -22,9 +21,11 @@ const elementControls = (video: HTMLVideoElement): PlayerControls => ({
   }
 })
 
+export const youTubeCaptions = '.ytp-caption-window-container'
+
 const youTubePlayer: PlayerSite = {
   player: '#movie_player',
-  siteCaptionsRule: `#movie_player[${siteCaptionsAttribute}="hidden"] .ytp-caption-window-container { display: none !important; }`,
+  siteCaptions: youTubeCaptions,
   adClass: 'ad-showing',
   controls: elementControls
 }

@@ -6,7 +6,7 @@ export type PlayerControls = Pick<VideoFollower, 'seek' | 'play' | 'pause' | 'se
 
 export type PlayerSite = {
   player: string
-  siteCaptionsRule: string
+  siteCaptions: string
   adClass?: string
   holdsRateThroughSeeks?: boolean
   controls(video: HTMLVideoElement): PlayerControls
@@ -135,7 +135,7 @@ export function elementFollower(
     player.setAttribute(siteCaptionsAttribute, 'hidden')
     if (style) return
     style = page.createElement('style')
-    style.textContent = site.siteCaptionsRule
+    style.textContent = `${site.player}[${siteCaptionsAttribute}="hidden"] ${site.siteCaptions} { display: none !important; }`
     ;(page.head ?? page.documentElement).append(style)
   }
 

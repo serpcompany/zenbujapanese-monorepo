@@ -1,4 +1,6 @@
 import { hostElementName } from '../content/shadow-mount'
+import { netflixCaptions } from '../video/netflix-follower'
+import { youTubeCaptions } from '../video/youtube-follower'
 import { hasJapanese } from './chunks'
 
 export const aidAttribute = 'data-zenbu-aid'
@@ -41,6 +43,8 @@ const leftAloneRoles = new Set([
   'option'
 ])
 
+const siteCaptions = [youTubeCaptions, netflixCaptions].join(', ')
+
 const pinned = new Set(['fixed', 'sticky'])
 
 type View = Pick<Window, 'getComputedStyle'>
@@ -58,6 +62,7 @@ export function leftAloneIn(view: View): LeftAlone {
     leftAlone.has(element.localName) ||
     element.hasAttribute(aidAttribute) ||
     leftAloneRoles.has(element.getAttribute('role') ?? '') ||
+    element.matches(siteCaptions) ||
     editable(element) ||
     pinned.has(view.getComputedStyle(element).position)
   const check = (element: Element): boolean => {
