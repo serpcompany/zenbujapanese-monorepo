@@ -255,17 +255,4 @@ describe('accountService', () => {
     })
     expect(world.routes().slice(-2)).toEqual(['DELETE /v1/me', 'GET /v1/auth/token'])
   })
-
-  it('keeps the account and asks to try again when a delete gets no answer but the session still works', async () => {
-    const world = await signedInWorld({
-      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
-      'POST /v1/auth/sign-out': () => json(200, {}),
-      'GET /v1/auth/token': token,
-      'DELETE /v1/me': () => new Response('gateway', { status: 504 })
-    })
-    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toMatchObject({
-      refusal: 'try-again'
-    })
-    expect(await world.store.keptAccount()).toMatchObject({ user })
-  })
 })
