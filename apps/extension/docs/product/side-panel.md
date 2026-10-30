@@ -11,18 +11,18 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
   nor "Zenbu Japanese", since Chrome's own title above the panel shows both and can't be removed.
   A screen reader still hears the panel named "Zenbu Japanese", from a heading only it reads
   (`panel.interaction.test.tsx`; `e2e/pages.spec.ts`, with the page's title).
-- **A tab bar at the bottom,** always in view: the app's Translate, Player, and Account, in the
-  app's order, each an icon over its name: the translate mark, a play button in a square, and a
-  person in a circle, as the app's. The app's Look Up has no tab: the extension has no dictionary
+- **A tab bar at the bottom,** always in view: Player, Translate, and Account, with Player first
+  since the Player tab took the iPhone app's Player design (#1172), each an icon over its name: a
+  play button in a square, the translate mark, and a person in a circle, as the app's. The app's Look Up has no tab: the extension has no dictionary
   search (#1129, D3). A click chooses a tab.
   The arrow keys move along the bar and choose the tab they land on, wrapping at the ends
   (`panel.interaction.test.tsx`; `e2e/side-panel-tabs.spec.ts`).
-- **Translate on its box,** to translate Japanese or English, with an Image row that opens Image
-  Search: [`translate.md`](translate.md) (`panel.interaction.test.tsx`, "opens each tab on its own
-  screen", "opens Image Search from the Image row on Translate").
 - **Player on the transcript** of the YouTube video in the tab the learner is on:
   [`video-tab.md`](video-tab.md). On a tab with no video, its empty state, with Recent under it;
   Recent shows only then.
+- **Translate on its box,** to translate Japanese or English, with an Image row that opens Image
+  Search: [`translate.md`](translate.md) (`panel.interaction.test.tsx`, "opens each tab on its own
+  screen", "opens Image Search from the Image row on Translate").
 - **Account on the account,** the same one Settings' Account page shows: signed out, the ways to
   sign in, and signed in, the email and the subscription ([`account.md`](account.md)). The
   profile's Words are under it.
@@ -54,9 +54,10 @@ in…").
 - **Each tab keeps its own pages:** choosing another tab and coming back finds the page where it
   was (`panel.interaction.test.tsx`).
 - **Image Search,** over Translate ([`translate.md`](translate.md)). A word's card and its full
-  entry don't open as pages: a word clicked in the panel opens its card on the page, one opened
-  with Enter or Space shows its card under its line, and Open Full Entry expands the card in place
-  ([`word-popup.md`](word-popup.md)).
+  entry don't open as pages: a word clicked in Translate opens its card on the page, one opened
+  with Enter or Space shows its card under its line, a word in the Player tab opens its card in a
+  sheet over the tab ([`video-tab.md`](video-tab.md)), and Open Full Entry expands the card in
+  place ([`word-popup.md`](word-popup.md)).
 - **The test page,** in the test build only, shows its text and opens another page over itself.
   The release build refuses a route to it (`route.test.ts`).
 
@@ -79,11 +80,11 @@ in…").
   expands in place (#1124), nothing in the extension asks for this: the agent harness docks the
   panel with it (`.claude/skills/verify-extension/SKILL.md`), and it waits for the next page that
   needs it.
-- **It opens on the tab it was last on,** in any window, and on Translate, the first tab, the
+- **It opens on the tab it was last on,** in any window, and on Player, the first tab, the
   first time (`open-panel.interaction.test.tsx`, `panel.interaction.test.tsx`).
 - **A last tab kept from the five tabs before opens on the tab that took it over:** Video or
-  Recent on Player, Images on Translate, and Words on Account, and anything else, the Look Up of
-  an earlier build included, on Translate. The panel keeps that tab from then on (`open-panel.interaction.test.tsx`, "opens on the tab that took over…";
+  Recent on Player, Images, the Look Up of an earlier build, and Settings on Translate, Words on
+  Account, and anything else on Player, the first tab. The panel keeps that tab from then on (`open-panel.interaction.test.tsx`, "opens on the tab that took over…";
   `e2e/side-panel-tabs.spec.ts`).
 - **A closed panel opens only from a click.** Chrome lets a click open it and nothing else, so a
   request made without one leaves it closed, and leaves nothing behind for later

@@ -1,11 +1,9 @@
 import { writeFileSync } from 'node:fs'
 import type { Page } from '@playwright/test'
-import { labels } from '../src/side-panel/labels.ts'
-import { videoTabLabels } from '../src/video-tab/labels.ts'
-import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
-import { sense, standInTranscript, word } from './transcript-stand-in.ts'
+import { type Extension, expect, test } from './fixtures.ts'
+import { openStandInTranscript, sense, word } from './transcript-stand-in.ts'
 import { setWordMeanings } from './word-underlines.ts'
-import { changeSettings, tones } from './words-page.ts'
+import { tones } from './words-page.ts'
 
 const vocabulary = {
   今日: word('今日', 'キョウ', 'kyou'),
@@ -156,21 +154,14 @@ const plainRows: Record<number, number[]> = { 320: [1, 2, 3, 4], 500: [1, 1, 2, 
 const widths = [320, 500]
 
 async function openTranscript(page: Page, extension: Extension, width: number) {
-  await changeSettings(extension, {
-    'readingAids.furigana': true,
-    'readingAids.romaji': false,
-    'readingAids.wordMeanings': false,
-    'readingAids.translations': false
-  })
   await page.setViewportSize({ width, height: 900 })
-  await standInTranscript(page, { videoId: 'zenbuJa1172', time: 1, lines, meanings })
-  await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
-  await page.getByRole('tab', { name: labels.tabs.player }).click()
-  const transcript = page.getByRole('list', { name: videoTabLabels.transcript })
-  await expect(transcript.locator('[data-word]')).toHaveCount(
-    lines.flatMap(each => each.tokens).length
-  )
-  return transcript
+  return openStandInTranscript(page, extension, {
+    videoId: 'zenbuJa1172',
+    time: 1,
+    lines,
+    meanings,
+    wordMeanings: false
+  })
 }
 
 function wrapping(page: Page) {

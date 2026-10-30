@@ -67,7 +67,12 @@ panel's edge and level with the word; the panel shows no card ([`word-popup.md`]
 A word's card from the side panel). Escape, in the panel or on the page, or a press outside it
 puts it away. A word opened from the keyboard, with Enter or Space, shows its card under the text
 instead, with focus in it, since focus can't move from the panel into the page (the owner's
-decision on #1124); Escape gives focus back to the word. Where that tab can't show one, such as a `chrome://` page, the Chrome Web Store, a
+decision on #1124); Escape gives focus back to the word. Only one word card shows at a time
+(#1185): a word's card here takes the place of one the page shows, such as a caption word's, the
+card a key opens in the panel takes the page's down, and a word clicked on the page then puts the
+panel's away; a video paused for a card stays paused until the last closes. The Player tab's
+transcript keeps its word cards in a sheet of its own, which holds the page's one card the same
+way ([`video-tab.md`](video-tab.md), A word's sheet). Where that tab can't show one, such as a `chrome://` page, the Chrome Web Store, a
 PDF, or a site where Zenbu is off, the popup opens under the text instead, at its size on a page.
 There Escape or a press outside the popup puts it away; Escape gives focus back to the word, and
 a press leaves focus where it lands. While the popup's ••• menu is open, a press closes only the
@@ -83,8 +88,9 @@ Check: `src/translate/source-words.interaction.test.tsx` ("opens a word's card o
 "lets go of the word when the page closes its card…", "shows the card under the line, at the
 popup's size, when the page can't show one", "opens the word popup under the line where nothing
 can show it on the page, and Open Full Entry expands it there", "shows a word's card in the
-panel, with focus in it, when Enter opens it…", the same for Space, and "opens a word's card on
-the page from a click after a key opened one in the panel…"), and the tab's test, "links the
+panel, with focus in it, when Enter opens it…", the same for Space, "asks the page to take its
+card down for a card a key opens in the panel…", and "opens a word's card on the page from a click
+after a key opened one in the panel…"), and the tab's test, "links the
 words of a Japanese source to their card on the page, with no card in the panel", "shows a source
 word's card in the panel, with focus in it, when a key opens it" and "expands a source word's
 popup in place where the page can't show its card". The words' spacing, with Word Meanings off

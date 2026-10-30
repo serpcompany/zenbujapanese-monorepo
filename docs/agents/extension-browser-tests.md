@@ -11,9 +11,9 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
 
 - **Pages:** each page the manifest names (`side_panel.default_path` and `options_ui.page`; there
   is no toolbar popup) is in the build, opens, and shows its title and text, so a build missing a
-  page fails. The side panel shows its header and Translate's Use Selection.
-- **The side panel's tabs:** the app's Translate, Player, and Account, Translate first and chosen
-  on a first open; Translate's box and its Image row opening Image Search; Player's empty state
+  page fails. The side panel shows its header and the Player tab's No video on this tab.
+- **The side panel's tabs:** Player, Translate, and Account, Player first and chosen on a first
+  open; Translate's box and its Image row opening Image Search; Player's empty state
   and Recent; Account's signed-out account and its Words'; and a last tab kept from the five tabs before them opening
   on the tab that took it over, and one kept as `lookUp` on Translate (`side-panel-tabs.spec.ts`).
 - **Content script:** on `hostile.html`, the test content script's surface shows `食べる` and
@@ -31,12 +31,13 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   and Copy Link; the More menu also over a caption word's popup on the YouTube stand-in, in and
   out of fullscreen; and the expanded card's Open on zenbujapanese.com, which opens the word's
   page in a new tab, fulfilled by `context.route` and taken off `outsideRequests`
-  (`word-popup.spec.ts`). A transcript word's card on the stand-in watch page: the side panel
-  page in a tab of its own, at 380 × 720, whose `chrome.tabs.query` for the active tab answers
-  the watch tab, so its port reaches the watch page's content script; with `page-lookup.js` run
-  in the watch tab as Every Site would, one card answers; and a caption word's card taking a
-  transcript word's place keeps the video paused until it closes
-  (`transcript-card-on-page.spec.ts`). The
+  (`word-popup.spec.ts`). A transcript word's sheet beside the stand-in watch page: the side
+  panel page in a tab of its own, at 380 × 720, whose `chrome.tabs.query` for the active tab
+  answers the watch tab, so its port reaches the watch page's content script; the sheet over the
+  lower 56% of the tab with the word's line above it, its handle, its X and Escape, a card's
+  click playing from its line, and one card between the sheet and a caption word's, also with
+  `page-lookup.js` run in the watch tab as Every Site would, with the video playing once when the
+  last closes (`transcript-word-sheet.spec.ts`). The
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
@@ -77,7 +78,12 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   each wrapped line starts at its first word and the first word sits right after the ellipsis
   (`side-panel-popup.spec.ts`). Each width's screenshots, light and dark, and `contrast.json` go to its
   test's folder under `e2e/results/` (`transcript-meanings.spec.ts`). Both contrast checks use
-  `e2e/contrast.ts`.
+  `e2e/contrast.ts`. Captions of one to four lines wrap inside their cards at 320 and 500
+  pixels, with Word Meanings off and on, light and dark: nothing scrolls sideways, no furigana
+  reaches the line above, nothing leaves its card, and each word stays together under its
+  furigana (`ruby-align: center`), with each width's row counts and `layout.json`
+  (`transcript-long-lines.spec.ts`). The transcript's stand-in tab, port, captions, and
+  dictionary answers are `e2e/transcript-stand-in.ts`.
 - **A page's word meanings:** `words.html` with Word Meanings on, light and dark, and a paragraph
   of two neighbouring words added. By their boxes, a meaning after plain text and a meaning after
   another meaning are the transcript's gap, half the page's root font size, from it, and a meaning

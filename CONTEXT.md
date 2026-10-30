@@ -63,8 +63,8 @@ Zenbu has (`apps/extension/src/content/page-lookup.ts`), registered at run time 
 _Avoid_: content script (alone, where the YouTube one or the test one could be meant)
 
 **Side panel**:
-The browser extension's panel beside the page, Chrome's side panel: a tab bar with the app's
-Translate, Player, and Account, each tab with its own pages, such as Image Search. A word's card
+The browser extension's panel beside the page, Chrome's side panel: a tab bar with Player,
+Translate, and Account, each tab with its own pages, such as Image Search. A word's card
 and full entry are not its pages: they open in the Word popup (#1124). It has no Look Up,
 since the extension has no dictionary search; the website has one (#1129, D3).
 _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)

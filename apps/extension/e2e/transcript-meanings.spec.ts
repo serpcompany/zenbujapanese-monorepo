@@ -1,12 +1,10 @@
 import { writeFileSync } from 'node:fs'
 import type { Page } from '@playwright/test'
-import { labels } from '../src/side-panel/labels.ts'
-import { videoTabLabels } from '../src/video-tab/labels.ts'
 import { textContrast } from './contrast.ts'
-import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
-import { sense, standInTranscript, word } from './transcript-stand-in.ts'
+import { type Extension, expect, test } from './fixtures.ts'
+import { openStandInTranscript, sense, word } from './transcript-stand-in.ts'
 import { ownUnderlines, setWordMeanings } from './word-underlines.ts'
-import { changeSettings, tones } from './words-page.ts'
+import { tones } from './words-page.ts'
 
 const videoId = 'zenbuJa0624'
 
@@ -59,18 +57,14 @@ async function openTranscript(
   width: number,
   wordMeanings = true
 ) {
-  await changeSettings(extension, {
-    'readingAids.furigana': true,
-    'readingAids.romaji': false,
-    'readingAids.wordMeanings': wordMeanings,
-    'readingAids.translations': false
-  })
   await page.setViewportSize({ width, height: 720 })
-  await standInTranscript(page, { videoId, time: 385, lines, meanings })
-  await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
-  await page.getByRole('tab', { name: labels.tabs.player }).click()
-  const transcript = page.getByRole('list', { name: videoTabLabels.transcript })
-  await expect(transcript.locator('[data-word]')).toHaveCount(wordCount)
+  const transcript = await openStandInTranscript(page, extension, {
+    videoId,
+    time: 385,
+    lines,
+    meanings,
+    wordMeanings
+  })
   if (wordMeanings)
     await expect(transcript.locator('[data-aid="meaning"]')).toHaveCount(
       wordCount - particles.length

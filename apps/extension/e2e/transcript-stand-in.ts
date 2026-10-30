@@ -1,8 +1,12 @@
 import type { Page } from '@playwright/test'
+import { labels } from '../src/side-panel/labels.ts'
+import { videoTabLabels } from '../src/video-tab/labels.ts'
+import { type Extension, expect, extensionUrl } from './fixtures.ts'
+import { changeSettings } from './words-page.ts'
 
 export type StandInWord = { text: string; reading: string; languageReferenceID: string }
 
-export type StandInLine = { start: number; text: string; tokens: StandInWord[] }
+type StandInLine = { start: number; text: string; tokens: StandInWord[] }
 
 export type StandInMeaning = { meaning: string; partsOfSpeech: string[] }
 
@@ -24,7 +28,7 @@ type StandIn = {
   meanings: Record<string, StandInMeaning>
 }
 
-export function standInTranscript(page: Page, standIn: StandIn) {
+function standInTranscript(page: Page, standIn: StandIn) {
   return page.addInitScript(({ videoId, time, lines, meanings }) => {
     const tab = { id: 624, url: `https://www.youtube.com/watch?v=${videoId}`, title: 'YouTube' }
     const query = chrome.tabs.query.bind(chrome.tabs)
@@ -74,4 +78,26 @@ export function standInTranscript(page: Page, standIn: StandIn) {
       }
     })
   }, standIn)
+}
+
+export async function openStandInTranscript(
+  page: Page,
+  extension: Extension,
+  standIn: StandIn & { wordMeanings: boolean }
+) {
+  const { wordMeanings, ...transcriptOf } = standIn
+  await changeSettings(extension, {
+    'readingAids.furigana': true,
+    'readingAids.romaji': false,
+    'readingAids.wordMeanings': wordMeanings,
+    'readingAids.translations': false
+  })
+  await standInTranscript(page, transcriptOf)
+  await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
+  await page.getByRole('tab', { name: labels.tabs.player }).click()
+  const transcript = page.getByRole('list', { name: videoTabLabels.transcript })
+  await expect(transcript.locator('[data-word]')).toHaveCount(
+    standIn.lines.flatMap(line => line.tokens).length
+  )
+  return transcript
 }
