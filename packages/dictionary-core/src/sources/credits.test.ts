@@ -57,12 +57,12 @@ describe('the source credits', () => {
     }
   })
 
-  test('leave uncredited only the three sources the doc has always marked so', () => {
+  test('leave uncredited only the four sources the doc marks so', () => {
     expect(
       recordedSources
         .filter(recorded => recorded.credit === 'None')
         .map(recorded => recorded.source)
-    ).toEqual(["Apple's App Store lookup", 'YouTube', '`Zenbu Word Relationships`'])
+    ).toEqual(["Apple's App Store lookup", 'YouTube', 'Netflix', '`Zenbu Word Relationships`'])
   })
 
   test('list each credit for the clients the doc says use its source', () => {
