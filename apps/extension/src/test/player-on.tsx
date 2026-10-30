@@ -42,7 +42,6 @@ export function captionServices(translator: TranslatorState = 'available') {
     })),
     wait: vi.fn<CaptionServices['wait']>(() => new Promise(() => {})),
     popupCard: vi.fn(async (id: string) => popupAnswer(id)),
-    openPanel: vi.fn<CaptionServices['openPanel']>(),
     keepCaptionPlace: vi.fn<CaptionServices['keepCaptionPlace']>(),
     translate: vi.fn<CaptionServices['translate']>(async request => {
       if (request.type !== 'translate') return { type: 'availability', state: state.translator }

@@ -10,6 +10,7 @@ import {
   translate
 } from '../translation/messages'
 import { downloadTranslator, translatorAvailability } from '../translation/translator'
+import { popupOnActiveTab } from '../word-popup/page-popup'
 import { readSelection } from './selection'
 import type { SourceServices } from './source-words'
 import { onDeviceSpeech } from './speech'
@@ -34,5 +35,6 @@ export const onDeviceServices: TranslateServices = {
   segment: text => segmentText(text),
   wait: afterTimeout,
   popupCard: (languageReferenceID, frequency) => lookUpPopupCard(languageReferenceID, frequency),
+  pagePopup: popupOnActiveTab(),
   ...onDeviceSpeech
 }

@@ -27,14 +27,23 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   the page's layout kept, the reading aids, a site turned off, words added later, a site given
   and taken back with `chrome.developerPrivate` from a `chrome://extensions` page, and the popup's
   card, choice, placement, closing, its More menu over it with one Escape each for the menu and
-  the popup, links, Open Full Entry, Share, and Copy Link; the More menu also over a caption
-  word's popup on the YouTube stand-in, in and out of fullscreen; and Word Detail on the side
-  panel page in a tab, opened by its pending route, whose Open on zenbujapanese.com opens the
-  word's page in a new tab, fulfilled by `context.route` and taken off `outsideRequests`
-  (`word-popup.spec.ts`). The
+  the popup, links, Open Full Entry expanding the card in place and scrolling inside it, Share,
+  and Copy Link; the More menu also over a caption word's popup on the YouTube stand-in, in and
+  out of fullscreen; and the expanded card's Open on zenbujapanese.com, which opens the word's
+  page in a new tab, fulfilled by `context.route` and taken off `outsideRequests`
+  (`word-popup.spec.ts`). A transcript word's card on the stand-in watch page: the side panel
+  page in a tab of its own, at 380 × 720, whose `chrome.tabs.query` for the active tab answers
+  the watch tab, so its port reaches the watch page's content script; with `page-lookup.js` run
+  in the watch tab as Every Site would, one card answers; and a caption word's card taking a
+  transcript word's place keeps the video paused until it closes
+  (`transcript-card-on-page.spec.ts`). The
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
+- **The panel's headword:** Vite serves `test-pages/word-header.html` on a free port, with
+  `test-pages/vite.config.ts`, and it draws `@zenbu/ui`'s `WordHeader` from props at the panel's
+  size. テーブル and 食べる, with た over 食, each sit on one line inside the card at 380 px, with
+  nothing overflowing (`word-header.spec.ts`). Neither word is in the fixture release.
 - **The caption on the player:** the `youTubeStandIn` option serves the agent Chrome harness's
   stand-in site (`agent-chrome/site.mjs`) over HTTPS as `www.youtube.com`, trusted by its SPKI
   hash, so the YouTube content script runs on its watch page and the service worker's two

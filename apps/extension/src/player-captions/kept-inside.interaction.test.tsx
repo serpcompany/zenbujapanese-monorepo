@@ -8,7 +8,9 @@ function mounted() {
   const host = document.body.appendChild(document.createElement('div'))
   const shadowRoot = host.attachShadow({ mode: 'open' })
   keptInside({ host, shadowRoot })
-  const menu = shadowRoot.appendChild(document.createElement('div'))
+  const portal = shadowRoot.appendChild(document.createElement('div'))
+  portal.setAttribute('data-base-ui-portal', '')
+  const menu = portal.appendChild(document.createElement('div'))
   menu.setAttribute('role', 'menu')
   document.addEventListener('keydown', hear)
   return menu
@@ -36,5 +38,17 @@ describe('keys inside the popup host', () => {
     press('ArrowDown', menu)
     press('m', menu)
     expect(heard).toEqual(['ArrowDown', 'm'])
+  })
+
+  it('keeps the keys that scroll inside while the card is expanded into its full entry', () => {
+    const menu = mounted()
+    const card = menu.getRootNode().appendChild(document.createElement('div'))
+    card.setAttribute('data-word-popup', '')
+    press('PageDown', card)
+    card.setAttribute('data-expanded', '')
+    press('ArrowDown', card)
+    press('End', card)
+    press('m', card)
+    expect(heard).toEqual(['PageDown', 'm'])
   })
 })

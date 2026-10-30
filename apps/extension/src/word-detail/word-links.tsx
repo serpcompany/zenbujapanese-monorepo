@@ -5,15 +5,14 @@ import {
   wordLinkKey
 } from '@zenbu/ui/dictionary/word-link'
 import { useMemo } from 'react'
-import type { PanelPage } from '../side-panel/route'
+import type { EntryPage, OpenEntry } from './entry-page'
 import { wordDetailLabels } from './labels'
 import { answered, type WordLookups } from './lookups'
-import { notify } from './notice'
+import { type Notify, useNotices } from './notice'
 
-type Open = (page: PanelPage) => void
 type Spelling = Extract<WordLinkTarget, { headword: string }>
 
-function pageFor(target: Exclude<WordLinkTarget, Spelling>): PanelPage {
+function pageFor(target: Exclude<WordLinkTarget, Spelling>): EntryPage {
   if ('kanji' in target) return { page: 'kanji', character: target.kanji }
   if ('entSeqs' in target) {
     return { page: 'word', entSeq: target.entSeqs[0] as number, entries: target.entSeqs }
@@ -24,7 +23,8 @@ function pageFor(target: Exclude<WordLinkTarget, Spelling>): PanelPage {
 async function openSpelling(
   { headword, reading }: Spelling,
   resolveWord: WordLookups['resolveWord'],
-  open: Open
+  open: OpenEntry,
+  notify: Notify
 ) {
   const answer = await answered(resolveWord(headword, reading))
   if (answer === null) notify(wordDetailLabels.lookup.failed)
@@ -33,10 +33,14 @@ async function openSpelling(
   } else open({ page: 'word', entSeq: answer.entSeq })
 }
 
-export function useWordLinks(open: Open, resolveWord: WordLookups['resolveWord']): RenderWordLink {
+export function useWordLinks(
+  open: OpenEntry,
+  resolveWord: WordLookups['resolveWord']
+): RenderWordLink {
+  const { notify } = useNotices()
   return useMemo(() => {
     const follow = (target: WordLinkTarget) => {
-      if ('headword' in target) void openSpelling(target, resolveWord, open)
+      if ('headword' in target) void openSpelling(target, resolveWord, open, notify)
       else open(pageFor(target))
     }
     return ({ target, className, children, ...attributes }) => (
@@ -50,5 +54,5 @@ export function useWordLinks(open: Open, resolveWord: WordLookups['resolveWord']
         {children}
       </button>
     )
-  }, [open, resolveWord])
+  }, [open, resolveWord, notify])
 }

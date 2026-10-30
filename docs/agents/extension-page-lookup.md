@@ -49,15 +49,22 @@ pieces are tested apart:
 
 `wordPopupHost` (`src/word-popup/popup-host.tsx`) mounts `WordPopup` with `mountInShadowRoot`
 next to the word, places it inside the window (`position.ts`), and moves it as the page scrolls
-or resizes. Escape and a click outside close it and give focus back; while its More menu is open
-(`[role="menu"][data-open]`, `open-menu.ts`), Escape is the menu's. The shadow host is the
+or resizes. Escape and a click outside close it and give focus back; while any Base UI layer is
+open over it, such as its More menu (`[data-base-ui-portal] [data-open]`,
+`src/word-popup/open-layer.ts`), Escape and the click are the layer's. The shadow host is the
 popup's layer (`position: fixed`, the highest `z-index`), and the placed box inside it has none,
 so the More menu, which portals to the shadow root's surface, stacks over the card; a `z-index`
 on the box made a stacking context the menu's `z-50` was below. Open Full Entry
-calls `openPanel(route)` from the click: the service worker opens the side panel before it awaits
-anything, so the click's activation carries through one message (checked in Chromium by the
-browser tests; no fallback is built). Share and Copy Link use `websiteOrigin` and `wordPath`.
-Translate's Japanese source draws the same popup in the panel (`src/translate/source-words.tsx`).
+expands the card in place: `WordPopup` draws `FullEntry` (`src/word-detail/full-entry.tsx`) inside
+the same box, at the window's height, and the host places it again for its new size. The entry
+scrolls in a `<section>` named "Full entry for …" with `tabIndex={0}`, and it takes focus when a
+page opens, so the arrow and Page keys scroll the entry, not the page behind; Back is before it in
+the tab order. Biome's `noNoninteractiveTabindex` is off for that one file (`biome.json`), since a
+scroll region is focusable by design (axe's `scrollable-region-focusable`). Share and
+Copy Link use `websiteOrigin` and `wordPath`. The same host shows a card the side panel asks for,
+at the window's edge ([`extension-side-panel.md`](extension-side-panel.md#a-words-card-on-the-page)),
+and one popup per page across hosts. Where the page can't, the panel draws the same popup itself
+(`src/translate/source-words.tsx`).
 
 An error's message never holds the page's text or a word.
 

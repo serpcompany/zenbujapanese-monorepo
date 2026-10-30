@@ -9,6 +9,8 @@ import { PitchAccent, type PronounceText } from './pitch-accent'
 import { type OnUnsupported, PronounceButton } from './pronounce-button'
 import { ReadingLine, RomajiLine } from './reading-aid-lines'
 
+const headwordSizes = { page: 'text-5xl', panel: 'text-4xl' } as const
+
 export function WordHeader({
   headword,
   ruby,
@@ -19,7 +21,8 @@ export function WordHeader({
   conjugations,
   text,
   onUnsupported,
-  onOpenConjugations
+  onOpenConjugations,
+  headwordSize = 'page'
 }: {
   headword: string
   ruby: RubySegment[]
@@ -31,6 +34,7 @@ export function WordHeader({
   text: { pronounce: PronounceText; conjugations: { showsConjugations: string } }
   onUnsupported: OnUnsupported
   onOpenConjugations?: () => void
+  headwordSize?: keyof typeof headwordSizes
 }) {
   return (
     <Card>
@@ -41,7 +45,7 @@ export function WordHeader({
               <HeadwordRuby
                 segments={ruby}
                 readingsOutsideText
-                className="block text-5xl font-medium leading-tight"
+                className={`block ${headwordSizes[headwordSize]} font-medium leading-tight`}
               />
             </h1>
             <RomajiLine romaji={romaji(reading)} className="text-base" />

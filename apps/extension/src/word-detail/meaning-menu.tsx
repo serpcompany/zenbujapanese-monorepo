@@ -11,7 +11,7 @@ import { speak, useWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-butt
 import { CopyIcon, MoreHorizontalIcon, Volume2Icon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { wordDetailLabels } from './labels'
-import { copyText, notify } from './notice'
+import { useNotices } from './notice'
 
 const englishVoice = 'en-US'
 
@@ -26,6 +26,7 @@ export function MeaningWithMenu({
 }) {
   const labels = wordDetailLabels.meaning
   const withoutLocalVoice = useWithoutLocalVoice()
+  const { notify, copy } = useNotices()
   return (
     <div className="flex items-start gap-2" data-meaning={number}>
       <div className="min-w-0 flex-1">{meaning}</div>
@@ -51,7 +52,7 @@ export function MeaningWithMenu({
             <Volume2Icon />
             {labels.speak}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => void copyText(actions.copyText, labels.copied)}>
+          <DropdownMenuItem onClick={() => void copy(actions.copyText, labels.copied)}>
             <CopyIcon />
             {labels.copy}
           </DropdownMenuItem>

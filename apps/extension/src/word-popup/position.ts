@@ -2,7 +2,9 @@ export type Edges = { left: number; top: number; right: number; bottom: number }
 
 export type Size = { width: number; height: number }
 
-export type Placement = { left: number; top: number; side: 'below' | 'above' }
+export type Placement = { left: number; top: number; side: 'below' | 'above' | 'beside' }
+
+export type Edge = { side: 'left' | 'right'; top: number }
 
 const gap = 8
 
@@ -22,6 +24,14 @@ export function popupPlacement(anchor: Edges, popup: Size, window: Size): Placem
     side,
     left: clamp(anchor.left, margin, window.width - margin - popup.width),
     top: clamp(side === 'below' ? below : above, margin, window.height - margin - popup.height)
+  }
+}
+
+export function edgePlacement(edge: Edge, popup: Size, window: Size): Placement {
+  return {
+    side: 'beside',
+    left: edge.side === 'left' ? margin : Math.max(margin, window.width - margin - popup.width),
+    top: clamp(edge.top, margin, window.height - margin - popup.height)
   }
 }
 

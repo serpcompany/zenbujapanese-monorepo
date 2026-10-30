@@ -1,15 +1,31 @@
 import { pronounceLabel } from '@zenbu/dictionary-core/detail/sections'
 import { fill } from '@zenbu/dictionary-core/detail/template'
+import { fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
 import { PronounceWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-button'
 import { act } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { settingDefaults } from '../shared/settings'
 import { wordAddress } from '../shared/word-address'
 import { byText, click, find, openMenu, type Rendered, render, settle } from '../test/render'
 import { openFullEntryButton, popupAnswer, youkyuu } from '../test/word-cards'
+import { wordDetailLabels } from '../word-detail/labels'
 import type { Sharing } from './copy'
 import { wordPopupLabels as labels } from './labels'
 import type { WordLookUp } from './use-cards'
 import { WordPopup } from './word-popup'
+
+vi.mock('../shared/dictionary', async importOriginal => ({
+  ...(await importOriginal<typeof import('../shared/dictionary')>()),
+  lookUpWord: vi.fn(async (entSeq: number) => ({
+    type: 'word',
+    rows: fixtureWordRows.find(rows => rows.entry.entSeq === entSeq) ?? null
+  }))
+}))
+
+vi.mock('../shared/dictionary-progress', async () => {
+  const { fakeDictionaryProgress } = await import('../test/data-state')
+  return fakeDictionaryProgress
+})
 
 const address = wordAddress(youkyuu)
 
@@ -23,6 +39,16 @@ const buttonNames = (popup: HTMLElement) =>
     button => button.getAttribute('aria-label') ?? button.textContent?.trim()
   )
 
+beforeEach(() => {
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      observe() {}
+      disconnect() {}
+    }
+  )
+})
+
 afterEach(() => {
   shown?.unmount()
   shown = undefined
@@ -35,28 +61,30 @@ async function showPopup(
   ids: string[],
   { lookUp = async id => popupAnswer(id), sharing }: { lookUp?: WordLookUp; sharing?: Sharing } = {}
 ) {
-  const openFullEntry = vi.fn()
   shown = render(
     <PronounceWithoutLocalVoice value="unsupported">
       <WordPopup
         text={text}
         ids={ids}
         lookUp={lookUp}
-        frequency={[]}
-        romaji={false}
-        openFullEntry={openFullEntry}
+        settings={settingDefaults}
         sharing={sharing}
       />
     </PronounceWithoutLocalVoice>
   )
   await settle()
   const popup = find(shown.container, '[data-word-popup]')
-  return { popup, openFullEntry, button: (name: string) => byText(popup, 'button', name) }
+  return { popup }
 }
 
+const currentPopup = () => find(shown?.container ?? document, '[data-word-popup]')
+
+const shownEntry = () =>
+  find(currentPopup(), 'section[data-entry-page]:not([hidden])') as HTMLElement
+
 describe('the word popup', () => {
-  it('shows the word’s card, takes focus, and opens its Word Detail from the Open Full Entry icon', async () => {
-    const { popup, openFullEntry } = await showPopup('要求', ['youkyuu'])
+  it('shows the word’s card, takes focus, and has an Open Full Entry icon', async () => {
+    const { popup } = await showPopup('要求', ['youkyuu'])
     expect(popup.getAttribute('aria-label')).toBe(fill(labels.word, { name: '要求' }))
     expect(document.activeElement).toBe(popup)
     expect(find(popup, '[data-meaning]').textContent).toContain('demand')
@@ -70,12 +98,56 @@ describe('the word popup', () => {
     expect(icon.getAttribute('title')).toBe(labels.openFullEntry)
     expect(icon.textContent).toBe('')
     expect(icon.querySelector('svg')).not.toBeNull()
-    await click(icon)
-    expect(openFullEntry).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
   })
 
-  it('asks which word is meant when the text has several, and offers them all to Open Full Entry', async () => {
-    const { popup, openFullEntry, button } = await showPopup('要', ['kaname', 'you'])
+  it('expands in place into the word’s full entry, which scrolls inside the card, and Back folds it again', async () => {
+    const { popup } = await showPopup('要求', ['youkyuu'])
+    await click(openFullEntryButton(popup))
+    const expanded = currentPopup()
+    expect(expanded.hasAttribute('data-expanded')).toBe(true)
+    expect(expanded.className).toContain('overflow-hidden')
+    expect(expanded.className).toContain('max-w-')
+    const entry = shownEntry()
+    expect(entry.dataset.entryPage).toBe('word')
+    expect(find(entry, '.overflow-y-auto').contains(find(entry, 'h1'))).toBe(true)
+    expect(find(entry, 'h1').getAttribute('aria-label')).toBe('要求')
+    expect(find(entry, 'h1 [class*="text-"]').className).toContain('text-4xl')
+    const scroller = find(entry, 'section[aria-label]')
+    expect(document.activeElement).toBe(scroller)
+    expect(scroller.getAttribute('aria-label')).toBe(fill(labels.entry, { name: '要求' }))
+    expect(scroller.tabIndex).toBe(0)
+    expect(scroller.contains(find(entry, 'h1'))).toBe(true)
+    expect(find(entry, 'button').textContent).toBe(labels.back)
+
+    await click(byText(entry, 'button', labels.back))
+    expect(currentPopup().hasAttribute('data-expanded')).toBe(false)
+    expect(document.activeElement).toBe(currentPopup())
+    expect(find(currentPopup(), '[data-meaning]').textContent).toContain('demand')
+  })
+
+  it('shows Word Detail’s own header actions in the expanded card, Open on zenbujapanese.com among them, and its notices at the card’s foot', async () => {
+    const writeText = vi.fn(async (_text: string) => {})
+    const { popup } = await showPopup('要求', ['youkyuu'], { sharing: { writeText } })
+    await click(openFullEntryButton(popup))
+    const label = wordDetailLabels.share.openOnWebsite
+    const link = find(shownEntry(), `a[aria-label="${label}"]`) as HTMLAnchorElement
+    expect(link.getAttribute('href')).toBe(address)
+    expect(link.target).toBe('_blank')
+    const share = link.nextElementSibling?.querySelector(
+      `button[aria-label="${fill(labels.share.share, { name: '要求' })}"]`
+    )
+    expect(share).not.toBeNull()
+
+    await click(share as HTMLElement)
+    expect(writeText).toHaveBeenLastCalledWith(address)
+    const notice = find(currentPopup(), '[data-notice]')
+    expect(notice.textContent).toBe(labels.share.linkCopied)
+    expect(notice.tagName).toBe('OUTPUT')
+    expect(shownEntry().contains(notice)).toBe(false)
+  })
+
+  it('asks which word is meant when the text has several, and offers them all in the full entry', async () => {
+    const { popup } = await showPopup('要', ['kaname', 'you'])
     expect(popup.getAttribute('aria-label')).toBe(fill(labels.choose, { name: '要' }))
     const choices = [...popup.querySelectorAll('[data-choice]')]
     expect(choices.map(choice => choice.getAttribute('data-choice'))).toEqual([
@@ -88,13 +160,13 @@ describe('the word popup', () => {
     await click(choices[1])
     expect(popup.getAttribute('aria-label')).toBe(fill(labels.word, { name: '要' }))
     await click(openFullEntryButton(popup))
-    expect(openFullEntry).toHaveBeenCalledWith({
-      page: 'word',
-      entSeq: 2188720,
-      entries: [1609600, 2188720]
-    })
-    await click(button(labels.back))
-    expect(popup.querySelectorAll('[data-choice]')).toHaveLength(2)
+    const tabs = [...shownEntry().querySelectorAll('[role="tab"]')]
+    expect(tabs.map(tab => tab.textContent)).toEqual(['かなめ', 'よう'])
+    expect(tabs.map(tab => tab.getAttribute('aria-selected'))).toEqual(['false', 'true'])
+    await click(byText(shownEntry(), 'button', labels.back))
+    expect(currentPopup().getAttribute('aria-label')).toBe(fill(labels.word, { name: '要' }))
+    await click(byText(currentPopup(), 'button', labels.back))
+    expect(currentPopup().querySelectorAll('[data-choice]')).toHaveLength(2)
   })
 
   it('says when the word isn’t in the dictionary, and when the dictionary didn’t answer', async () => {

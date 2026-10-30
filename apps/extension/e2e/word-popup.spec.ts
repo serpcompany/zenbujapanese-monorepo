@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { wordDetailLabels } from '../src/word-detail/labels.ts'
 import { wordPopupLabels as labels } from '../src/word-popup/labels.ts'
-import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
+import { type Extension, expect, test } from './fixtures.ts'
 import {
   changeSettings,
   clickWord,
@@ -105,22 +105,46 @@ for (const { name, aids } of readingAidCases) {
       })
     }
 
-    test('Open Full Entry sends Word Detail and the entry, and opens the closed side panel', async ({
+    test('Open Full Entry expands the popup in place into the full entry, which scrolls inside the card, and opens no side panel', async ({
       extension,
       page
     }) => {
       await recordPanelOpens(extension)
       await readyPage(page, extension)
       await clickWord(page, '#sentence', '要求')
-      await popupFor(page, '要求').getByRole('button', { name: labels.openFullEntry }).click()
+      const popup = popupFor(page, '要求')
+      const card = await popup.boundingBox()
+      await popup.getByRole('button', { name: labels.openFullEntry }).click()
+      await expect(popup).toHaveAttribute('data-expanded')
+      await expect(popup.getByRole('heading', { level: 1, name: '要求' })).toBeVisible()
+      expect((await popup.boundingBox())?.width).toBe(card?.width)
+      const scroller = popup.locator('section[data-entry-page]:not([hidden]) .overflow-y-auto')
       await expect
-        .poll(() => panelOpens(extension))
-        .toEqual({ routes: [{ page: { page: 'word', entSeq: 1546680 } }], opens: ['opened'] })
-      await expect(wordPopup(page)).toHaveCount(0)
-      await expect.poll(() => sidePanels(extension)).toBe(1)
+        .poll(() => scroller.evaluate(element => element.scrollHeight > element.clientHeight))
+        .toBe(true)
+      const pageScroll = await page.evaluate(() => window.scrollY)
+      const scrolled = () => scroller.evaluate(element => element.scrollTop)
+      await expect(scroller).toBeFocused()
+      await page.keyboard.press('PageDown')
+      await expect.poll(scrolled).toBeGreaterThan(0)
+      await page.keyboard.press('Home')
+      await expect.poll(scrolled).toBe(0)
+      expect(await page.evaluate(() => window.scrollY)).toBe(pageScroll)
+      await scroller.hover()
+      await page.mouse.wheel(0, 400)
+      await expect.poll(scrolled).toBeGreaterThan(0)
+      expect(await page.evaluate(() => window.scrollY)).toBe(pageScroll)
+      await page.keyboard.press('Shift+Tab')
+      const back = popup.getByRole('button', { name: labels.back })
+      await expect(back).toBeFocused()
+      await back.click()
+      await expect(popup).not.toHaveAttribute('data-expanded')
+      await expect(popup.locator('[data-meaning]').first()).toContainText('demand')
+      expect(await panelOpens(extension)).toEqual({ routes: [], opens: [] })
+      expect(await sidePanels(extension)).toBe(0)
     })
 
-    test('several entries open on a choice, the one the sentence links first, and Open Full Entry offers them all', async ({
+    test('several entries open on a choice, the one the sentence links first, and the full entry offers them all', async ({
       extension,
       page
     }) => {
@@ -140,9 +164,10 @@ for (const { name, aids } of readingAidCases) {
       await popup.getByRole('button', { name: labels.back }).click()
       await page.locator('[data-choice="1609600"]').click()
       await popup.getByRole('button', { name: labels.openFullEntry }).click()
-      await expect
-        .poll(async () => (await panelOpens(extension)).routes)
-        .toEqual([{ page: { page: 'word', entSeq: 1609600, entries: [2188720, 1609600] } }])
+      const tabs = popup.getByRole('tab')
+      await expect(tabs).toHaveText(['よう', 'かなめ'])
+      await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true')
+      expect((await panelOpens(extension)).routes).toEqual([])
     })
 
     test('the popup stays inside the window for a word at each edge, and follows the page as it scrolls until its word is gone', async ({
@@ -274,24 +299,20 @@ for (const { name, aids } of readingAidCases) {
   })
 }
 
-test('Word Detail’s Open on zenbujapanese.com opens the word’s page in a new tab and keeps the panel', async ({
+test('the expanded card’s Open on zenbujapanese.com opens the word’s page in a new tab and keeps the card', async ({
   extension,
   outsideRequests,
   page
 }) => {
   await readyPage(page, extension)
-  await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
-  await page.evaluate(async () => {
-    const { id } = await chrome.windows.getCurrent()
-    await chrome.storage.session.set({
-      [`sidePanel.route.${id}`]: { page: { page: 'word', entSeq: 1546640 } }
-    })
-  })
-  await page.reload()
-  const address = 'https://zenbujapanese.com/dictionary/%E8%A6%81%E3%82%8B-1546640/'
-  expect(address).toBe(wordUrl('要る', 'いる', 1546640))
+  const before = page.url()
+  await clickWord(page, '#sentence', '要求')
+  const popup = popupFor(page, '要求')
+  await popup.getByRole('button', { name: labels.openFullEntry }).click()
+  const address = 'https://zenbujapanese.com/dictionary/%E8%A6%81%E6%B1%82-1546680/'
+  expect(address).toBe(wordUrl('要求', 'ようきゅう', 1546680))
   await extension.context.route(address, route => route.fulfill({ body: 'word page' }))
-  const link = page.getByRole('button', { name: wordDetailLabels.share.openOnWebsite })
+  const link = popup.getByRole('button', { name: wordDetailLabels.share.openOnWebsite })
   await expect(link).toHaveAttribute('title', wordDetailLabels.share.openOnWebsite)
   const opened = extension.context.waitForEvent('page')
   await link.click()
@@ -299,8 +320,8 @@ test('Word Detail’s Open on zenbujapanese.com opens the word’s page in a new
   await expect.poll(() => tab.url()).toBe(address)
   await tab.close()
   await extension.context.unroute(address)
-  await expect(page.getByRole('heading', { level: 1, name: '要る' })).toBeVisible()
-  expect(page.url()).toBe(extensionUrl(extension, 'pages/side-panel.html'))
+  await expect(popup.getByRole('heading', { level: 1, name: '要求' })).toBeVisible()
+  expect(page.url()).toBe(before)
   expect(outsideRequests).toEqual([address])
   outsideRequests.length = 0
 })

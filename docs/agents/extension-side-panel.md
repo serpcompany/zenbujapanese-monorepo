@@ -20,13 +20,14 @@ has no tab: the extension has no dictionary search. Translate's `Content` is `Tr
 (`src/side-panel/account-tab.tsx`), the place sign-in will show (#960, #961). Player's is
 `VideoTab` (`src/video-tab/video-tab.tsx`,
 [`video-tab.md`](../../apps/extension/docs/product/video-tab.md)), with Recent under its empty
-state; the code keeps the Video tab's names. It reads the active tab
+state only, when no video is open; the code keeps the Video tab's names. It reads the active tab
 (`chrome.tabs.query`, then `tabs.onActivated` and `tabs.onUpdated`) once it is first shown, asks
 for the video's captions, and follows the video on its port
-([`extension-captions.md`](extension-captions.md#the-player-tabs-port)) only while shown. Word Detail and the kanji and
-form pages it opens are `src/word-detail/`'s, drawn with `@zenbu/ui`'s dictionary parts from the
-core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts`
-([`word-detail.md`](../../apps/extension/docs/product/word-detail.md)).
+([`extension-captions.md`](extension-captions.md#the-player-tabs-port)) only while shown. The
+panel has no Word Detail pages (#1124): a word clicked in Translate or the transcript opens its
+card on the page through a `word-popup` port, one opened from the keyboard shows its card in
+the panel, and Open Full Entry expands a card in place
+([A word's card on the page](#a-words-card-on-the-page)).
 
 - **The toolbar icon opens it.** The manifest's `action` has no popup, and the service worker
   calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` when it starts
@@ -34,8 +35,10 @@ core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts
   ([`extension-error-reports.md`](extension-error-reports.md)). The header's trailing side is
   `HeaderControls`: the site switch and the menu, which has the reading aids, Zenbu Captions, and
   Settings ([The header's site](#the-headers-site)).
-- **`openPanel(route)` opens it, from a click.** An extension page or a content
-  script calls it in the click handler itself, before any `await`. Chrome opens a side panel only
+- **The `openPanel` message opens it, from a click.** `{ target: 'service-worker', openPanel:
+  route }` reaches the service worker's handler. Since #1124 only the agent harness and the tests
+  send it; nothing in the extension does. A sender sends it in the click handler itself, before
+  any `await`. Chrome opens a side panel only
   in response to a user gesture, and the gesture lasts through one message only if the service
   worker calls `chrome.sidePanel.open` before it awaits anything: checked in Chrome 156 on
   2026-10-28 from a content script, an extension page in a tab, and a toolbar popup, and refused after
@@ -71,6 +74,57 @@ core's `detail/` rows; they ask the dictionary through `src/shared/dictionary.ts
   gets 24 px. The compact bar showed all five whole at 320 px; the three tabs since #1129 each get
   a third of the bar.
 
+## A word's card on the page
+
+A word clicked in the panel (`src/translate/source-words.tsx`, which the transcript draws too)
+asks `services.pagePopup`, `popupOnActiveTab()` in `src/word-popup/page-popup.ts`, to show the
+card on the active tab. It connects `chrome.tabs.connect(tabId, { name: 'word-popup', frameId: 0 })`
+and posts `{ target: 'word-popup', show: { text, ids, fromBottom, side } }`: `fromBottom` is the
+word's distance from the panel's bottom, and `side` is `chrome.sidePanel.getLayout()`'s, read only
+where it exists (Chrome 140; the extension's minimum is 138), else `right`. Both content scripts,
+`youtube.ts` and `page-lookup.ts`, serve the port with `servePagePopups`
+(`src/word-popup/page-popup-server.ts`). With Every Site given, both run on YouTube and share the
+isolated world, so both hear one port: a frame keeps its servers under
+`Symbol.for('zenbujapanese.page-popup-servers')`, and only one answers, YouTube's (`preferred`)
+where it runs, else the first still running. With Zenbu on for the site, the page's popup host opens
+the card at the window's edge, `innerHeight - fromBottom` from its top
+(`edgePlacement` in `position.ts`), and answers `{ shown: true }`. The page closing the card
+disconnects the port; the panel disconnecting closes it.
+
+- **A port that drops before `shown` is a tab that can't,** such as `chrome://`, the Web Store, a
+  PDF viewer, a site where Zenbu is off, or a tab with no content script: the panel then draws the
+  card inline under the word, at the popup's size or the line's width where that is narrower. A
+  drop after `shown` is the card closing.
+- **One card at a time.** A newer request ends any not yet shown, and any shown on another tab.
+  One shown on the same tab is left for the page to replace: the server lets the old port go when
+  the next panel card shows. Only the latest request's close or failure ends the rest. A request
+  ended by another, or by the latest's failure, hears `closed`, a microtask later so a row's card
+  closing and the next row's opening don't play the video between them; the owner's own close
+  tells it nothing. A page
+  keeps one popup across its hosts (`Symbol.for('zenbujapanese.shown-word-popup')`), handed over
+  without a close and open between, so the video doesn't play for a moment between two cards.
+- **A card replaced on the page isn't closed to the panel.** When a caption word's or a page
+  word's card takes the panel card's place, the host's `closed` says `replaced`, and the server
+  keeps the port until the page's last card closes (the `close` event of `wordPopupEvents`). A
+  card closed during a press counts as replaced too, since a click on another word closes the
+  card on `pointerdown` and opens the next on `click`: the server waits for the press to end and
+  lets the port go then only if no card is open. So the transcript keeps the video paused while
+  any Zenbu card is open, and plays it when the last closes, if it was playing.
+- **A press keeps a card when it lands in it or a layer it opened.** Base UI draws a menu or
+  sheet in a `[data-base-ui-portal]` outside the card, so the page's host holds a press whose
+  `composedPath()` has the card, and any open portal layer (`hasOpenLayer` in `open-layer.ts`, on
+  the shadow root) holds it too. In the panel, a press inside a word or the inline card is marked
+  through React's events, which pass through portals, and an open layer holds it as on the page.
+- **A word opened from the keyboard stays in the panel.** Focus can't move from the side panel
+  into the page, so a card there is out of a keyboard user's reach (the owner's decision on
+  #1124, 2026-10-30). Enter and Space on a button fire a `click` whose `detail` is 0, and a
+  pointer's has its click count, 1 or more, so `Words` passes `event.detail === 0` to `pick`,
+  which then draws the card inline, asks the page for none, and closes any the page shows for
+  the panel. `WordPopup` focuses its card when it mounts, keyed by each pick, and Escape gives
+  focus back to the word. A screen reader's activation is a `click` with `detail` 0 too, so it
+  gets the inline card as well. The caption on the player passes its own `pick`, which ignores
+  the flag: its words are on the page.
+
 ## The header's site
 
 The site switch is for the active tab's site (`src/side-panel/active-site.ts`), and the header
@@ -104,14 +158,16 @@ a granted origin covers it or the toolbar icon was clicked on that tab, and its 
   and icons, each tab's screen (Player's transcript is checked in `src/video-tab/`), Translate's
   Image row, the arrow keys, pages over a tab and Back, focus after each, the last tab and the
   five tabs' ids read as the three's, the sign-up links, the dictionary progress on every tab but Translate and on a
-  page over Translate, Try again, and `openPanel` through a fake Chrome to the panel, closed and
-  open. The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)
+  page over Translate, Try again, and the `openPanel` message through a fake Chrome to the panel, closed and
+  open. A word's card on the page: `src/word-popup/page-popup.test.ts` (the panel's side) and
+  `page-popup-server.test.ts` (the page's), with a fake port. The header: each behavior its [product page](../../apps/extension/docs/product/side-panel-header.md)
   lists, with the test content script beside it on one fake Chrome. The browser tests open
   `side-panel.html` with no popup, and `e2e/side-panel-tabs.spec.ts` its three tabs, each tab's
-  screen, and the old ids read as the three's
+  screen, and the old ids read as the three's, and `e2e/transcript-card-on-page.spec.ts` a
+  transcript word's card on the stand-in watch page
   ([`extension-browser-tests.md`](extension-browser-tests.md)).
 - **In Chrome,** with the `verify-extension` skill ([`extension.md`](extension.md), Checks): open the
-  side panel from the toolbar icon and with `openPanel` from a click, closed and open, and check
+  side panel from the toolbar icon and with the `openPanel` message from a click, closed and open, and check
   that nothing scrolls sideways at 320 px. Check it in the side panel itself: in a background tab,
   `side-panel.html` waits for the tab to come to the front before it hides the tab it left.
   For the header: a click on the toolbar icon gives `activeTab` and the tab's address; Allow's

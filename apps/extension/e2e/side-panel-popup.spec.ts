@@ -26,7 +26,7 @@ async function openPopupInPanel(page: Page, extension: Extension) {
   return popup
 }
 
-test('a word’s popup in the side panel stays inside the panel at its narrowest width', async ({
+test('where the page can’t show a word’s card, its popup opens in the side panel and stays inside it at its narrowest width', async ({
   extension,
   page
 }) => {

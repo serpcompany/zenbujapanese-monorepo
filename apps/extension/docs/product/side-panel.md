@@ -20,8 +20,9 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
 - **Translate on its box,** to translate Japanese or English, with an Image row that opens Image
   Search: [`translate.md`](translate.md) (`panel.interaction.test.tsx`, "opens each tab on its own
   screen", "opens Image Search from the Image row on Translate").
-- **Player on the transcript** of the YouTube video in the tab the learner is on, and Recent under
-  it: [`video-tab.md`](video-tab.md). On a tab with no video, its empty state.
+- **Player on the transcript** of the YouTube video in the tab the learner is on:
+  [`video-tab.md`](video-tab.md). On a tab with no video, its empty state, with Recent under it;
+  Recent shows only then.
 - **Account on the account,** signed out until the extension signs in (#960, #961), and the
   profile's Words under it.
 
@@ -49,8 +50,10 @@ doesn't sign in yet (#961): Account is where it will show.
   page revealed, or to the tab (`panel.interaction.test.tsx`).
 - **Each tab keeps its own pages:** choosing another tab and coming back finds the page where it
   was (`panel.interaction.test.tsx`).
-- **The pages for a word, a kanji, and a form** are Word Detail's
-  ([`word-detail.md`](word-detail.md)).
+- **Image Search,** over Translate ([`translate.md`](translate.md)). A word's card and its full
+  entry don't open as pages: a word clicked in the panel opens its card on the page, one opened
+  with Enter or Space shows its card under its line, and Open Full Entry expands the card in place
+  ([`word-popup.md`](word-popup.md)).
 - **The test page,** in the test build only, shows its text and opens another page over itself.
   The release build refuses a route to it (`route.test.ts`).
 
@@ -69,7 +72,10 @@ doesn't sign in yet (#961): Account is where it will show.
   opens on them, and an open one moves to them; the tab it was on keeps its pages. The route is
   used once: the next time the panel opens by itself, it opens on its last tab with no page
   (`open-panel.interaction.test.tsx`, `src/service-worker/side-panel.test.ts`; in Chrome by an
-  agent on 2026-10-28, from a click on an extension page, closed and open).
+  agent on 2026-10-28, from a click on an extension page, closed and open). Since a word's card
+  expands in place (#1124), nothing in the extension asks for this: the agent harness docks the
+  panel with it (`.claude/skills/verify-extension/SKILL.md`), and it waits for the next page that
+  needs it.
 - **It opens on the tab it was last on,** in any window, and on Translate, the first tab, the
   first time (`open-panel.interaction.test.tsx`, `panel.interaction.test.tsx`).
 - **A last tab kept from the five tabs before opens on the tab that took it over:** Video or
@@ -84,8 +90,8 @@ doesn't sign in yet (#961): Account is where it will show.
 
 While the dictionary is being checked or downloaded, or has failed, every tab but Translate shows
 the dictionary's progress instead of its content, and the tab bar stays. Translate doesn't need
-the dictionary, but a word, kanji, or form page opened from it does: it shows the progress under
-its Back row, and Back finds Translate as it was. When it has failed, Try again starts it again,
+the dictionary, but a page opened over it waits for it: it shows the progress under its Back row,
+and Back finds Translate as it was. When it has failed, Try again starts it again,
 and the tab comes back once the dictionary is ready (`panel.interaction.test.tsx`).
 
 ## Width

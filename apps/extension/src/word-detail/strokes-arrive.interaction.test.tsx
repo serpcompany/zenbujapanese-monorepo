@@ -6,14 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { KanjiAnswer } from '../shared/answers'
 import type { DataState } from '../shared/data-state'
 import { readDataState } from '../shared/dictionary'
+import { settingDefaults } from '../shared/settings'
 import '../test/act-environment'
+import { fakeNotices, WithNotices } from '../test/notices'
 import { KanjiDetailPage } from './kanji-detail-page'
 import type { WordLookups } from './lookups'
-
-vi.mock('../shared/use-settings', async () => {
-  const { settingDefaults } = await import('../shared/settings')
-  return { useSettings: () => settingDefaults }
-})
 
 vi.mock('../shared/dictionary', async importOriginal => ({
   ...(await importOriginal<typeof import('../shared/dictionary')>()),
@@ -57,7 +54,14 @@ async function kanjiPage() {
   mounted.push(() => root.unmount())
   await act(async () =>
     root.render(
-      <KanjiDetailPage page={{ page: 'kanji', character: '要' }} open={vi.fn()} lookups={lookups} />
+      <WithNotices notices={fakeNotices().notices}>
+        <KanjiDetailPage
+          page={{ page: 'kanji', character: '要' }}
+          open={vi.fn()}
+          settings={settingDefaults}
+          lookups={lookups}
+        />
+      </WithNotices>
     )
   )
   await act(async () => vi.advanceTimersByTimeAsync(3000))

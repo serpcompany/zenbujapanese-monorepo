@@ -39,7 +39,8 @@ root, so a check refuses anything only one of them has:
   indirectly (`ui-needs-no-next`, `verify.json`).
 - **One Toaster.** shadcn's Sonner, `components/sonner.tsx`, is the one file that imports
   `sonner`. It takes the theme as a prop, so each client passes its own: the website its
-  `next-themes` theme, the extension's side panel the system's. Nothing else in the package
+  `next-themes` theme. The extension mounts none: Word Detail's notices show in the word popup
+  that holds it (#1124). Nothing else in the package
   reaches it, however indirectly (`ui-toasts-only-in-toaster`, `verify.json`), so Biome doesn't
   list `sonner` and lifts nothing for that file: a component takes a notice as a callback, and the
   client shows the toast. Sonner adds its styles to the page's head, so a shadow root mounts no
@@ -86,8 +87,8 @@ which may be an online one; the extension's roots (`mountPage` and `mountInShado
 `unsupported`, so it calls `onUnsupported` and speaks nothing (#1122's D4 is the extension's). An
 empty list after the wait gets the `lang`-only utterance on the website, and `unsupported` in the
 extension. `onUnsupported` also gets a `clearWhen`, which runs the clear it is given once a
-`voiceschanged` lists a local voice of the language, so the popup's notice and Word Detail's toast
-go and the next click speaks. `useWithoutLocalVoice` asks for
+`voiceschanged` lists a local voice of the language, so the popup's notice, on its card or in its
+full entry, goes and the next click speaks. `useWithoutLocalVoice` asks for
 `getVoices()` when a speaker mounts, so a click usually speaks inside its handler and keeps the user
 gesture. A click before the voices load waits for a `voiceschanged` that lists a local voice of the
 language, up to a second, and a later click drops that wait. Each click cancels what is being

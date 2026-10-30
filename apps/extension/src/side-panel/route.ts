@@ -2,16 +2,9 @@ export const panelTabs = ['translate', 'player', 'account'] as const
 
 export type PanelTab = (typeof panelTabs)[number]
 
-export type PanelPage =
-  | { page: 'word'; entSeq: number; entries?: number[] }
-  | { page: 'kanji'; character: string }
-  | { page: 'form'; form: string }
-  | { page: 'image-search' }
-  | { page: 'test'; text: string }
+export type PanelPage = { page: 'image-search' } | { page: 'test'; text: string }
 
 export type PanelRoute = { tab?: PanelTab; page?: PanelPage }
-
-export type OpenPanel = { target: 'service-worker'; openPanel: PanelRoute }
 
 export type MovePanel = { target: 'side-panel'; windowId: number; route: PanelRoute }
 
@@ -22,28 +15,13 @@ export type PanelPageProps<P extends PanelPage = PanelPage> = {
   open(page: PanelPage): void
 }
 
-type Sender = { sendMessage(message: OpenPanel): Promise<unknown> }
-
-export function openPanel(route: PanelRoute, sender: Sender = chrome.runtime): Promise<void> {
-  return sender.sendMessage({ target: 'service-worker', openPanel: route }).then(
-    () => undefined,
-    () => undefined
-  )
-}
-
 type Fields = Record<string, unknown>
 
 const isFields = (value: unknown): value is Fields => typeof value === 'object' && value !== null
 
-const isEntSeqList = (value: unknown) =>
-  value === undefined || (Array.isArray(value) && value.every(Number.isSafeInteger))
-
 const isTestBuild = () => import.meta.env.MODE === 'test'
 
 const pageShapes: { [K in PanelPage['page']]: (page: Fields) => boolean } = {
-  word: page => Number.isSafeInteger(page.entSeq) && isEntSeqList(page.entries),
-  kanji: page => typeof page.character === 'string',
-  form: page => typeof page.form === 'string',
   'image-search': () => true,
   test: page => isTestBuild() && typeof page.text === 'string'
 }

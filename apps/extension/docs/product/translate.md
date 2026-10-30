@@ -60,18 +60,32 @@ for the voice.
 ## Words in Japanese text
 
 When the text is Japanese, each dictionary word in it is underlined as on a page, and a click on
-one opens its word popup under the text ([`word-popup.md`](word-popup.md)). The popup's Open Full
-Entry opens the word's Word Detail over the tab; Escape or a press outside the popup puts it
-away. Escape gives focus back to the word; a press leaves focus where it lands. While the popup's
-••• menu is open, a press closes only the menu. The text has the reading aids turned on in
+one opens its card on the page in the tab the learner is on, as the word popup, beside the side
+panel's edge and level with the word; the panel shows no card ([`word-popup.md`](word-popup.md),
+A word's card from the side panel). Escape, in the panel or on the page, or a press outside it
+puts it away. A word opened from the keyboard, with Enter or Space, shows its card under the text
+instead, with focus in it, since focus can't move from the panel into the page (the owner's
+decision on #1124); Escape gives focus back to the word. Where that tab can't show one, such as a `chrome://` page, the Chrome Web Store, a
+PDF, or a site where Zenbu is off, the popup opens under the text instead, at its size on a page.
+There Escape or a press outside the popup puts it away; Escape gives focus back to the word, and
+a press leaves focus where it lands. While the popup's ••• menu is open, a press closes only the
+menu. Either way, the card's Open Full Entry expands it in place into the word's full entry; it
+opens no page over the tab. The text has the reading aids turned on in
 Settings: furigana over its kanji, a romaji line under it, and each word's short meaning ([`settings.md`](settings.md),
 Reading Aids). A meaning is in the muted foreground, half a rem from the word before it; one wider
 than its column is cut with an ellipsis, and its sense's full text is its tooltip and what a screen
 reader reads. Until the dictionary is ready, the text is plain; the tab asks again, waiting longer
 each time as page lookup does, and links the words once it is ready.
 
-Check: `src/translate/source-words.interaction.test.tsx`, and the tab's test, "links the words of
-a Japanese source…". The spacing, colour and tooltip are checked in the Player tab's transcript,
+Check: `src/translate/source-words.interaction.test.tsx` ("opens a word's card on the page…",
+"lets go of the word when the page closes its card…", "shows the card under the line, at the
+popup's size, when the page can't show one", "opens the word popup under the line where nothing
+can show it on the page, and Open Full Entry expands it there", "shows a word's card in the
+panel, with focus in it, when Enter opens it…", the same for Space, and "opens a word's card on
+the page from a click after a key opened one in the panel…"), and the tab's test, "links the
+words of a Japanese source to their card on the page, with no card in the panel", "shows a source
+word's card in the panel, with focus in it, when a key opens it" and "expands a source word's
+popup in place where the page can't show its card". The spacing, colour and tooltip are checked in the Player tab's transcript,
 which draws the same line (`e2e/transcript-meanings.spec.ts`).
 
 ## Downloading and unavailable
