@@ -1,9 +1,11 @@
+import type { Locator } from '@playwright/test'
 import { fill } from '@zenbu/dictionary-core/detail/template'
+import { playerCaptionLabels } from '../src/player-captions/labels.ts'
 import { labels } from '../src/side-panel/labels.ts'
 import { videoTabLabels } from '../src/video-tab/labels.ts'
 import { wordPopupLabels } from '../src/word-popup/labels.ts'
 import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
-import { openAt } from './watch-page.ts'
+import { caption, openAt, overlay, videoState } from './watch-page.ts'
 import { wordPopup } from './words-page.ts'
 
 test.use({ youTubeStandIn: true })
@@ -66,4 +68,54 @@ test('a word clicked in the transcript opens its card on the watch page, beside 
   await word.click()
   await expect(card).toBeVisible()
   await expect(panel.locator('[data-word-popup]')).toHaveCount(0)
+})
+
+const transcriptWord = (transcript: Locator) =>
+  transcript.locator('[data-line] [data-source] [data-word="要求"]').last()
+
+test('with Every Site given, one card answers a transcript word on YouTube, and Escape in the panel closes it', async ({
+  extension,
+  page
+}) => {
+  await openAt(page, 1)
+  const tabId = await watchTab(extension)
+  await extension.serviceWorker.evaluate(
+    id => chrome.scripting.executeScript({ target: { tabId: id }, files: ['page-lookup.js'] }),
+    tabId
+  )
+  const { panel, transcript } = await panelBeside(extension, tabId)
+  await transcriptWord(transcript).click()
+  await expect(wordPopup(page)).toHaveCount(1)
+  await panel.keyboard.press('Escape')
+  await expect(wordPopup(page)).toHaveCount(0)
+})
+
+test('a caption word clicked over a transcript word’s card takes its place, and the video stays paused until that card closes', async ({
+  extension,
+  page
+}) => {
+  await openAt(page, 1)
+  const { transcript } = await panelBeside(extension, await watchTab(extension))
+  await overlay(page).getByRole('button', { name: playerCaptionLabels.play }).click()
+  await expect.poll(async () => (await videoState(page)).paused).toBe(false)
+  await transcriptWord(transcript).click()
+  await expect(wordPopup(page)).toHaveCount(1)
+  await expect.poll(async () => (await videoState(page)).paused).toBe(true)
+  await page.evaluate(() => {
+    const video = document.querySelector('video')
+    if (!video) throw new Error('No video')
+    document.body.dataset.plays = '0'
+    video.addEventListener('play', () => {
+      document.body.dataset.plays = String(Number(document.body.dataset.plays) + 1)
+    })
+    video.currentTime = 1
+  })
+  await caption(page).locator('[data-word="要求"]').click()
+  await expect(wordPopup(page)).toHaveCount(1)
+  expect((await videoState(page)).paused).toBe(true)
+  await page.keyboard.press('Escape')
+  await expect(wordPopup(page)).toHaveCount(0)
+  await expect.poll(async () => (await videoState(page)).paused).toBe(false)
+  expect(await page.evaluate(() => document.body.dataset.plays)).toBe('1')
+  await page.evaluate(() => document.querySelector('video')?.pause())
 })

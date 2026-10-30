@@ -127,8 +127,12 @@ A word's card from the side panel: `e2e/transcript-card-on-page.spec.ts`, "a wor
 transcript opens its card on the watch page, beside the panel and level with its row, with none
 in the panel", on the YouTube stand-in with the panel page following that tab;
 `src/word-popup/page-popup.test.ts` (the panel's side: the panel's edge, shown and closed, a tab
-that can't, one card replacing another) and `src/word-popup/page-popup-server.test.ts` (the
-page's side: where it shows, what it refuses, closing either way); in the panel,
+that can't, one card replacing another, a card left on a tab the learner left) and
+`src/word-popup/page-popup-server.test.ts` (the page's side: where it shows, what it refuses,
+closing either way, one answer with both content scripts in a frame, and a card replaced by
+another part's, by hand-over or across a press); `e2e/transcript-card-on-page.spec.ts`, "with
+Every Site given, one card answers a transcript word on YouTube, and Escape in the panel closes
+it"; in the panel,
 `src/translate/source-words.interaction.test.tsx` ("opens a word's card on the page…", "lets go
 of the word when the page closes its card…", "shows the card under the line… when the page
 can't show one") and `e2e/side-panel-popup.spec.ts`, "where the page can't show a word's card,

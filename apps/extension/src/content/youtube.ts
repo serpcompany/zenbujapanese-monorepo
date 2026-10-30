@@ -48,6 +48,7 @@ servePagePopups({
   view: window,
   settings: pageSettings,
   on: settings => isZenbuOn(location.hostname, settings),
+  preferred: true,
   popup: settings =>
     wordPopupHost({
       report,

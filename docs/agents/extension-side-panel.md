@@ -82,7 +82,10 @@ and posts `{ target: 'word-popup', show: { text, ids, fromBottom, side } }`: `fr
 word's distance from the panel's bottom, and `side` is `chrome.sidePanel.getLayout()`'s, read only
 where it exists (Chrome 140; the extension's minimum is 138), else `right`. Both content scripts,
 `youtube.ts` and `page-lookup.ts`, serve the port with `servePagePopups`
-(`src/word-popup/page-popup-server.ts`): with Zenbu on for the site, the page's popup host opens
+(`src/word-popup/page-popup-server.ts`). With Every Site given, both run on YouTube and share the
+isolated world, so both hear one port: a frame keeps its servers under
+`Symbol.for('zenbujapanese.page-popup-servers')`, and only one answers, YouTube's (`preferred`)
+where it runs, else the first still running. With Zenbu on for the site, the page's popup host opens
 the card at the window's edge, `innerHeight - fromBottom` from its top
 (`edgePlacement` in `position.ts`), and answers `{ shown: true }`. The page closing the card
 disconnects the port; the panel disconnecting closes it.
@@ -91,11 +94,18 @@ disconnects the port; the panel disconnecting closes it.
   PDF viewer, a site where Zenbu is off, or a tab with no content script: the panel then draws the
   card inline under the word, at the popup's size or the line's width where that is narrower. A
   drop after `shown` is the card closing.
-- **One card at a time.** A newer request ends any not yet shown. One already shown is left for
-  the page to replace: its host hands the place to the next card, which tells the old one's port
-  it closed. Only the latest request's close or failure ends the rest. A page keeps one popup
-  across its hosts (`Symbol.for('zenbujapanese.shown-word-popup')`), handed over without a close
-  and open between, so the video doesn't play for a moment between two cards.
+- **One card at a time.** A newer request ends any not yet shown, and any shown on another tab.
+  One shown on the same tab is left for the page to replace: the server lets the old port go when
+  the next panel card shows. Only the latest request's close or failure ends the rest. A page
+  keeps one popup across its hosts (`Symbol.for('zenbujapanese.shown-word-popup')`), handed over
+  without a close and open between, so the video doesn't play for a moment between two cards.
+- **A card replaced on the page isn't closed to the panel.** When a caption word's or a page
+  word's card takes the panel card's place, the host's `closed` says `replaced`, and the server
+  keeps the port until the page's last card closes (the `close` event of `wordPopupEvents`). A
+  card closed during a press counts as replaced too, since a click on another word closes the
+  card on `pointerdown` and opens the next on `click`: the server waits for the press to end and
+  lets the port go then only if no card is open. So the transcript keeps the video paused while
+  any Zenbu card is open, and plays it when the last closes, if it was playing.
 - **A press keeps a card when it lands in it or a layer it opened.** Base UI draws a menu or
   sheet in a `[data-base-ui-portal]` outside the card, so the page's host holds a press whose
   `composedPath()` has the card, and any open portal layer (`hasOpenLayer` in `open-layer.ts`, on

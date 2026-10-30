@@ -16,9 +16,11 @@ const popupHostAttribute = 'data-zenbu-word-popup'
 
 type Where = { anchor: () => DOMRect } | { edge: Edge }
 
+export type CardGone = 'closed' | 'replaced'
+
 export type PopupTarget = Pick<WordPopupProps, 'text' | 'ids'> &
   Where & {
-    closed?: () => void
+    closed?: (how: CardGone) => void
   }
 
 export type PopupSettings = Omit<WordPopupProps, 'text' | 'ids'>
@@ -135,7 +137,11 @@ export function wordPopupHost({
   prepare,
   report
 }: Options): PopupHost {
-  let shown: { mount: ShadowMount; returnTo: Element | null; closed?: () => void } | null = null
+  let shown: {
+    mount: ShadowMount
+    returnTo: Element | null
+    closed?: PopupTarget['closed']
+  } | null = null
   const events = wordPopupEvents()
   const page = shownWordPopup()
 
@@ -161,7 +167,7 @@ export function wordPopupHost({
     doc.addEventListener('fullscreenchange', onFullscreen)
   }
 
-  function takeDown(): HandedOver | null {
+  function takeDown(how: CardGone): HandedOver | null {
     if (!shown) return null
     const { mount: mounted, returnTo, closed } = shown
     shown = null
@@ -170,14 +176,14 @@ export function wordPopupHost({
     doc.removeEventListener('pointerdown', onPointer, true)
     doc.removeEventListener('fullscreenchange', onFullscreen)
     mounted.unmount()
-    closed?.()
+    closed?.(how)
     return { returnTo }
   }
 
-  const self = { handOver: takeDown }
+  const self = { handOver: () => takeDown('replaced') }
 
   function close() {
-    const taken = takeDown()
+    const taken = takeDown('closed')
     if (!taken) return
     const { returnTo } = taken
     if (returnTo?.isConnected) (returnTo as HTMLElement).focus?.({ preventScroll: true })
@@ -190,7 +196,7 @@ export function wordPopupHost({
     const returnTo = previous ? previous.returnTo : handed ? handed.returnTo : doc.activeElement
     if (previous) {
       previous.mount.unmount()
-      previous.closed?.()
+      previous.closed?.('replaced')
     }
     const mounted = mount(
       <Placed at={placing(target)} doc={doc} view={view} held={layerOpen} gone={close}>

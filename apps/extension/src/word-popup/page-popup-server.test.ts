@@ -1,46 +1,34 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { type Settings, settingDefaults } from '../shared/settings'
-import { type FakePort, fakePort } from '../test/fake-port'
-import type { PagePopupPort } from './page-popup'
+import type { FakePort } from '../test/fake-port'
+import { fakePopupHost, fakeRuntime } from '../test/page-frame'
 import { servePagePopups } from './page-popup-server'
-import type { PopupHost, PopupTarget } from './popup-host'
+import { shownWordPopup } from './popup-events'
 
 const show = (fields: Record<string, unknown> = {}) => ({
   target: 'word-popup',
   show: { text: '要求', ids: ['youkyuu'], fromBottom: 240, side: 'right', ...fields }
 })
 
-function fakeHost() {
-  let current: PopupTarget | null = null
-  const host = {
-    open: vi.fn((target: PopupTarget) => {
-      const previous = current
-      current = target
-      previous?.closed?.()
-    }),
-    close: vi.fn(() => {
-      const previous = current
-      current = null
-      previous?.closed?.()
-    }),
-    holds: () => false,
-    shown: () => current
-  }
-  return host satisfies PopupHost
-}
+const stops: (() => void)[] = []
 
-function aPage({ on = true, ask = async (): Promise<Settings> => settingDefaults } = {}) {
-  const listeners = new Set<(port: PagePopupPort) => void>()
-  const host = fakeHost()
+afterEach(() => {
+  for (const stop of stops.splice(0)) stop()
+  shownWordPopup().current = null
+})
+
+function aPage({
+  on = true,
+  ask = async (): Promise<Settings> => settingDefaults,
+  frame = fakeRuntime(),
+  preferred = false
+} = {}) {
+  const host = fakePopupHost()
+  const view = Object.assign(new EventTarget(), { innerHeight: 800, setTimeout })
   let changed: (settings: Settings) => void = () => {}
   const stop = servePagePopups({
-    runtime: {
-      onConnect: {
-        addListener: listener => void listeners.add(listener),
-        removeListener: listener => void listeners.delete(listener)
-      }
-    },
-    view: { innerHeight: 800 } as Window,
+    runtime: frame.runtime,
+    view: view as unknown as Window,
     settings: {
       ask,
       onChanged: listener => {
@@ -49,14 +37,18 @@ function aPage({ on = true, ask = async (): Promise<Settings> => settingDefaults
       }
     },
     on: settings => on && settings['readingAids.furigana'],
-    popup: () => host
+    popup: () => host,
+    preferred
   })
-  const connect = (name?: string) => {
-    const port = fakePort(name)
-    for (const listener of listeners) listener(port)
-    return port
+  stops.push(stop)
+  return {
+    host,
+    view,
+    connect: frame.connect,
+    stop,
+    listeners: frame.listeners,
+    change: (next: Settings) => changed(next)
   }
-  return { host, connect, stop, listeners, change: (next: Settings) => changed(next) }
 }
 
 const settled = () => new Promise(done => setTimeout(done, 0))
@@ -95,6 +87,7 @@ describe('the page’s side of a card the side panel asks for', () => {
     await asked(off)
     expect(off.disconnected).toBe(true)
     expect(page.host.open).not.toHaveBeenCalled()
+    page.stop()
 
     const unread = aPage({ ask: () => Promise.reject(new Error('gone')) })
     const early = unread.connect()
@@ -144,5 +137,85 @@ describe('the page’s side of a card the side panel asks for', () => {
     expect(page.listeners.size).toBe(0)
     expect(page.host.close).toHaveBeenCalledOnce()
     expect(port.disconnected).toBe(true)
+  })
+
+  it('answers once in a frame where both content scripts serve cards, through the YouTube script’s, whichever starts first', async () => {
+    for (const youtubeFirst of [false, true]) {
+      const frame = fakeRuntime()
+      const start = (preferred: boolean) => aPage({ frame, preferred })
+      const first = start(youtubeFirst)
+      const second = start(!youtubeFirst)
+      const [youtube, pageLookup] = youtubeFirst ? [first, second] : [second, first]
+      const port = frame.connect()
+      await asked(port)
+      expect(youtube.host.open).toHaveBeenCalledOnce()
+      expect(pageLookup.host.open).not.toHaveBeenCalled()
+      expect(port.posted).toEqual([{ target: 'word-popup', shown: true }])
+      expect(port.disconnected).toBe(false)
+
+      youtube.stop()
+      const later = frame.connect()
+      await asked(later)
+      expect(pageLookup.host.open).toHaveBeenCalledOnce()
+      expect(later.posted).toEqual([{ target: 'word-popup', shown: true }])
+      pageLookup.stop()
+    }
+  })
+
+  it('keeps the panel’s request while another part’s card takes the card’s place, until the last card closes', async () => {
+    const page = aPage()
+    const captions = fakePopupHost()
+    const port = page.connect()
+    await asked(port)
+    captions.open({ text: '要る', ids: ['iru'], edge: { side: 'right', top: 0 } })
+    expect(page.host.shown()).toBeNull()
+    expect(port.disconnected).toBe(false)
+    captions.close()
+    expect(port.disconnected).toBe(true)
+
+    const again = page.connect()
+    await asked(again)
+    captions.open({ text: '要る', ids: ['iru'], edge: { side: 'right', top: 0 } })
+    again.drop()
+    expect(captions.shown()).not.toBeNull()
+    expect(page.host.close).not.toHaveBeenCalled()
+  })
+
+  it('lets a replaced request go when the panel asks for another card', async () => {
+    const page = aPage()
+    const captions = fakePopupHost()
+    const first = page.connect()
+    await asked(first)
+    captions.open({ text: '要る', ids: ['iru'], edge: { side: 'right', top: 0 } })
+    const second = page.connect()
+    await asked(second, show({ text: '要る', ids: ['iru'] }))
+    expect(first.disconnected).toBe(true)
+    expect(second.disconnected).toBe(false)
+    expect(captions.shown()).toBeNull()
+  })
+
+  it('keeps the panel’s request across a press that closes its card and opens another, and lets go after a press that opens none', async () => {
+    const page = aPage()
+    const captions = fakePopupHost()
+    const press = (type: string) => page.view.dispatchEvent(new Event(type))
+    const port = page.connect()
+    await asked(port)
+    press('pointerdown')
+    page.host.close()
+    captions.open({ text: '要る', ids: ['iru'], edge: { side: 'right', top: 0 } })
+    press('pointerup')
+    await settled()
+    expect(port.disconnected).toBe(false)
+    captions.close()
+    expect(port.disconnected).toBe(true)
+
+    const again = page.connect()
+    await asked(again)
+    press('pointerdown')
+    page.host.close()
+    expect(again.disconnected).toBe(false)
+    press('pointerup')
+    await settled()
+    expect(again.disconnected).toBe(true)
   })
 })

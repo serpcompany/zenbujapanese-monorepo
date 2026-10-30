@@ -33,7 +33,9 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   page in a new tab, fulfilled by `context.route` and taken off `outsideRequests`
   (`word-popup.spec.ts`). A transcript word's card on the stand-in watch page: the side panel
   page in a tab of its own, at 380 × 720, whose `chrome.tabs.query` for the active tab answers
-  the watch tab, so its port reaches the watch page's content script
+  the watch tab, so its port reaches the watch page's content script; with `page-lookup.js` run
+  in the watch tab as Every Site would, one card answers; and a caption word's card taking a
+  transcript word's place keeps the video paused until it closes
   (`transcript-card-on-page.spec.ts`). The
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
