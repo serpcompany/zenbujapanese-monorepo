@@ -1,10 +1,10 @@
 import type { MutationResult, SyncedChange } from '@zenbu/account-rules/account-copy'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { chosenWith, moved } from '../../settings/frequency-order'
 import { readSettings, settingDefaults } from '../../shared/settings'
 import { json } from '../../test/account-stand-in'
 import { appliedTo, type Sync, syncAnswer } from '../../test/copy-stand-in'
-import { answeringSync, copyWorld } from '../../test/copy-world'
+import { answeringSync, copyWorld, gated } from '../../test/copy-world'
 
 const setting = (name: string, value: unknown, version = 1): SyncedChange => ({
   entity: 'setting',
@@ -101,6 +101,61 @@ describe("the copy's settings", () => {
     await world.settled()
     expect(settingsSent(world)).toEqual([])
     expect(world.settings.items).toMatchObject({ 'readingAids.romaji': true })
+  })
+
+  describe('changed here while a sync is on its way', () => {
+    async function changedWhileSending(theirs: SyncedChange[]) {
+      const { gate, open } = gated()
+      let request = 0
+      const world = copyWorld(
+        answeringSync(async body => {
+          request += 1
+          if (request === 1) {
+            await gate
+            return json(200, syncAnswer(appliedTo(body), theirs))
+          }
+          const current = theirs[0]
+          return json(
+            200,
+            syncAnswer(
+              current
+                ? body.mutations.map(sent => ({
+                    id: sent.id,
+                    status: 'conflict',
+                    version: current.version,
+                    current
+                  }))
+                : appliedTo(body, 4)
+            )
+          )
+        })
+      )
+      await world.signIn()
+      const sending = world.settled()
+      await vi.waitFor(() => expect(world.syncs()).toHaveLength(1))
+      await world.settings.store.set({ 'readingAids.romaji': true })
+      const changed = world.copy.settingsChanged()
+      await vi.waitFor(() => expect(world.storage.meta()?.queue).toHaveLength(1))
+      open()
+      await Promise.all([sending, changed])
+      await world.settled()
+      return world
+    }
+
+    it("takes the account's value when the answer changes the same setting", async () => {
+      const world = await changedWhileSending([setting('readingAids.romaji', false, 3)])
+      expect(world.settings.items).toMatchObject({ 'readingAids.romaji': false })
+      expect(world.storage.meta()?.queue).toEqual([])
+    })
+
+    it("sends the browser's value when the answer leaves that setting alone", async () => {
+      const world = await changedWhileSending([])
+      expect(settingsSent(world)).toMatchObject([
+        { entityId: 'readingAids.romaji', baseVersion: 0, fields: { value: true } }
+      ])
+      expect(world.settings.items).toMatchObject({ 'readingAids.romaji': true })
+      expect(world.storage.meta()?.queue).toEqual([])
+    })
   })
 
   it('brings the translation language and source down, and never sends either', async () => {
