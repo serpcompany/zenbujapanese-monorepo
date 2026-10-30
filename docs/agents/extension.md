@@ -71,8 +71,10 @@ on the toolbar icon.
   `pnpm check-package` fails a zip whose version isn't `package.json`'s or isn't above 1.1.0, a
   store zip with a `key` or an unpacked one whose `key` gives another ID, a zip missing a page or
   a file the manifest names, one holding the test content script or a source map, and one whose
-  `homepage_url` isn't its environment's website or whose files name the other environment's
-  hosts, or any `.js` that still holds a `__ZENBU_` setting the build didn't fill in.
+  `homepage_url` isn't its environment's website, whose `externally_connectable` lets any page
+  but that website's message the extension (the test build's `localhost` and `127.0.0.1` among
+  them), or whose files name the other environment's hosts, or any `.js` that still holds a
+  `__ZENBU_` setting the build didn't fill in.
 
 ## Code layout
 
