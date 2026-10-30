@@ -116,14 +116,13 @@ describe('syncing the copy', () => {
     await expect(world.read()).resolves.toMatchObject({ knownWords: [], unsynced: 0 })
   })
 
-  it("sends a change made while a sync is on its way at the account's version when the one before it conflicted", async () => {
+  it("keeps the account's value when a change made while the one before it was on its way conflicts too", async () => {
     const { gate, open } = gated()
     const world = copyWorld(
       answeringSync(async body => {
-        const sent = body.mutations[0]
-        if (sent?.operation === 'mark') await gate
+        if (body.mutations[0]?.operation === 'mark') await gate
         const results = body.mutations.map(each =>
-          each.operation === 'clear' && each.baseVersion === 3
+          each.baseVersion === 3
             ? { id: each.id, status: 'applied' as const, version: 4 }
             : { id: each.id, status: 'conflict' as const, version: 3, current: knownWord(3) }
         )
@@ -134,8 +133,8 @@ describe('syncing the copy', () => {
     await world.change({ change: 'clear', item: word.item })
     open()
     await world.settled()
-    expect(world.sent().at(-1)).toMatchObject({ operation: 'clear', baseVersion: 3 })
-    await expect(world.read()).resolves.toMatchObject({ knownWords: [], unsynced: 0 })
+    expect(world.sent().at(-1)).toMatchObject({ operation: 'clear', baseVersion: 0 })
+    await expect(world.read()).resolves.toMatchObject({ knownWords: [word], unsynced: 0 })
   })
 
   it('sends at most fifty changes in one request, and the rest in the next', async () => {
