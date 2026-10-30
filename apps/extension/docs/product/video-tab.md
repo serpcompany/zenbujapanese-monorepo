@@ -82,7 +82,7 @@ video only once it is shown").
 | Behavior | Check |
 | --- | --- |
 | A click on a word pauses the video and opens the word's card in a sheet over the lower half of the tab, with the word in blue. Its line's card moves to the middle of the space above the sheet, and the notices above the cards, such as the English download, are put away while the sheet shows, so the line fits. No card opens on the watch page. | Transcript: "opens over the lower half of the tab from a click on a word…", "keeps the playing card in view, and moves the card of a word opened…", "puts the notices above the cards away while it shows…"; `e2e/transcript-word-sheet.spec.ts`: "a word clicked in the transcript pauses the video and opens its card in a sheet…" |
-| Its X, or Esc, closes it and plays the video again, only if it was playing. | Transcript: "closes from its X…", "closes from Esc…", "leaves a paused video paused when it closes"; `e2e/transcript-word-sheet.spec.ts` |
+| Its X, or Esc, closes it and plays the video again, only if it was playing. Esc pressed while another tab shows leaves it open and the video paused. | Transcript: "closes from its X…", "closes from Esc…", "leaves a paused video paused when it closes", "stays open, and keeps the video paused, through Esc pressed while the Player tab is hidden"; `e2e/transcript-word-sheet.spec.ts` |
 | Its card is the Word popup's, with the same ••• menu: Status, Add to List… and Add Note save to the account, and signed out, Known says to sign in, in the sheet. | `e2e/transcript-word-sheet.spec.ts`: "a transcript word's sheet offers the ••• menu's Status…" |
 | Its handle switches it between half and full height. | Transcript: "goes to full height from its handle, and back to half"; `e2e/transcript-word-sheet.spec.ts` |
 | Another word shows in the same sheet, at the same height, and the video plays again only once the sheet closes. | Transcript: "shows another word in the same sheet…" |
@@ -137,8 +137,8 @@ Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing on
 the player: the ••• menu marks a word Known, and the transcript follows it, but the caption doesn't
 yet (#1187). Where the Player tab differs from the canvas:
 
-- The video's title stays in the tab, not the header, which is #1184's.
-- No scrubber and no length: Playback has no duration.
+- The video's title stays in the tab, not the header, which is #1208's.
+- No scrubber and no length: Playback has no duration (#1207).
 - Furigana is 12 pixels, the smallest the extension draws (`furigana` in `@zenbu/ui`'s theme), not
   the canvas's .62em (#1206).
 - A press outside the sheet, other than on a word or a card, doesn't close it (#1205).

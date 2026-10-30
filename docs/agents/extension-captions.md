@@ -59,8 +59,9 @@ Netflix's controls go through Netflix's player (Netflix, below). The follower re
 holds the time and ignores the controls while the player has `ad-showing`, then puts the
 learner's speed back, also when the site puts its own back after a seek, and hides the site's
 own captions with an attribute on the player and one style rule. `currentLine` (`follower.ts`) finds the line playing at a time, and `playingLine` the
-line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. Every
-consumer of a follower uses `playingLine`. `ended` is the `<video>` element's `ended` (false
+line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. The Player
+tab follows with `currentCard` (`panel-line-controls.ts`), not `playingLine`: it keeps the card the
+learner moved to, and the first card before the first line starts. `ended` is the `<video>` element's `ended` (false
 during an ad); #964 added it (PR #1108, amending the interface) because the core leaves the last
 line's end unclamped, so a last line can end after the video does.
 

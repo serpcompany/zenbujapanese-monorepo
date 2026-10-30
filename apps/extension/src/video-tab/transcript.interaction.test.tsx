@@ -356,6 +356,28 @@ describe('a word’s sheet', () => {
     expect(putAway()).toBe(false)
   })
 
+  it('stays open, and keeps the video paused, through Esc pressed while the Player tab is hidden', async () => {
+    const shown = await pausedForAWord()
+    await shown.show(false)
+    await pressEscape()
+    expect(sheet()).not.toBeNull()
+    expect(shown.video.controls).toEqual([{ type: 'pause' }])
+    await shown.show(true)
+    await pressEscape()
+    expect(sheet()).toBeNull()
+    await playsAgain(shown)
+  })
+
+  it('pauses the video for no word before the settings load, since none shows a sheet', async () => {
+    vi.spyOn(chrome.storage.local, 'get').mockImplementation(
+      (() => new Promise(() => undefined)) as never
+    )
+    const shown = await transcript()
+    await click(shown.panel.querySelector('[data-line] [data-source]'))
+    expect(sheet()).toBeNull()
+    expect(shown.video.controls).toEqual([])
+  })
+
   it('shows another word in the same sheet at the same height, and plays again only once it closes', async () => {
     const shown = await pausedForAWord()
     await click(sheetButton(videoTabLabels.fullHeight))

@@ -1,6 +1,6 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import type { Settings } from '../shared/settings'
+import { type Settings, settingsFrom } from '../shared/settings'
 import type { Playback } from '../video/follower'
 import { CaptionCard } from './caption-card'
 import { ControlBar } from './control-bar'
@@ -12,6 +12,8 @@ import { captionGlosses, useKnownWords } from './word-marks'
 import { WordSheet } from './word-sheet'
 
 const sheetGap = 16
+
+const defaultSettings = settingsFrom({})
 
 const still = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true
 
@@ -80,7 +82,7 @@ export function Transcript({
   const latest = useRef({ playback, ready: false })
   latest.current = { playback, ready: view.ready && !view.ad }
   const playing = useCallback(() => latest.current.playback?.playing === true, [])
-  const sheet = useWordSheet(video, playing, services.pagePopup)
+  const sheet = useWordSheet(video, playing, shown, services.pagePopup)
   const glosses = useMemo(() => captionGlosses(services), [services])
   const known = useKnownWords(services)
   const at = currentCard(lines, playback, view)
@@ -126,11 +128,11 @@ export function Transcript({
           ))}
         </ol>
       </div>
-      {chosen && settings ? (
+      {chosen ? (
         <WordSheet
           ref={sheetRef}
           opened={chosen}
-          settings={settings}
+          settings={settings ?? defaultSettings}
           services={services}
           toggleFull={sheet.toggleFull}
           dismiss={sheet.dismiss}

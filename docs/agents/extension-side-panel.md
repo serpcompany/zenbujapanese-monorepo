@@ -101,7 +101,7 @@ disconnects the port; the panel disconnecting closes it.
   One shown on the same tab is left for the page to replace: the server lets the old port go when
   the next panel card shows. Only the latest request's close or failure ends the rest. A request
   ended by another, or by the latest's failure, hears `closed`, a microtask later so a row's card
-  closing and the next row's opening don't play the video between them; the owner's own close
+  closing and the next row's opening on Translate don't play the video between them; the owner's own close
   tells it nothing. A page
   keeps one popup across its hosts (`Symbol.for('zenbujapanese.shown-word-popup')`), handed over
   without a close and open between, so the video doesn't play for a moment between two cards.
@@ -110,8 +110,9 @@ disconnects the port; the panel disconnecting closes it.
   keeps the port until the page's last card closes (the `close` event of `wordPopupEvents`). A
   card closed during a press counts as replaced too, since a click on another word closes the
   card on `pointerdown` and opens the next on `click`: the server waits for the press to end and
-  lets the port go then only if no card is open. So the transcript keeps the video paused while
-  any Zenbu card is open, and plays it when the last closes, if it was playing.
+  lets the port go then only if no card is open. So the video stays paused while any card on the
+  page is open, and plays when the last closes, if it was playing. The Player tab's words open in
+  its sheet, not on the page (below).
 - **A card the panel shows itself holds the page's place.** A word opened with Enter or Space
   posts `show` with `inPanel: true`: the server hands over the page's card without opening one,
   keeps its pause, holds the shown slot, and answers `shown`. A card on the page taking the slot
@@ -137,7 +138,9 @@ disconnects the port; the panel disconnecting closes it.
   `inPanel: true` once while the sheet shows any word: the page takes down a card it shows and
   keeps its pause. `replaced` hides the sheet and keeps the pause the sheet owes; `closed` ends
   it and plays the video, if it was playing; a tab that can't hold a card leaves the sheet open.
-  A word opened again after `replaced` asks again and takes the place back.
+  A word opened again after `replaced` asks again and takes the place back. Escape closes the sheet
+  only while the Player tab shows: from a hidden Player tab it leaves the sheet open and the video
+  paused.
 
 ## The header's site
 

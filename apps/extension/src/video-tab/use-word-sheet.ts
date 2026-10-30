@@ -22,6 +22,7 @@ type PageHold = { id: number; onPage: boolean; end(): void }
 export function useWordSheet(
   video: Player,
   playing: () => boolean,
+  shown: boolean,
   pagePopup?: PagePopup
 ): WordSheetState {
   const [opened, setOpened] = useState<OpenedWord | null>(null)
@@ -87,13 +88,13 @@ export function useWordSheet(
   const showing = opened !== null
   const { dismiss } = actions
   useEffect(() => {
-    if (!showing) return
+    if (!showing || !shown) return
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || event.defaultPrevented || hasOpenLayer(document)) return
       dismiss()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [showing, dismiss])
+  }, [showing, shown, dismiss])
   return { opened, ...state }
 }
