@@ -60,7 +60,8 @@ for the voice.
 ## Words in Japanese text
 
 When the text is Japanese, each dictionary word in it is underlined, half a rem from the word
-before it as in the Player tab's transcript ([`video-tab.md`](video-tab.md), Words), and a click on
+before it as in the Player tab's transcript ([`video-tab.md`](video-tab.md), Words), with no space
+at the start of a wrapped line or after leading punctuation, and a click on
 one opens its card on the page in the tab the learner is on, as the word popup, beside the side
 panel's edge and level with the word; the panel shows no card ([`word-popup.md`](word-popup.md),
 A word's card from the side panel). Escape, in the panel or on the page, or a press outside it
@@ -86,8 +87,10 @@ panel, with focus in it, when Enter opens it…", the same for Space, and "opens
 the page from a click after a key opened one in the panel…"), and the tab's test, "links the
 words of a Japanese source to their card on the page, with no card in the panel", "shows a source
 word's card in the panel, with focus in it, when a key opens it" and "expands a source word's
-popup in place where the page can't show its card". The spacing, colour and tooltip are checked in the Player tab's transcript,
-which draws the same line (`e2e/transcript-meanings.spec.ts`).
+popup in place where the page can't show its card". The words' spacing, with Word Meanings off
+and on, is checked on the tab itself: `e2e/side-panel-popup.spec.ts`, "starts each line of a
+wrapped Japanese source at its first word…". The meanings' colour and tooltip are checked in the
+Player tab's transcript, which draws the same line (`e2e/transcript-meanings.spec.ts`).
 
 ## Downloading and unavailable
 

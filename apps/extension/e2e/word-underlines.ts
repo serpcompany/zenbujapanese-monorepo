@@ -33,17 +33,55 @@ async function expectEachWordApart(lines: Locator, words: readonly string[][]) {
   }
 }
 
+export async function setWordMeanings(extension: Extension, surface: Locator, on: boolean) {
+  await changeSettings(extension, { 'readingAids.wordMeanings': on })
+  await expect(surface.locator('[data-reading-aids]').first()).toHaveAttribute(
+    'data-word-meanings',
+    on ? 'on' : 'off'
+  )
+}
+
 export async function expectWordsApartWithMeaningsOffAndOn(
   extension: Extension,
   surface: Locator,
   words: readonly string[][]
 ) {
   const lines = surface.locator('[data-source]')
+  await setWordMeanings(extension, surface, false)
   await expect(surface.locator('[data-word]')).toHaveCount(words.flat().length)
   await expectEachWordApart(lines, words)
   await surface.screenshot({ path: test.info().outputPath('word-meanings-off.png') })
-  await changeSettings(extension, { 'readingAids.wordMeanings': true })
+  await setWordMeanings(extension, surface, true)
   await expect(surface.locator('[data-aid="meaning"]')).toHaveCount(words.flat().length)
   await expectEachWordApart(lines, words)
   await surface.screenshot({ path: test.info().outputPath('word-meanings-on.png') })
+}
+
+type LineStart = { word: string; after: 'line start' | 'text'; lead: number }
+
+export function wordsStartingALineOrAfterText(line: Locator) {
+  return line.evaluate(source => {
+    const style = getComputedStyle(source)
+    const lineStart =
+      source.getBoundingClientRect().left +
+      Number.parseFloat(style.borderLeftWidth) +
+      Number.parseFloat(style.paddingLeft)
+    const starts: LineStart[] = []
+    for (const piece of source.children) {
+      const word = piece.querySelector<HTMLElement>('[data-word]')?.dataset.word
+      const first = piece.getClientRects()[0]
+      if (!word || !first) continue
+      const before = piece.previousElementSibling
+      const end = before ? [...before.getClientRects()].at(-1) : undefined
+      const sameLine = end !== undefined && first.top < end.bottom && first.bottom > end.top
+      if (sameLine && before?.querySelector('[data-word]')) continue
+      const lead = first.left - (sameLine ? end.right : lineStart)
+      starts.push({
+        word,
+        after: sameLine ? 'text' : 'line start',
+        lead: Math.round(lead * 10) / 10
+      })
+    }
+    return starts
+  })
 }

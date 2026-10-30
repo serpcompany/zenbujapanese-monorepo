@@ -71,8 +71,11 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   its backgrounds (at least 4.5:1); a cut meaning's full text is its title and in the
   accessibility tree. With Word Meanings off and then on, each word's box, which carries its
   underline, is the meanings' gap from the next on its line, at the same splits either way
-  (`e2e/word-underlines.ts`, which the caption's test uses too); each state's screenshot goes to
-  its test's folder. Each width's screenshots, light and dark, and `contrast.json` go to its
+  (`e2e/word-underlines.ts`, which the caption's and the Translate tab's tests use too); each
+  state's screenshot goes to its test's folder. The Translate tab's test translates a source that
+  opens with an ellipsis and wraps at 360 pixels, and, with Word Meanings off and on, measures that
+  each wrapped line starts at its first word and the first word sits right after the ellipsis
+  (`side-panel-popup.spec.ts`). Each width's screenshots, light and dark, and `contrast.json` go to its
   test's folder under `e2e/results/` (`transcript-meanings.spec.ts`). Both contrast checks use
   `e2e/contrast.ts`.
 - **A page's word meanings:** `words.html` with Word Meanings on, light and dark, and a paragraph
