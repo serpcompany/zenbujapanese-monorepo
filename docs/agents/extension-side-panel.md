@@ -88,7 +88,8 @@ disconnects the port; the panel disconnecting closes it.
 
 - **A port that drops before `shown` is a tab that can't,** such as `chrome://`, the Web Store, a
   PDF viewer, a site where Zenbu is off, or a tab with no content script: the panel then draws the
-  card inline under the word, at the popup's size. A drop after `shown` is the card closing.
+  card inline under the word, at the popup's size or the line's width where that is narrower. A
+  drop after `shown` is the card closing.
 - **One card at a time.** A newer request ends any not yet shown. One already shown is left for
   the page to replace: its host hands the place to the next card, which tells the old one's port
   it closed. Only the latest request's close or failure ends the rest. A page keeps one popup

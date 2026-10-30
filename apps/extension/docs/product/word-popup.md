@@ -55,8 +55,8 @@ the page close it. A page shows one popup: a click on a word on the page puts th
 the place of the panel's, and a panel word's in the place of the page's.
 
 Where the tab can't show one, the card opens in the panel instead, under the word's line, at
-this popup's size: on a `chrome://` page, the Chrome Web Store, a PDF, a site where Zenbu is off,
-and a tab with no Zenbu in it, such as one opened before Zenbu was installed or updated. There
+this popup's size or the line's width where that is narrower: on a `chrome://` page, the Chrome
+Web Store, a PDF, a site where Zenbu is off, and a tab with no Zenbu in it, such as one opened before Zenbu was installed or updated. There
 Escape and a press outside it, its menu, or the line's words close it. Escape gives focus back to
 the word, without scrolling; a press leaves focus where it lands. While its menu is open, a press
 anywhere closes only the menu. A card never shows on the page and in the panel at once.
