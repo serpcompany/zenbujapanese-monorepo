@@ -369,6 +369,14 @@ function refusingWhen(refuses: (body: Sync) => Response | null) {
   return { sync, up }
 }
 
+type RefusedAlone = { up: string[]; marked: (typeof word)[]; refused?: string; status: number }
+
+async function expectRefusedAlone(world: CopyWorld, { up, marked, refused, status }: RefusedAlone) {
+  expect(world.failures).toEqual([`account-sync ${status}`])
+  expect(up.toSorted()).toEqual(marked.map(each => each.item).filter(item => item !== refused))
+  await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+}
+
 async function oneRefusedUntilFixed(marked: (typeof word)[], at: number) {
   const refused = marked[at]?.item
   let fixed = false
@@ -400,11 +408,7 @@ describe("the copy's sync when the service refuses a whole request", () => {
     )
     const world = copyWorld(service.sync)
     await queuedWhileSignedOut(world, marked)
-    expect(world.failures).toEqual(['account-sync 400'])
-    expect(service.up.toSorted()).toEqual(
-      marked.map(each => each.item).filter(item => item !== refused)
-    )
-    await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+    await expectRefusedAlone(world, { up: service.up, marked, refused, status: 400 })
     const asked = world.syncs().length
     await world.change({ change: 'mark', ...otherWord })
     await vi.waitFor(() => expect(world.syncs().length).toBeGreaterThan(asked))
@@ -447,6 +451,29 @@ describe("the copy's sync when the service refuses a whole request", () => {
     await world.stopped()
     expect(service.up).not.toContain(refused)
     await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
+  })
+
+  it.each([
+    400, 413
+  ])('splits a %i after a failure that left every change marked, until it refuses one alone', async status => {
+    const marked = words(3)
+    const refused = marked[1]?.item
+    let unavailable = true
+    const service = refusingWhen(body => {
+      if (body.mutations.length === 0) return null
+      if (unavailable) {
+        unavailable = false
+        return refusal(503, 'unavailable')
+      }
+      const ids = body.mutations.map(mutation => mutation.entityId)
+      return ids.includes(refused ?? '') ? refusal(status, 'refused') : null
+    })
+    const world = copyWorld(service.sync)
+    await queuedWhileSignedOut(world, marked)
+    expect(world.syncs()).toHaveLength(2)
+    await world.settled()
+    expect(world.syncs().length).toBeLessThan(10)
+    await expectRefusedAlone(world, { up: service.up, marked, refused, status })
   })
 
   it('sends fewer at a time when the body is too large, until every change is up', async () => {

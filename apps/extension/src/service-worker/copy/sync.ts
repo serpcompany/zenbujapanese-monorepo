@@ -97,12 +97,11 @@ export function accountSync(parts: SyncParts) {
     return 'stopped'
   }
 
-  async function unsent(batch: Batch, refusedWith?: number) {
-    const ids = new Set(batch.mutations.map(mutation => mutation.id))
+  async function unsent(clearing: Set<string>, refusedWith?: number) {
     await copy.edit(draft => {
       for (const queued of draft.meta?.queue ?? []) {
-        if (!ids.has(queued.mutation.id)) continue
-        if (batch.marked.has(queued.mutation.id)) queued.sent = false
+        if (!clearing.has(queued.mutation.id)) continue
+        queued.sent = false
         if (refusedWith !== undefined) queued.refusedWith = refusedWith
       }
     })
@@ -110,7 +109,7 @@ export function accountSync(parts: SyncParts) {
 
   async function refusedBatch(status: number, batch: Batch): Promise<Step> {
     const alone = batch.mutations.length === 1
-    await unsent(batch, alone ? status : undefined)
+    await unsent(new Set(batch.mutations.map(mutation => mutation.id)), alone ? status : undefined)
     if (alone) parts.reportFailure('account-sync', status)
     else atMost = Math.ceil(batch.mutations.length / 2)
     return 'more'
@@ -153,7 +152,7 @@ export function accountSync(parts: SyncParts) {
     }
     if (answer.status === 0 || answer.status >= 500) return backOff(answer.status === 0)
     if (answer.status === 403 || answer.status === 404) {
-      await unsent(batch)
+      await unsent(batch.marked)
       parts.reportFailure('account-sync', answer.status)
       return backOff(false)
     }
