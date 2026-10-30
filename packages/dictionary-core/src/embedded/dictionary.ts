@@ -3,6 +3,8 @@ import { youTubeCaptions, youTubeTranslatedCaptions, youTubeVideo } from '../cap
 import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter } from '../detail/text'
+import { progressDays } from '../progress/days'
+import { knownByDate } from '../progress/known-by-date'
 import { progressStats } from '../progress/stats'
 import { notesInSearch } from '../results/notes'
 import { lookupSegments, type MorphologyAnalysis } from '../search/morphology'
@@ -94,6 +96,8 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     },
     sourceCredits: creditsShownBy,
     progressStats: request => progressStats(JSON.parse(request)),
+    progressDays: request => progressDays(JSON.parse(request)),
+    knownByDate: request => knownByDate(JSON.parse(request)),
     youTubeVideo,
     youTubeCaptions,
     youTubeTranslatedCaptions: request => {

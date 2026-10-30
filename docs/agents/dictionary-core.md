@@ -75,10 +75,10 @@ The app asks `embedded/` for each of these; [The app's side](#the-apps-side) say
   `tokenize` does: `word_position` is 1-based, in UTF-16 code units, as the app's `NSRange` reads
   it. Every client's is the core's own ([The tokenizer](#the-tokenizer)): the service builds it
   from the files it read and passes it, and the app hands the embedded host the files.
-- `morphology` is an analyzer such as the app's Sudachi (a 217 MB dictionary). It answers its own
-  morphemes, ranged in code points: Mode C `words`, which search looks up (`lookupSegments`), and
-  the app's Mode A `pieces`, nested in them to link (`analyzedWords`). Tags go most general first
-  (名詞, 動詞), `*` or an empty `dictionaryForm` is none, and an analysis that throws finds no words.
+- `morphology` is an analyzer such as the app's Sudachi (217 MB). Its morphemes, in code points, are
+  Mode C `words`, which search looks up as Discovered Words (`lookedUpWords`, `isOneWordPhrase`,
+  `namedItem`), and Mode A `pieces`, nested in them to link (`analyzedWords`). Tags go most general
+  first, `*` or an empty `dictionaryForm` is none, and an analysis that throws finds no words.
 
 ## Embedded
 
@@ -149,9 +149,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
   | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
   | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
-  | `phraseNote` | A phrase with its entry's meanings and parts of speech | A set phrase's first three meanings, or null |
-  | `sourceCredits` | `app`, `website`, or `extension` | That client's credits and conversion notice |
-  | `progressStats` | The log's days, the goal, and today | `ProgressStats` |
+  | `phraseNote` | A phrase, its meanings and parts of speech | Its first three meanings, or null |
+  | `sourceCredits` | `app`, `website`, or `extension` | That client's source credits and conversion notice |
+  | `progressStats`, `progressDays` | The log's days, goal, today, changes | Stats; days filled |
+  | `knownByDate` | The log's days, today, a week back | A week's Known IDs by day, total, change |
   | `youTubeVideo`, `youTubeCaptions`, `youTubeTranslatedCaptions` | A player response; timed text; captions, translated timed text | Its track and playability; captions; them paired; or null |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the

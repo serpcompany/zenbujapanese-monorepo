@@ -91,5 +91,6 @@ struct SubscriptionTextTests {
     ]
     #expect(Set(problems.map(SubscriptionText.problem)).count == problems.count)
     #expect(SubscriptionText.problem(.nothingToRestore).contains("no Zenbu subscription"))
+    #expect(SubscriptionText.problem(.notAvailableHere).hasSuffix("Try again."))
   }
 }

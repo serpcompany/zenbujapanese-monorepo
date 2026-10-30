@@ -5,6 +5,7 @@ extension View {
     environment(readingAids)
       .environment(profile)
       .environment(WordKnowledge.shared)
+      .environment(ProgressLog.shared)
       .environment(WordLists.shared)
       .environment(NotesWithoutAWord.shared)
       .environment(LearnerNotes.shared)
@@ -46,6 +47,7 @@ enum AppLifecycle {
     switch phase {
     case .active:
       WordKnowledge.shared.saveIfNeeded()
+      ProgressLog.shared.refreshDay()
       ProgressLog.shared.saveIfNeeded()
       WordLists.shared.saveIfNeeded()
       applySharedChanges()

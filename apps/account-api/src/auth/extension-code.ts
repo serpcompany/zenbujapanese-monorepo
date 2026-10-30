@@ -51,6 +51,12 @@ export const extensionCode = (trustedOrigins: readonly string[], take: TakeVerif
               message: 'Only a session on the website hands the extension a code.'
             })
           }
+          if (!trustedOrigins.includes(context.headers?.get('origin') ?? '')) {
+            throw new APIError('FORBIDDEN', {
+              code: 'INVALID_ORIGIN',
+              message: "Only the website's origins ask for a code."
+            })
+          }
           const code = randomBytes(32).toString('base64url')
           await context.context.internalAdapter.createVerificationValue({
             identifier: identifierOf(code),

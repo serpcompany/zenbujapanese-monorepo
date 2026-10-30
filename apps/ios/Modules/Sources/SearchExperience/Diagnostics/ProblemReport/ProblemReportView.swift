@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct ReportAProblemButton: View {
-  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
-  @State private var reportsProblem = false
+  @Binding var reportsProblem: Bool
 
   var body: some View {
     Button {
@@ -13,7 +12,15 @@ struct ReportAProblemButton: View {
     }
     .foregroundStyle(.primary)
     .accessibilityIdentifier("account.report-a-problem")
-    .sheet(isPresented: $reportsProblem) {
+  }
+}
+
+struct ProblemReportSheet: ViewModifier {
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
+  @Binding var isPresented: Bool
+
+  func body(content: Content) -> some View {
+    content.sheet(isPresented: $isPresented) {
       ProblemReportView(
         accountEmail: zenbuAccount?.account?.email,
         sender: LaunchHarness.problemReportSender ?? .live)

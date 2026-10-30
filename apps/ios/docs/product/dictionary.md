@@ -204,9 +204,9 @@ Check: package `ResultsScreenTests` and `FrequencyListsTests` (a finished first 
 that can't be read named, the others still ordering); core `detail/frequency.test.ts` (the notice's
 words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts` (which
 sentences an English query finds); the recorded `SearchResultsConformanceTests` (the refinement,
-Example Sentences, and Kanji rows), `SentenceResultsConformanceTests` (discovered words), and
-`ExampleSearchConformanceTests` (`startled you` and `generously`); UI
-`SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
+Example Sentences, and Kanji rows), `SentenceResultsConformanceTests` ([Discovered
+Words](results.md#discovered-words)), and `ExampleSearchConformanceTests` (`startled you` and
+`generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
 The Example Sentences row opens the query's sentences on a screen titled with the query, whose

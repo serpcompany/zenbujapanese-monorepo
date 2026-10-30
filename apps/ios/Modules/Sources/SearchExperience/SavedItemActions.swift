@@ -247,7 +247,7 @@ struct SavedItemListsSection: View {
   let editLists: () -> Void
 
   var body: some View {
-    ForEach(wordLists.lists.filter { wordLists.contains(item, in: $0.id) }) { list in
+    ForEach(wordLists.ownLists.filter { wordLists.contains(item, in: $0.id) }) { list in
       LinkRow {
         openList(list.id)
       } label: {

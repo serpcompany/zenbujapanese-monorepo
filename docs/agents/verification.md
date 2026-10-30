@@ -20,7 +20,7 @@ The inner loop, by part:
 | --- | --- |
 | A pnpm package | `pnpm --filter <package> typecheck`, and `pnpm --filter <package> exec vitest related --run <files>` with paths from the package's folder. The packages are `zenbujapanese-web`, `zenbujapanese-dictionary-api`, `zenbujapanese-account-api`, `zenbujapanese-extension`, `@zenbu/dictionary-core`, `@zenbu/node-service`, and `zenbujapanese-checks`. |
 | The checks | `pnpm verify <checks> <paths>` runs some checks on some paths, such as `pnpm verify sizes,comments apps/web/src`. |
-| The app's package | From `apps/ios/Modules`, one suite on this checkout's Simulator: `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package -destination "platform=iOS Simulator,id=$(python3 ../Tools/simulator.py)" ONLY_ACTIVE_ARCH=YES -only-testing:SearchExperienceTests/<Suite> test` |
+| The app's package | From `apps/ios/Modules`, one suite on this checkout's Simulator: `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package -destination "platform=iOS Simulator,id=$(python3 ../Tools/simulator.py)" ONLY_ACTIVE_ARCH=YES -collect-test-diagnostics never -only-testing:SearchExperienceTests/<Suite> test` |
 | The app's screens | The UI tests that cover the change: the `verify-app` skill. |
 | The language-data tools | `python3 -m unittest discover -s language-data/tools/tests -p '<test file>'` |
 | The app's Python tests (its project settings and Simulator script) | `python3 -m unittest discover -s apps/ios/Tools/tests -p '<test file>'` |
@@ -48,6 +48,15 @@ The inner loop, by part:
   each other.
 - Don't change files a running check reads, and run nothing else heavy during a UI suite: on a
   busy Mac its taps miss.
+- **A Simulator test run ends a few seconds after its result summary,** failing or not, since
+  each `xcodebuild` command here that tests on a Simulator passes `-collect-test-diagnostics never`.
+  Without it, after a failing test `xcodebuild` runs `simctl diagnose` on the Simulator before it
+  finishes the result bundle and exits, and with Xcode 27.0 that stalled in 6 of the 11 failing
+  runs measured, until its 600-second timeout (#1121, #1132). The result bundle still holds each
+  failed test's screenshot, view hierarchy, and output. For Apple's diagnostics, run
+  `xcrun simctl diagnose -b --no-archive --udid=<udid> --output=<folder>` while the Simulator is
+  up. Never kill an `xcodebuild` that has printed its summary: its result bundle is left
+  unfinished, with no `Info.plist`.
 - With nothing else to do, hand back with the status and what is being waited for.
 
 ## Evidence

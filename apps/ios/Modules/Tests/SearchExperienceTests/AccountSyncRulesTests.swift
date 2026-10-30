@@ -26,16 +26,18 @@ struct AccountSyncRulesTests {
     try await phone.signIn()
     try await pad.signIn()
     phone.defaults.set(1.5, forKey: speed)
+    DailyGoal.write(30, to: phone.defaults)
     pad.defaults.set("known", forKey: ResultsLearner.filterKey)
     try await phone.syncNow()
     try await pad.syncNow()
     try await phone.syncNow()
 
     #expect(pad.defaults.double(forKey: speed) == 1.5)
+    #expect(DailyGoal.read(pad.defaults) == 30)
     #expect(phone.defaults.string(forKey: ResultsLearner.filterKey) == "known")
   }
 
-  @Test("a setting the account refuses stays on the device, and goes again the next time the app opens")
+  @Test("a setting the account refuses, such as the daily goal, stays on the device, and goes again the next time the app opens")
   func refusedSetting() async throws {
     let fixture = try await Fixture.afterSignIn()
     fixture.serve { request in
@@ -43,14 +45,17 @@ struct AccountSyncRulesTests {
         results: request.mutations.map { StubSync.rejected($0.id, "unknown_setting") }, cursor: "c2")
     }
     fixture.defaults.set(1.5, forKey: speed)
+    DailyGoal.write(30, to: fixture.defaults)
     try await fixture.syncNow()
     #expect(fixture.sync.state.queue.isEmpty)
     #expect(fixture.defaults.double(forKey: speed) == 1.5)
+    #expect(DailyGoal.read(fixture.defaults) == 30)
 
     fixture.serve()
     await fixture.launch()
     try await fixture.syncNow()
     #expect(sent(fixture).last?.contains { $0.hasPrefix("setting set translate.speechSpeed") } == true)
+    #expect(sent(fixture).last?.contains { $0.hasPrefix("setting set progress.dailyGoal") } == true)
   }
 
   @Test("a setting whose conflict comes back as gone goes again at the account's version")
