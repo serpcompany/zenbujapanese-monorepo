@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SettingsPage } from '../settings/settings-page'
-import { readingAidKeys } from '../shared/settings'
+import { askSettings, onSettingsChanged, readingAidKeys } from '../shared/settings'
 import { dictionary, resetDictionary } from '../test/dictionary'
 import {
   aidShownOn,
@@ -10,6 +10,7 @@ import {
   startExtension
 } from '../test/extension'
 import { allSites } from '../test/fake-chrome'
+import { pageAids, pageLookupOn, stopPageLookups } from '../test/page-lookup'
 import {
   byText,
   click,
@@ -21,6 +22,7 @@ import {
   settle,
   switchFor
 } from '../test/render'
+import { sentence } from '../test/word-cards'
 import { HeaderControls } from './header-controls'
 
 vi.mock('../shared/dictionary', () => import('../test/dictionary'))
@@ -33,6 +35,19 @@ const siteSwitchName = `[role="switch"][aria-label="Zenbu on ${host}"]`
 
 let opened: Rendered[] = []
 let contentScripts: (() => void)[] = []
+
+function lookUpInTab(fake: FakeExtension, tabId = article.id) {
+  const tab = fake.inTab(tabId)
+  document.body.insertAdjacentHTML('beforeend', `<p id="read">${sentence}</p>`)
+  const { underlines } = pageLookupOn(
+    {
+      ask: () => askSettings(tab),
+      onChanged: listener => onSettingsChanged(listener, tab.onMessage)
+    },
+    host
+  )
+  return underlines
+}
 
 async function drawHeader(): Promise<HTMLElement> {
   const header = render(<HeaderControls />)
@@ -62,6 +77,7 @@ const menuSwitch = (menu: HTMLElement, setting: string) =>
 const isChecked = (item: HTMLElement) => item.getAttribute('aria-checked') === 'true'
 
 afterEach(() => {
+  stopPageLookups()
   for (const stop of contentScripts) stop()
   for (const page of opened) page.unmount()
   contentScripts = []
@@ -101,6 +117,40 @@ describe("the side panel's header", () => {
     await click(menuSwitch(menu, 'videos.zenbuCaptions'))
     expect(fake.items['videos.zenbuCaptions']).toBe(false)
     expect(isOn(switchFor(settings, 'videos.zenbuCaptions'))).toBe(false)
+  })
+
+  it("turns Page Text off and on from its menu, under Pages between Reading Aids and Videos, as Settings does, apart from the site's switch, and the open page hears it without a reload", async () => {
+    const fake = startExtension({ tabs: [article], granted })
+    const underlines = lookUpInTab(fake)
+    await vi.waitFor(() => expect(pageAids()).toBeGreaterThan(0))
+    const header = await drawHeader()
+    const settings = await openSettings('#reading-aids')
+    const menu = await openMenu(header)
+    const titles = [...menu.querySelectorAll('[data-slot="dropdown-menu-label"]')].map(
+      label => label.textContent
+    )
+    expect(titles.slice(-3)).toEqual(['Reading Aids', 'Pages', 'Videos'])
+    const pageGroup = menuSwitch(menu, 'pages.pageText').closest(
+      '[data-slot="dropdown-menu-group"]'
+    )
+    expect(pageGroup?.querySelector('[data-slot="dropdown-menu-label"]')?.textContent).toBe('Pages')
+    expect(isChecked(menuSwitch(menu, 'pages.pageText'))).toBe(true)
+
+    await click(menuSwitch(menu, 'pages.pageText'))
+    expect(fake.items['pages.pageText']).toBe(false)
+    expect(isChecked(menuSwitch(menu, 'pages.pageText'))).toBe(false)
+    expect(isOn(switchFor(settings, 'pages.pageText'))).toBe(false)
+    expect(isOn(find(header, siteSwitchName))).toBe(true)
+    expect(isChecked(menuSwitch(menu, 'videos.zenbuCaptions'))).toBe(true)
+    await vi.waitFor(() => expect(pageAids()).toBe(0))
+    expect(underlines.stop).toHaveBeenCalled()
+
+    underlines.draw.mockClear()
+    await click(switchFor(settings, 'pages.pageText'))
+    expect(fake.items['pages.pageText']).toBe(true)
+    expect(isChecked(menuSwitch(menu, 'pages.pageText'))).toBe(true)
+    await vi.waitFor(() => expect(pageAids()).toBeGreaterThan(0))
+    expect(underlines.draw).toHaveBeenCalled()
   })
 
   it('waits for Furigana before Hide Furigana on Known Words can change', async () => {

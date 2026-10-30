@@ -42,7 +42,9 @@ and refuses a write that holds any other key, so a page that took over its rende
 crash reports back on or a site back on (`src/shared/settings.test.ts`, "takes only the caption’s
 place from a content script…"). A tab that can't
 take the message (a closed tab, a page with no content script) stops none of the others. Whether
-Zenbu runs on a site is `isZenbuOn(host, settings)`, from `sites.off`.
+Zenbu runs on a site is `isZenbuOn(host, settings)`, from `sites.off`, and whether the page script
+reads a page's text is `readsPageText(host, settings)`, which also needs Page Text
+(`pages.pageText`), kept in the browser alone, like Zenbu Captions.
 
 ## Permissions
 

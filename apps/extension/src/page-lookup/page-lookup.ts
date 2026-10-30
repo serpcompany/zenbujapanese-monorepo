@@ -1,4 +1,4 @@
-import { isZenbuOn, type Settings } from '../shared/settings'
+import { readsPageText, type Settings } from '../shared/settings'
 import type { PopupHost, PopupSettings } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
 import type { SavingPort } from '../word-saving/saving'
@@ -25,6 +25,8 @@ export type PageLookupBrowser = {
 }
 
 export type PageLookup = { stop(): void }
+
+export const decidedEvent = 'zenbujapanese-page-text'
 
 const aidsOf = (settings: Settings): Aids => ({
   furigana: settings['readingAids.furigana'],
@@ -172,7 +174,7 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
   const show = (next: Settings) => {
     const before = settings
     settings = next
-    if (!isZenbuOn(browser.host, next)) {
+    if (!readsPageText(browser.host, next)) {
       running?.stop()
       running = null
       return
@@ -191,6 +193,10 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
     heard = true
     show(next)
   })
+  const answerDecided = (event: Event) => {
+    if (settings) event.preventDefault()
+  }
+  doc.addEventListener(decidedEvent, answerDecided)
   browser.askSettings().then(
     next => {
       if (!heard) show(next)
@@ -203,6 +209,7 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
       running?.stop()
       running = null
       stopListening()
+      doc.removeEventListener(decidedEvent, answerDecided)
     }
   }
 }

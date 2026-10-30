@@ -1,8 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type Settings, settingDefaults } from '../shared/settings'
-import { savingStandIn } from '../test/saving-stand-in'
-import { popupAnswer, sentence, sentenceAnswer } from '../test/word-cards'
-import { startPageLookup } from './page-lookup'
+import {
+  changingSettings,
+  later,
+  pageAids,
+  pageLookupOn,
+  stopPageLookups
+} from '../test/page-lookup'
+import { sentence } from '../test/word-cards'
+import { decidedEvent } from './page-lookup'
 
 const watching = new Set<MutationObserver>()
 
@@ -26,36 +32,17 @@ class WatchedObserver extends MutationObserver {
 }
 
 afterEach(() => {
+  stopPageLookups()
   vi.unstubAllGlobals()
   watching.clear()
   heard = 0
   document.body.replaceChildren()
 })
 
-const later = () => new Promise<void>(done => setTimeout(done, 20))
+const settingsWith = (changes: Partial<Settings>) =>
+  changingSettings({ ...settingDefaults, 'sites.off': [], ...changes })
 
-function lookUpOn(changes: Partial<Settings>) {
-  const settings: Settings = { ...settingDefaults, 'sites.off': [], ...changes }
-  const segment = vi.fn(async () => sentenceAnswer)
-  const underlines = { draw: vi.fn(), erase: vi.fn(), stop: vi.fn() }
-  const lookup = startPageLookup({
-    doc: document,
-    view: window,
-    host: 'example.test',
-    askSettings: async () => settings,
-    onSettingsChanged: () => () => {},
-    segment,
-    popupCard: async id => popupAnswer(id),
-    saving: savingStandIn().port,
-    underlines: () => underlines,
-    popup: () => ({ open: vi.fn(), close: vi.fn(), holds: () => false }),
-    report: error => {
-      throw error
-    },
-    wait: later
-  })
-  return { lookup, segment, underlines }
-}
+const lookUpOn = (changes: Partial<Settings>) => pageLookupOn(settingsWith(changes))
 
 describe('the page lookup', () => {
   for (const aid of ['readingAids.furigana', 'readingAids.wordMeanings'] as const) {
@@ -66,9 +53,7 @@ describe('the page lookup', () => {
         'readingAids.furigana': false,
         [aid]: true
       })
-      await vi.waitFor(() =>
-        expect(document.querySelectorAll('rt, [data-zenbu-aid]').length).toBeGreaterThan(0)
-      )
+      await vi.waitFor(() => expect(pageAids()).toBeGreaterThan(0))
       lookup.stop()
       expect(document.getElementById('read')?.textContent).toBe(sentence)
       expect(watching.size).toBe(0)
@@ -80,7 +65,54 @@ describe('the page lookup', () => {
       expect(heard).toBe(before)
       expect(segment).not.toHaveBeenCalled()
       expect(underlines.draw).not.toHaveBeenCalled()
-      expect(document.querySelector('rt, [data-zenbu-aid]')).toBeNull()
+      expect(pageAids()).toBe(0)
     })
   }
+
+  it('answers that it has decided only once it has the settings, and not after it stops', async () => {
+    const decided = () => !document.dispatchEvent(new Event(decidedEvent, { cancelable: true }))
+    const { lookup } = lookUpOn({ 'pages.pageText': false })
+    expect(decided()).toBe(false)
+    await vi.waitFor(() => expect(decided()).toBe(true))
+    lookup.stop()
+    expect(decided()).toBe(false)
+  })
+
+  it('reads no page text while Page Text is off, and starts when it turns on, with no reload', async () => {
+    document.body.innerHTML = `<p id="read">${sentence}</p>`
+    const settings = settingsWith({ 'pages.pageText': false })
+    const { segment, underlines } = pageLookupOn(settings)
+    await later()
+    expect(segment).not.toHaveBeenCalled()
+    expect(underlines.draw).not.toHaveBeenCalled()
+    expect(pageAids()).toBe(0)
+    settings.change({ 'pages.pageText': true })
+    await vi.waitFor(() => expect(pageAids()).toBeGreaterThan(0))
+    expect(underlines.draw).toHaveBeenCalled()
+  })
+
+  it('takes its underlines and reading aids away at once when Page Text turns off, watches nothing, and brings them back when it turns on', async () => {
+    vi.stubGlobal('MutationObserver', WatchedObserver)
+    document.body.innerHTML = `<p id="read">${sentence}</p>`
+    const settings = settingsWith({})
+    const { segment, underlines } = pageLookupOn(settings)
+    await vi.waitFor(() => expect(pageAids()).toBeGreaterThan(0))
+    expect(underlines.draw).toHaveBeenCalled()
+
+    settings.change({ 'pages.pageText': false })
+    expect(pageAids()).toBe(0)
+    expect(document.getElementById('read')?.textContent).toBe(sentence)
+    expect(underlines.stop).toHaveBeenCalled()
+    expect(watching.size).toBe(0)
+    segment.mockClear()
+    underlines.draw.mockClear()
+    document.body.insertAdjacentHTML('beforeend', `<p id="added">${sentence}</p>`)
+    await later()
+    expect(segment).not.toHaveBeenCalled()
+    expect(underlines.draw).not.toHaveBeenCalled()
+
+    settings.change({ 'pages.pageText': true })
+    await vi.waitFor(() => expect(document.querySelectorAll('#read rt, #added rt')).toHaveLength(4))
+    expect(underlines.draw).toHaveBeenCalled()
+  })
 })

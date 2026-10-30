@@ -182,6 +182,50 @@ test('underlines nothing and opens no popup on a site turned off, and starts whe
   await expect.poll(() => underlinedWords(page)).toEqual({ light: {}, dark: {} })
 })
 
+test('takes the underlines and reading aids off every open page when Page Text turns off, keeps them off after a reload, and brings them back without one', async ({
+  extension,
+  page
+}) => {
+  const noUnderlines = { light: {}, dark: {} }
+  await openMarkedPage(page, extension)
+  const other = await extension.context.newPage()
+  await openWordsPage(other, extension, 'light')
+  await expect.poll(() => underlinesIn(other)).toEqual(pageWords)
+  await other.evaluate(() => Object.assign(window, { notReloaded: true }))
+  await changeSettings(extension, { 'readingAids.furigana': true })
+  await expect(other.locator('#sentence rt')).toHaveText(['ようきゅう', 'い'])
+
+  await changeSettings(extension, { 'pages.pageText': false })
+  for (const open of [page, other]) {
+    await expect(open.locator('#sentence rt')).toHaveCount(0)
+    await expect.poll(() => underlinedWords(open)).toEqual(noUnderlines)
+    await expect(open.locator('#sentence')).toHaveText('要求が要る。')
+  }
+  await page.reload()
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => !document.dispatchEvent(new Event('zenbujapanese-page-text', { cancelable: true }))
+      )
+    )
+    .toBe(true)
+  await clickWord(page, '#sentence', '要求')
+  await expect(wordPopup(page)).toHaveCount(0)
+  await expect(page.locator('#sentence rt')).toHaveCount(0)
+  expect(await underlinedWords(page)).toEqual(noUnderlines)
+
+  await changeSettings(extension, { 'pages.pageText': true })
+  for (const open of [page, other]) {
+    await expect(open.locator('#sentence rt')).toHaveText(['ようきゅう', 'い'])
+  }
+  await changeSettings(extension, { 'readingAids.furigana': false })
+  for (const open of [page, other]) {
+    await expect.poll(() => underlinesIn(open)).toEqual(pageWords)
+  }
+  expect(await other.evaluate(() => 'notReloaded' in window)).toBe(true)
+  await other.close()
+})
+
 test('underlines words added to the page later', async ({ extension, page }) => {
   await openWordsPage(page, extension, 'light')
   await expect.poll(() => underlinesIn(page)).toEqual(pageWords)
