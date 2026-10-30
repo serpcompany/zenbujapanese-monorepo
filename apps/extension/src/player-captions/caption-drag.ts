@@ -51,7 +51,7 @@ export function useCaptionDrag(keep: KeepPlace) {
     press.current = null
     if (!held) return
     clearTimeout(held.timer)
-    eatClick.current = held.lifted
+    eatClick.current = held.place !== null
     if (held.place) keep(held.place)
     setStage(null)
     setMoving(null)
@@ -61,17 +61,19 @@ export function useCaptionDrag(keep: KeepPlace) {
     const held = press.current
     if (!held) return
     held.lifted = true
-    held.box.setPointerCapture(held.pointer)
     setStage('lifted')
   }
 
   const follow = (event: PointerEvent<HTMLElement>) => {
     const held = press.current
     if (held?.pointer !== event.pointerId) return
+    const still = Math.hypot(event.clientX - held.x, event.clientY - held.y) <= holdSlop
     if (!held.lifted) {
-      if (Math.hypot(event.clientX - held.x, event.clientY - held.y) > holdSlop) release()
+      if (!still) release()
       return
     }
+    if (!held.place && still) return
+    held.box.setPointerCapture(held.pointer)
     const room = event.currentTarget.parentElement
     if (!room) return
     const pointer = { x: event.clientX, y: event.clientY }
@@ -106,8 +108,11 @@ export function useCaptionDrag(keep: KeepPlace) {
         release()
       },
       onPointerCancel: release,
-      onPointerLeave() {
-        if (!press.current?.lifted) release()
+      onPointerLeave(event: PointerEvent<HTMLElement>) {
+        const held = press.current
+        if (!held?.lifted) return release()
+        held.box.setPointerCapture(held.pointer)
+        follow(event)
       },
       onLostPointerCapture(event: PointerEvent<HTMLElement>) {
         if (event.target === event.currentTarget) release()

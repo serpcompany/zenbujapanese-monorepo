@@ -53,7 +53,8 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   meaning's contrast against the caption's band over a white frame, the brightest a video can
   show, written to the test's `contrast.json`, and, on the stand-in's line of two neighbouring
   words, each word's underline apart from the next's (`player-captions.spec.ts`); dragging the caption
-  after a hold, its cursor, its edges, a line change mid-drag, its place kept through a resize,
+  after a hold, its cursor, a word held and let go unmoved opening its popup, its edges, a line
+  change mid-drag, its place kept through a resize,
   fullscreen, and the next video, and the English in its own box, dragged on its own, with Reset
   Caption Position from the side panel page putting both back (`caption-drag.spec.ts`, whose
   English comes from a stand-in for the offscreen Translator patched into the service worker's

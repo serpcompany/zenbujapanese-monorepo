@@ -121,12 +121,15 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
   `useCaptionDrag` is a press and hold: a primary-button press marks the box `data-pressed` and
   starts a 280 ms timer (`holdTime`); a move of more than 6 pixels, a leave, or a release first
   lets it go, so a quick click still reaches a word. When the timer fires the box lifts
-  (`data-dragging`) and captures the pointer, and every move measures the box and the layer and
-  places the box under the pointer by its grip (`caption-place.ts`'s `followed`), so a line of
-  another size that runs straight into the last one mid-drag doesn't jump. The click that ends
-  a lifted drag is eaten, so a hold on a word drags without opening its popup. On release,
-  cancel, the box's own lost capture, or the box unmounting mid-drag, it keeps the place through
-  its `keep`; a double-click on a box's background keeps `null` for that box.
+  (`data-dragging`). It captures the pointer only once the pointer is more than 6 pixels from
+  the press, or leaves the box, since Chrome sends the click after a captured release to the
+  box, not the word under it; from then every move measures the box and the layer and places the
+  box under the pointer by its grip (`caption-place.ts`'s `followed`), so a line of another size
+  that runs straight into the last one mid-drag doesn't jump. The click that ends a drag that
+  moved the box is eaten, so a hold on a word drags without opening its popup, and a hold that
+  never moved it is a click, however long. On release, cancel, the box's own lost capture, or
+  the box unmounting mid-drag, it keeps the place through its `keep`; a double-click on a box's
+  background keeps `null` for that box.
   `player-captions.tsx` has one stable keeper per key, which puts the place in its settings at
   once and calls the services' `keepCaptionPlaces`, which `youtube.ts` gives
   `askToWriteSettings`; the service worker takes only `captionPlaceKeys` from a content script.

@@ -159,6 +159,13 @@ test('shows a grab hand over the caption, lifts it after a hold, and a drag then
   await expect(wordPopup(page)).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(wordPopup(page)).toBeHidden()
+  const held = await boxOf(word)
+  await lift(page, caption(page), { x: held.x + held.width / 2, y: held.y + held.height / 2 })
+  await page.mouse.up()
+  await expect(wordPopup(page)).toBeVisible()
+  expect(await boxOf(caption(page))).toEqual(moved)
+  await page.keyboard.press('Escape')
+  await expect(wordPopup(page)).toBeHidden()
   await page.evaluate(() => document.querySelector('video')?.pause())
 })
 

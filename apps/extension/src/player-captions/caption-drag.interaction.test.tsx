@@ -52,6 +52,18 @@ async function drag(
   await pointer('pointerup', target, from.x + by.x, from.y + by.y)
 }
 
+const leave = (target: Element) =>
+  act(() => {
+    target.dispatchEvent(
+      new PointerEvent('pointerout', {
+        bubbles: true,
+        composed: true,
+        pointerId: 1,
+        relatedTarget: document.body
+      })
+    )
+  })
+
 const doubleClick = (target: Element) =>
   act(() => {
     target.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, composed: true }))
@@ -156,6 +168,72 @@ describe('dragging the caption', () => {
     await act(async () => word.click())
     await player.wait(0)
     expect(wordPopup()).not.toBeNull()
+  })
+
+  it('opens the word’s popup for a press held past the quarter second that never moves the box, however long, and keeps no place', async () => {
+    const player = await opened()
+    await player.playFrom(10.5)
+    const caption = measured(player.caption(), captionRect)
+    const word = player.word('要求')
+    if (!word) throw new Error('The caption has no word.')
+    await hold(player, word, { x: 260, y: 320 })
+    expect(lifted(caption)).toBe(true)
+    await player.wait(2000)
+    await pointer('pointermove', word, 263, 323)
+    await pointer('pointerup', word, 263, 323)
+    expect(lifted(caption)).toBe(false)
+    expect(caption.hasPointerCapture(1)).toBe(false)
+    await act(async () => word.click())
+    await player.wait(0)
+    expect(wordPopup()).not.toBeNull()
+    expect(player.services.keepCaptionPlaces).not.toHaveBeenCalled()
+    expect(placed(caption)).toEqual(unmoved)
+  })
+
+  it('lets a press go when the pointer leaves the box before the hold, and keeps dragging a lifted box when the pointer leaves it', async () => {
+    const player = await opened()
+    await player.playFrom(10.5)
+    const caption = measured(player.caption(), captionRect)
+    await pointer('pointerdown', caption, 300, 330)
+    await leave(caption)
+    expect(caption.hasAttribute('data-pressed')).toBe(false)
+    await player.wait(holdTime)
+    expect(lifted(caption)).toBe(false)
+    await hold(player, caption)
+    expect(caption.hasPointerCapture(1)).toBe(false)
+    await leave(caption)
+    expect(lifted(caption)).toBe(true)
+    expect(caption.hasPointerCapture(1)).toBe(true)
+    await pointer('pointermove', caption, 400, 180)
+    await pointer('pointerup', caption, 400, 180)
+    expect(player.services.keepCaptionPlaces).toHaveBeenCalledExactlyOnceWith({
+      'videos.captionPlace': { x: 0.75, y: 150 / 340 }
+    })
+  })
+
+  it('ends a drag where it got to when the browser cancels the pointer or the box loses its capture, but not when a word inside loses one', async () => {
+    const player = await opened()
+    await player.playFrom(10.5)
+    const caption = measured(player.caption(), captionRect)
+    const word = player.word('要求')
+    if (!word) throw new Error('The caption has no word.')
+    await hold(player, caption)
+    await pointer('pointermove', caption, 400, 180)
+    await pointer('pointercancel', caption, 400, 180)
+    expect(lifted(caption)).toBe(false)
+    expect(player.services.keepCaptionPlaces).toHaveBeenLastCalledWith({
+      'videos.captionPlace': { x: 0.75, y: 150 / 340 }
+    })
+    await hold(player, caption)
+    await pointer('pointermove', caption, 200, 330)
+    await pointer('lostpointercapture', word, 200, 330)
+    expect(lifted(caption)).toBe(true)
+    await pointer('lostpointercapture', caption, 200, 330)
+    expect(lifted(caption)).toBe(false)
+    expect(player.services.keepCaptionPlaces).toHaveBeenCalledTimes(2)
+    expect(player.services.keepCaptionPlaces).toHaveBeenLastCalledWith({
+      'videos.captionPlace': { x: 0.25, y: 300 / 340 }
+    })
   })
 
   it('keeps the box under the pointer when one line runs straight into the next mid-drag', async () => {
