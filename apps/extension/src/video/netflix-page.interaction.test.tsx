@@ -58,11 +58,12 @@ async function netflixTab(settings = { 'videos.zenbuCaptions': true }) {
   })
   await settled()
   const player = document.querySelector<HTMLElement>('.watch-video--player-view')
-  const caption = () =>
-    player
-      ?.querySelector(`[${playerCaptionsAttribute}]`)
-      ?.shadowRoot?.querySelector('[data-player-caption]') ?? null
-  return { tab, standIn, page, player, caption, services }
+  const shown = (selector: string) =>
+    player?.querySelector(`[${playerCaptionsAttribute}]`)?.shadowRoot?.querySelector(selector) ??
+    null
+  const caption = () => shown('[data-player-caption]')
+  const english = () => shown('[data-player-translation]')?.textContent
+  return { tab, standIn, page, player, caption, english, services }
 }
 
 function navigate(path: string) {
@@ -96,14 +97,12 @@ describe('a Netflix watch page', () => {
   })
 
   it("draws the line on Netflix's player with Netflix's English, hiding Netflix's subtitles while Zenbu Captions is on", async () => {
-    const { standIn, player, page, caption, services } = await netflixTab()
+    const { standIn, player, page, caption, english, services } = await netflixTab()
     standIn.setTime(4)
     standIn.video.dispatchEvent(new Event('timeupdate'))
     await settled()
     expect(lineText(caption())).toBe(netflixLines[0])
-    expect(caption()?.querySelector('[data-aid="translation"]')?.textContent).toBe(
-      netflixEnglish[0]
-    )
+    expect(english()).toBe(netflixEnglish[0])
     expect(services.translate).not.toHaveBeenCalledWith(
       expect.objectContaining({ texts: [netflixLines[0]] })
     )

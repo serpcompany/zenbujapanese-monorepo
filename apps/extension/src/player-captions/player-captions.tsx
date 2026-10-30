@@ -1,11 +1,12 @@
 import { mountInShadowRoot, type ShadowMount } from '../content/shadow-mount'
 import type { PageToken } from '../page-lookup/words'
-import type { CaptionPlace, Settings } from '../shared/settings'
+import type { CaptionPlaceKey, CaptionPlaces, Settings } from '../shared/settings'
 import type { SourceServices } from '../translate/source-words'
 import type { VideoFollower } from '../video/follower'
 import { wordPopupEvents } from '../word-popup/popup-events'
 import { wordPopupHost } from '../word-popup/popup-host'
 import { type PopupBrowser, popupSettings } from '../word-popup/popup-settings'
+import type { KeepPlace } from './caption-drag'
 import { keptInside } from './kept-inside'
 import { type CaptionedVideo, lineControls } from './line-controls'
 import { lineEnglish, type Translate } from './line-english'
@@ -17,7 +18,7 @@ export const playerCaptionsAttribute = 'data-zenbu-player-captions'
 export type CaptionServices = SourceServices &
   PopupBrowser & {
     translate: Translate
-    keepCaptionPlace(place: CaptionPlace | null): void
+    keepCaptionPlaces(places: CaptionPlaces): void
   }
 
 export type ShownCaptions = {
@@ -74,10 +75,16 @@ export function playerCaptions({
     })
     const pick = (token: PageToken, word: HTMLElement) =>
       popup.open({ text: token.text, ids: token.ids, anchor: () => word.getBoundingClientRect() })
-    const keepPlace = (place: CaptionPlace | null) => {
-      settings = { ...settings, 'videos.captionPlace': place }
-      tell()
-      services.keepCaptionPlace(place)
+    const keeper =
+      (key: CaptionPlaceKey): KeepPlace =>
+      place => {
+        settings = { ...settings, [key]: place }
+        tell()
+        services.keepCaptionPlaces({ [key]: place })
+      }
+    const keepPlace = {
+      'videos.captionPlace': keeper('videos.captionPlace'),
+      'videos.translationPlace': keeper('videos.translationPlace')
     }
     let mounted: ShadowMount | null = null
     let siteCaptionsShown = false

@@ -52,10 +52,14 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   do, the speed menu in and out of fullscreen, a word's popup pausing the video, and a word
   meaning's contrast against the caption's band over a white frame, the brightest a video can
   show, written to the test's `contrast.json`, and, on the stand-in's line of two neighbouring
-  words, each word's underline apart from the next's (`player-captions.spec.ts`); dragging the caption,
-  its cursor, its edges, a line change mid-drag, and its place kept through a resize, fullscreen,
-  and the next video (`caption-drag.spec.ts`), which puts the place back after each test since
-  the browser and its storage last the worker. Both open the page
+  words, each word's underline apart from the next's (`player-captions.spec.ts`); dragging the caption
+  after a hold, its cursor, a word held and let go unmoved opening its popup, its edges, a line
+  change mid-drag, its place kept through a resize,
+  fullscreen, and the next video, and the English in its own box, dragged on its own, with Reset
+  Caption Position from the side panel page putting both back (`caption-drag.spec.ts`, whose
+  English comes from a stand-in for the offscreen Translator patched into the service worker's
+  `chrome.runtime.sendMessage` and restored after), which puts both places back after each test
+  since the browser and its storage last the worker. Both open the page
   with `e2e/watch-page.ts`, and the stand-in's request log lasts the worker too, so a count of
   requests starts from the log's length when the test began. Both enter fullscreen through its
   `enterFullscreen`, from a real click on the page's heading, since Chrome refuses

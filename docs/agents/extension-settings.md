@@ -31,16 +31,17 @@ the same way. The side panel's header and Settings read and write the storage di
 storage: it asks the service worker with `askSettings()` (`{ target: 'service-worker', settings:
 'read' }`), and the service worker, which watches the storage, sends `{ target: 'settings',
 settings }` to every open tab when one changes, which `onSettingsChanged` hears. One content
-script writes one key: the video one (YouTube and Netflix) keeps `videos.captionPlace`, where the learner dragged the
-caption, or `null` once a double-click puts it back. It asks the service worker to write it, with
+script writes settings: the video one (YouTube and Netflix) keeps `captionPlaceKeys`,
+`videos.captionPlace` and `videos.translationPlace`, where the learner dragged the Japanese box and
+the English box, or `null` once a double-click puts one back. It asks the service worker to write it, with
 `askToWriteSettings()` (`{ target: 'service-worker', settings: 'write', changes }`), since the
 service worker closes `chrome.storage.local` to content scripts to keep the account's session
 token from them ([`account-extension.md`](account-extension.md)); the service worker keeps only
 the changes whose key and kind fit (`fittingChanges`), and the content script hears them back the
-same way. From a sender outside the extension's own origin it takes only `videos.captionPlace`,
-and refuses a write that holds any other key, so a page that took over its renderer can't turn
-crash reports back on or a site back on (`src/shared/settings.test.ts`, "takes only the caption’s
-place from a content script…"). A tab that can't
+same way. From a sender outside the extension's own origin it takes only `captionPlaceKeys`, and
+refuses a write that holds any other key, so a page that took over its renderer can't turn crash
+reports back on or a site back on (`src/shared/settings.test.ts`, "takes only the caption boxes’
+places from a content script…"). A tab that can't
 take the message (a closed tab, a page with no content script) stops none of the others. Whether
 Zenbu runs on a site is `isZenbuOn(host, settings)`, from `sites.off`, and whether the page script
 reads a page's text is `readsPageText(host, settings)`, which also needs Page Text

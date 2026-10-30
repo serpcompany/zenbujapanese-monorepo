@@ -3,11 +3,10 @@ import { useSyncExternalStore } from 'react'
 import type { PageToken } from '../page-lookup/words'
 import type { Settings } from '../shared/settings'
 import type { SourceServices } from '../translate/source-words'
-import type { KeepPlace } from './caption-drag'
 import { playerCaptionLabels as labels } from './labels'
 import type { LineControls } from './line-controls'
 import type { LineEnglish } from './line-english'
-import { PlayerCaption } from './player-caption'
+import { type KeepPlaces, PlayerCaption } from './player-caption'
 import { PlayerControls } from './player-controls'
 import type { PopupHold } from './popup-hold'
 import { usePointerOver } from './presence'
@@ -26,7 +25,7 @@ export type OverlayProps = {
   services: SourceServices
   settings: SettingsSource
   pick(token: PageToken, word: HTMLElement): void
-  keepPlace: KeepPlace
+  keepPlace: KeepPlaces
 }
 
 export function PlayerOverlay({
@@ -55,17 +54,15 @@ export function PlayerOverlay({
         </output>
       </div>
       {view.line === null ? null : (
-        <div className="absolute inset-x-4 inset-y-0">
-          <PlayerCaption
-            lines={lines}
-            line={view.line}
-            settings={settings}
-            services={services}
-            english={english}
-            pick={pick}
-            keepPlace={keepPlace}
-          />
-        </div>
+        <PlayerCaption
+          lines={lines}
+          line={view.line}
+          settings={settings}
+          services={services}
+          english={english}
+          pick={pick}
+          keepPlace={keepPlace}
+        />
       )}
     </div>
   )

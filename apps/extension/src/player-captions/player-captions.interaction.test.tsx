@@ -77,13 +77,15 @@ describe('the caption in the player', () => {
     )
   })
 
-  it('shows the line’s English under it, asking only to translate this line and the next', async () => {
+  it('shows the line’s English in its own box under the caption, asking only to translate this line and the next', async () => {
     const player = await opened()
     await player.playFrom(1.2)
     expect(player.english()).toBe('Good morning.')
-    expect(player.caption()?.querySelector('[data-aid="translation"]')?.getAttribute('lang')).toBe(
-      'en'
-    )
+    const english = player.translation()
+    expect(english?.getAttribute('lang')).toBe('en')
+    expect(player.caption()?.contains(english ?? null)).toBe(false)
+    expect(player.caption()?.textContent).not.toContain('Good morning.')
+    expect(player.caption()?.nextElementSibling).toBe(english)
     const asked = player.services.translate.mock.calls.map(([request]) => request)
     expect(asked).toEqual([
       { type: 'translate', direction: { from: 'ja', to: 'en' }, texts: ['おはようございます'] },
@@ -112,8 +114,22 @@ describe('the caption in the player', () => {
     const player = await opened({ settings: { 'readingAids.translations': false } })
     await player.playFrom(1.2)
     expect(player.line()).toBe('おはようございます')
-    expect(player.english()).toBeNull()
+    expect(player.translation()).toBeNull()
     expect(player.services.translate).not.toHaveBeenCalled()
+  })
+
+  it('takes away only the English’s box when Translations turns off, and brings it back when it turns on', async () => {
+    const player = await opened()
+    await player.playFrom(1.2)
+    const caption = player.caption()
+    expect(player.english()).toBe('Good morning.')
+    await player.changeSettings({ 'readingAids.translations': false })
+    expect(player.translation()).toBeNull()
+    expect(player.caption()).toBe(caption)
+    expect(player.line()).toBe('おはようございます')
+    await player.changeSettings({ 'readingAids.translations': true })
+    expect(player.english()).toBe('Good morning.')
+    expect(player.caption()).toBe(caption)
   })
 })
 

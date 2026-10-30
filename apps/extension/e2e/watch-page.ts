@@ -5,6 +5,8 @@ export const overlay = (page: Page) => page.locator('#movie_player > [data-zenbu
 
 export const caption = (page: Page) => overlay(page).locator('[data-player-caption]')
 
+export const english = (page: Page) => overlay(page).locator('[data-player-translation]')
+
 export const videoState = (page: Page) =>
   page.evaluate(() => {
     const element = document.querySelector('video')

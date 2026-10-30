@@ -4,6 +4,9 @@ import { extensionId, fakeChrome } from '../test/fake-chrome'
 import {
   askSettings,
   askToWriteSettings,
+  captionPlaceKeys,
+  captionPlacesReset,
+  captionsMoved,
   isZenbuOn,
   onSettingsChanged,
   readSettings,
@@ -50,19 +53,35 @@ describe('settings', () => {
     expect(settings).not.toHaveProperty('unknown')
   })
 
-  it('keeps the caption’s place only as two shares, and none by default', () => {
-    const place = (stored: unknown) => settingsFrom({ 'videos.captionPlace': stored })
-    expect(settingDefaults['videos.captionPlace']).toBeNull()
-    expect(place({ x: 0, y: 1 })['videos.captionPlace']).toEqual({ x: 0, y: 1 })
-    for (const stored of [
-      { x: 0.5 },
-      { x: 0.5, y: 1.5 },
-      { x: '0.5', y: 0 },
-      [0.5, 0.5],
-      0.5,
-      null
-    ])
-      expect(place(stored)['videos.captionPlace']).toBeNull()
+  it('keeps the caption’s place and its English’s, each only as two shares, and none by default', () => {
+    for (const key of captionPlaceKeys) {
+      const place = (stored: unknown) => settingsFrom({ [key]: stored })
+      expect(settingDefaults[key]).toBeNull()
+      expect(place({ x: 0, y: 1 })[key]).toEqual({ x: 0, y: 1 })
+      for (const stored of [
+        { x: 0.5 },
+        { x: 0.5, y: 1.5 },
+        { x: '0.5', y: 0 },
+        [0.5, 0.5],
+        0.5,
+        null
+      ])
+        expect(place(stored)[key]).toBeNull()
+    }
+  })
+
+  it('says the caption has moved while either box has a place, and Reset puts both back', () => {
+    const moved = (places: Partial<Settings>) => captionsMoved({ ...settingDefaults, ...places })
+    expect(moved({})).toBe(false)
+    expect(moved({ 'videos.captionPlace': { x: 0.2, y: 0.1 } })).toBe(true)
+    expect(moved({ 'videos.translationPlace': { x: 0.2, y: 0.1 } })).toBe(true)
+    expect(
+      moved({
+        'videos.captionPlace': { x: 0.2, y: 0.1 },
+        'videos.translationPlace': { x: 0.8, y: 0.9 },
+        ...captionPlacesReset
+      })
+    ).toBe(false)
   })
 
   it('writes one key per setting and reads them back', async () => {
@@ -169,7 +188,7 @@ describe('the settings channel', () => {
     expect((await readSettings(store))['videos.captionPlace']).toBeNull()
   })
 
-  it('takes only the caption’s place from a content script, and refuses any other setting it sends', async () => {
+  it('takes only the caption boxes’ places from a content script, and refuses any other setting it sends', async () => {
     const { chrome } = fakeChrome()
     const store = chrome.storage.local
     const listener = answerSettings(
@@ -189,6 +208,9 @@ describe('the settings channel', () => {
     await expect(fromSite({ 'videos.captionPlace': { x: 0.4, y: 0.6 } })).resolves.toEqual({
       type: 'written'
     })
+    await expect(fromSite({ 'videos.translationPlace': { x: 0.3, y: 0.9 } })).resolves.toEqual({
+      type: 'written'
+    })
     await expect(
       fromSite({ 'videos.captionPlace': { x: 0.1, y: 0.1 }, 'crashReports.send': true })
     ).resolves.toMatchObject({ type: 'failed' })
@@ -197,6 +219,7 @@ describe('the settings channel', () => {
     })
     const settings = await readSettings(store)
     expect(settings['videos.captionPlace']).toEqual({ x: 0.4, y: 0.6 })
+    expect(settings['videos.translationPlace']).toEqual({ x: 0.3, y: 0.9 })
     expect(settings['crashReports.send']).toBe(false)
     expect(settings['sites.off']).toEqual(settingDefaults['sites.off'])
   })
