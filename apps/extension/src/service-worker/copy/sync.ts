@@ -168,9 +168,7 @@ export function accountSync(parts: SyncParts) {
         return null
       }
       const outcome = applyAnswer(draft, batch, synced, latest, parts)
-      if (Object.keys(outcome.writes).length > 0) {
-        draft.afterSave(() => parts.settings.set(outcome.writes))
-      }
+      if (Object.keys(outcome.writes).length > 0) await parts.settings.set(outcome.writes)
       return outcome
     })
     if (applied === null) return 'more'

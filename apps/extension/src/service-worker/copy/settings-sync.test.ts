@@ -87,6 +87,22 @@ describe("the copy's settings", () => {
     await expect(world.read()).resolves.toMatchObject({ unsynced: 0 })
   })
 
+  it("sends nothing over the account's setting when the browser couldn't write it, and writes it next time", async () => {
+    const world = copyWorld(
+      answering((_, request) => ({
+        changes: request <= 2 ? [setting('readingAids.romaji', true, 2)] : []
+      }))
+    )
+    world.settings.failWrites(1)
+    await world.signIn()
+    await world.settled()
+    expect(world.failures).toEqual(['account-copy'])
+    await world.copy.settingsChanged()
+    await world.settled()
+    expect(settingsSent(world)).toEqual([])
+    expect(world.settings.items).toMatchObject({ 'readingAids.romaji': true })
+  })
+
   it('brings the translation language and source down, and never sends either', async () => {
     const world = copyWorld(
       answering(() => ({

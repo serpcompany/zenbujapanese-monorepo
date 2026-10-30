@@ -37,9 +37,14 @@ export function settingsStore(initial: Record<string, unknown> = {}) {
   const items: Record<string, unknown> = { ...initial }
   const kept = keptItems(items)
   const listeners = new Set<(changes: Record<string, unknown>) => void>()
+  let failing = 0
   const store: SettingsStore = {
     get: kept.get,
     set: async next => {
+      if (failing > 0) {
+        failing -= 1
+        throw new Error('The browser refused the write.')
+      }
       const changes = kept.write(next)
       for (const listener of [...listeners]) listener(changes)
     },
@@ -48,7 +53,13 @@ export function settingsStore(initial: Record<string, unknown> = {}) {
       removeListener: listener => listeners.delete(listener)
     }
   }
-  return { store, items }
+  return {
+    store,
+    items,
+    failWrites: (times: number) => {
+      failing = times
+    }
+  }
 }
 
 export type Sync = { cursor: string | null; limit: number; mutations: Mutation[] }

@@ -56,7 +56,6 @@ type Kept = { items: Map<string, Item>; meta: Meta | null }
 export class Draft {
   private readonly changed = new Map<string, Item | null>()
   private replaced = false
-  private readonly afterwards: (() => Promise<void>)[] = []
   meta: Meta | null
 
   constructor(
@@ -94,10 +93,6 @@ export class Draft {
     return [...merged.values()]
   }
 
-  afterSave(run: () => Promise<void>): void {
-    this.afterwards.push(run)
-  }
-
   saved(): Saved {
     const put = [...this.changed.values()].filter(item => item !== null)
     const remove = [...this.changed].filter(([, item]) => item === null).map(([key]) => key)
@@ -111,10 +106,6 @@ export class Draft {
       else kept.items.delete(key)
     }
     kept.meta = this.meta
-  }
-
-  async finish(): Promise<void> {
-    for (const run of this.afterwards) await run()
   }
 }
 
@@ -151,7 +142,6 @@ export function keptCopy(storage: CopyStorage, inTurn: InTurn) {
         throw error
       }
       draft.commit(kept)
-      await draft.finish()
       return value
     })
 
