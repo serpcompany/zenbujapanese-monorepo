@@ -70,7 +70,7 @@ const chromeBrowser: ActiveTabBrowser = {
   lastError: () => chrome.runtime.lastError
 }
 
-type Request = { shown: boolean; end(): void }
+type Request = { shown: boolean; tabId: number | null; end(): void }
 
 export function popupOnActiveTab(browser: ActiveTabBrowser = chromeBrowser): PagePopup {
   const live = new Set<Request>()
@@ -86,6 +86,7 @@ export function popupOnActiveTab(browser: ActiveTabBrowser = chromeBrowser): Pag
       live.delete(request)
     }
     const request: Request = {
+      tabId: null,
       get shown() {
         return state === 'shown'
       },
@@ -106,6 +107,8 @@ export function popupOnActiveTab(browser: ActiveTabBrowser = chromeBrowser): Pag
     }
     const connect = (tabId: number, side: PanelSide) => {
       if (state !== 'asking') return
+      request.tabId = tabId
+      for (const each of [...live]) if (each.tabId !== tabId) each.end()
       const connected = browser.connect(tabId)
       port = connected
       state = 'connected'

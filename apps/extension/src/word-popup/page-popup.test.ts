@@ -13,8 +13,9 @@ const shown = { target: 'word-popup', shown: true }
 function onATab({ tab = 7 as number | null, side = 'left' as 'left' | 'right' } = {}) {
   const ports: FakePort[] = []
   const lastError = vi.fn()
+  const active = { tab }
   const browser: ActiveTabBrowser = {
-    activeTab: async () => tab,
+    activeTab: async () => active.tab,
     side: async () => side,
     connect: vi.fn((_tabId: number) => {
       const port = fakePort()
@@ -23,7 +24,7 @@ function onATab({ tab = 7 as number | null, side = 'left' as 'left' | 'right' } 
     }),
     lastError
   }
-  return { ports, browser, lastError, pagePopup: popupOnActiveTab(browser) }
+  return { ports, browser, lastError, active, pagePopup: popupOnActiveTab(browser) }
 }
 
 function listener(): PagePopupHeard & { said: string[] } {
@@ -125,5 +126,18 @@ describe('a word’s card on the page, asked for from the side panel', () => {
     tab.ports[1]?.drop()
     expect(next.said).toEqual(['unavailable'])
     expect(tab.ports[0]?.disconnected).toBe(true)
+  })
+
+  it('takes a shown card off a tab the learner left when the next is asked for on another tab', async () => {
+    const tab = onATab()
+    const first = tab.pagePopup(word, listener())
+    await settled()
+    tab.ports[0]?.say(shown)
+    tab.active.tab = 8
+    tab.pagePopup({ ...word, text: '要る', ids: ['iru'] }, listener())
+    first()
+    await settled()
+    expect(tab.browser.connect).toHaveBeenLastCalledWith(8)
+    expect(tab.ports.map(port => port.disconnected)).toEqual([true, false])
   })
 })
