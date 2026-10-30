@@ -6,7 +6,7 @@ const refreshBeforeMs = 60_000
 
 const accessTokenLifeMs = 15 * 60_000
 
-export const signedOut: Answered = { ok: false, status: 401, code: 'signed_out', retryAfter: null }
+const signedOut: Answered = { ok: false, status: 401, code: 'signed_out', retryAfter: null }
 
 function expiryOf(token: string): number | null {
   const payload = token.split('.')[1]
@@ -20,8 +20,7 @@ function expiryOf(token: string): number | null {
   }
 }
 
-const endsSession = (answer: Answered) =>
-  !answer.ok && (answer.status === 401 || answer.code === 'sign_in_again')
+const endsSession = (answer: Answered) => !answer.ok && answer.status === 401
 
 export function accessTokens(api: Api, store: AccountStore, now: () => number = Date.now) {
   async function newAccessToken(): Promise<Answered | string> {

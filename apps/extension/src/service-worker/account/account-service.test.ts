@@ -81,7 +81,7 @@ describe('accountService', () => {
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
       'POST /v1/auth/sign-out': () => json(200, { success: true }),
       'GET /v1/auth/token': token,
-      'DELETE /v1/me': () => json(200, { deleted: true, appStoreSubscriptionContinues: true })
+      'DELETE /v1/me': () => json(200, { status: 'deleted', appStoreSubscriptionContinues: true })
     })
     const answer = await world.account.answer({ account: 'delete', with: code })
     expect(answer).toEqual({ type: 'deleted', appStoreSubscriptionContinues: true })
@@ -117,7 +117,7 @@ describe('accountService', () => {
         'DELETE /v1/me': () =>
           ++deletes === 1
             ? refusal(400, 'apple_authorization_needed')
-            : json(200, { deleted: true, appStoreSubscriptionContinues: false })
+            : json(200, { status: 'deleted', appStoreSubscriptionContinues: false })
       },
       url => returnedFrom(url, { id_token: 'apple-id', code: 'apple-code' })
     )

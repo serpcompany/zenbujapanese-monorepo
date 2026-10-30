@@ -74,7 +74,9 @@ function sameKind(value: unknown, fallback: unknown): boolean {
 }
 
 const fits = (key: SettingKey, value: unknown) =>
-  key === 'videos.captionPlace' ? isCaptionPlace(value) : sameKind(value, settingDefaults[key])
+  key === 'videos.captionPlace'
+    ? value === null || isCaptionPlace(value)
+    : sameKind(value, settingDefaults[key])
 
 export function settingFrom<K extends SettingKey>(key: K, value: unknown): Settings[K] {
   return fits(key, value) ? (value as Settings[K]) : settingDefaults[key]

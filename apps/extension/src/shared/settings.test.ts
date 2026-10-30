@@ -99,6 +99,18 @@ describe('settings', () => {
   })
 })
 
+function settingsChannel() {
+  const { chrome } = fakeChrome()
+  const store = chrome.storage.local
+  chrome.runtime.onMessage.addListener(
+    answerSettings(
+      () => readSettings(store),
+      changes => writeSettings(changes, store)
+    )
+  )
+  return { runtime: chrome.runtime, store }
+}
+
 describe('the settings channel', () => {
   it("answers a content script's ask with the stored settings", async () => {
     const { chrome } = fakeChrome()
@@ -115,21 +127,21 @@ describe('the settings channel', () => {
   })
 
   it("keeps a content script's setting through the service worker, and only the settings that fit", async () => {
-    const { chrome } = fakeChrome()
-    const store = chrome.storage.local
-    chrome.runtime.onMessage.addListener(
-      answerSettings(
-        () => readSettings(store),
-        changes => writeSettings(changes, store)
-      )
-    )
+    const { runtime, store } = settingsChannel()
     await askToWriteSettings(
       { 'videos.captionPlace': { x: 0.5, y: 0.8 }, 'readingAids.romaji': 'yes' } as never,
-      chrome.runtime
+      runtime
     )
     const settings = await readSettings(store)
     expect(settings['videos.captionPlace']).toEqual({ x: 0.5, y: 0.8 })
     expect(settings['readingAids.romaji']).toBe(false)
+  })
+
+  it('clears the caption’s place through the service worker when a double-click puts it back', async () => {
+    const { runtime, store } = settingsChannel()
+    await askToWriteSettings({ 'videos.captionPlace': { x: 0.2, y: 0.3 } }, runtime)
+    await askToWriteSettings({ 'videos.captionPlace': null }, runtime)
+    expect((await readSettings(store))['videos.captionPlace']).toBeNull()
   })
 
   it('rejects a write the service worker could not keep', async () => {

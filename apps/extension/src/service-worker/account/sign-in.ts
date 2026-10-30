@@ -16,7 +16,7 @@ export type SignInSettings = {
   extensionId: string
 }
 
-export type SignedIn = { ok: true; sessionToken: string; user: User; appleCode: string | null }
+type SignedIn = { ok: true; sessionToken: string; user: User; appleCode: string | null }
 
 export type SignInResult = SignedIn | { ok: false; refused: Refused }
 

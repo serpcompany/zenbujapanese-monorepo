@@ -1,5 +1,6 @@
 import type { Refusal } from '../../shared/account'
 import { fields } from '../../shared/messages'
+import { sha256Hex } from '../../shared/sha256'
 
 export type Identity = {
   launchWebAuthFlow(details: { url: string; interactive: boolean }): Promise<string | undefined>
@@ -14,16 +15,11 @@ export const appleReturnPath = '/v1/auth/apple/extension'
 
 type Name = { firstName?: string; lastName?: string }
 
-export type Authorized = { idToken: string; code: string | null; name: Name | null }
+type Authorized = { idToken: string; code: string | null; name: Name | null }
 
 export type Authorization = { ok: true; authorized: Authorized } | { ok: false; refusal: Refusal }
 
 const cancelledErrors = ['access_denied', 'user_cancelled_authorize']
-
-export async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')
-}
 
 async function returnedFields(identity: Identity, url: URL): Promise<URLSearchParams | Refusal> {
   try {
@@ -100,7 +96,7 @@ export async function authorizeWithApple(
     response_type: 'code id_token',
     response_mode: 'form_post',
     scope: 'name email',
-    nonce: await sha256Hex(nonce),
+    nonce: await sha256Hex(new TextEncoder().encode(nonce)),
     state
   }).toString()
   return authorizationOf(await returnedFields(identity, url), state)

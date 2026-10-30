@@ -1,9 +1,9 @@
 import { websiteOrigin } from './hosts'
 import { type Failure, failure, fields } from './messages'
 
-export type CloudAccess = 'subscribed' | 'free' | 'subscription_required'
+type CloudAccess = 'subscribed' | 'free' | 'subscription_required'
 
-export type ManagedIn = 'app_store' | 'website'
+type ManagedIn = 'app_store' | 'website'
 
 export type RunningSubscription = {
   managedIn: ManagedIn
@@ -86,12 +86,11 @@ export function isAccountEnvelope(message: unknown): message is AccountEnvelope 
 
 type Sender = { sendMessage(message: AccountEnvelope): Promise<unknown> }
 
-export function askAccount(
-  request: AccountRequest,
-  sender: Sender = chrome.runtime
-): Promise<AccountAnswer> {
+export function askAccount(request: AccountRequest, sender?: Sender): Promise<AccountAnswer> {
   return Promise.resolve()
-    .then(() => sender.sendMessage({ target: 'service-worker', account: request }))
+    .then(() =>
+      (sender ?? chrome.runtime).sendMessage({ target: 'service-worker', account: request })
+    )
     .then(answer =>
       typeof fields(answer)?.type === 'string'
         ? (answer as AccountAnswer)
@@ -107,10 +106,14 @@ type ChangeEvents = {
   removeListener(listener: (changes: Changes) => void): void
 }
 
+const keptAccountChanges = (): ChangeEvents | null =>
+  typeof chrome === 'undefined' ? null : chrome.storage.local.onChanged
+
 export function onAccountChanged(
   listener: () => void,
-  events: ChangeEvents = chrome.storage.local.onChanged
+  events: ChangeEvents | null = keptAccountChanges()
 ): () => void {
+  if (events === null) return () => undefined
   const heard = (changes: Changes) => {
     if (accountKey in changes) listener()
   }

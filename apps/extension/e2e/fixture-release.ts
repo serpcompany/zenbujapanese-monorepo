@@ -5,14 +5,9 @@ import { DatabaseSync } from 'node:sqlite'
 import { type AttachmentName, attachments } from '@zenbu/dictionary-core/artifact/database'
 import { retiredEntriesFile } from '@zenbu/dictionary-core/artifact/retired'
 import { rankedPackIds } from '@zenbu/dictionary-core/browse/lists'
+import { sha256Hex } from '../src/shared/sha256.ts'
 import { publishRelease, releasesIndex } from '../src/test/publish-release.ts'
-import {
-  artifactFile,
-  firstSet,
-  kanjiFiles,
-  laterSet,
-  sha256Hex
-} from '../src/worker/release-files.ts'
+import { artifactFile, firstSet, kanjiFiles, laterSet } from '../src/worker/release-files.ts'
 import { kuromojiFiles } from './fixture-ipadic.ts'
 import { attachmentRows, type Fill, fillEntries } from './fixture-words.ts'
 

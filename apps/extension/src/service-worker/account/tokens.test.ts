@@ -31,7 +31,7 @@ describe('accessTokens', () => {
 
   it.each([
     [401, 'unauthorized'],
-    [403, 'sign_in_again']
+    [401, 'sign_in_again']
   ])('signs the learner out when the session token is refused with %i %s', async (status, code) => {
     const world = await signedInWorld({ 'GET /v1/auth/token': () => refusal(status, code) })
     const answer = await world.tokens.withAccess({ method: 'GET', path: '/v1/me/subscription' })

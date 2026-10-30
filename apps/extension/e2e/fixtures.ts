@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { type BrowserContext, test as base, expect, type Page, type Worker } from '@playwright/test'
+import { type AccountService, startAccountService } from './account-service.ts'
 import { contentScriptHost } from './expected.ts'
 import { type LocalServer, startLocalServer } from './local-server.ts'
 import { startYouTubeStandIn, type YouTubeStandIn } from './youtube-stand-in.ts'
@@ -18,6 +19,7 @@ export type Extension = {
   server: LocalServer
   manifest: Record<string, unknown>
   youTube: YouTubeStandIn | null
+  account: AccountService | null
 }
 
 const extensionSchemes = new Set(['chrome-extension:', 'chrome:', 'data:', 'blob:', 'about:'])
@@ -27,28 +29,54 @@ function isAllowedRequest(url: string, server: LocalServer, extension: Extension
   if (protocol === 'chrome-extension:') return `${protocol}//${host}` === extension.origin
   return (
     extensionSchemes.has(protocol) ||
-    [server.url, server.languageDataUrl, server.allowedSiteUrl, extension.youTube?.origin].includes(
-      origin
-    )
+    [
+      server.url,
+      server.languageDataUrl,
+      server.allowedSiteUrl,
+      extension.youTube?.origin,
+      ...(extension.account?.origins ?? []),
+      ...(extension.account ? [`https://${extension.id}.chromiumapp.org`] : [])
+    ].includes(origin)
   )
 }
 
-function onlyTheLocalServer(server: LocalServer, youTube: YouTubeStandIn | null) {
-  const rules = [server.hostRule, ...(youTube ? [youTube.hostRule] : [])].join(', ')
+function trusting(youTube: YouTubeStandIn | null, account: AccountService | null): string[] {
+  const certificates = [youTube?.spki, account?.spki].filter(spki => spki !== undefined)
+  return certificates.length === 0
+    ? []
+    : [`--ignore-certificate-errors-spki-list=${certificates.join(',')}`]
+}
+
+function onlyTheLocalServer(
+  server: LocalServer,
+  youTube: YouTubeStandIn | null,
+  account: AccountService | null
+) {
+  const rules = [server.hostRule, youTube?.hostRule, ...(account?.hostRules ?? [])]
+    .filter(rule => rule !== undefined)
+    .join(', ')
   return `--host-resolver-rules=${rules}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1`
 }
 
 export const test = base.extend<
   { outsideRequests: string[] },
-  { extension: Extension; languageDataHeld: boolean; youTubeStandIn: boolean; reloads: boolean }
+  {
+    extension: Extension
+    languageDataHeld: boolean
+    youTubeStandIn: boolean
+    accountService: boolean
+    reloads: boolean
+  }
 >({
   languageDataHeld: [false, { option: true, scope: 'worker' }],
   reloads: [false, { option: true, scope: 'worker' }],
   youTubeStandIn: [false, { option: true, scope: 'worker' }],
+  accountService: [false, { option: true, scope: 'worker' }],
   extension: [
-    async ({ playwright, languageDataHeld, youTubeStandIn }, use) => {
+    async ({ playwright, languageDataHeld, youTubeStandIn, accountService }, use) => {
       const server = await startLocalServer(0, languageDataHeld)
       const youTube = youTubeStandIn ? await startYouTubeStandIn() : null
+      const account = accountService ? await startAccountService() : null
       const profile = mkdtempSync(join(tmpdir(), 'zenbu-extension-'))
       const context = await playwright.chromium.launchPersistentContext(profile, {
         channel: 'chromium',
@@ -56,8 +84,8 @@ export const test = base.extend<
           `--disable-extensions-except=${extensionBuild}`,
           `--load-extension=${extensionBuild}`,
           '--disable-blink-features=WebShare',
-          onlyTheLocalServer(server, youTube),
-          ...(youTube ? [youTube.certificate] : [])
+          onlyTheLocalServer(server, youTube, account),
+          ...trusting(youTube, account)
         ]
       })
       const serviceWorker =
@@ -65,10 +93,11 @@ export const test = base.extend<
       const id = new URL(serviceWorker.url()).host
       const origin = `chrome-extension://${id}`
       const manifest = JSON.parse(readFileSync(join(extensionBuild, 'manifest.json'), 'utf8'))
-      await use({ context, id, origin, serviceWorker, server, manifest, youTube })
+      await use({ context, id, origin, serviceWorker, server, manifest, youTube, account })
       await context.close()
       await server.close()
       youTube?.close()
+      await account?.close()
       rmSync(profile, { recursive: true, force: true })
     },
     { scope: 'worker' }

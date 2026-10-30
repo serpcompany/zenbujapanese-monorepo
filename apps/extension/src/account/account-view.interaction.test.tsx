@@ -86,6 +86,15 @@ const problem = (scope: ParentNode) => scope.querySelector('[role="alert"]')?.te
 
 const dialog = () => find(document, '[data-delete-step]')
 
+async function signInThenDeleteWithCode(view: ParentNode) {
+  await signInByCode(view)
+  await click(byText(view, 'button', words.deleteAccount))
+  await click(byText(dialog(), 'button', words.confirm))
+  await click(byText(dialog(), 'button', accountLabels.sendCode))
+  typeInto(find(dialog(), 'input[autocomplete="one-time-code"]'), code)
+  await click(byText(dialog(), 'button', accountLabels.signIn))
+}
+
 const keepLinksHere = (event: Event) => {
   if (event.target instanceof HTMLElement && event.target.closest('a')) event.preventDefault()
 }
@@ -235,7 +244,7 @@ describe('Deleting the account', () => {
     const { view, service } = await showAccount(
       signInRoutes({
         'GET /v1/me/subscription': () => json(200, appStore),
-        'DELETE /v1/me': () => json(200, { deleted: true, appStoreSubscriptionContinues: true })
+        'DELETE /v1/me': () => json(200, { status: 'deleted', appStoreSubscriptionContinues: true })
       })
     )
     await signInByCode(view)
@@ -267,17 +276,12 @@ describe('Deleting the account', () => {
       signInRoutes({
         'DELETE /v1/me': () =>
           ++deletes === 1
-            ? refusal(403, 'apple_authorization_needed')
-            : json(200, { deleted: true, appStoreSubscriptionContinues: false })
+            ? refusal(400, 'apple_authorization_needed')
+            : json(200, { status: 'deleted', appStoreSubscriptionContinues: false })
       }),
       url => returnedFrom(url, { id_token: 'id-token', code: 'apple-code' })
     )
-    await signInByCode(view)
-    await click(byText(view, 'button', words.deleteAccount))
-    await click(byText(dialog(), 'button', words.confirm))
-    await click(byText(dialog(), 'button', accountLabels.sendCode))
-    typeInto(find(dialog(), 'input[autocomplete="one-time-code"]'), code)
-    await click(byText(dialog(), 'button', accountLabels.signIn))
+    await signInThenDeleteWithCode(view)
     expect(dialog().getAttribute('data-delete-step')).toBe('apple')
     await click(byText(dialog(), 'button', accountLabels.apple))
     const deleted = service.asked.filter(({ route }) => route === 'DELETE /v1/me')
@@ -298,12 +302,7 @@ describe('Deleting the account', () => {
             : signedInAnswer('session-other', { id: 'user-2', email: user.email })
       })
     )
-    await signInByCode(view)
-    await click(byText(view, 'button', words.deleteAccount))
-    await click(byText(dialog(), 'button', words.confirm))
-    await click(byText(dialog(), 'button', accountLabels.sendCode))
-    typeInto(find(dialog(), 'input[autocomplete="one-time-code"]'), code)
-    await click(byText(dialog(), 'button', accountLabels.signIn))
+    await signInThenDeleteWithCode(view)
     expect(problem(dialog())).toBe(accountLabels.refusals['other-account'])
     expect(service.routes()).not.toContain('DELETE /v1/me')
     expect(stateOf(view)).toBe('signed-in')

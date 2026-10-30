@@ -9,8 +9,9 @@ import {
 } from '@zenbu/ui/components/dialog'
 import { useState } from 'react'
 import { type AccountAnswer, askAccount, type KeptSubscription } from '../shared/account'
+import { Problem, useAsking } from './asking'
 import { accountLabels } from './labels'
-import { Problem, problemOf, SignInWays } from './sign-in-ways'
+import { SignInWays } from './sign-in-ways'
 import { appStoreRuns, websiteRuns } from './subscription'
 
 export type Deleted = Extract<AccountAnswer, { type: 'deleted' }>
@@ -27,8 +28,7 @@ type Props = {
 
 export function DeleteAccount({ email, subscription, onDeleted }: Props) {
   const [step, setStep] = useState<Step | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(null)
+  const { busy, problem, ask, clearProblem } = useAsking()
 
   function settle(answer: AccountAnswer) {
     if (answer.type === 'deleted') {
@@ -39,12 +39,7 @@ export function DeleteAccount({ email, subscription, onDeleted }: Props) {
   }
 
   async function withApple() {
-    setBusy(true)
-    setProblem(null)
-    const answer = await askAccount({ account: 'delete-with-apple' })
-    setBusy(false)
-    setProblem(problemOf(answer))
-    settle(answer)
+    settle(await ask(askAccount({ account: 'delete-with-apple' })))
   }
 
   return (
@@ -52,7 +47,7 @@ export function DeleteAccount({ email, subscription, onDeleted }: Props) {
       <Button
         variant="destructive"
         onClick={() => {
-          setProblem(null)
+          clearProblem()
           setStep('confirm')
         }}
       >

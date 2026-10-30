@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { extensionId, origin, returnedFrom, standInIdentity } from '../../test/account-stand-in'
-import { authorizeWithApple, authorizeWithGoogle, sha256Hex } from './identity'
+import { authorizeWithApple, authorizeWithGoogle } from './identity'
 
 const google = 'zenbu-extension-test.apps.googleusercontent.com'
 
@@ -78,15 +78,9 @@ describe('authorizeWithApple', () => {
       response_type: 'code id_token',
       response_mode: 'form_post',
       scope: 'name email',
-      nonce: await sha256Hex('nonce-1')
+      nonce: '9e3f156324d42f0ea4b6f4fce81d56fbd64a2143a3fdd60a130d9c90e5b4d688'
     })
     expect(fields.state).toMatch(new RegExp(`^${extensionId}\\.[0-9a-f-]{36}$`))
-  })
-
-  it("hashes the nonce as Apple's lowercase hex SHA-256", async () => {
-    await expect(sha256Hex('abc')).resolves.toBe(
-      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
-    )
   })
 
   it('cancels when the learner backs out of Apple, and keeps no name Apple did not send', async () => {

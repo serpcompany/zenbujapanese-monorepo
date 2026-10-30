@@ -3,9 +3,10 @@ import { Button } from '@zenbu/ui/components/button'
 import { Input } from '@zenbu/ui/components/input'
 import { Label } from '@zenbu/ui/components/label'
 import { Separator } from '@zenbu/ui/components/separator'
-import { type FormEvent, useId, useState } from 'react'
+import { type ComponentProps, type FormEvent, useId, useState } from 'react'
 import { type AccountAnswer, askAccount, type SignInWay } from '../shared/account'
 import { googleClientId } from '../shared/hosts'
+import { Problem, useAsking } from './asking'
 import { accountLabels } from './labels'
 
 type Props = {
@@ -14,37 +15,27 @@ type Props = {
   onAnswer?: (answer: AccountAnswer) => void
 }
 
-export function problemOf(answer: AccountAnswer): string | null {
-  if (answer.type === 'failed') return accountLabels.refusals['try-again']
-  if (answer.type !== 'refused') return null
-  if (answer.refusal === 'wait' && answer.retryAfter !== null) {
-    return accountLabels.waitFor(answer.retryAfter)
-  }
-  return accountLabels.refusals[answer.refusal]
-}
+type FieldProps = ComponentProps<typeof Input> & { label: string }
 
-export function Problem({ problem }: { problem: string | null }) {
-  return problem ? (
-    <p role="alert" className="text-sm text-destructive">
-      {problem}
-    </p>
-  ) : null
+function Field({ label, ...input }: FieldProps) {
+  const id = useId()
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} required {...input} />
+    </div>
+  )
 }
 
 export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
-  const id = useId()
   const [email, setEmail] = useState(fixedEmail ?? '')
   const [code, setCode] = useState('')
   const [sentTo, setSentTo] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(null)
+  const asking = useAsking()
+  const { busy, problem } = asking
 
   async function ask(answering: Promise<AccountAnswer>) {
-    setBusy(true)
-    setProblem(null)
-    const answer = await answering
-    setBusy(false)
-    setProblem(problemOf(answer))
+    const answer = await asking.ask(answering)
     onAnswer?.(answer)
     return answer
   }
@@ -76,18 +67,14 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
   const codeForm =
     sentTo === null ? (
       <form className="flex flex-col gap-3" onSubmit={send}>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`${id}-email`}>{accountLabels.email}</Label>
-          <Input
-            id={`${id}-email`}
-            type="email"
-            autoComplete="email"
-            required
-            readOnly={fixedEmail !== undefined}
-            value={email}
-            onChange={event => setEmail(event.target.value)}
-          />
-        </div>
+        <Field
+          label={accountLabels.email}
+          type="email"
+          autoComplete="email"
+          readOnly={fixedEmail !== undefined}
+          value={email}
+          onChange={event => setEmail(event.target.value)}
+        />
         <Problem problem={problem} />
         <Button type="submit" disabled={busy}>
           {accountLabels.sendCode}
@@ -99,18 +86,14 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
           {accountLabels.sent} <strong className="text-foreground">{sentTo}</strong>.{' '}
           {accountLabels.sentFor}
         </output>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`${id}-code`}>{accountLabels.code}</Label>
-          <Input
-            id={`${id}-code`}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern={signInCode.typedPattern}
-            required
-            value={code}
-            onChange={event => setCode(event.target.value)}
-          />
-        </div>
+        <Field
+          label={accountLabels.code}
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern={signInCode.typedPattern}
+          value={code}
+          onChange={event => setCode(event.target.value)}
+        />
         <Problem problem={problem} />
         <Button type="submit" disabled={busy}>
           {accountLabels.signIn}
@@ -133,7 +116,7 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
               disabled={busy}
               onClick={() => {
                 setSentTo(null)
-                setProblem(null)
+                asking.clearProblem()
               }}
             >
               {accountLabels.anotherEmail}

@@ -1,6 +1,6 @@
 import { fields } from '../../shared/messages'
 
-export const extensionClient = 'zenbu-extension'
+const extensionClient = 'zenbu-extension'
 
 export type Call = {
   method: 'GET' | 'POST' | 'DELETE'
