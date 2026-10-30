@@ -7,7 +7,6 @@ import {
   CardHeader
 } from '@zenbu/ui/components/card'
 import { useState, useSyncExternalStore } from 'react'
-import type { PanelPage } from '../side-panel/route'
 import type { Direction } from '../translation/messages'
 import { translateLabels } from './labels'
 import type { TranslateServices } from './services'
@@ -17,17 +16,15 @@ export type Translated = { source: string; translation: string; direction: Direc
 
 type CardServices = Pick<
   TranslateServices,
-  'copy' | 'speak' | 'localVoice' | 'watchVoices' | 'segment' | 'wait' | 'popupCard'
+  'copy' | 'speak' | 'localVoice' | 'watchVoices' | 'segment' | 'wait' | 'popupCard' | 'pagePopup'
 >
 
 export function TranslationCard({
   translated: { source, translation, direction },
-  services,
-  open
+  services
 }: {
   translated: Translated
   services: CardServices
-  open?(page: PanelPage): void
 }) {
   const [copied, setCopied] = useState(false)
   const voice = useSyncExternalStore(services.watchVoices, () => services.localVoice(direction.to))
@@ -44,7 +41,7 @@ export function TranslationCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {direction.from === 'ja' ? (
-          <SourceWords source={source} services={services} open={open} />
+          <SourceWords source={source} services={services} />
         ) : (
           <p
             lang={direction.from}

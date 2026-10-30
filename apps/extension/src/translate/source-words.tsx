@@ -1,6 +1,7 @@
 import { RomajiLine } from '@zenbu/ui/dictionary/reading-aid-lines'
 import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import {
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
   useCallback,
   useEffect,
@@ -16,16 +17,17 @@ import { backoff, readText, type Segment, type Wait } from '../page-lookup/scan'
 import { type PageToken, wordGroups } from '../page-lookup/words'
 import type { Settings } from '../shared/settings'
 import { useSettings } from '../shared/use-settings'
-import type { PanelPage } from '../side-panel/route'
 import { ReadingAids } from '../word-detail/reading-aids'
 import { wordPopupLabels } from '../word-popup/labels'
-import { hasOpenMenu } from '../word-popup/open-menu'
+import { hasOpenLayer } from '../word-popup/open-layer'
+import type { PagePopup } from '../word-popup/page-popup'
 import { WordPopup } from '../word-popup/word-popup'
 
 export type SourceServices = {
   segment: Segment
   wait: Wait
   popupCard(languageReferenceID: string, frequency: readonly string[]): ReturnType<GlossLookUp>
+  pagePopup?: PagePopup
 }
 
 const sourceClass = 'whitespace-pre-wrap text-muted-foreground'
@@ -102,6 +104,7 @@ function Words({
         data-word={token.text}
         data-start={token.start}
         className={wordClass}
+        onPointerDown={keep}
         onClick={event => pick(token, event.currentTarget)}
       >
         <RubyText segments={token.ruby} />
@@ -126,32 +129,62 @@ function Words({
   )
 }
 
-const keptPresses = '[data-word-popup], [role="menu"], [data-start]'
+const keptPresses = new WeakSet<Event>()
 
-function usePicked(source: RefObject<HTMLParagraphElement | null>) {
-  const [picked, setPicked] = useState<PageToken | null>(null)
-  const start = picked?.start
+const keep = (event: ReactPointerEvent) => void keptPresses.add(event.nativeEvent)
+
+type Picked = { token: PageToken; at: 'asking' | 'page' | 'inline' }
+
+function usePicked(source: RefObject<HTMLParagraphElement | null>, pagePopup?: PagePopup) {
+  const [picked, setPicked] = useState<Picked | null>(null)
+  const asked = useRef(0)
+  const closeOnPage = useRef<(() => void) | null>(null)
+  const drop = useCallback(() => {
+    asked.current += 1
+    closeOnPage.current?.()
+    closeOnPage.current = null
+    setPicked(null)
+  }, [])
+  const pick = useCallback(
+    (token: PageToken, word: HTMLElement) => {
+      const id = ++asked.current
+      if (!pagePopup) return setPicked({ token, at: 'inline' })
+      const fromBottom = window.innerHeight - word.getBoundingClientRect().top
+      const current = () => asked.current === id
+      setPicked({ token, at: 'asking' })
+      closeOnPage.current = pagePopup(
+        { text: token.text, ids: token.ids, fromBottom },
+        {
+          shown: () => current() && setPicked({ token, at: 'page' }),
+          closed: () => current() && drop(),
+          unavailable: () => current() && setPicked({ token, at: 'inline' })
+        }
+      )
+    },
+    [pagePopup, drop]
+  )
+  useEffect(() => () => closeOnPage.current?.(), [])
+  const start = picked?.token.start
   useEffect(() => {
     if (start === undefined) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || hasOpenMenu(document)) return
-      setPicked(null)
+      if (event.key !== 'Escape' || hasOpenLayer(document)) return
+      drop()
       source.current
         ?.querySelector<HTMLElement>(`[data-start="${start}"]`)
         ?.focus({ preventScroll: true })
     }
     const onPress = (event: PointerEvent) => {
-      if (hasOpenMenu(document)) return
-      if (!(event.target instanceof Element && event.target.closest(keptPresses))) setPicked(null)
+      if (!keptPresses.has(event) && !hasOpenLayer(document)) drop()
     }
     document.addEventListener('keydown', onKey)
-    document.addEventListener('pointerdown', onPress, true)
+    document.addEventListener('pointerdown', onPress)
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.removeEventListener('pointerdown', onPress, true)
+      document.removeEventListener('pointerdown', onPress)
     }
-  }, [start, source])
-  return [picked, setPicked] as const
+  }, [start, source, drop])
+  return { picked, pick, drop }
 }
 
 type PickWord = (token: PageToken, word: HTMLElement) => void
@@ -159,37 +192,31 @@ type PickWord = (token: PageToken, word: HTMLElement) => void
 type LineProps = {
   settings: Settings
   services: SourceServices
-  open?(page: PanelPage): void
   onPopup?(open: boolean, dismiss: () => void): void
   glosses?: GlossCache
   pick?: PickWord
 }
 
-function useReportPopup(
-  popupOpen: boolean,
-  onPopup: LineProps['onPopup'],
-  setPicked: (picked: null) => void
-) {
+function useReportPopup(popupOpen: boolean, onPopup: LineProps['onPopup'], drop: () => void) {
   useEffect(() => {
     if (!popupOpen || !onPopup) return
-    onPopup(true, () => setPicked(null))
-    return () => onPopup(false, () => setPicked(null))
-  }, [popupOpen, onPopup, setPicked])
+    onPopup(true, drop)
+    return () => onPopup(false, drop)
+  }, [popupOpen, onPopup, drop])
 }
 
 function Linked({
   found,
   settings,
   services,
-  open,
   onPopup,
   glosses: shared,
   pick
 }: LineProps & { found: Found }) {
   const glosses = useGlosses(found, settings['readingAids.wordMeanings'], services, shared)
   const source = useRef<HTMLParagraphElement>(null)
-  const [picked, setPicked] = usePicked(source)
-  useReportPopup(picked !== null, onPopup, setPicked)
+  const { picked, pick: pickHere, drop } = usePicked(source, services.pagePopup)
+  useReportPopup(picked !== null, onPopup, drop)
   const frequency = settings['frequencyDictionaries.chosen']
   const lookUp = useCallback(
     (id: string) => services.popupCard(id, frequency),
@@ -203,21 +230,19 @@ function Linked({
             key={group[0].start}
             group={group}
             gloss={glossOf(group, glosses)}
-            pick={pick ?? setPicked}
+            pick={pick ?? pickHere}
           />
         ))}
       </p>
       <RomajiLine romaji={found.romaji} className="text-sm" />
-      {picked ? (
-        <section className="pt-2 [&_[data-word-popup]]:w-full">
+      {picked?.at === 'inline' ? (
+        <section className="pt-2 [&_[data-word-popup]]:max-w-full" onPointerDown={keep}>
           <WordPopup
-            key={picked.start}
-            text={picked.text}
-            ids={picked.ids}
+            key={picked.token.start}
+            text={picked.token.text}
+            ids={picked.token.ids}
             lookUp={lookUp}
-            frequency={frequency}
-            romaji={settings['readingAids.romaji']}
-            openFullEntry={page => open?.(page)}
+            settings={settings}
           />
         </section>
       ) : null}
@@ -241,15 +266,7 @@ export function SourceLine({
   return <Linked found={found} settings={settings} {...line} />
 }
 
-export function SourceWords({
-  source,
-  services,
-  open
-}: {
-  source: string
-  services: SourceServices
-  open?(page: PanelPage): void
-}) {
+export function SourceWords({ source, services }: { source: string; services: SourceServices }) {
   const settings = useSettings()
-  return <SourceLine source={source} settings={settings} services={services} open={open} />
+  return <SourceLine source={source} settings={settings} services={services} />
 }

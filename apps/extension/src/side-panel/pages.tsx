@@ -1,9 +1,6 @@
 import { Button } from '@zenbu/ui/components/button'
 import type { ComponentType } from 'react'
 import { ImageSearchPage } from '../translate/image-search-page'
-import { FormExamplesPage } from '../word-detail/form-examples-page'
-import { KanjiDetailPage } from '../word-detail/kanji-detail-page'
-import { WordDetailPage } from '../word-detail/word-detail-page'
 import { labels } from './labels'
 import type { PanelPage, PanelPageProps } from './route'
 
@@ -24,9 +21,6 @@ function TestPage({ page, open }: PanelPageProps<Extract<PanelPage, { page: 'tes
 export const pages: {
   [K in PanelPage['page']]: ComponentType<PanelPageProps<Extract<PanelPage, { page: K }>>>
 } = {
-  word: WordDetailPage,
-  kanji: KanjiDetailPage,
-  form: FormExamplesPage,
   'image-search': ImageSearchPage,
   test: TestPage
 }

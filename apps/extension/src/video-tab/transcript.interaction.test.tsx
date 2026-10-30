@@ -9,6 +9,7 @@ import { click, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
 import { openFullEntryButton, popupAnswer } from '../test/word-cards'
 import { translateLabels } from '../translate/labels'
+import type { PagePopup, PagePopupHeard } from '../word-popup/page-popup'
 import { videoTabLabels } from './labels'
 
 let tab: ReturnType<typeof watching> | undefined
@@ -284,11 +285,39 @@ describe('the transcript’s words', () => {
     await closesAndPlaysAgain(shown)
   })
 
-  it('opens Word Detail from the popup’s Open Full Entry', async () => {
+  it('expands the popup in place into the word’s full entry where the page can’t show the card', async () => {
     const shown = await transcript()
     shown.services.popupCard.mockImplementation(async () => popupAnswer('youkyuu'))
     await click(document.querySelector(walkWord('散歩')))
     await click(openFullEntryButton(document))
-    expect(shown.open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
+    expect(popup()?.hasAttribute('data-expanded')).toBe(true)
+    expect(shown.open).not.toHaveBeenCalled()
+  })
+
+  it('opens a word’s card on the page with no card in the panel, pausing the video until the page closes the last one', async () => {
+    const heard: PagePopupHeard[] = []
+    const closes: (() => void)[] = []
+    const pagePopup = vi.fn<PagePopup>((_word, listener) => {
+      heard.push(listener)
+      const close = vi.fn()
+      closes.push(close)
+      return close
+    })
+    const shown = await transcript({ pagePopup })
+    await shown.playsAt(12)
+    await click(document.querySelector(walkWord('散歩')))
+    await act(async () => heard[0]?.shown())
+    expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '散歩' })
+    expect(popup()).toBeNull()
+    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+
+    await click(document.querySelector(walkWord('天気')))
+    await act(async () => heard[1]?.shown())
+    expect(closes[0]).toHaveBeenCalledOnce()
+    expect(popup()).toBeNull()
+    expect(shown.video.controls).toEqual([{ type: 'pause' }])
+
+    await act(async () => heard[1]?.closed())
+    await playsAgain(shown)
   })
 })

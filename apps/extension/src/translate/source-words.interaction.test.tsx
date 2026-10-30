@@ -10,8 +10,9 @@ import {
   sentence,
   sentenceAnswer
 } from '../test/word-cards'
-import { hasOpenMenu } from '../word-popup/open-menu'
-import { type SourceServices, SourceWords } from './source-words'
+import { hasOpenLayer } from '../word-popup/open-layer'
+import type { PagePopup, PagePopupHeard } from '../word-popup/page-popup'
+import { SourceLine, type SourceServices, SourceWords } from './source-words'
 
 type Segmented = Awaited<ReturnType<SourceServices['segment']>>
 
@@ -32,10 +33,33 @@ afterEach(() => {
   shown = undefined
 })
 
-async function showSource(using: SourceServices, open = vi.fn()) {
-  shown = render(<SourceWords source={sentence} services={using} open={open} />)
+async function showSource(using: SourceServices) {
+  shown = render(<SourceWords source={sentence} services={using} />)
   await settle()
   return shown.container
+}
+
+type Asked = { word: Parameters<PagePopup>[0]; heard: PagePopupHeard; close: () => void }
+
+function onThePage() {
+  const asked: Asked[] = []
+  const pagePopup = vi.fn<PagePopup>((word, heard) => {
+    const close = vi.fn()
+    asked.push({ word, heard, close })
+    return close
+  })
+  const onPopup = vi.fn<(open: boolean, dismiss: () => void) => void>()
+  const using: SourceServices = { ...services(), pagePopup }
+  const show = async () => {
+    shown = render(
+      <SourceLine source={sentence} settings={settingDefaults} services={using} onPopup={onPopup} />
+    )
+    await settle()
+    return shown.container
+  }
+  const hear = (event: keyof PagePopupHeard, index = 0) =>
+    act(async () => asked[index]?.heard[event]())
+  return { asked, pagePopup, onPopup, show, hear }
 }
 
 const texts = (scope: ParentNode, selector: string) =>
@@ -99,10 +123,9 @@ describe('the Japanese source of a translation', () => {
     expect(using.popupCard).toHaveBeenCalledWith('youkyuu', [])
   })
 
-  it('opens the word popup from a word, and Open Full Entry opens Word Detail', async () => {
+  it('opens the word popup under the line where nothing can show it on the page, and Open Full Entry expands it there', async () => {
     const using = services()
-    const open = vi.fn()
-    const container = await showSource(using, open)
+    const container = await showSource(using)
     await click(find(container, '[data-word="要求"]'))
     expect(popup()?.getAttribute('aria-label')).toBe('Word 要求')
     expect(find(document, '[data-headword]').textContent).toContain('要求')
@@ -111,7 +134,54 @@ describe('the Japanese source of a translation', () => {
       settingDefaults['frequencyDictionaries.chosen']
     )
     await click(openFullEntryButton(document))
-    expect(open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
+    expect(popup()?.hasAttribute('data-expanded')).toBe(true)
+    expect(find(document, 'section[data-entry-page]').dataset.entryPage).toBe('word')
+  })
+
+  it('opens a word’s card on the page, level with the word, and shows no card in the panel', async () => {
+    const page = onThePage()
+    const container = await page.show()
+    const word = find(container, '[data-word="要求"]')
+    await click(word)
+    expect(page.asked.map(({ word }) => word)).toEqual([
+      {
+        text: '要求',
+        ids: ['youkyuu'],
+        fromBottom: window.innerHeight - word.getBoundingClientRect().top
+      }
+    ])
+    expect(page.onPopup).toHaveBeenLastCalledWith(true, expect.any(Function))
+    await page.hear('shown')
+    expect(popup()).toBeNull()
+    await press(outside())
+    expect(page.asked[0]?.close).toHaveBeenCalledOnce()
+    expect(page.onPopup).toHaveBeenLastCalledWith(false, expect.any(Function))
+  })
+
+  it('lets go of the word when the page closes its card, and puts it away on Escape with focus back on the word', async () => {
+    const page = onThePage()
+    const container = await page.show()
+    await click(find(container, '[data-word="要る"]'))
+    await page.hear('shown')
+    await page.hear('closed')
+    expect(page.onPopup).toHaveBeenLastCalledWith(false, expect.any(Function))
+    const word = find(container, '[data-word="要求"]')
+    await click(word)
+    await page.hear('shown', 1)
+    await escapeOn(document.body)
+    expect(page.asked[1]?.close).toHaveBeenCalledOnce()
+    expect(document.activeElement).toBe(word)
+    expect(page.onPopup).toHaveBeenLastCalledWith(false, expect.any(Function))
+  })
+
+  it('shows the card under the line, at the popup’s size, when the page can’t show one', async () => {
+    const page = onThePage()
+    const container = await page.show()
+    await click(find(container, '[data-word="要求"]'))
+    expect(popup()).toBeNull()
+    await page.hear('unavailable')
+    expect(popup()?.getAttribute('aria-label')).toBe('Word 要求')
+    expect(popup()?.parentElement?.closest('[data-reading-aids]')).not.toBeNull()
   })
 
   it('puts the popup away on a press outside it and leaves focus and scroll where the press put them', async () => {
@@ -137,7 +207,7 @@ describe('the Japanese source of a translation', () => {
     const backdrop = find(document, '[role="presentation"][data-base-ui-inert]')
     expect(popup()?.contains(backdrop)).toBe(false)
     await press(backdrop)
-    expect(hasOpenMenu(document)).toBe(false)
+    expect(hasOpenLayer(document)).toBe(false)
     expect(popup()).not.toBeNull()
   })
 
@@ -148,7 +218,7 @@ describe('the Japanese source of a translation', () => {
     const menu = await openMenu(document)
     await escapeOn(menu)
     expect(popup()).not.toBeNull()
-    expect(hasOpenMenu(document)).toBe(false)
+    expect(hasOpenLayer(document)).toBe(false)
     const closing = document.body.appendChild(document.createElement('div'))
     closing.setAttribute('role', 'menu')
     closing.setAttribute('data-closed', '')

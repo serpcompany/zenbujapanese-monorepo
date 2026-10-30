@@ -19,6 +19,7 @@ import {
   onDeviceTranslation,
   translatorAvailability
 } from '../translation/translator'
+import type { PagePopup } from '../word-popup/page-popup'
 import { translateLabels } from './labels'
 import type { TranslateServices } from './services'
 import { TranslateTab } from './translate-tab'
@@ -114,19 +115,35 @@ describe('the Translate tab', () => {
     expect(tab.card()?.textContent).toContain(translateLabels.onThisDevice)
   })
 
-  it('links the words of a Japanese source to the word popup, and its Open Full Entry to Word Detail', async () => {
+  it('links the words of a Japanese source to their card on the page, with no card in the panel', async () => {
+    standInTranslator()
+    const pagePopup = vi.fn<PagePopup>((_word, heard) => {
+      heard.shown()
+      return () => {}
+    })
+    const services = { ...servicesWith(), pagePopup }
+    services.segment.mockImplementation(async () => sentenceAnswer)
+    const tab = await showTab(services)
+    await tab.type(sentence)
+    await tab.click(translateLabels.translate)
+    await settle()
+    await click(find(document, '[data-source] [data-word="要求"]'))
+    expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '要求', ids: ['youkyuu'] })
+    expect(document.querySelector('[data-word-popup]')).toBeNull()
+    expect(services.segment).toHaveBeenCalledWith(sentence)
+  })
+
+  it('expands a source word’s popup in place where the page can’t show its card', async () => {
     standInTranslator()
     const services = servicesWith()
     services.segment.mockImplementation(async () => sentenceAnswer)
-    const open = vi.fn()
-    const tab = await showTab(services, open)
+    const tab = await showTab(services)
     await tab.type(sentence)
     await tab.click(translateLabels.translate)
     await settle()
     await click(find(document, '[data-source] [data-word="要求"]'))
     await click(openFullEntryButton(document))
-    expect(open).toHaveBeenCalledWith({ page: 'word', entSeq: 1546680 })
-    expect(services.segment).toHaveBeenCalledWith(sentence)
+    expect(document.querySelector('[data-word-popup]')?.hasAttribute('data-expanded')).toBe(true)
   })
 
   it('translates English typed in the box to Japanese', async () => {

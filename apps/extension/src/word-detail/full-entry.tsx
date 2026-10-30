@@ -73,12 +73,11 @@ export function FullEntry({ first, settings, notices, backLabel, back, lookups }
               {backLabel}
             </Button>
           </div>
-          <ReadingAids
-            settings={settings}
-            className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4"
-          >
-            <PageView page={page} open={open} settings={settings} lookups={lookups} />
-          </ReadingAids>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <ReadingAids settings={settings} className="flex flex-col gap-4 p-4">
+              <PageView page={page} open={open} settings={settings} lookups={lookups} />
+            </ReadingAids>
+          </div>
         </section>
       ))}
     </NoticesProvider>

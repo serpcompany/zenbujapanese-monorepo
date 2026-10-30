@@ -2,6 +2,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { hostElementName, type ShadowMount } from '../content/shadow-mount'
+import { settingDefaults } from '../shared/settings'
 import '../test/act-environment'
 import { popupAnswer } from '../test/word-cards'
 import { wordPopupEvents } from './popup-events'
@@ -45,21 +46,19 @@ const target = (text: string) => ({
   anchor: () => new DOMRect(0, 0, 10, 10)
 })
 
+const pageHost = (mount: (content: ReactNode) => ShadowMount) =>
+  wordPopupHost({
+    settings: () => ({ lookUp: async id => popupAnswer(id), settings: settingDefaults }),
+    mount
+  })
+
 function popupHost(mount: (content: ReactNode) => ShadowMount = fakeMount) {
   const said: string[] = []
   const events = wordPopupEvents()
   const heard = (event: Event) => said.push(event.type)
   events.addEventListener('open', heard)
   events.addEventListener('close', heard)
-  const host = wordPopupHost({
-    settings: () => ({
-      lookUp: async id => popupAnswer(id),
-      frequency: [],
-      romaji: false,
-      openFullEntry: () => {}
-    }),
-    mount
-  })
+  const host = pageHost(mount)
   const shownIn = () => document.querySelector('[data-zenbu-word-popup]')?.parentElement
   const stop = () => {
     host.close()
@@ -70,11 +69,18 @@ function popupHost(mount: (content: ReactNode) => ShadowMount = fakeMount) {
 }
 
 const menuIn = (shadow: ShadowRoot) => {
-  const menu = shadow.appendChild(document.createElement('div'))
+  const portal = shadow.appendChild(document.createElement('div'))
+  portal.setAttribute('data-base-ui-portal', '')
+  const menu = portal.appendChild(document.createElement('div'))
   menu.setAttribute('role', 'menu')
   menu.setAttribute('data-open', '')
   return menu
 }
+
+const nextFrame = () => new Promise(done => requestAnimationFrame(() => setTimeout(done, 0)))
+
+const press = (element: Element) =>
+  element.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, composed: true }))
 
 const popupShadow = () =>
   document.querySelector('[data-zenbu-word-popup]')?.shadowRoot as ShadowRoot
@@ -130,7 +136,7 @@ describe('the word popup on a page', () => {
     const menu = menuIn(popupShadow())
     anchor = new DOMRect(0, -500, 10, 10)
     window.dispatchEvent(new Event('scroll'))
-    await new Promise(done => requestAnimationFrame(() => setTimeout(done, 0)))
+    await nextFrame()
     expect(said).toEqual(['open'])
     menu.removeAttribute('data-open')
     await vi.waitFor(() => expect(said).toEqual(['open', 'close']))
@@ -159,6 +165,63 @@ describe('the word popup on a page', () => {
     const box = popupShadow().querySelector<HTMLElement>('[style]')
     expect(box?.style.position).toBe('fixed')
     expect(box?.style.zIndex).toBe('')
+    stop()
+  })
+
+  it('places a card at the side panel’s edge, level with the word, and keeps it there while the page scrolls', async () => {
+    const { host, said, stop } = popupHost(drawingMount)
+    const closed = vi.fn()
+    host.open({ text: '要求', ids: ['youkyuu'], edge: { side: 'right', top: 300 }, closed })
+    const box = popupShadow().querySelector<HTMLElement>('[style]')
+    expect(box?.dataset.side).toBe('beside')
+    expect(box?.style.left).toBe(`${window.innerWidth - 8}px`)
+    expect(box?.style.top).toBe('300px')
+    window.dispatchEvent(new Event('scroll'))
+    await nextFrame()
+    expect(said).toEqual(['open'])
+    expect(closed).not.toHaveBeenCalled()
+    host.close()
+    expect(closed).toHaveBeenCalledOnce()
+    stop()
+  })
+
+  it('tells the one who opened a card when it goes, whether it closes or another card takes its place', () => {
+    const { host, stop } = popupHost()
+    const first = vi.fn()
+    const second = vi.fn()
+    host.open({ ...target('要求'), closed: first })
+    host.open({ ...target('要る'), closed: second })
+    expect(first).toHaveBeenCalledOnce()
+    expect(second).not.toHaveBeenCalled()
+    pressEscape()
+    expect(second).toHaveBeenCalledOnce()
+    stop()
+  })
+
+  it('shows one card on a page: another part’s card takes the place of this one, without a close between', () => {
+    const { host, said, stop } = popupHost()
+    const other = pageHost(fakeMount)
+    const closed = vi.fn()
+    host.open({ ...target('要求'), closed })
+    other.open(target('要る'))
+    expect(document.querySelectorAll('[data-zenbu-word-popup]')).toHaveLength(1)
+    expect(closed).toHaveBeenCalledOnce()
+    expect(said).toEqual(['open'])
+    host.close()
+    expect(said).toEqual(['open'])
+    pressEscape()
+    expect(document.querySelectorAll('[data-zenbu-word-popup]')).toHaveLength(0)
+    expect(said).toEqual(['open', 'close'])
+    stop()
+  })
+
+  it('stays open for a press in a layer it opened, and closes for a press on the page', () => {
+    const { host, said, stop } = popupHost()
+    host.open(target('要求'))
+    press(menuIn(popupShadow()))
+    expect(said).toEqual(['open'])
+    press(document.body)
+    expect(said).toEqual(['open', 'close'])
     stop()
   })
 })

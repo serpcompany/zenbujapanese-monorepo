@@ -4,15 +4,15 @@ import { isPanelRoute, type OpenPanel, openPanel, type PanelPage, routeForWindow
 
 afterEach(() => vi.unstubAllEnvs())
 
-const word: PanelPage = { page: 'word', entSeq: 1358280, entries: [1358280, 2028920] }
-const kanji: PanelPage = { page: 'kanji', character: '猫' }
+const testPage: PanelPage = { page: 'test', text: '猫' }
+const imageSearch: PanelPage = { page: 'image-search' }
 
 describe('isPanelRoute', () => {
   it('takes a tab, a page, both, or neither', () => {
     expect(isPanelRoute({})).toBe(true)
     expect(isPanelRoute({ tab: 'player' })).toBe(true)
-    expect(isPanelRoute({ page: word })).toBe(true)
-    expect(isPanelRoute({ tab: 'account', page: { page: 'form', form: '食べた' } })).toBe(true)
+    expect(isPanelRoute({ page: testPage })).toBe(true)
+    expect(isPanelRoute({ tab: 'account', page: { page: 'image-search' } })).toBe(true)
     expect(isPanelRoute({ page: { page: 'test', text: '猫' } })).toBe(true)
     expect(isPanelRoute({ tab: 'translate', page: { page: 'image-search' } })).toBe(true)
   })
@@ -24,9 +24,10 @@ describe('isPanelRoute', () => {
     expect(isPanelRoute({ tab: 'lookUp' })).toBe(false)
     expect(isPanelRoute({ page: { page: 'settings' } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'toString' } })).toBe(false)
-    expect(isPanelRoute({ page: { page: 'word', entSeq: '1358280' } })).toBe(false)
-    expect(isPanelRoute({ page: { page: 'word', entSeq: 1358280, entries: ['x'] } })).toBe(false)
-    expect(isPanelRoute({ page: { page: 'kanji', character: 7 } })).toBe(false)
+    expect(isPanelRoute({ page: { page: 'test', text: 7 } })).toBe(false)
+    expect(isPanelRoute({ page: { page: 'word', entSeq: 1358280 } })).toBe(false)
+    expect(isPanelRoute({ page: { page: 'kanji', character: '猫' } })).toBe(false)
+    expect(isPanelRoute({ page: { page: 'form', form: '食べた' } })).toBe(false)
   })
 
   it('refuses the test page outside the test build', () => {
@@ -36,10 +37,10 @@ describe('isPanelRoute', () => {
 })
 
 describe('routeForWindow', () => {
-  const move = { target: 'side-panel', windowId: 7, route: { page: kanji } }
+  const move = { target: 'side-panel', windowId: 7, route: { page: imageSearch } }
 
   it("takes a move for the panel's own window", () => {
-    expect(routeForWindow(7, move)).toEqual({ page: kanji })
+    expect(routeForWindow(7, move)).toEqual({ page: imageSearch })
   })
 
   it("ignores another window's move, another target, and a broken route", () => {
@@ -54,42 +55,45 @@ describe('openPanel', () => {
   it('asks the service worker to open the panel on the route', async () => {
     const sendMessage = vi.fn(async (_message: OpenPanel) => ({ type: 'opened' }))
     await expect(
-      openPanel({ tab: 'account', page: word }, { sendMessage })
+      openPanel({ tab: 'account', page: testPage }, { sendMessage })
     ).resolves.toBeUndefined()
     expect(sendMessage).toHaveBeenCalledWith({
       target: 'service-worker',
-      openPanel: { tab: 'account', page: word }
+      openPanel: { tab: 'account', page: testPage }
     })
   })
 
   it('settles quietly when the service worker cannot be reached', async () => {
     const sendMessage = () => Promise.reject(new Error('Extension context invalidated.'))
-    await expect(openPanel({ page: kanji }, { sendMessage })).resolves.toBeUndefined()
+    await expect(openPanel({ page: imageSearch }, { sendMessage })).resolves.toBeUndefined()
   })
 })
 
 describe('navigation', () => {
   it('keeps a stack of pages for each tab, and Back pops one page of the current tab', () => {
-    const onTranslate = openPage(openPage(startState('translate'), word), kanji)
-    const onAccount = openPage(selectTab(onTranslate, 'account'), word)
-    expect(onAccount.stacks.translate.map(stacked => stacked.page)).toEqual([word, kanji])
-    expect(onAccount.stacks.account.map(stacked => stacked.page)).toEqual([word])
+    const onTranslate = openPage(openPage(startState('translate'), testPage), imageSearch)
+    const onAccount = openPage(selectTab(onTranslate, 'account'), testPage)
+    expect(onAccount.stacks.translate.map(stacked => stacked.page)).toEqual([testPage, imageSearch])
+    expect(onAccount.stacks.account.map(stacked => stacked.page)).toEqual([testPage])
     const back = goBack(selectTab(onAccount, 'translate'))
-    expect(back.stacks.translate.map(stacked => stacked.page)).toEqual([word])
+    expect(back.stacks.translate.map(stacked => stacked.page)).toEqual([testPage])
     expect(back.stacks.account).toHaveLength(1)
     expect(goBack(goBack(back))).toEqual(goBack(back))
   })
 
   it('gives every page its own key, and does not stack the page already on top', () => {
-    const state = openPage(openPage(openPage(startState('translate'), word), word), kanji)
+    const state = openPage(
+      openPage(openPage(startState('translate'), testPage), testPage),
+      imageSearch
+    )
     expect(state.stacks.translate.map(stacked => stacked.key)).toEqual([0, 1])
   })
 
   it('goes to a route by choosing its tab, then opening its page there', () => {
-    const state = goTo(startState('translate'), { tab: 'player', page: kanji })
+    const state = goTo(startState('translate'), { tab: 'player', page: imageSearch })
     expect(state.tab).toBe('player')
-    expect(state.stacks.player.map(stacked => stacked.page)).toEqual([kanji])
+    expect(state.stacks.player.map(stacked => stacked.page)).toEqual([imageSearch])
     expect(goTo(state, {})).toBe(state)
-    expect(goTo(state, { page: word }).stacks.player).toHaveLength(2)
+    expect(goTo(state, { page: testPage }).stacks.player).toHaveLength(2)
   })
 })

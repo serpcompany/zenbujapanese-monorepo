@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { PanelRoute } from '../side-panel/route'
 import { openOnToolbarClick, openPanelListener, type PanelWindows } from './side-panel'
 
-const route: PanelRoute = { tab: 'account', page: { page: 'kanji', character: '猫' } }
+const route: PanelRoute = { tab: 'account', page: { page: 'image-search' } }
 
 const noGesture = '`sidePanel.open()` may only be called in response to a user gesture.'
 
