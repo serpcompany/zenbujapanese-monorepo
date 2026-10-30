@@ -193,6 +193,7 @@ export function startAccountOn(
     identity,
     extensionId,
     onMessage: fake.chrome.runtime.onMessage,
+    onMessageExternal: fake.chrome.runtime.onMessageExternal,
     onStartup: { addListener: () => undefined },
     send: service.send,
     copy: {

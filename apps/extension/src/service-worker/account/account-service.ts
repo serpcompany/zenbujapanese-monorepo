@@ -7,7 +7,7 @@ import {
 } from '../../shared/account'
 import { fields } from '../../shared/messages'
 import type { Answered, Api } from './api'
-import type { SignIns } from './sign-in'
+import type { SignedIn, SignIns } from './sign-in'
 import { refusedFor } from './sign-in'
 import { type AccountStore, accountOf, type User } from './store'
 import type { AccessTokens } from './tokens'
@@ -25,6 +25,10 @@ type Parts = {
   signIns: SignIns
   copy: CopyHooks
 }
+
+export type WebsiteReply =
+  | { signedIn: true }
+  | { signedIn: false; refusal: 'signed-in-already' | 'wait' | 'try-again' }
 
 const subscriptionOf = (value: Record<string, unknown>): KeptSubscription => ({
   status: String(value.status),
@@ -73,14 +77,38 @@ export function accountService({ api, store, tokens, signIns, copy }: Parts) {
     return api({ method: 'POST', path: '/v1/auth/sign-out', bearer: sessionToken, body: {} })
   }
 
+  async function startCopy(user: User): Promise<void> {
+    await copy.signedIn(user)
+    await subscription()
+    copy.chance('access')
+  }
+
+  async function keep({ sessionToken, user }: SignedIn, readFailed?: () => void): Promise<void> {
+    await store.keepSignIn(sessionToken, user)
+    const started = startCopy(user)
+    await (readFailed ? started.catch(readFailed) : started)
+  }
+
   async function signIn(way: SignInWay): Promise<AccountAnswer> {
     const signedIn = await signIns.signIn(way)
     if (!signedIn.ok) return signedIn.refused
-    await store.keepSignIn(signedIn.sessionToken, signedIn.user)
-    await copy.signedIn(signedIn.user)
-    await subscription()
-    copy.chance('access')
+    await keep(signedIn)
     return read()
+  }
+
+  async function signInFromWebsite(code: string, readFailed: () => void): Promise<WebsiteReply> {
+    if ((await store.sessionToken()) !== null) {
+      return { signedIn: false, refusal: 'signed-in-already' }
+    }
+    const signedIn = await signIns.withWebsiteCode(code)
+    if (!signedIn.ok) {
+      return {
+        signedIn: false,
+        refusal: signedIn.refused.refusal === 'wait' ? 'wait' : 'try-again'
+      }
+    }
+    await keep(signedIn, readFailed)
+    return { signedIn: true }
   }
 
   async function signOut(): Promise<AccountAnswer> {
@@ -183,7 +211,7 @@ export function accountService({ api, store, tokens, signIns, copy }: Parts) {
     }
   }
 
-  return { answer, readSubscription: subscription }
+  return { answer, readSubscription: subscription, signInFromWebsite }
 }
 
 export type AccountService = ReturnType<typeof accountService>

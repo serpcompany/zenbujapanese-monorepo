@@ -2760,6 +2760,21 @@
         ],
         "additionalProperties": {}
       },
+      "ExtensionCode": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "expiresIn"
+        ]
+      },
       "AppleExtensionReturn": {
         "type": "object",
         "properties": {
@@ -8724,6 +8739,348 @@
                           "type": "string",
                           "enum": [
                             "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/extension-code": {
+      "post": {
+        "summary": "A code that signs the browser extension in",
+        "description": "Needs the website's session, from one of the website's origins. The website hands the code straight to the extension, which signs in with it at POST /v1/auth/sign-in/extension-code. It works once, only for `zenbu-extension`, within `expiresIn` seconds. The website never logs it, keeps it, or puts it in a URL.",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hand `code` to the extension.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtensionCode"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`website_only`: The session isn't the website's: only the website hands out a code. `invalid_origin`: The cookie came from outside the website's origins.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "website_only",
+                            "invalid_origin"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in/extension-code": {
+      "post": {
+        "summary": "Sign the browser extension in with the website's code",
+        "description": "The extension's own session, with its own scopes, for the account signed in on the website. It counts as signed in when the website's session did, so it is no fresher. Signing either out leaves the other signed in.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "ja",
+              "description": "The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read."
+            },
+            "required": false,
+            "description": "The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.",
+            "name": "content-language",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zenbu-ios",
+                "zenbu-web",
+                "tomodachi",
+                "zenbu-extension"
+              ],
+              "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out."
+            },
+            "required": false,
+            "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.",
+            "name": "x-zenbu-client",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "The code the website handed over."
+                  }
+                },
+                "required": [
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in.",
+            "headers": {
+              "set-auth-token": {
+                "description": "The signed session token: the refresh token, good for 60 days from its last use. Send it as `Authorization: Bearer` to GET /v1/auth/token for an access token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_error`: A field is missing, or of the wrong type; `message` names it. `unknown_client`: No `X-Zenbu-Client`, or one the service doesn't list, from outside the website's origins.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "validation_error",
+                            "unknown_client"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`invalid_code`: The code is unknown, was used, or the website session that asked for it has ended: ask the website for a new one. `code_expired`: The code is over 5 minutes old: ask the website for a new one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_code",
+                            "code_expired"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`client_mismatch`: The code signs in only `zenbu-extension`, and is spent: ask the website for a new one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "client_mismatch"
                           ]
                         },
                         "message": {

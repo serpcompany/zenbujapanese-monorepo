@@ -16,7 +16,7 @@ export type SignInSettings = {
   extensionId: string
 }
 
-type SignedIn = { ok: true; sessionToken: string; user: User; appleCode: string | null }
+export type SignedIn = { ok: true; sessionToken: string; user: User; appleCode: string | null }
 
 export type SignInResult = SignedIn | { ok: false; refused: Refused }
 
@@ -121,6 +121,16 @@ export function signIns(api: Api, identity: Identity, settings: SignInSettings) 
       })
       return answer.ok ? null : refusedFor(answer)
     },
+    withWebsiteCode: async (code: string): Promise<SignInResult> =>
+      signedInOf(
+        await api({
+          method: 'POST',
+          path: '/v1/auth/sign-in/extension-code',
+          signIn: true,
+          body: { code }
+        }),
+        null
+      ),
     signIn: (way: SignInWay): Promise<SignInResult> =>
       way.way === 'code'
         ? withCode(way.email, way.code)

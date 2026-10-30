@@ -16,6 +16,8 @@ import type { AccountCopy } from './copy-service'
 
 const pages = `chrome-extension://${extensionId}`
 
+const other = { id: 'user-2', email: 'other@example.com' }
+
 function answering(copy: Partial<AccountCopy> = {}) {
   const reportFailure = vi.fn()
   const answer = vi.fn(async (): Promise<CopyAnswer> => ({ type: 'opened' }))
@@ -98,5 +100,37 @@ describe("the copy's messages", () => {
     await vi.waitFor(() => expect(heard).toContainEqual({ [word.item]: true }))
     await expect(askKnown([word.item], tab)).resolves.toEqual({ [word.item]: true })
     await expect(askCopy({ copy: 'read' }, tab)).resolves.toMatchObject({ type: 'failed' })
+  })
+
+  it("hands the copy to the account the website signs in, as the extension's own sign-in does, and syncs it", async () => {
+    const fake = startExtension()
+    const service = startAccountOn(fake, {
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-other', other),
+      'POST /v1/auth/sign-in/extension-code': () => signedInAnswer('session-website'),
+      'POST /v1/auth/sign-out': () => json(200, {}),
+      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
+      'GET /v1/me/subscription': () => json(200, subscribed),
+      'POST /v1/sync': asked => json(200, syncAnswer(appliedTo(asked.body as Sync)))
+    })
+    const syncs = () => service.asked.filter(asked => asked.route === 'POST /v1/sync')
+    await askAccount({
+      account: 'sign-in',
+      with: { way: 'code', email: other.email, code: '123456' }
+    })
+    await askCopy({ copy: 'change', change: { change: 'mark', ...word } })
+    await vi.waitFor(() => expect(syncs().length).toBeGreaterThan(0))
+    await askAccount({ account: 'sign-out' })
+    const before = syncs().length
+    await expect(
+      fake
+        .fromPage('https://zenbujapanese.com')
+        .sendMessage({ type: 'sign-in', code: 'website-code' })
+    ).resolves.toEqual({ signedIn: true })
+    await vi.waitFor(async () =>
+      expect(await askCopy({ copy: 'read' })).toMatchObject({
+        copy: { owner: user.email, knownWords: [], unsynced: 0, sync: 'synced' }
+      })
+    )
+    expect(syncs().slice(before)).toMatchObject([{ body: { cursor: null, mutations: [] } }])
   })
 })

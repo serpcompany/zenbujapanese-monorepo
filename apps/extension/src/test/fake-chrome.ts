@@ -78,6 +78,7 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
   const kept = keptItems(items)
   const changed = chromeEvent<ChangeListener>()
   const messages = chromeEvent<MessageListener>()
+  const external = chromeEvent<MessageListener>()
   const activated = chromeEvent<() => void>()
   const updated = chromeEvent<TabUpdated>()
   const added = chromeEvent<() => void>()
@@ -126,6 +127,7 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
     },
     runtime: {
       onMessage: messages.event,
+      onMessageExternal: external.event,
       sendMessage: (message: unknown) => {
         sent.push(message)
         return deliver(messages.listeners, message, { origin: `chrome-extension://${extensionId}` })
@@ -182,6 +184,10 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
     }
   })
 
+  const fromPage = (origin: string) => ({
+    sendMessage: (message: unknown) => deliver(external.listeners, message, { origin })
+  })
+
   const switchTo = (tabId: number) => {
     site.active = tabId
     for (const listener of [...activated.listeners]) listener()
@@ -208,6 +214,7 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
     opened,
     site,
     inTab,
+    fromPage,
     switchTo,
     load,
     clickIcon,

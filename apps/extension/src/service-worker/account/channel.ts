@@ -1,5 +1,5 @@
 import { type AccountAnswer, isAccountEnvelope } from '../../shared/account'
-import { apiOrigin, appleServicesId, googleClientId } from '../../shared/hosts'
+import { apiOrigin, appleServicesId, googleClientId, signInWebsites } from '../../shared/hosts'
 import { failure } from '../../shared/messages'
 import type { SettingsStore } from '../../shared/settings'
 import { answerCopy, tellKnown } from '../copy/copy-channel'
@@ -7,12 +7,18 @@ import { accountCopy } from '../copy/copy-service'
 import type { CopyStorage } from '../copy/kept'
 import type { CopyFailure } from '../copy/sync'
 import { isSyncedSetting } from '../copy/synced-settings'
-import { type AccountService, accountService, readSubscription } from './account-service'
+import {
+  type AccountService,
+  accountService,
+  readSubscription,
+  type WebsiteReply
+} from './account-service'
 import { accountApi, type Send } from './api'
 import type { Identity } from './identity'
 import { signIns } from './sign-in'
 import { type AccountStorage, accountStore } from './store'
 import { accessTokens } from './tokens'
+import { answerWebsite } from './website-sign-in'
 
 type Events = { addListener(listener: () => void): void }
 
@@ -25,17 +31,20 @@ type CopyParts = {
   pages: Parameters<typeof tellKnown>[1]
 }
 
+type Messages<Answer> = {
+  addListener(
+    listener: (message: unknown, sender: Sender, respond: (answer: Answer) => void) => boolean
+  ): void
+}
+
 type Parts = {
   storage: AccountStorage & {
     local: { setAccessLevel(details: { accessLevel: 'TRUSTED_CONTEXTS' }): Promise<void> }
   }
   identity: Identity
   extensionId: string
-  onMessage: {
-    addListener(
-      listener: (message: unknown, sender: Sender, respond: (answer: unknown) => void) => boolean
-    ): void
-  }
+  onMessage: Messages<unknown>
+  onMessageExternal: Messages<WebsiteReply>
   onStartup: Events
   send?: Send
   copy: CopyParts
@@ -54,7 +63,7 @@ const accessOnly = (answer: AccountAnswer): AccountAnswer =>
     : answer
 
 export function answerAccount(
-  service: AccountService,
+  service: Pick<AccountService, 'answer'>,
   reportFailure: Parts['reportFailure'],
   pagesOrigin: string
 ) {
@@ -113,4 +122,5 @@ export function startAccount(parts: Parts): void {
       .catch(() => undefined)
       .then(() => copy.chance('startup'))
   })
+  parts.onMessageExternal.addListener(answerWebsite(service, signInWebsites, parts.reportFailure))
 }

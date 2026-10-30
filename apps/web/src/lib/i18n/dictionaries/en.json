@@ -63,6 +63,11 @@
         "title": "Settings",
         "description": "Your Zenbu app’s settings and frequency dictionaries.",
         "intro": "The frequency dictionaries the Zenbu app ranks words by, which you can choose here, and the settings you changed in the app."
+      },
+      "extension": {
+        "title": "The Chrome extension",
+        "description": "Sign Zenbu Japanese for Chrome in to your Zenbu account.",
+        "intro": "Sign Zenbu Japanese for Chrome in to the account you’re signed in to here. Signing out of either leaves the other signed in."
       }
     },
     "unavailable": "Signing in to a Zenbu account isn’t available on this site yet.",
@@ -119,6 +124,14 @@
       "signOutHere": "Sign out of this browser. Your other devices stay signed in.",
       "signedOut": "You’re signed out.",
       "appStoreStillBilling": "Your App Store subscription is still running, and Apple keeps billing you until you cancel it in your Apple Account’s subscriptions."
+    },
+    "extension": {
+      "signInFirst": "Sign in here first. Then one click signs the extension in to the same account.",
+      "signIn": "Sign in to the extension",
+      "signedIn": "Zenbu Japanese for Chrome is signed in. You can close this tab.",
+      "signedInAlready": "The extension is signed in already. To use another account there, sign out in the extension first.",
+      "noExtension": "This works in Chrome, with Zenbu Japanese for Chrome installed and up to date. Open this page there, then try again.",
+      "tryAgain": "That didn’t work. Try again."
     },
     "profile": {
       "heading": "Profile",

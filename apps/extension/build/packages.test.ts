@@ -109,8 +109,19 @@ describe('the check of a package', () => {
     const files = { ...built('staging', 'test'), 'test-content-script.js': '' }
     expect(problemsOf(files, 'unpacked', 'staging')).toEqual([
       "The package holds the test build's test-content-script.js.",
+      'The manifest lets https://staging.zenbujapanese.com/*, http://localhost/*, http://127.0.0.1/* message the extension, not https://staging.zenbujapanese.com/* alone.',
       `the test build's ${testLanguageDataHost} is in manifest.json.`,
       `the test build's ${testApiHost} is in manifest.json.`
+    ])
+  })
+
+  it("fails a package that lets the test build's local pages message the extension", () => {
+    const files = built('production', 'release', {
+      key: undefined,
+      externally_connectable: manifest('test', 'production').externally_connectable
+    })
+    expect(problemsOf(files, 'store', 'production')).toEqual([
+      'The manifest lets https://zenbujapanese.com/*, http://localhost/*, http://127.0.0.1/* message the extension, not https://zenbujapanese.com/* alone.'
     ])
   })
 
@@ -142,6 +153,7 @@ describe('the check of a package', () => {
     ])
     expect(problemsOf(built('staging'), 'unpacked', 'production')).toEqual([
       "The manifest's homepage_url is https://staging.zenbujapanese.com, not https://zenbujapanese.com.",
+      'The manifest lets https://staging.zenbujapanese.com/* message the extension, not https://zenbujapanese.com/* alone.',
       "staging's https://staging.zenbujapanese.com is in manifest.json, assets/popup.js.",
       "staging's https://api-staging.zenbujapanese.com is in manifest.json."
     ])

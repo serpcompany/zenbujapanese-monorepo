@@ -36,11 +36,18 @@ export const testLanguageDataHost = 'http://language-data.localhost'
 
 export const testApiHost = 'http://account-api.localhost'
 
+const testWebsites = ['http://localhost', 'http://127.0.0.1']
+
 export const testGoogleClientId = 'zenbu-extension-test.apps.googleusercontent.com'
 
 export function hostsOf(variant: Variant, environment: Environment): Hosts {
   const own = hosts[environment]
   return variant === 'test' ? { ...own, languageData: testLanguageDataHost, api: testApiHost } : own
+}
+
+export function websitesOf(variant: Variant, environment: Environment): string[] {
+  const own = hosts[environment].website
+  return variant === 'test' ? [own, ...testWebsites] : [own]
 }
 
 export function signInIdsOf(variant: Variant, environment: Environment): SignInIds {
@@ -64,6 +71,7 @@ export function hostDefines(environment: Environment, variant: Variant = 'releas
     __ZENBU_WEBSITE_ORIGIN__: JSON.stringify(website),
     __ZENBU_LANGUAGE_DATA_ORIGIN__: JSON.stringify(languageData),
     __ZENBU_API_ORIGIN__: JSON.stringify(api),
+    __ZENBU_SIGN_IN_WEBSITES__: JSON.stringify(websitesOf(variant, environment)),
     __ZENBU_GOOGLE_CLIENT_ID__: JSON.stringify(googleClientId),
     __ZENBU_APPLE_SERVICES_ID__: JSON.stringify(appleServicesId)
   }

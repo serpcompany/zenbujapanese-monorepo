@@ -212,6 +212,7 @@ zenbujapanese.com (`zenbu-web`) signs in from the learner's browser, on an origi
   `apps/web/src/lib/account/client.ts`). A call's emails are in it, a new account keeps it
   ([`account-email.md`](account-email.md)), and it needs no entry in `Access-Control-Allow-Headers`.
 - **On `429`**, wait what `Retry-After` says.
+- **The extension** signs in with a code from it ([`account-extension.md`](account-extension.md)).
 
 ## Access tokens
 
@@ -451,12 +452,12 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `401 unauthorized` from `/v1/me` or `/v1/sync` | Get a new access token and send the request once more. If `GET /v1/auth/token` answers `401` too, the learner is signed out. |
 | `401 unauthorized` or `sign_in_again` from `GET /v1/auth/token` | Sign out on the device, keeping its data, and offer to sign in. |
 | `403 insufficient_scope` | Your app may not do this. Don't retry; don't offer it. |
-| `403 sign_in_again`, `403 session_not_fresh` | Sign the learner in again, then do it within 10 minutes. |
+| `403 sign_in_again`, `session_not_fresh` | Sign the learner in again; do it within 10 minutes. |
 | `400 bad_request`, `400 validation_error` | A bug in the request. Don't retry it unchanged. |
-| `400 invalid_otp`, `otp_expired`, `403 too_many_attempts` | Ask for the code again, or a new one. |
+| `400 invalid_otp`, `otp_expired`, `403 too_many_attempts`, `401 invalid_code`, `code_expired` | Ask for the code again, or a new one. |
 | `401 invalid_nonce`, `invalid_token`, `400 nonce_required` | Start the Apple or Google sign-in over, with a new nonce. |
 | `401 oauth_link_error`, `403 account_not_linked` | The email has an account through another way in: sign in that way, then add this one. |
-| `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
+| `403 email_not_verified`, `client_mismatch`, `website_only`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
 | `402 subscription_required` | From `/v1/sync` or `/v1/photos`: keep the queue and the photos on the device; show the paywall ([billing](account-billing.md)). |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
 | `410 invalid_cursor` | Read again from no cursor, as a full read (How to sync, step 5). |

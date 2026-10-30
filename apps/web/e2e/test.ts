@@ -58,7 +58,8 @@ export const accountPages = [
   { path: '/register/', title: 'Create your account' },
   { path: '/forgot-password/', title: 'No password needed' },
   { path: '/account/', title: 'Your account' },
-  { path: '/account/lists/', title: 'Lists' }
+  { path: '/account/lists/', title: 'Lists' },
+  { path: '/account/extension/', title: 'The Chrome extension' }
 ]
 
 export const footerAccountLink = (page: Page) =>

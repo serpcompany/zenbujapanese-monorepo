@@ -85,8 +85,11 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   answering `subscription_required`, since the real one can't offer it locally; the Account tab
   at 360 pixels cutting none of its lines; and a content
   script, in its isolated world over CDP, finding no token in local or session storage or the
-  page's IndexedDB. Each test starts signed out (`account-pages.ts`), since the browser lasts the
-  worker, and counts the stand-ins' log from where it was when the test began.
+  page's IndexedDB. The website's handover (`website-sign-in.spec.ts`): a code the service gives
+  a `zenbu-web` session, sent from a page on the local server, signs the extension in; a second
+  answers `signed-in-already`; a page on `language-data.localhost` can't reach the extension.
+  Each test starts signed out (`account-pages.ts`), since the browser lasts the worker, and
+  counts the stand-ins' log from where it was when the test began.
 - **Sync,** with the same service (`account-sync.spec.ts`, helpers in `account-copy.ts`): a word,
   a kanji, Favorites with a word, a note, and each synced setting reaching the account and a
   second profile signed in to it (`openProfile` in `fixtures.ts`), and a change made there coming
@@ -99,7 +102,8 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   `indexedDB.databases()`.
 - **The account service** (`account-service.ts`) is `apps/account-api` from the checkout, started
   as a child process on PGlite over a socket, with the dev mailbox, on a free port, not
-  `verify-service`'s 8789, so it runs beside one. `account-api.localhost` maps to it. Its preload
+  `verify-service`'s 8789, so it runs beside one. `account-api.localhost` maps to it, and it takes
+  the local server's origin as the website's (`websiteCode`). Its preload
   (`account-service-preload.mjs`) answers Google's and Apple's key sets with the stand-ins' keys
   and refuses any other fetch off the machine. The stand-ins (`sign-in-providers.ts`) are an HTTPS
   server mapped as `accounts.google.com` and `appleid.apple.com`, with `agent-chrome/site.mjs`'s

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { AccountSettings } from '@/lib/account/settings'
 import type { Locale } from '@/lib/i18n/config'
+import ExtensionPage from './account/extension/page'
 import AccountPage from './account/page'
 import ForgotPasswordPage from './forgot-password/page'
 import LoginPage from './login/page'
@@ -25,7 +26,9 @@ const pagesIn = (locale: Locale) => {
     '/register/': () => RegisterPage({ params, searchParams } as PageProps<'/[locale]/register'>),
     '/forgot-password/': () =>
       ForgotPasswordPage({ params, searchParams } as PageProps<'/[locale]/forgot-password'>),
-    '/account/': () => AccountPage({ params, searchParams } as PageProps<'/[locale]/account'>)
+    '/account/': () => AccountPage({ params, searchParams } as PageProps<'/[locale]/account'>),
+    '/account/extension/': () =>
+      ExtensionPage({ params, searchParams } as PageProps<'/[locale]/account/extension'>)
   }
 }
 

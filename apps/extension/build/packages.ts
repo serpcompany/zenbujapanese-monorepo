@@ -33,6 +33,7 @@ type BuiltManifest = {
   options_ui?: { page?: string }
   background?: { service_worker?: string }
   content_scripts?: { js?: string[] }[]
+  externally_connectable?: { matches?: string[] }
 }
 
 const manifestFile = 'manifest.json'
@@ -156,10 +157,17 @@ function hostProblems(
     { other: 'the test build', origin: testLanguageDataHost },
     { other: 'the test build', origin: testApiHost }
   ].filter(({ origin }) => !own.includes(origin))
+  const messaging = manifest.externally_connectable?.matches ?? []
+  const websitePages = `${website}/*`
   return [
     ...(manifest.homepage_url === website
       ? []
       : [`The manifest's homepage_url is ${manifest.homepage_url}, not ${website}.`]),
+    ...(messaging.length === 1 && messaging[0] === websitePages
+      ? []
+      : [
+          `The manifest lets ${messaging.join(', ') || 'no page'} message the extension, not ${websitePages} alone.`
+        ]),
     ...others.flatMap(({ other, origin }) => {
       const naming = [...files]
         .filter(([file, data]) => textFile.test(file) && data.includes(origin))
