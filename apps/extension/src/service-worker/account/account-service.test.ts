@@ -321,4 +321,44 @@ describe('accountService', () => {
     ])
     expect(await world.store.keptAccount()).toBeNull()
   })
+
+  const checkFailures: [string, () => Promise<Response>][] = [
+    ['answers 503', async () => new Response('down', { status: 503 })],
+    ['cannot be reached', () => Promise.reject(new TypeError('Failed to fetch'))]
+  ]
+
+  it.each(
+    checkFailures
+  )('keeps the session and goes on to the fresh sign-in of a delete when the session check %s', async (_, failing) => {
+    const world = await signedInWorld({
+      'POST /v1/auth/sign-in/email-otp': () => refusal(400, 'invalid_otp'),
+      'GET /v1/auth/token': failing
+    })
+    await expect(world.account.answer({ account: 'delete', with: code })).resolves.toEqual({
+      type: 'refused',
+      refusal: 'wrong-code',
+      retryAfter: null
+    })
+    expect(world.routes()).toEqual(['GET /v1/auth/token', 'POST /v1/auth/sign-in/email-otp'])
+    expect(world.local.items.get(sessionTokenKey)).toBe('session-earlier')
+    expect(await world.store.keptAccount()).toMatchObject({ user })
+  })
+
+  it.each(
+    checkFailures
+  )("keeps the session and sends a delete's code when the session check %s", async (_, failing) => {
+    const world = await signedInWorld({
+      'POST /v1/auth/email-otp/send-verification-otp': () => json(200, { success: true }),
+      'GET /v1/auth/token': failing
+    })
+    await expect(
+      world.account.answer({ account: 'send-code', email: user.email, deleting: true })
+    ).resolves.toEqual({ type: 'code-sent' })
+    expect(world.routes()).toEqual([
+      'GET /v1/auth/token',
+      'POST /v1/auth/email-otp/send-verification-otp'
+    ])
+    expect(world.local.items.get(sessionTokenKey)).toBe('session-earlier')
+    expect(await world.store.keptAccount()).toMatchObject({ user })
+  })
 })
