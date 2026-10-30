@@ -107,13 +107,16 @@ describe('answerWebsite', () => {
   })
 })
 
+const redeemingWorld = () =>
+  accountWorld({
+    [redeem]: () => signedInAnswer('session-website'),
+    'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
+    'GET /v1/me/subscription': () => json(200, subscription)
+  })
+
 describe("the account's sign-in from the website", () => {
   it('redeems the code as the extension and keeps the session as every other sign-in does', async () => {
-    const world = accountWorld({
-      [redeem]: () => signedInAnswer('session-website'),
-      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
-      'GET /v1/me/subscription': () => json(200, subscription)
-    })
+    const world = redeemingWorld()
     await expect(world.account.signInFromWebsite('website-code', readFails)).resolves.toEqual({
       signedIn: true
     })
@@ -130,11 +133,7 @@ describe("the account's sign-in from the website", () => {
   })
 
   it('answers Signed in once the session is kept, and reports a failed subscription read', async () => {
-    const world = accountWorld({
-      [redeem]: () => signedInAnswer('session-website'),
-      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
-      'GET /v1/me/subscription': () => json(200, subscription)
-    })
+    const world = redeemingWorld()
     world.session.area.set = () => Promise.reject(new Error('storage failed'))
     const reportFailure = vi.fn()
     const listener = answerWebsite(world.account, production, reportFailure)
