@@ -74,8 +74,8 @@ can read a tab with no page script, which `activeTab` reaches after a click on t
   `externally_connectable` is anything but its environment's website, or whose files name the
   other environment's hosts, and any `.js` holding a `__ZENBU_` setting the build didn't fill in.
 
-  A build for the owner to load by hand is handed over only after `pnpm check-package` and
-  `pnpm check-hosts` pass for its environment, or with what fails said up front.
+  A hand-loaded build is handed over once `pnpm check-package` and `pnpm check-hosts` (it needs the
+  network; not in `pnpm check` or CI) pass for its environment, or with what fails said up front.
 
 ## Code layout
 

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { type Fetch, hostProblems, signInCodePath } from './host-checks.ts'
+import {
+  answerSeconds,
+  type Fetch,
+  hostProblems,
+  neverMadeCode,
+  signInCodePath
+} from './host-checks.ts'
 import { hosts } from './hosts.ts'
 
 function answering(page: Response | Error, code: Response | Error): Fetch {
@@ -73,6 +79,30 @@ describe('hostProblems', () => {
     ])
   })
 
+  it('fails a 401 whose body is not JSON', async () => {
+    const code = new Response('<html>', { status: 401 })
+    expect(await hostProblems('staging', answering(ok(), code))).toEqual([
+      `POST ${hosts.staging.api}${signInCodePath} answered 401 with a body that isn't JSON, not 401 invalid_code.`
+    ])
+  })
+
+  it('gives each request a timeout and says which host did not answer in time', async () => {
+    const signals: (AbortSignal | null | undefined)[] = []
+    const problems = await hostProblems('production', async (_url, init) => {
+      signals.push(init?.signal)
+      throw new DOMException('The operation was aborted due to timeout', 'TimeoutError')
+    })
+    expect(signals).toHaveLength(2)
+    for (const signal of signals) {
+      expect(signal).toBeInstanceOf(AbortSignal)
+      expect(signal?.aborted).toBe(false)
+    }
+    expect(problems).toEqual([
+      `GET ${hosts.production.website}/account/extension/ didn't answer in time: no answer within ${answerSeconds} s.`,
+      `POST ${hosts.production.api}${signInCodePath} didn't answer in time: no answer within ${answerSeconds} s.`
+    ])
+  })
+
   it('sends the extension client and a code no service made, and nothing else', async () => {
     const seen: { url: string; init?: RequestInit }[] = []
     await hostProblems('production', async (url, init) => {
@@ -80,14 +110,15 @@ describe('hostProblems', () => {
       return url.endsWith(signInCodePath) ? invalid() : ok()
     })
     expect(seen).toHaveLength(2)
-    expect(seen[0]).toEqual({
-      url: `${hosts.production.website}/account/extension/`,
-      init: undefined
-    })
+    expect(seen[0]?.url).toBe(`${hosts.production.website}/account/extension/`)
+    expect(Object.keys(seen[0]?.init ?? {})).toEqual(['signal'])
+    expect(seen[1]?.url).toBe(`${hosts.production.api}${signInCodePath}`)
+    expect(Object.keys(seen[1]?.init ?? {}).sort()).toEqual(['body', 'headers', 'method', 'signal'])
     expect(seen[1]?.init?.method).toBe('POST')
     expect(seen[1]?.init?.headers).toEqual({
       'X-Zenbu-Client': 'zenbu-extension',
       'content-type': 'application/json'
     })
+    expect(seen[1]?.init?.body).toBe(JSON.stringify({ code: neverMadeCode }))
   })
 })

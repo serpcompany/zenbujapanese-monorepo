@@ -6,29 +6,36 @@ const handoverPath = '/account/extension/'
 
 export const signInCodePath = '/v1/auth/sign-in/extension-code'
 
-const neverMadeCode = 'a-code-no-service-ever-made'
+export const neverMadeCode = 'a-code-no-service-ever-made'
+
+export const answerSeconds = 15
 
 async function answer(request: Promise<Response>, ask: string): Promise<Response | string> {
   try {
     return await request
   } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      return `${ask} didn't answer in time: no answer within ${answerSeconds} s.`
+    }
     return `${ask} didn't answer: ${error instanceof Error ? error.message : String(error)}.`
   }
 }
 
-async function errorCode(response: Response): Promise<string | null> {
+async function json(response: Response): Promise<{ body: unknown } | null> {
   try {
-    const body: unknown = await response.json()
-    if (typeof body === 'object' && body !== null && 'error' in body) {
-      const { error } = body
-      if (typeof error === 'string') return error
-      if (typeof error === 'object' && error !== null && 'code' in error) {
-        const { code } = error
-        return typeof code === 'string' ? code : null
-      }
-    }
+    return { body: await response.json() }
   } catch {
     return null
+  }
+}
+
+function errorCode(body: unknown): string | null {
+  if (typeof body !== 'object' || body === null || !('error' in body)) return null
+  const { error } = body
+  if (typeof error === 'string') return error
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const { code } = error
+    return typeof code === 'string' ? code : null
   }
   return null
 }
@@ -36,9 +43,10 @@ async function errorCode(response: Response): Promise<string | null> {
 export async function hostProblems(environment: Environment, fetcher: Fetch): Promise<string[]> {
   const { website, api } = hosts[environment]
   const problems: string[] = []
+  const timeout = () => AbortSignal.timeout(answerSeconds * 1000)
 
   const handoverUrl = `${website}${handoverPath}`
-  const handover = await answer(fetcher(handoverUrl), `GET ${handoverUrl}`)
+  const handover = await answer(fetcher(handoverUrl, { signal: timeout() }), `GET ${handoverUrl}`)
   if (typeof handover === 'string') problems.push(handover)
   else if (handover.status !== 200) {
     problems.push(
@@ -52,7 +60,8 @@ export async function hostProblems(environment: Environment, fetcher: Fetch): Pr
     fetcher(codeUrl, {
       method: 'POST',
       headers: { 'X-Zenbu-Client': 'zenbu-extension', 'content-type': 'application/json' },
-      body: JSON.stringify({ code: neverMadeCode })
+      body: JSON.stringify({ code: neverMadeCode }),
+      signal: timeout()
     }),
     ask
   )
@@ -62,8 +71,11 @@ export async function hostProblems(environment: Environment, fetcher: Fetch): Pr
       `${ask} answered 404, not 401: the account service has no extension sign-in route.`
     )
   } else {
-    const reason = await errorCode(code)
-    if (code.status === 400 && reason === 'unknown_client') {
+    const read = await json(code)
+    const reason = read === null ? null : errorCode(read.body)
+    if (code.status === 401 && read === null) {
+      problems.push(`${ask} answered 401 with a body that isn't JSON, not 401 invalid_code.`)
+    } else if (code.status === 400 && reason === 'unknown_client') {
       problems.push(
         `${ask} answered 400 unknown_client: the account service doesn't take the extension as a client.`
       )
