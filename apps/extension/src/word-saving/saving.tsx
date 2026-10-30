@@ -45,7 +45,7 @@ export type SavingToast =
   | { kind: SavingRefusal }
   | { kind: 'known'; headword: string; undo(): void }
 
-export const toastShown = 5_000
+const toastShown = 5_000
 
 type Saving = {
   port: SavingPort
