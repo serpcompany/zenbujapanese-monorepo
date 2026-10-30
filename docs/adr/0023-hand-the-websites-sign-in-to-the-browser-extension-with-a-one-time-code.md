@@ -24,7 +24,8 @@ sign-in carries over in one click, as one more way in, kept beside the others.
   message only from that origin, by the sender Chrome reports, never by anything in the message.
 - **The extension redeems it** at `POST /v1/auth/sign-in/extension-code` for a session of its own,
   kept as every other way in keeps one. The session counts as signed in when the website's session
-  did, so a delete still asks for a fresh sign-in.
+  did, so a delete still asks for a fresh sign-in. The code keeps the website session's ID, and is
+  refused once that session has signed out or run out.
 - **The two sessions stay apart:** signing out of either leaves the other signed in.
 
 ## Not taken

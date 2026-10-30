@@ -17,6 +17,7 @@ const identifierOf = (code: string) =>
 
 const HandedSchema = z.object({
   userId: z.string(),
+  sessionId: z.string(),
   clientId: z.string(),
   signedInAt: z.iso.datetime()
 })
@@ -55,6 +56,7 @@ export const extensionCode = (trustedOrigins: readonly string[], take: TakeVerif
             identifier: identifierOf(code),
             value: JSON.stringify({
               userId: session.userId,
+              sessionId: session.id,
               clientId: handedTo,
               signedInAt: new Date(session.createdAt).toISOString()
             }),
@@ -83,10 +85,15 @@ export const extensionCode = (trustedOrigins: readonly string[], take: TakeVerif
               message: 'That code signs in only the browser extension.'
             })
           }
-          const adapter = context.context.internalAdapter
-          const user = await adapter.findUserById(handed.userId)
+          const { adapter, internalAdapter } = context.context
+          const user = await internalAdapter.findUserById(handed.userId)
           if (!user) throw invalidCode()
-          const session = await adapter.createSession(
+          const minting = await adapter.findOne<{ expiresAt: Date }>({
+            model: 'session',
+            where: [{ field: 'id', value: handed.sessionId }]
+          })
+          if (!unexpired(minting)) throw invalidCode()
+          const session = await internalAdapter.createSession(
             user.id,
             false,
             { createdAt: new Date(handed.signedInAt) },

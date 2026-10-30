@@ -87,6 +87,40 @@ describe("the website's code for the extension", () => {
     })
   })
 
+  test('signs in only one of two redeems of one code at once', async () => {
+    const code = await codeFor(await onTheWebsite('twice@example.com'))
+    const answers = await Promise.all([redeem(code), redeem(code)])
+    expect(answers.map(answer => answer.status).sort()).toEqual([200, 401])
+    expect(answers.find(answer => answer.status === 401)).toMatchObject({
+      body: { error: { code: 'invalid_code' } }
+    })
+  })
+
+  test('refuses a code once the website session that asked for it has ended', async () => {
+    const { service } = running
+    const signedOut = await onTheWebsite('ended@example.com')
+    const fromSignedOut = await codeFor(signedOut)
+    const signOut = await service.call('/v1/auth/sign-out', {
+      ...fromTheWebsite(signedOut),
+      body: {}
+    })
+    expect(signOut.status).toBe(200)
+    expect(await redeem(fromSignedOut)).toMatchObject({
+      status: 401,
+      body: { error: { code: 'invalid_code' } }
+    })
+
+    const lapsed = await onTheWebsite('lapsed@example.com')
+    const fromLapsed = await codeFor(lapsed)
+    await service.rows(
+      `update sessions set expires_at = now() - interval '1 second' where token = '${decodeURIComponent(lapsed).split('.')[0]}'`
+    )
+    expect(await redeem(fromLapsed)).toMatchObject({
+      status: 401,
+      body: { error: { code: 'invalid_code' } }
+    })
+  })
+
   test('refuses a code over 5 minutes old, and spends it', async () => {
     const { service } = running
     const code = await codeFor(await onTheWebsite('late@example.com'))

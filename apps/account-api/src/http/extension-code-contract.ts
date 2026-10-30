@@ -50,7 +50,8 @@ export const extensionCodeRoutes = {
       200: signedIn,
       400: refusal({ ...malformed, unknown_client: unknownClient }),
       401: refusal({
-        invalid_code: 'The code is unknown, or was used: ask the website for a new one.',
+        invalid_code:
+          'The code is unknown, was used, or the website session that asked for it has ended: ask the website for a new one.',
         code_expired: 'The code is over 5 minutes old: ask the website for a new one.'
       }),
       403: refusal({

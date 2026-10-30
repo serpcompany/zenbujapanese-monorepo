@@ -105,8 +105,8 @@ handed by message is [ADR 0023](../adr/0023-hand-the-websites-sign-in-to-the-bro
   unanswered. A page without the extension finds no `chrome.runtime`, or no receiving end.
 - **The extension redeems it,** `POST /v1/auth/sign-in/extension-code` with `{ code }` and
   `X-Zenbu-Client: zenbu-extension`, and keeps the session as every other way in does
-  (`keepSignIn`). A code works once: a second use, or one the service never made, is
-  `401 invalid_code`, one over 5 minutes old `401 code_expired`, and another app's
+  (`keepSignIn`). A code works once: a second use, one the service never made, or one whose
+  website session has since signed out or run out, is `401 invalid_code`, one over 5 minutes old `401 code_expired`, and another app's
   `403 client_mismatch`; each of these spends it. No client header is `400 unknown_client`,
   which doesn't. The session counts as signed in when the website's did, so it is no fresher.
 - **The website hears only whether it worked:** `{ signedIn: true }`, or `{ signedIn: false,

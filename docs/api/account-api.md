@@ -785,7 +785,7 @@ The extension's own session, with its own scopes, for the account signed in on t
 - **200**, [`SignIn`](#signin): Signed in.
 - **400** `validation_error`: A field is missing, or of the wrong type; `message` names it.
 - **400** `unknown_client`: No `X-Zenbu-Client`, or one the service doesn't list, from outside the website's origins.
-- **401** `invalid_code`: The code is unknown, or was used: ask the website for a new one.
+- **401** `invalid_code`: The code is unknown, was used, or the website session that asked for it has ended: ask the website for a new one.
 - **401** `code_expired`: The code is over 5 minutes old: ask the website for a new one.
 - **403** `client_mismatch`: The code signs in only `zenbu-extension`, and is spent: ask the website for a new one.
 - **429** `too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import type { Drizzle } from './database'
 import { verifications } from './schema'
 
-export interface TakenVerification {
+interface TakenVerification {
   value: string
   expiresAt: Date
 }
