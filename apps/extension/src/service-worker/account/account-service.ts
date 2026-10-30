@@ -7,12 +7,16 @@ import {
 } from '../../shared/account'
 import { fields } from '../../shared/messages'
 import type { Answered, Api } from './api'
-import type { SignIns } from './sign-in'
+import type { SignInResult, SignIns } from './sign-in'
 import { refusedFor } from './sign-in'
 import { type AccountStore, accountOf } from './store'
 import type { AccessTokens } from './tokens'
 
 type Parts = { api: Api; store: AccountStore; tokens: AccessTokens; signIns: SignIns }
+
+export type WebsiteReply =
+  | { signedIn: true }
+  | { signedIn: false; refusal: 'signed-in-already' | 'wait' | 'try-again' }
 
 const subscriptionOf = (value: Record<string, unknown>): KeptSubscription => ({
   status: String(value.status),
@@ -59,12 +63,23 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     return api({ method: 'POST', path: '/v1/auth/sign-out', bearer: sessionToken, body: {} })
   }
 
-  async function signIn(way: SignInWay): Promise<AccountAnswer> {
-    const signedIn = await signIns.signIn(way)
+  async function keep(signedIn: SignInResult): Promise<AccountAnswer> {
     if (!signedIn.ok) return signedIn.refused
     await store.keepSignIn(signedIn.sessionToken, signedIn.user)
     await readSubscription()
     return read()
+  }
+
+  const signIn = async (way: SignInWay) => keep(await signIns.signIn(way))
+
+  async function signInFromWebsite(code: string): Promise<WebsiteReply> {
+    if ((await store.sessionToken()) !== null) {
+      return { signedIn: false, refusal: 'signed-in-already' }
+    }
+    const answer = await keep(await signIns.withWebsiteCode(code))
+    if (answer.type === 'account' && answer.account.signedIn) return { signedIn: true }
+    const wait = answer.type === 'refused' && answer.refusal === 'wait'
+    return { signedIn: false, refusal: wait ? 'wait' : 'try-again' }
   }
 
   async function signOut(): Promise<AccountAnswer> {
@@ -163,7 +178,7 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     }
   }
 
-  return { answer, readSubscription }
+  return { answer, readSubscription, signInFromWebsite }
 }
 
 export type AccountService = ReturnType<typeof accountService>

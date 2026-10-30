@@ -163,7 +163,11 @@ function guardRequests(
         { 'Retry-After': String(wait), 'X-Retry-After': String(wait) }
       )
     }
-    if (path === route.signInWithCode || path === route.signInWithProvider) {
+    if (
+      path === route.signInWithCode ||
+      path === route.signInWithProvider ||
+      path === route.signInWithExtensionCode
+    ) {
       requireSignInClient(context.request?.headers ?? context.headers, path, body, trustedOrigins)
     }
     if (routesNeedingAFreshSession.has(path)) await requireFreshSession(context)

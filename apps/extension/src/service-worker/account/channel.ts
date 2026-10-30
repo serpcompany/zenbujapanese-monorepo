@@ -1,16 +1,23 @@
 import { type AccountAnswer, isAccountEnvelope } from '../../shared/account'
-import { apiOrigin, appleServicesId, googleClientId } from '../../shared/hosts'
+import { apiOrigin, appleServicesId, googleClientId, signInWebsites } from '../../shared/hosts'
 import { failure } from '../../shared/messages'
-import { type AccountService, accountService } from './account-service'
+import { type AccountService, accountService, type WebsiteReply } from './account-service'
 import { accountApi, type Send } from './api'
 import type { Identity } from './identity'
 import { signIns } from './sign-in'
 import { type AccountStorage, accountStore } from './store'
 import { accessTokens } from './tokens'
+import { answerWebsite } from './website-sign-in'
 
 type Events = { addListener(listener: () => void): void }
 
 type Sender = { origin?: string }
+
+type Messages<Answer> = {
+  addListener(
+    listener: (message: unknown, sender: Sender, respond: (answer: Answer) => void) => boolean
+  ): void
+}
 
 type Parts = {
   storage: AccountStorage & {
@@ -18,15 +25,8 @@ type Parts = {
   }
   identity: Identity
   extensionId: string
-  onMessage: {
-    addListener(
-      listener: (
-        message: unknown,
-        sender: Sender,
-        respond: (answer: AccountAnswer) => void
-      ) => boolean
-    ): void
-  }
+  onMessage: Messages<AccountAnswer>
+  onMessageExternal: Messages<WebsiteReply>
   onStartup: Events
   send?: Send
   reportFailure(code: 'account-answer' | 'account-storage'): void
@@ -44,7 +44,7 @@ const accessOnly = (answer: AccountAnswer): AccountAnswer =>
     : answer
 
 export function answerAccount(
-  service: AccountService,
+  service: Pick<AccountService, 'answer'>,
   reportFailure: Parts['reportFailure'],
   pagesOrigin: string
 ) {
@@ -83,5 +83,6 @@ export function startAccount(parts: Parts): void {
   parts.onMessage.addListener(
     answerAccount(service, parts.reportFailure, `chrome-extension://${parts.extensionId}`)
   )
+  parts.onMessageExternal.addListener(answerWebsite(service, signInWebsites, parts.reportFailure))
   parts.onStartup.addListener(() => void service.readSubscription().catch(() => undefined))
 }

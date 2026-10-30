@@ -4,7 +4,12 @@ import { Input } from '@zenbu/ui/components/input'
 import { Label } from '@zenbu/ui/components/label'
 import { Separator } from '@zenbu/ui/components/separator'
 import { type ComponentProps, type FormEvent, useId, useState } from 'react'
-import { type AccountAnswer, askAccount, type SignInWay } from '../shared/account'
+import {
+  type AccountAnswer,
+  askAccount,
+  type SignInWay,
+  websiteSignInPage
+} from '../shared/account'
 import { googleClientId } from '../shared/hosts'
 import { Problem, useAsking } from './asking'
 import { accountLabels } from './labels'
@@ -23,6 +28,16 @@ function Field({ label, ...input }: FieldProps) {
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
       <Input id={id} required {...input} />
+    </div>
+  )
+}
+
+function Or() {
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <Separator className="flex-1" />
+      {accountLabels.or}
+      <Separator className="flex-1" />
     </div>
   )
 }
@@ -134,12 +149,22 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
 
   return (
     <div data-sign-in={purpose} className="flex w-full flex-col gap-3 text-left">
+      {purpose === 'sign-in' && (
+        <>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <a data-sign-in-website href={websiteSignInPage} target="_blank" rel="noreferrer">
+                {accountLabels.website}
+              </a>
+            }
+          />
+          <Or />
+        </>
+      )}
       {codeForm}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Separator className="flex-1" />
-        {accountLabels.or}
-        <Separator className="flex-1" />
-      </div>
+      <Or />
       <div data-sign-in-providers className="flex flex-col gap-3">
         {googleClientId !== null && (
           <Button

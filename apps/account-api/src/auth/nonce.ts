@@ -6,11 +6,15 @@ import { route } from './routes'
 const nonceMinutes = 10
 const nonceIdentifier = (nonce: string) => `sign-in-nonce:${nonce}`
 
-export type TakeVerification = (identifier: string) => Promise<Date | null>
+export type TakeVerification = (
+  identifier: string
+) => Promise<{ value: string; expiresAt: Date } | null>
+
+export const unexpired = (taken: { expiresAt: Date } | null): boolean =>
+  taken !== null && new Date(taken.expiresAt) > new Date()
 
 export async function consumeNonce(take: TakeVerification, nonce: string): Promise<boolean> {
-  const expiresAt = await take(nonceIdentifier(nonce))
-  return expiresAt !== null && new Date(expiresAt) > new Date()
+  return unexpired(await take(nonceIdentifier(nonce)))
 }
 
 export const signInNonce = () =>

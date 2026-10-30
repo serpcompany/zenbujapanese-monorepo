@@ -14,6 +14,7 @@ export const accountLabels = {
   sendAgain: 'Send a New Code',
   anotherEmail: 'Use Another Email',
   or: 'or',
+  website: 'Continue with zenbujapanese.com',
   google: 'Continue with Google',
   apple: 'Continue with Apple',
   refusals: {

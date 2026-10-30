@@ -72,6 +72,8 @@ export const accountKey = 'account'
 
 export const accountPage = `${websiteOrigin}/account/`
 
+export const websiteSignInPage = `${websiteOrigin}/account/extension/`
+
 export const refused = (refusal: Refusal, retryAfter: number | null = null): Refused => ({
   type: 'refused',
   refusal,

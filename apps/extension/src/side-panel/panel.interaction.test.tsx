@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { accountLabels } from '../account/labels'
+import { websiteSignInPage } from '../shared/account'
 import type { DataState } from '../shared/data-state'
 import { labels as sharedLabels } from '../shared/labels'
 import { fakeChrome } from '../test/fake-chrome'
@@ -205,14 +206,15 @@ describe('SidePanel', () => {
     expect(host.kept.pending).toBeNull()
   })
 
-  it("opens the Account tab's sign-in from Player's Sign up or sign in, with no link to the website, and none from Translate", async () => {
+  it("opens the Account tab's sign-in from Player's Sign up or sign in, with no link from Player or Translate", async () => {
     await draw(fakeHost())
     expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
     await click(tab('Player'))
     expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
     await click(shownButton(labels.signUp))
     expect(selectedTab()?.textContent).toBe('Account')
-    expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
+    const links = [...(shownPanel()?.querySelectorAll('a') ?? [])]
+    expect(links.map(link => link.getAttribute('href'))).toEqual([websiteSignInPage])
     expect(shownPanel()?.querySelector('[data-sign-in="sign-in"]')).not.toBeNull()
   })
 

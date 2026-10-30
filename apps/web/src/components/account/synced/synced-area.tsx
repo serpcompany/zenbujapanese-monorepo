@@ -1,7 +1,6 @@
 'use client'
 
 import type { Change } from '@zenbu/account-rules/account-copy'
-import { Button } from '@zenbu/ui/components/button'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { accessTokens } from '@/lib/account/access-tokens'
@@ -21,8 +20,8 @@ import {
 import { changeMessage, failedMessage, signedOutBy } from '@/lib/account/synced-messages'
 import type { Locale } from '@/lib/i18n/config'
 import { localizedPath } from '@/lib/i18n/paths'
-import { SignedOut } from '../account-view'
-import { FormMessage, Notice } from '../form-message'
+import { SignedOut, Unreachable } from '../account-view'
+import { Notice } from '../form-message'
 import { areaViews } from './areas'
 import type { AreaProps } from './parts'
 
@@ -157,17 +156,11 @@ export function SyncedAreaView({
         <NeedsASubscription locale={locale} text={text} />
       ) : null}
       {view.kind === 'unreachable' ? (
-        <div className="flex flex-col gap-3">
-          <FormMessage problem={failedMessage(view.failure, text, locale)} />
-          <Button
-            type="button"
-            variant="outline"
-            className="self-start"
-            onClick={() => void load()}
-          >
-            {text.view.tryAgain}
-          </Button>
-        </div>
+        <Unreachable
+          problem={failedMessage(view.failure, text, locale)}
+          text={text}
+          onRetry={() => void load()}
+        />
       ) : null}
       {props ? <AreaView {...props} /> : null}
     </div>

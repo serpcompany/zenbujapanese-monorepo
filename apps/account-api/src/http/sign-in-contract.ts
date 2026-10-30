@@ -4,7 +4,7 @@ import type { AccountEnv } from './env'
 import { json, refusal } from './refusals'
 import { PageLanguageHeaders } from './schemas'
 
-const body = <T>(schema: T) => ({
+export const body = <T>(schema: T) => ({
   body: { content: { 'application/json': { schema } }, required: true }
 })
 
@@ -51,7 +51,7 @@ const SignInSchema = z
   })
   .openapi('SignIn')
 
-const signedIn = {
+export const signedIn = {
   ...json(SignInSchema, 'Signed in.'),
   headers: {
     'set-auth-token': {
@@ -97,10 +97,10 @@ const WebSignInSchema = z.object({ url: z.url(), redirect: z.literal(true) }).op
 
 const provider = z.enum(['apple', 'google'])
 
-const unknownClient =
+export const unknownClient =
   "No `X-Zenbu-Client`, or one the service doesn't list, from outside the website's origins."
 
-const appSigningIn = PageLanguageHeaders.extend({
+export const appSigningIn = PageLanguageHeaders.extend({
   'x-zenbu-client': z
     .enum(clients.map(client => client.id) as [string, ...string[]])
     .optional()
@@ -110,14 +110,14 @@ const appSigningIn = PageLanguageHeaders.extend({
     })
 })
 
-const malformed = {
+export const malformed = {
   validation_error: 'A field is missing, or of the wrong type; `message` names it.'
 }
-const limited = refusal({
+export const limited = refusal({
   too_many_requests:
     'Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.'
 })
-const signedOut = { unauthorized: 'No session, or one that has ended: sign in again.' }
+export const signedOut = { unauthorized: 'No session, or one that has ended: sign in again.' }
 const notFresh = {
   session_not_fresh: 'The session is over 10 minutes old: sign the learner in again first.'
 }
@@ -131,7 +131,7 @@ const badToken = {
   invalid_token:
     "Apple's or Google's token is malformed, expired, over an hour old, signed by another key or issuer, made for another app, or made for another nonce."
 }
-const sessionToken = (...scopes: string[]) => [{ sessionToken: scopes }]
+export const sessionToken = (...scopes: string[]) => [{ sessionToken: scopes }]
 const managing = {
   401: refusal(signedOut),
   403: refusal(noScope('account')),

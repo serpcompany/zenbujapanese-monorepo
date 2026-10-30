@@ -3,6 +3,7 @@ import { askAccount, isAccountEnvelope, onAccountChanged } from '../../shared/ac
 import {
   extensionId,
   json,
+  signedInAnswer,
   standInIdentity,
   standInService,
   storageArea,
@@ -11,10 +12,14 @@ import {
 } from '../../test/account-stand-in'
 import { answerAccount, startAccount } from './channel'
 import { accountStore } from './store'
+import { sessionTokenKey } from './token-keys'
 
 function started(routes: Parameters<typeof standInService>[0] = {}) {
   const listeners: Parameters<Parameters<typeof startAccount>[0]['onMessage']['addListener']>[0][] =
     []
+  const fromWebsite: Parameters<
+    Parameters<typeof startAccount>[0]['onMessageExternal']['addListener']
+  >[0][] = []
   const startups: (() => void)[] = []
   const local = storageArea()
   const session = storageArea()
@@ -26,6 +31,7 @@ function started(routes: Parameters<typeof standInService>[0] = {}) {
     identity: standInIdentity().identity,
     extensionId,
     onMessage: { addListener: listener => listeners.push(listener) },
+    onMessageExternal: { addListener: listener => fromWebsite.push(listener) },
     onStartup: { addListener: listener => startups.push(listener) },
     send: service.send,
     reportFailure
@@ -35,7 +41,7 @@ function started(routes: Parameters<typeof standInService>[0] = {}) {
       const keeps = listeners[0]?.(message, sender, answer => resolve({ keeps, answer })) ?? false
       if (!keeps) resolve({ keeps, answer: undefined })
     })
-  return { ask, startups, local, session, setAccessLevel, reportFailure, service }
+  return { ask, fromWebsite, startups, local, session, setAccessLevel, reportFailure, service }
 }
 
 describe('startAccount', () => {
@@ -95,6 +101,24 @@ describe('startAccount', () => {
     })
   })
 
+  it("signs in with a code only the website's own origin hands over", async () => {
+    const { fromWebsite, local, service } = started({
+      'POST /v1/auth/sign-in/extension-code': () => signedInAnswer('session-website'),
+      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
+      'GET /v1/me/subscription': () => json(200, subscription)
+    })
+    const handOver = (origin: string) =>
+      new Promise(resolve => {
+        const sent = { type: 'sign-in', code: 'website-code' }
+        if (!fromWebsite[0]?.(sent, { origin }, resolve)) resolve(undefined)
+      })
+    await expect(handOver('https://staging.zenbujapanese.com')).resolves.toBeUndefined()
+    await expect(handOver('http://localhost:3000')).resolves.toBeUndefined()
+    expect(service.routes()).toEqual([])
+    await expect(handOver('https://zenbujapanese.com')).resolves.toEqual({ signedIn: true })
+    expect(local.items.get(sessionTokenKey)).toBe('session-website')
+  })
+
   it('reads the subscription when the browser starts, for a learner who is signed in', async () => {
     const { startups, local, session, service } = started({
       'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
@@ -111,10 +135,7 @@ describe('startAccount', () => {
   it('reports a failed ask by its code alone, and answers it with a failure', async () => {
     const reportFailure = vi.fn()
     const listener = answerAccount(
-      {
-        answer: () => Promise.reject(new Error(user.email)),
-        readSubscription: async () => false
-      },
+      { answer: () => Promise.reject(new Error(user.email)) },
       reportFailure,
       `chrome-extension://${extensionId}`
     )
@@ -140,6 +161,7 @@ describe('startAccount', () => {
       identity: standInIdentity().identity,
       extensionId,
       onMessage: { addListener: () => undefined },
+      onMessageExternal: { addListener: () => undefined },
       onStartup: { addListener: () => undefined },
       reportFailure
     })

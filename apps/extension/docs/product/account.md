@@ -13,7 +13,8 @@ Each check is in `src/account/account-view.interaction.test.tsx` unless it names
 
 | What a learner sees | Check |
 | --- | --- |
-| "Not signed in", that a Zenbu account keeps known words, lists and notes on all devices, then Email and Send Code, "or", Continue with Google, and Continue with Apple. | `says Not signed in and offers an emailed code, Google, and Apple` |
+| "Not signed in", that a Zenbu account keeps known words, lists and notes on all devices, then Continue with zenbujapanese.com, "or", Email and Send Code, "or", Continue with Google, and Continue with Apple. | `says Not signed in and offers an emailed code, Google, and Apple`; `offers zenbujapanese.com first…` |
+| Continue with zenbujapanese.com opens the website's `/account/extension/` page in a new tab. Its Sign in to the extension hands the extension a code, and the account shows here with no more steps. Only the build's own website can hand one over: zenbujapanese.com, or staging's in a staging build. A browser signed in already keeps its account. Deleting the account never offers this way: it asks for a fresh sign-in here. | `offers zenbujapanese.com first, and shows the account once the website hands over a code`; `warns that an App Store subscription goes on…`; `src/service-worker/account/website-sign-in.test.ts`; `channel.test.ts`, "signs in with a code only the website's own origin hands over" |
 | Send Code: "We sent a 6-digit code to" the email, "It works for 10 minutes.", a Code field, Sign In, Send a New Code, and Use Another Email. | `signs in with an emailed code, then shows the email and the subscription, never the profile`; `e2e/account.spec.ts`, the emailed code |
 | Continue with Google and Continue with Apple open the provider's own sign-in in a Chrome window, and the account shows once it closes. Apple's answer comes back through the account service's return route. | `signs in with Google, and after signing out, with Apple`; `e2e/account.spec.ts`, Google and Apple through the stand-ins |
 | No Continue with Google in a build without the extension's Google client: the release builds, until #987 sets it up. | `offers no Google sign-in in a build without a Google client` |
@@ -43,6 +44,6 @@ content script's read of a signed-in account…"). How the extension signs in is
 
 ## Not built yet
 
-Saving words is #962, and syncing them #979. Signing in once on zenbujapanese.com and carrying it
-to the extension is #1130. Google and Apple are checked against stand-ins: a real sign-in with
-each is #987.
+Saving words is #962, and syncing them #979. Google and Apple are checked against stand-ins: a
+real sign-in with each is #987. The website's handover is checked locally, with the website and
+the account service from the checkout; on staging it waits on #960.

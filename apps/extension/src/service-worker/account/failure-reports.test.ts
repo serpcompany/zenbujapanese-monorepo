@@ -18,6 +18,7 @@ const secrets = {
   sessionToken: 'session-secret-7f3a',
   accessToken: 'access-secret-91c2',
   code: '482913',
+  websiteCode: 'website-code-5d1e',
   email: user.email
 }
 
@@ -37,9 +38,11 @@ function startedWithReports() {
     sender: object,
     respond: (answer: unknown) => void
   ) => boolean)[] = []
+  const fromWebsite: typeof listeners = []
   const service = standInService({
     'POST /v1/auth/email-otp/send-verification-otp': () => json(200, { success: true }),
     'POST /v1/auth/sign-in/email-otp': () => signedInAnswer(secrets.sessionToken),
+    'POST /v1/auth/sign-in/extension-code': () => signedInAnswer(secrets.sessionToken),
     'GET /v1/auth/token': () => json(200, { token: secrets.accessToken }),
     'GET /v1/me/subscription': () =>
       json(500, { error: { code: 'internal', message: everySecret } })
@@ -57,6 +60,7 @@ function startedWithReports() {
     identity: standInIdentity().identity,
     extensionId,
     onMessage: { addListener: listener => listeners.push(listener) },
+    onMessageExternal: { addListener: listener => fromWebsite.push(listener) },
     onStartup: { addListener: () => undefined },
     send: service.send,
     reportFailure
@@ -69,12 +73,16 @@ function startedWithReports() {
         resolve
       )
     )
-  return { sent, ask, fail: () => (failing = true) }
+  const handOver = (code: string) =>
+    new Promise(resolve =>
+      fromWebsite[0]?.({ type: 'sign-in', code }, { origin: 'https://zenbujapanese.com' }, resolve)
+    )
+  return { sent, ask, handOver, fail: () => (failing = true) }
 }
 
 describe("the account's failure reports", () => {
-  it('hold their code alone, never a session token, an access token, an emailed code, or an email', async () => {
-    const { sent, ask, fail } = startedWithReports()
+  it("hold their code alone, never a session token, an access token, an emailed or the website's code, or an email", async () => {
+    const { sent, ask, handOver, fail } = startedWithReports()
     await vi.waitFor(() => expect(sent).toHaveLength(1))
     await ask({ account: 'send-code', email: secrets.email })
     await ask({
@@ -85,8 +93,16 @@ describe("the account's failure reports", () => {
     await expect(
       ask({ account: 'sign-in', with: { way: 'code', email: secrets.email, code: secrets.code } })
     ).resolves.toMatchObject({ type: 'failed' })
-    await vi.waitFor(() => expect(sent).toHaveLength(2))
-    expect(sent.map(event => event.message)).toEqual(['account-storage', 'account-answer'])
+    await expect(handOver(secrets.websiteCode)).resolves.toEqual({
+      signedIn: false,
+      refusal: 'try-again'
+    })
+    await vi.waitFor(() => expect(sent).toHaveLength(3))
+    expect(sent.map(event => event.message)).toEqual([
+      'account-storage',
+      'account-answer',
+      'account-answer'
+    ])
     const reports = JSON.stringify(sent)
     for (const [kind, secret] of Object.entries(secrets)) {
       expect(reports.includes(secret), kind).toBe(false)

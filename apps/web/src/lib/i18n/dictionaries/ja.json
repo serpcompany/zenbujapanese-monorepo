@@ -63,6 +63,11 @@
         "title": "設定",
         "description": "Zenbuアプリの設定と頻度辞書です。",
         "intro": "Zenbuアプリが単語の順位付けに使う頻度辞書（ここで選べます）と、アプリで変更した設定です。"
+      },
+      "extension": {
+        "title": "Chrome拡張機能",
+        "description": "Zenbu Japanese for ChromeをZenbuアカウントにログインさせます。",
+        "intro": "ここでログインしているアカウントで、Zenbu Japanese for Chromeにもログインします。どちらかでログアウトしても、もう一方はログインしたままです。"
       }
     },
     "unavailable": "このサイトでは、Zenbuアカウントへのログインにまだ対応していません。",
@@ -119,6 +124,14 @@
       "signOutHere": "このブラウザからログアウトします。ほかのデバイスはログインしたままです。",
       "signedOut": "ログアウトしました。",
       "appStoreStillBilling": "App Storeのサブスクリプションはまだ有効で、Appleアカウントのサブスクリプションから解約するまで、Appleからの請求が続きます。"
+    },
+    "extension": {
+      "signInFirst": "まずここでログインしてください。そのあと、ワンクリックで拡張機能も同じアカウントにログインできます。",
+      "signIn": "拡張機能にログイン",
+      "signedIn": "Zenbu Japanese for Chromeにログインしました。このタブは閉じてかまいません。",
+      "signedInAlready": "拡張機能はすでにログインしています。別のアカウントを使うには、先に拡張機能でログアウトしてください。",
+      "noExtension": "この操作は、最新のZenbu Japanese for Chromeを入れたChromeで使えます。Chromeでこのページを開いてから、もう一度お試しください。",
+      "tryAgain": "うまくいきませんでした。もう一度お試しください。"
     },
     "profile": {
       "heading": "プロフィール",
