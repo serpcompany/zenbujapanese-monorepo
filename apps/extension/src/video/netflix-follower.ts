@@ -14,6 +14,7 @@ const siteCaptions = '.player-timedtext'
 const netflixPlayer = (videoId: string, bridge: NetflixBridge): PlayerSite => ({
   player,
   siteCaptionsRule: `${player}[${siteCaptionsAttribute}="hidden"] ${siteCaptions} { display: none !important; }`,
+  holdsRateThroughSeeks: true,
   controls: () => ({
     seek: time => bridge.control(videoId, { type: 'seek', time }),
     play: () => bridge.control(videoId, { type: 'play' }),

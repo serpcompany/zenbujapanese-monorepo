@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { fakeFrames, mutationsSeen } from '../test/fake-frames'
 import { netflixPlayerStandIn } from '../test/netflix-player-stand-in'
 import { siteCaptionsAttribute } from './element-follower'
-import type { VideoFollower } from './follower'
+import type { Playback, VideoFollower } from './follower'
 import { netflixBridge } from './netflix-bridge'
 import { netflixFollower } from './netflix-follower'
 import { type NetflixWindow, serveNetflixPlayer } from './netflix-player'
@@ -71,6 +71,18 @@ describe('netflixFollower', () => {
     expect(standIn.video.playbackRate).toBe(0.75)
   })
 
+  it("takes the learner's next speed after a load cuts a seek short", async () => {
+    const { standIn, follower } = follow()
+    follower.setRate(0.75)
+    standIn.video.dispatchEvent(new Event('seeking'))
+    standIn.video.dispatchEvent(new Event('loadstart'))
+    standIn.video.dispatchEvent(new Event('loadedmetadata'))
+    standIn.video.playbackRate = 1.25
+    await mutationsSeen()
+    expect(standIn.video.playbackRate).toBe(1.25)
+    expect(follower.playback?.rate).toBe(1.25)
+  })
+
   it("hides Netflix's captions on the player while asked, and gives the player as the caption host", () => {
     const { follower } = follow()
     const player = document.querySelector<HTMLElement>('.watch-video--player-view')
@@ -81,5 +93,29 @@ describe('netflixFollower', () => {
     expect(captions && getComputedStyle(captions).display).toBe('none')
     follower.showSiteCaptions(true)
     expect(player?.hasAttribute(siteCaptionsAttribute)).toBe(false)
+  })
+  it('follows the player and video Netflix swaps in, with its caption host, speed, and time', async () => {
+    const { standIn, follower } = follow()
+    const seen: (Playback | null)[] = []
+    follower.subscribe(playback => seen.push(playback))
+    follower.setRate(0.75)
+    follower.showSiteCaptions(false)
+    const next = document.createElement('div')
+    next.className = 'watch-video--player-view'
+    const nextVideo = document.createElement('video')
+    next.append(nextVideo)
+    document.querySelector('.watch-video--player-view')?.replaceWith(next)
+    await mutationsSeen()
+    expect(follower.captionHost()).toBe(next)
+    expect(next.getAttribute(siteCaptionsAttribute)).toBe('hidden')
+    expect(standIn.calls.at(-1)).toBe('rate 0.75')
+    Object.defineProperty(nextVideo, 'currentTime', { configurable: true, value: 20 })
+    nextVideo.dispatchEvent(new Event('timeupdate'))
+    expect(seen.at(-1)?.time).toBe(20)
+    Object.defineProperty(nextVideo, 'playbackRate', { configurable: true, value: 1.25 })
+    nextVideo.dispatchEvent(new Event('ratechange'))
+    expect(follower.playback?.rate).toBe(1.25)
+    standIn.video.dispatchEvent(new Event('ratechange'))
+    expect(follower.playback?.rate).toBe(1.25)
   })
 })

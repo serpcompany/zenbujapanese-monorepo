@@ -138,6 +138,17 @@ describe('youTubeFollower', () => {
     expect(follower.playback?.rate).toBe(1.25)
   })
 
+  it('takes a speed the learner picks just after a seek as their speed', () => {
+    const { video } = watchPage()
+    const follower = follow()
+    follower.setRate(0.75)
+    video.dispatchEvent(new Event('seeking'))
+    video.dispatchEvent(new Event('seeked'))
+    setRate(video, 1.5)
+    expect(video.playbackRate).toBe(1.5)
+    expect(follower.playback?.rate).toBe(1.5)
+  })
+
   it("hides YouTube's captions on the player while asked, and gives the player as the caption host", () => {
     const { player } = watchPage()
     const follower = follow()

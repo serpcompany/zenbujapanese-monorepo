@@ -33,7 +33,8 @@ Netflix player and a saved Netflix track file.
 | Behavior | Check |
 | --- | --- |
 | Seeking, playing, pausing, and the speed go through Netflix's own player. The page never sets the video's time, which stops Netflix with error M7375. | `netflix-follower.interaction.test.tsx`: "follows Netflix's video and drives it through Netflix's player…"; netflix-page: "seeks, plays, and sets the speed…" |
-| A speed the learner set, such as 0.75×, stays after a seek: if Netflix puts it back to 1×, the page sets it again. | `netflix-follower.interaction.test.tsx`: "keeps the learner's 0.75x when Netflix puts its own speed back after a seek" |
+| A speed the learner set, such as 0.75×, stays after a seek: if Netflix puts it back to 1× within a second of the seek, the page sets it again. A load that cuts a seek short ends that, so the learner's next speed is theirs. On YouTube the page never puts a speed back ([`youtube-captions.md`](youtube-captions.md)). | `netflix-follower.interaction.test.tsx`: "keeps the learner's 0.75x when Netflix puts its own speed back after a seek", "takes the learner's next speed after a load cuts a seek short" |
+| When Netflix swaps in another player or video, such as for the next episode, the caption moves to the new player, Netflix's subtitles stay hidden there, the learner's speed is set on it, and its time and speed are followed. | `netflix-follower.interaction.test.tsx`: "follows the player and video Netflix swaps in…" |
 | While the caption on the player shows, Netflix's own subtitles are hidden by a style rule, which holds when Netflix draws them again; with Zenbu Captions off they show again. | `netflix-follower.interaction.test.tsx`: "hides Netflix's captions on the player while asked…"; netflix-page: "draws the line on Netflix's player…" |
 | The Player tab's title is the tab's own without " - Netflix". | `src/video-tab/netflix.interaction.test.tsx`: "takes the title from the tab…" |
 

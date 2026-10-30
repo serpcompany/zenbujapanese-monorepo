@@ -8,6 +8,7 @@ export type PlayerSite = {
   player: string
   siteCaptionsRule: string
   adClass?: string
+  holdsRateThroughSeeks?: boolean
   controls(video: HTMLVideoElement): PlayerControls
 }
 
@@ -86,7 +87,7 @@ export function elementFollower(
 
   const onRateChange = () => {
     if (video && !ad && !loading) {
-      if (now() < seekingUntil) restoreRate()
+      if (site.holdsRateThroughSeeks && now() < seekingUntil) restoreRate()
       else learnerRate = video.playbackRate
     }
     changed()
@@ -103,6 +104,7 @@ export function elementFollower(
 
   const onLoadStart = () => {
     loading = true
+    seekingUntil = 0
   }
 
   const onLoadedMetadata = () => {
@@ -114,10 +116,14 @@ export function elementFollower(
   const mediaListeners: [string, () => void][] = [
     ...followedEvents.map((type): [string, () => void] => [type, changed]),
     ['ratechange', onRateChange],
-    ['seeking', onSeeking],
-    ['seeked', onSeeked],
     ['loadstart', onLoadStart],
-    ['loadedmetadata', onLoadedMetadata]
+    ['loadedmetadata', onLoadedMetadata],
+    ...(site.holdsRateThroughSeeks
+      ? ([
+          ['seeking', onSeeking],
+          ['seeked', onSeeked]
+        ] satisfies [string, () => void][])
+      : [])
   ]
 
   const applySiteCaptions = () => {
@@ -141,27 +147,38 @@ export function elementFollower(
     changed()
   })
 
-  const attach = (): boolean => {
+  const detach = () => {
+    adObserver.disconnect()
+    for (const [type, listener] of mediaListeners) video?.removeEventListener(type, listener)
+    player?.removeAttribute(siteCaptionsAttribute)
+  }
+
+  const attach = () => {
     const foundPlayer = page.querySelector<HTMLElement>(site.player)
     const foundVideo = foundPlayer?.querySelector('video') ?? null
-    if (!foundPlayer || !foundVideo) return false
+    if (!foundPlayer || !foundVideo) return
+    const swapped = video !== null
+    detach()
     player = foundPlayer
     video = foundVideo
     controls = site.controls(foundVideo)
+    loading = false
+    seekingUntil = 0
     ad = adShowing()
-    if (!ad) learnerRate = video.playbackRate
+    if (!ad && !swapped) learnerRate = video.playbackRate
     for (const [type, listener] of mediaListeners) video.addEventListener(type, listener)
     if (site.adClass) adObserver.observe(player, { attributes: true, attributeFilter: ['class'] })
     applySiteCaptions()
+    if (swapped) restoreRate()
     changed()
-    return true
   }
 
   const playerWatch = new MutationObserver(() => {
-    if (attach()) playerWatch.disconnect()
+    if (!player?.isConnected || !video?.isConnected) attach()
   })
 
-  if (!attach()) playerWatch.observe(page.documentElement, { childList: true, subtree: true })
+  attach()
+  playerWatch.observe(page.documentElement, { childList: true, subtree: true })
 
   const control = (act: (to: PlayerControls) => void) => {
     if (controls && !ad) act(controls)
@@ -192,11 +209,9 @@ export function elementFollower(
     },
     stop() {
       playerWatch.disconnect()
-      adObserver.disconnect()
       if (frame !== null) frames.cancelAnimationFrame(frame)
       frame = null
-      for (const [type, listener] of mediaListeners) video?.removeEventListener(type, listener)
-      player?.removeAttribute(siteCaptionsAttribute)
+      detach()
       style?.remove()
       style = null
       video = null
