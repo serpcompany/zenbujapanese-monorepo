@@ -54,7 +54,7 @@ on the toolbar icon shows the header the tab's address; `unlimitedStorage`, for 
 the extension keeps on the device; `alarms`, for the daily language-data update check;
 `scripting`, to register the page lookup script on the sites the user allows;
 `declarativeNetRequestWithHostAccess`, for the rule that removes the `origin` header from the
-extension's own YouTube and Netflix caption requests; and `identity`, for Google's and Apple's sign-in windows
+extension's own YouTube caption requests; and `identity`, for Google's and Apple's sign-in windows
 (`chrome.identity.launchWebAuthFlow`). Its `host_permissions` are the language data host
 (`https://data.zenbujapanese.com/*`, in the test build `http://language-data.localhost/*`), the
 account service's (`https://api.zenbujapanese.com/*`, `https://api-staging.zenbujapanese.com/*`
