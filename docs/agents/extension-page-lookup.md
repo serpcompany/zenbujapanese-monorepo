@@ -26,8 +26,10 @@ Every Site (`src/shared/every-site.tsx`) ask Chrome with `chrome.permissions.req
 `startPageLookup` (`src/page-lookup/page-lookup.ts`) takes the browser as a parameter, so the
 pieces are tested apart:
 
-- **Settings:** `askSettings()` once, then `onSettingsChanged()`. `isZenbuOn(host, settings)`,
-  from `sites.off`, starts and stops it; a reading aid's change redraws in place.
+- **Settings:** `askSettings()` once, then `onSettingsChanged()`. `readsPageText(host,
+  settings)`, from Page Text (`pages.pageText`, one switch for every site) and `sites.off`, starts
+  and stops it; a reading aid's change redraws in place. The caption on the player follows
+  `isZenbuOn` and Zenbu Captions alone, so Page Text leaves it as it is.
 - **Text:** `japaneseText` (`walker.ts`) finds the text nodes to read and leaves out controls,
   editable text, navigation, fixed and sticky elements, and Zenbu's own. A `MutationObserver`
   hands it what the page adds.

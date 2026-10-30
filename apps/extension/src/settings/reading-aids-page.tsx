@@ -8,6 +8,9 @@ export function ReadingAidsPage({ settings }: { settings: Settings }) {
       <section className="flex flex-col">
         <ReadingAidSwitches settings={settings} />
       </section>
+      <SwitchGroup title={settingsLabels.pageGroup} level="h3">
+        <SettingSwitch setting="pages.pageText" settings={settings} />
+      </SwitchGroup>
       <SwitchGroup title={settingsLabels.videos} level="h3">
         <SettingSwitch setting="videos.zenbuCaptions" settings={settings} />
       </SwitchGroup>

@@ -1,4 +1,4 @@
-import { isZenbuOn, type Settings } from '../shared/settings'
+import { readsPageText, type Settings } from '../shared/settings'
 import type { PopupHost, PopupSettings } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
 import type { Aids } from './annotate'
@@ -170,7 +170,7 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
   const show = (next: Settings) => {
     const before = settings
     settings = next
-    if (!isZenbuOn(browser.host, next)) {
+    if (!readsPageText(browser.host, next)) {
       running?.stop()
       running = null
       return
