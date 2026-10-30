@@ -23,41 +23,40 @@ function expiryOf(token: string): number | null {
 const endsSession = (answer: Answered) => !answer.ok && answer.status === 401
 
 export function accessTokens(api: Api, store: AccountStore, now: () => number = Date.now) {
-  async function newAccessToken(): Promise<Answered | string> {
-    const sessionToken = await store.sessionToken()
-    if (sessionToken === null) return signedOut
+  async function newAccessToken(sessionToken: string): Promise<Answered | string> {
     const answer = await api({ method: 'GET', path: '/v1/auth/token', bearer: sessionToken })
     if (endsSession(answer)) {
-      await store.forget()
+      await store.forgetSession(sessionToken)
       return signedOut
     }
     if (!answer.ok) return answer
     const token = typeof answer.value.token === 'string' ? answer.value.token : null
     if (token === null) return networkFailure
-    await store.keepAccessToken({
-      token,
-      expiresAt: expiryOf(token) ?? now() + accessTokenLifeMs
-    })
-    return token
+    const expiresAt = expiryOf(token) ?? now() + accessTokenLifeMs
+    return (await store.keepAccessToken(sessionToken, { token, expiresAt })) ? token : signedOut
   }
 
-  async function accessToken(): Promise<Answered | string> {
+  async function keptAccessToken(sessionToken: string): Promise<string | null> {
     const kept = await store.accessToken()
-    if (kept && kept.expiresAt - refreshBeforeMs > now()) return kept.token
-    return newAccessToken()
+    if (!kept || kept.expiresAt - refreshBeforeMs <= now()) return null
+    return (await store.isCurrent(sessionToken)) ? kept.token : null
   }
 
-  async function withAccess(call: Omit<Call, 'bearer'>): Promise<Answered> {
-    const first = await accessToken()
+  async function withAccess(sessionToken: string, call: Omit<Call, 'bearer'>): Promise<Answered> {
+    const first = (await keptAccessToken(sessionToken)) ?? (await newAccessToken(sessionToken))
     if (typeof first !== 'string') return first
     const answer = await api({ ...call, bearer: first })
     if (answer.ok || answer.status !== 401) return answer
     await store.forgetAccessToken()
-    const second = await newAccessToken()
+    const second = await newAccessToken(sessionToken)
     return typeof second === 'string' ? api({ ...call, bearer: second }) : second
   }
 
-  return { withAccess, newAccessToken }
+  async function checkSession(sessionToken: string): Promise<void> {
+    if ((await keptAccessToken(sessionToken)) === null) await newAccessToken(sessionToken)
+  }
+
+  return { withAccess, newAccessToken, checkSession }
 }
 
 export type AccessTokens = ReturnType<typeof accessTokens>

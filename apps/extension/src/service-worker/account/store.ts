@@ -43,14 +43,19 @@ export const accountOf = (kept: KeptAccount | null): Account =>
 export function accountStore({ local, session }: AccountStorage) {
   const keptAccount = async () => keptAccountOf((await local.get([accountKey]))[accountKey])
 
-  const update = async (change: Partial<KeptAccount>) => {
-    const kept = await keptAccount()
-    if (kept) await local.set({ [accountKey]: { ...kept, ...change } })
+  const sessionToken = async () => textOf((await local.get([sessionTokenKey]))[sessionTokenKey])
+
+  const isCurrent = async (asked: string) => (await sessionToken()) === asked
+
+  const forgetAll = async () => {
+    await local.remove([sessionTokenKey, accountKey])
+    await session.remove([accessTokenKey])
   }
 
   return {
     keptAccount,
-    sessionToken: async () => textOf((await local.get([sessionTokenKey]))[sessionTokenKey]),
+    sessionToken,
+    isCurrent,
     accessToken: async (): Promise<AccessToken | null> => {
       const kept = fields((await session.get([accessTokenKey]))[accessTokenKey])
       const token = textOf(kept?.token)
@@ -58,20 +63,35 @@ export function accountStore({ local, session }: AccountStorage) {
         ? { token, expiresAt: kept.expiresAt }
         : null
     },
-    keepAccessToken: (token: AccessToken) => session.set({ [accessTokenKey]: token }),
-    forgetAccessToken: () => session.remove([accessTokenKey]),
-    keepSignIn: async (sessionToken: string, user: User) => {
-      await session.remove([accessTokenKey])
-      await local.set({
-        [sessionTokenKey]: sessionToken,
-        [accountKey]: { user, subscription: null, wentToSubscribe: false }
-      })
+    keepAccessToken: async (asked: string, token: AccessToken): Promise<boolean> => {
+      if (!(await isCurrent(asked))) return false
+      await session.set({ [accessTokenKey]: token })
+      return true
     },
-    keepSubscription: (subscription: KeptSubscription) => update({ subscription }),
-    keepWentToSubscribe: (wentToSubscribe: boolean) => update({ wentToSubscribe }),
-    forget: async () => {
+    forgetAccessToken: () => session.remove([accessTokenKey]),
+    keepSignIn: async (newSession: string, user: User) => {
+      const kept = await keptAccount()
+      const subscription = kept?.user.id === user.id ? kept.subscription : null
+      await local.set({
+        [sessionTokenKey]: newSession,
+        [accountKey]: { user, subscription, wentToSubscribe: false }
+      })
       await session.remove([accessTokenKey])
-      await local.remove([sessionTokenKey, accountKey])
+    },
+    keepSubscription: async (asked: string, subscription: KeptSubscription) => {
+      const kept = await local.get([sessionTokenKey, accountKey])
+      const account = keptAccountOf(kept[accountKey])
+      if (account && kept[sessionTokenKey] === asked) {
+        await local.set({ [accountKey]: { ...account, subscription } })
+      }
+    },
+    keepWentToSubscribe: async (wentToSubscribe: boolean) => {
+      const kept = await keptAccount()
+      if (kept) await local.set({ [accountKey]: { ...kept, wentToSubscribe } })
+    },
+    forget: forgetAll,
+    forgetSession: async (asked: string) => {
+      if (await isCurrent(asked)) await forgetAll()
     }
   }
 }

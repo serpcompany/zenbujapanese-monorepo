@@ -205,15 +205,13 @@ describe('SidePanel', () => {
     expect(host.kept.pending).toBeNull()
   })
 
-  it('offers sign-up on the website in a new tab from Player, signing in on Account, and no link from Translate', async () => {
+  it("opens the Account tab's sign-in from Player's Sign up or sign in, with no link to the website, and none from Translate", async () => {
     await draw(fakeHost())
     expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
     await click(tab('Player'))
-    const links = shownPanel()?.querySelectorAll('a') ?? []
-    expect([...links].map(link => [link.textContent, link.href, link.target])).toEqual([
-      [labels.signUp, 'https://zenbujapanese.com/register/', '_blank']
-    ])
-    await click(tab('Account'))
+    expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
+    await click(shownButton(labels.signUp))
+    expect(selectedTab()?.textContent).toBe('Account')
     expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
     expect(shownPanel()?.querySelector('[data-sign-in="sign-in"]')).not.toBeNull()
   })

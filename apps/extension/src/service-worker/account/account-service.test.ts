@@ -59,7 +59,7 @@ describe('accountService', () => {
       'GET /v1/me/subscription': () => json(200, plan)
     })
     await world.account.answer({ account: 'opened' })
-    expect(world.asked).toEqual([])
+    expect(world.routes()).toEqual(['GET /v1/auth/token'])
     await world.account.answer({ account: 'went-to-subscribe' })
     plan = {
       ...subscription,
@@ -74,6 +74,26 @@ describe('accountService', () => {
     })
     await world.account.answer({ account: 'opened' })
     expect(world.routes()).toEqual(['GET /v1/auth/token', 'GET /v1/me/subscription'])
+  })
+
+  it('asks for an access token once when the account opens without one, and shows Not signed in when the service has ended the session', async () => {
+    const world = await signedInWorld({ 'GET /v1/auth/token': () => refusal(401, 'unauthorized') })
+    await expect(world.account.answer({ account: 'opened' })).resolves.toEqual({
+      type: 'account',
+      account: { signedIn: false }
+    })
+    expect(world.routes()).toEqual(['GET /v1/auth/token'])
+    expect(world.local.items.size).toBe(0)
+  })
+
+  it('keeps showing the account when the access token cannot be asked for when it opens', async () => {
+    const world = await signedInWorld({
+      'GET /v1/auth/token': () => new Response('down', { status: 503 })
+    })
+    await expect(world.account.answer({ account: 'opened' })).resolves.toMatchObject({
+      account: { signedIn: true, email: user.email }
+    })
+    expect(world.routes()).toEqual(['GET /v1/auth/token'])
   })
 
   it('deletes the account after a fresh sign-in to the same account, and forgets it here', async () => {
@@ -106,14 +126,16 @@ describe('accountService', () => {
     expect(world.local.items.get(sessionTokenKey)).toBe('session-earlier')
   })
 
-  it("asks Apple again when the account signs in with Apple, and sends Apple's code", async () => {
+  it("signs in with Apple again when the account needs Apple to delete it, and deletes with that fresh session and Apple's code", async () => {
     let deletes = 0
     const world = await signedInWorld(
       {
         'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
         'POST /v1/auth/sign-out': () => json(200, {}),
         'POST /v1/auth/sign-in/nonce': () => json(200, { nonce: 'nonce-2' }),
-        'GET /v1/auth/token': token,
+        'POST /v1/auth/sign-in/social': () => signedInAnswer('session-apple'),
+        'GET /v1/auth/token': asked =>
+          json(200, { token: `access-for-${asked.headers.get('authorization')?.slice(7)}` }),
         'DELETE /v1/me': () =>
           ++deletes === 1
             ? refusal(400, 'apple_authorization_needed')
@@ -124,12 +146,40 @@ describe('accountService', () => {
     await expect(world.account.answer({ account: 'delete', with: code })).resolves.toEqual({
       type: 'apple-needed'
     })
-    const answer = await world.account.answer({ account: 'delete-with-apple' })
+    const answer = await world.account.answer({ account: 'delete', with: { way: 'apple' } })
     expect(answer).toEqual({ type: 'deleted', appStoreSubscriptionContinues: false })
+    const afterApple = world.routes().slice(world.routes().indexOf('POST /v1/auth/sign-in/social'))
+    expect(afterApple).toEqual([
+      'POST /v1/auth/sign-in/social',
+      'POST /v1/auth/sign-out',
+      'GET /v1/auth/token',
+      'DELETE /v1/me'
+    ])
+    const last = world.asked.slice(-3)
+    expect(last.map(asked => asked.headers.get('authorization'))).toEqual([
+      'Bearer session-fresh',
+      'Bearer session-apple',
+      'Bearer access-for-session-apple'
+    ])
     expect(world.asked.at(-1)?.body).toEqual({
       confirm: true,
       appleAuthorizationCode: 'apple-code'
     })
+    expect(await world.store.keptAccount()).toBeNull()
+  })
+
+  it("keeps the account's subscription through the fresh sign-in of a delete that doesn't finish", async () => {
+    const world = await signedInWorld({
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-fresh'),
+      'POST /v1/auth/sign-out': () => json(200, {}),
+      'GET /v1/auth/token': token,
+      'DELETE /v1/me': () => refusal(400, 'apple_authorization_needed')
+    })
+    const kept = { ...subscription, cloudAccess: 'subscribed' as const }
+    await world.store.keepSubscription('session-earlier', kept)
+    await world.account.answer({ account: 'delete', with: code })
+    expect(world.local.items.get(sessionTokenKey)).toBe('session-fresh')
+    expect(await world.store.keptAccount()).toMatchObject({ user, subscription: kept })
   })
 
   it('takes a lost answer to a delete for done once the service refuses the session', async () => {

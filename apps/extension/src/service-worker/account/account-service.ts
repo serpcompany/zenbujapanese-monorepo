@@ -44,9 +44,13 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
   })
 
   async function readSubscription(): Promise<void> {
-    if ((await store.keptAccount()) === null) return
-    const answer = await tokens.withAccess({ method: 'GET', path: '/v1/me/subscription' })
-    if (answer.ok) await store.keepSubscription(subscriptionOf(answer.value))
+    const sessionToken = await store.sessionToken()
+    if (sessionToken === null || (await store.keptAccount()) === null) return
+    const answer = await tokens.withAccess(sessionToken, {
+      method: 'GET',
+      path: '/v1/me/subscription'
+    })
+    if (answer.ok) await store.keepSubscription(sessionToken, subscriptionOf(answer.value))
   }
 
   async function endSession(sessionToken: string): Promise<Answered> {
@@ -63,31 +67,38 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
 
   async function signOut(): Promise<AccountAnswer> {
     const sessionToken = await store.sessionToken()
-    if (sessionToken !== null) await endSession(sessionToken)
-    await store.forget()
+    if (sessionToken === null) {
+      await store.forget()
+      return read()
+    }
+    await endSession(sessionToken)
+    await store.forgetSession(sessionToken)
     return read()
   }
 
-  async function goneAfterLostAnswer(): Promise<boolean> {
-    const answer = await tokens.newAccessToken()
+  async function goneAfterLostAnswer(sessionToken: string): Promise<boolean> {
+    const answer = await tokens.newAccessToken(sessionToken)
     return typeof answer !== 'string' && !answer.ok && answer.status === 401
   }
 
-  async function deleteNow(appleAuthorizationCode: string | null): Promise<AccountAnswer> {
-    const answer = await tokens.withAccess({
+  async function deleteNow(
+    sessionToken: string,
+    appleAuthorizationCode: string | null
+  ): Promise<AccountAnswer> {
+    const answer = await tokens.withAccess(sessionToken, {
       method: 'DELETE',
       path: '/v1/me',
       body: { confirm: true, ...(appleAuthorizationCode ? { appleAuthorizationCode } : {}) }
     })
     if (answer.ok) {
-      await store.forget()
+      await store.forgetSession(sessionToken)
       return {
         type: 'deleted',
         appStoreSubscriptionContinues: answer.value.appStoreSubscriptionContinues === true
       }
     }
     if (answer.code === 'apple_authorization_needed') return { type: 'apple-needed' }
-    if (answer.code === 'network' && (await goneAfterLostAnswer())) {
+    if (answer.code === 'network' && (await goneAfterLostAnswer(sessionToken))) {
       return { type: 'deleted', appStoreSubscriptionContinues: false }
     }
     return refusedFor(answer)
@@ -99,25 +110,24 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
     if (kept === null || earlier === null) return read()
     const fresh = await signIns.signIn(way)
     if (!fresh.ok) return fresh.refused
-    if (fresh.user.id !== kept.user.id) {
+    if (fresh.user.id !== kept.user.id || !(await store.isCurrent(earlier))) {
       await endSession(fresh.sessionToken)
-      return refused('other-account')
+      return fresh.user.id === kept.user.id ? read() : refused('other-account')
     }
     await endSession(earlier)
     await store.keepSignIn(fresh.sessionToken, fresh.user)
-    return deleteNow(fresh.appleCode)
-  }
-
-  async function deleteWithApple(): Promise<AccountAnswer> {
-    const code = await signIns.appleCode()
-    return typeof code === 'string' ? deleteNow(code) : code
+    return deleteNow(fresh.sessionToken, fresh.appleCode)
   }
 
   async function opened(): Promise<AccountAnswer> {
     const kept = await store.keptAccount()
-    if (kept?.wentToSubscribe) {
+    const sessionToken = await store.sessionToken()
+    if (kept === null || sessionToken === null) return read()
+    if (kept.wentToSubscribe) {
       await store.keepWentToSubscribe(false)
       await readSubscription()
+    } else {
+      await tokens.checkSession(sessionToken)
     }
     return read()
   }
@@ -138,8 +148,6 @@ export function accountService({ api, store, tokens, signIns }: Parts) {
         return signOut()
       case 'delete':
         return deleteAfterSignIn(request.with)
-      case 'delete-with-apple':
-        return deleteWithApple()
       case 'went-to-subscribe':
         await store.keepWentToSubscribe(true)
         return read()

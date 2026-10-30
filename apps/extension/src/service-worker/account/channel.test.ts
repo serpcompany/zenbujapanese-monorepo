@@ -6,6 +6,7 @@ import {
   standInIdentity,
   standInService,
   storageArea,
+  subscription,
   user
 } from '../../test/account-stand-in'
 import { answerAccount, startAccount } from './channel'
@@ -60,13 +61,15 @@ describe('startAccount', () => {
     const page = { origin: 'https://www.youtube.com', tab: { id: 7 } }
     await expect(
       ask({ target: 'service-worker', account: { account: 'read' } }, page)
-    ).resolves.toEqual({ keeps: true, answer: { type: 'account', account: { signedIn: false } } })
+    ).resolves.toEqual({
+      keeps: true,
+      answer: { type: 'access', signedIn: false, cloudAccess: null }
+    })
     for (const account of [
       { account: 'sign-out' },
       { account: 'send-code', email: user.email },
       { account: 'sign-in', with: { way: 'google' } },
       { account: 'delete', with: { way: 'apple' } },
-      { account: 'delete-with-apple' },
       { account: 'opened' },
       { account: 'went-to-subscribe' }
     ]) {
@@ -76,6 +79,20 @@ describe('startAccount', () => {
       })
     }
     expect(service.routes()).toEqual([])
+  })
+
+  it("answers a content script's read of a signed-in account with whether it is signed in and its cloud access, and nothing else", async () => {
+    const { ask, local, session } = started()
+    const store = accountStore({ local: local.area, session: session.area })
+    await store.keepSignIn('session-1', user)
+    await store.keepSubscription('session-1', { ...subscription, cloudAccess: 'subscribed' })
+    const read = { target: 'service-worker', account: { account: 'read' } }
+    const fromPage = await ask(read, { origin: 'https://www.youtube.com' })
+    expect(fromPage.answer).toEqual({ type: 'access', signedIn: true, cloudAccess: 'subscribed' })
+    expect(JSON.stringify(fromPage.answer)).not.toContain(user.email)
+    await expect(ask(read)).resolves.toMatchObject({
+      answer: { account: { signedIn: true, email: user.email, subscription: { status: 'none' } } }
+    })
   })
 
   it('reads the subscription when the browser starts, for a learner who is signed in', async () => {

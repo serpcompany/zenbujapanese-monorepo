@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener(
   routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
 )
 
-startSettingsChannel()
+startSettingsChannel(chrome.runtime.id)
 startSidePanel(reportFailure)
 keepPageScriptRegistered(
   {

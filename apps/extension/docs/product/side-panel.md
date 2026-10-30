@@ -36,10 +36,9 @@ screen"; `e2e/side-panel-tabs.spec.ts`):
 | Account's Words | "No words yet", and that the words known and the lists kept show here. |
 | Image Search, over Translate | "Reading text in pictures is coming soon", with no button. |
 
-Player's "Sign up or sign in" opens zenbujapanese.com's `/register/` page in a new tab, where a
-new email makes an account and a known one signs in; Account signs in here instead, and Translate
-has no link (`panel.interaction.test.tsx`, "offers sign-up on the website in a new tab from
-Player, signing in on Account…").
+Player's "Sign up or sign in" opens the Account tab, where the extension signs in itself, and
+Translate has no link (`panel.interaction.test.tsx`, "opens the Account tab's sign-in from
+Player's Sign up or sign in…").
 
 ## Pages over a tab
 

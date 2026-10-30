@@ -144,10 +144,9 @@ test('deleting an email account leaves GET /v1/auth/token answering 401 for its 
   }
 })
 
-test('a session the service refuses with 401 shows the learner signed out', async ({
+test('a session the service has ended shows Not signed in the next time the side panel opens the account, with no Subscribe…', async ({
   extension,
-  page,
-  outsideRequests
+  page
 }) => {
   await stubSubscription(extension)
   const view = await openAccountPage(page, extension)
@@ -158,9 +157,14 @@ test('a session the service refuses with 401 shows the learner signed out', asyn
     200
   )
   await extension.serviceWorker.evaluate(() => chrome.storage.session.clear())
-  await openSubscribe(page, extension, outsideRequests)
+  const asked = answered(extension, '/v1/auth/token')
+  const panel = await extension.context.newPage()
+  const tab = await openAccountTab(panel, extension)
+  expect((await asked).status()).toBe(401)
+  await expect(tab.getByText(signedOutTitle)).toBeVisible()
   await expect(view.getByText(signedOutTitle)).toBeVisible()
   expect(await keptSessionToken(extension)).toBe('')
+  await panel.close()
 })
 
 test('with the subscription answering subscription_required, the Account page shows No subscription, and Subscribe… opens zenbujapanese.com/account/ in a new tab', async ({

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { accountLabels } from '../../account/labels'
 import {
   accountWorld,
   extensionId,
@@ -15,6 +16,15 @@ import { accountApi } from './api'
 import { signIns } from './sign-in'
 
 const nonce = () => json(200, { nonce: 'nonce-1' })
+
+const signedInWithGoogle = (
+  social: () => Response,
+  routes: Parameters<typeof accountWorld>[0] = {}
+) =>
+  accountWorld(
+    { 'POST /v1/auth/sign-in/nonce': nonce, 'POST /v1/auth/sign-in/social': social, ...routes },
+    url => returnedFrom(url, { id_token: 'google-id' })
+  )
 
 describe('signIns', () => {
   it('asks for a sign-in code for the email, naming the extension', async () => {
@@ -47,7 +57,7 @@ describe('signIns', () => {
       invalid_otp: 'wrong-code',
       otp_expired: 'new-code',
       too_many_attempts: 'new-code',
-      oauth_link_error: 'other-way',
+      account_not_linked: 'other-way',
       email_unavailable: 'no-email',
       client_mismatch: 'cannot',
       something_new: 'try-again'
@@ -66,15 +76,10 @@ describe('signIns', () => {
   })
 
   it("signs in with Google's ID token and the service's nonce", async () => {
-    const world = accountWorld(
-      {
-        'POST /v1/auth/sign-in/nonce': nonce,
-        'POST /v1/auth/sign-in/social': () => signedInAnswer('session-google'),
-        'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
-        'GET /v1/me/subscription': () => json(200, {})
-      },
-      url => returnedFrom(url, { id_token: 'google-id' })
-    )
+    const world = signedInWithGoogle(() => signedInAnswer('session-google'), {
+      'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
+      'GET /v1/me/subscription': () => json(200, {})
+    })
     const answer = await world.account.answer({ account: 'sign-in', with: { way: 'google' } })
     expect(answer).toMatchObject({
       type: 'account',
@@ -86,6 +91,16 @@ describe('signIns', () => {
       idToken: { token: 'google-id', nonce: 'nonce-1' }
     })
     expect(social?.headers.get('x-zenbu-client')).toBe('zenbu-extension')
+  })
+
+  it('tells a learner whose email has an account another way in to sign in that way, not with Apple or Google', async () => {
+    const world = signedInWithGoogle(() => refusal(401, 'oauth_link_error'))
+    const answer = await world.account.answer({ account: 'sign-in', with: { way: 'google' } })
+    expect(answer).toMatchObject({ type: 'refused', refusal: 'has-other-way' })
+    const told = accountLabels.refusals['has-other-way']
+    expect(told).toContain('an emailed code')
+    expect(told).not.toMatch(/Apple|Google/)
+    expect(await world.store.keptAccount()).toBeNull()
   })
 
   it("sends Apple's name on a first sign-in with Apple", async () => {

@@ -32,6 +32,17 @@ type Parts = {
   reportFailure(code: 'account-answer' | 'account-storage'): void
 }
 
+const accessOnly = (answer: AccountAnswer): AccountAnswer =>
+  answer.type === 'account'
+    ? {
+        type: 'access',
+        signedIn: answer.account.signedIn,
+        cloudAccess: answer.account.signedIn
+          ? (answer.account.subscription?.cloudAccess ?? null)
+          : null
+      }
+    : answer
+
 export function answerAccount(
   service: AccountService,
   reportFailure: Parts['reportFailure'],
@@ -39,11 +50,15 @@ export function answerAccount(
 ) {
   return (message: unknown, sender: Sender, respond: (answer: AccountAnswer) => void): boolean => {
     if (!isAccountEnvelope(message)) return false
-    if (message.account.account !== 'read' && sender.origin !== pagesOrigin) return false
-    service.answer(message.account).then(respond, (error: unknown) => {
-      reportFailure('account-answer')
-      respond(failure(error))
-    })
+    const fromPages = sender.origin === pagesOrigin
+    if (!fromPages && message.account.account !== 'read') return false
+    service.answer(message.account).then(
+      answer => respond(fromPages ? answer : accessOnly(answer)),
+      (error: unknown) => {
+        reportFailure('account-answer')
+        respond(failure(error))
+      }
+    )
     return true
   }
 }

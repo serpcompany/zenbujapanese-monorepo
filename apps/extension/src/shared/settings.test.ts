@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { answerSettings, tellOpenTabs } from '../service-worker/settings'
-import { fakeChrome } from '../test/fake-chrome'
+import { extensionId, fakeChrome } from '../test/fake-chrome'
 import {
   askSettings,
   askToWriteSettings,
@@ -16,6 +16,8 @@ import {
   watchSettings,
   writeSettings
 } from './settings'
+
+const pages = `chrome-extension://${extensionId}`
 
 const youtube = 'zenbu.tubelex.youtube.ja.unidic-3.1'
 const jlpt = 'zenbu.jlpt.waller.levels'
@@ -104,6 +106,7 @@ function settingsChannel() {
   const store = chrome.storage.local
   chrome.runtime.onMessage.addListener(
     answerSettings(
+      pages,
       () => readSettings(store),
       changes => writeSettings(changes, store)
     )
@@ -115,14 +118,18 @@ describe('the settings channel', () => {
   it("answers a content script's ask with the stored settings", async () => {
     const { chrome } = fakeChrome()
     await writeSettings({ 'readingAids.romaji': true }, chrome.storage.local)
-    chrome.runtime.onMessage.addListener(answerSettings(() => readSettings(chrome.storage.local)))
+    chrome.runtime.onMessage.addListener(
+      answerSettings(pages, () => readSettings(chrome.storage.local))
+    )
     const settings = await askSettings(chrome.runtime)
     expect(settings['readingAids.romaji']).toBe(true)
   })
 
   it('rejects an ask the service worker answers with a failure', async () => {
     const { chrome } = fakeChrome()
-    chrome.runtime.onMessage.addListener(answerSettings(() => Promise.reject(new Error('gone'))))
+    chrome.runtime.onMessage.addListener(
+      answerSettings(pages, () => Promise.reject(new Error('gone')))
+    )
     await expect(askSettings(chrome.runtime)).rejects.toThrow('without the settings')
   })
 
@@ -144,10 +151,50 @@ describe('the settings channel', () => {
     expect((await readSettings(store))['videos.captionPlace']).toBeNull()
   })
 
+  it('takes only the caption’s place from a content script, and refuses any other setting it sends', async () => {
+    const { chrome } = fakeChrome()
+    const store = chrome.storage.local
+    const listener = answerSettings(
+      pages,
+      () => readSettings(store),
+      changes => writeSettings(changes, store)
+    )
+    const fromSite = (changes: Record<string, unknown>) =>
+      new Promise(resolve =>
+        listener(
+          { target: 'service-worker', settings: 'write', changes },
+          { origin: 'https://www.youtube.com' },
+          resolve
+        )
+      )
+    await writeSettings({ 'crashReports.send': false }, store)
+    await expect(fromSite({ 'videos.captionPlace': { x: 0.4, y: 0.6 } })).resolves.toEqual({
+      type: 'written'
+    })
+    await expect(
+      fromSite({ 'videos.captionPlace': { x: 0.1, y: 0.1 }, 'crashReports.send': true })
+    ).resolves.toMatchObject({ type: 'failed' })
+    await expect(fromSite({ 'sites.off': ['example.com'] })).resolves.toMatchObject({
+      type: 'failed'
+    })
+    const settings = await readSettings(store)
+    expect(settings['videos.captionPlace']).toEqual({ x: 0.4, y: 0.6 })
+    expect(settings['crashReports.send']).toBe(false)
+    expect(settings['sites.off']).toEqual(settingDefaults['sites.off'])
+  })
+
+  it('takes any setting from the extension’s own pages', async () => {
+    const { runtime, store } = settingsChannel()
+    await askToWriteSettings({ 'crashReports.send': false, 'sites.off': ['example.com'] }, runtime)
+    const settings = await readSettings(store)
+    expect([settings['crashReports.send'], settings['sites.off']]).toEqual([false, ['example.com']])
+  })
+
   it('rejects a write the service worker could not keep', async () => {
     const { chrome } = fakeChrome()
     chrome.runtime.onMessage.addListener(
       answerSettings(
+        pages,
         () => Promise.resolve(settingDefaults),
         () => Promise.reject(new Error('full'))
       )
@@ -158,7 +205,7 @@ describe('the settings channel', () => {
   })
 
   it('leaves every other message to the other listeners', () => {
-    const answer = answerSettings(() => Promise.resolve(settingDefaults))
+    const answer = answerSettings(pages, () => Promise.resolve(settingDefaults))
     expect(
       answer({ target: 'service-worker', request: { type: 'ping' } }, {}, () => undefined)
     ).toBe(false)

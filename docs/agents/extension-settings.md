@@ -37,7 +37,10 @@ caption, or `null` once a double-click puts it back. It asks the service worker 
 service worker closes `chrome.storage.local` to content scripts to keep the account's session
 token from them ([`account-extension.md`](account-extension.md)); the service worker keeps only
 the changes whose key and kind fit (`fittingChanges`), and the content script hears them back the
-same way. A tab that can't
+same way. From a sender outside the extension's own origin it takes only `videos.captionPlace`,
+and refuses a write that holds any other key, so a page that took over its renderer can't turn
+crash reports back on or a site back on (`src/shared/settings.test.ts`, "takes only the caption’s
+place from a content script…"). A tab that can't
 take the message (a closed tab, a page with no content script) stops none of the others. Whether
 Zenbu runs on a site is `isZenbuOn(host, settings)`, from `sites.off`.
 

@@ -41,6 +41,12 @@ extension does it, #961's, is in In the extension, below.
   `chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' })` at install and at
   each start. The 15-minute **access token** goes in `chrome.storage.session`, refreshed as the
   client guide's Access tokens says.
+- **Each answer is kept for the session that asked.** A token, a subscription, or a refused
+  session is kept, or forgets the account, only while the session token it was asked with is
+  still the one kept; one that comes back after a sign-out, or a sign-in to another account, is
+  dropped (`tokens.test.ts`, "an access token that comes back after the session it was asked
+  with ended"). A sign-in writes the session before it clears the access token, and a sign-out
+  removes the session before the access token, so a late answer finds the new one.
 - Never send `Authorization` on a sign-in: a sign-in with a session adds a way in to that account,
   which needs `account`.
 - No token, code, or email goes in an error report.
@@ -107,13 +113,20 @@ route's URL as `redirect_uri`, since that's where Apple sent it (`src/auth/apple
   closes `chrome.storage.local` to content scripts at each start, answers a page's ask, and reads
   the subscription when the browser starts. Only the extension's own pages, by the sender's
   origin, may sign in or out, delete, or send a code: a content script's ask is answered only
-  when it reads the account, so a page that took over its renderer can't sign the learner out.
+  when it reads the account, so a page that took over its renderer can't sign the learner out,
+  and its read answers only `{ type: 'access', signedIn, cloudAccess }`, never the email or the
+  rest of the subscription.
 - **A page asks by message,** `askAccount()` in `src/shared/account.ts` (`{ target:
   'service-worker', account }`), and reads the account the service worker keeps under `account` in
   `chrome.storage.local`: the email and the subscription, never a token. `onAccountChanged` tells
-  it of a change, so the side panel and Settings show the same account. The subscription is read
-  again when a page comes back into view after Subscribe… or Manage Subscription; `cloudAccess`
-  is kept with it, for saving (#962).
+  it of a change, so the side panel and Settings show the same account. Each time a page opens
+  the account or comes back into view (`opened`), the service worker asks `GET /v1/auth/token`
+  once if no access token is kept that has more than a minute left, so a session ended
+  elsewhere shows signed out then. The subscription is read again when a page comes back into
+  view after Subscribe… or Manage Subscription; `cloudAccess` is kept with it, for saving (#962).
+- **Deleting** asks for a fresh sign-in to the same account, which keeps the subscription it
+  had. When the service needs Apple, Continue with Apple signs in with Apple again, so the delete
+  goes with that fresh session and its `code`, never an earlier session over 10 minutes old.
 - **The account component,** `src/account/`, is the one the side panel's Account tab and
   Settings' Account page both draw ([product docs](../../apps/extension/docs/product/account.md)).
   It shows each answer's problem inline, by the field or the button it belongs to, with no toast.

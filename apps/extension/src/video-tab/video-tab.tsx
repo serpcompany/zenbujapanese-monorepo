@@ -20,14 +20,14 @@ import { useCaptions, usePlayback } from './use-video'
 
 type Shared = { services: VideoTabServices; open: PanelTabProps['open'] }
 
-function NoVideo() {
+function NoVideo({ select }: Pick<PanelTabProps, 'select'>) {
   return (
     <div className="flex flex-col">
       <EmptyState icon={MonitorPlay} text={panelLabels.empty.video} />
       <section data-recent className="border-t">
         <h2 className="px-4 pt-4 font-heading text-base font-medium">{panelLabels.recent}</h2>
         <EmptyState icon={History} text={panelLabels.empty.recent}>
-          <SignUpButton />
+          <SignUpButton select={select} />
         </EmptyState>
       </section>
     </div>
@@ -154,11 +154,12 @@ function CaptionsView({
 function VideoCaptions({
   video,
   shown,
+  select,
   ...shared
-}: Shared & { video: WatchedVideo; shown: boolean }) {
+}: Shared & Pick<PanelTabProps, 'select'> & { video: WatchedVideo; shown: boolean }) {
   const { answer, tryAgain } = useCaptions(shared.services, video)
   const settings = useSettings()
-  if (answer && 'state' in answer && answer.state === 'no-video') return <NoVideo />
+  if (answer && 'state' in answer && answer.state === 'no-video') return <NoVideo select={select} />
   if (answer && 'state' in answer && answer.state === 'no-japanese-captions')
     return <NoJapaneseCaptions open={shared.open} />
   return (
@@ -182,6 +183,7 @@ function VideoCaptions({
 
 export function VideoTab({
   open,
+  select,
   shown = true,
   services = onDeviceVideoServices
 }: PanelTabProps & { services?: VideoTabServices }) {
@@ -196,7 +198,16 @@ export function VideoTab({
     else setOpened(current => (current === key ? current : null))
   }, [shown, key])
   if (video === undefined) return null
-  if (video === null) return <NoVideo />
+  if (video === null) return <NoVideo select={select} />
   if (key !== opened) return null
-  return <VideoCaptions key={key} video={video} shown={shown} services={services} open={open} />
+  return (
+    <VideoCaptions
+      key={key}
+      video={video}
+      shown={shown}
+      services={services}
+      open={open}
+      select={select}
+    />
+  )
 }

@@ -39,7 +39,7 @@ export function DeleteAccount({ email, subscription, onDeleted }: Props) {
   }
 
   async function withApple() {
-    settle(await ask(askAccount({ account: 'delete-with-apple' })))
+    settle(await ask(askAccount({ account: 'delete', with: { way: 'apple' } })))
   }
 
   return (

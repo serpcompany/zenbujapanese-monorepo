@@ -24,7 +24,7 @@ const refusalByCode: Record<string, Refused['refusal']> = {
   invalid_otp: 'wrong-code',
   otp_expired: 'new-code',
   too_many_attempts: 'new-code',
-  oauth_link_error: 'other-way',
+  oauth_link_error: 'has-other-way',
   account_not_linked: 'other-way',
   email_unavailable: 'no-email',
   email_not_verified: 'cannot',
@@ -126,14 +126,7 @@ export function signIns(api: Api, identity: Identity, settings: SignInSettings) 
         ? withCode(way.email, way.code)
         : way.way === 'google'
           ? withGoogle()
-          : withApple(),
-    appleCode: async (): Promise<string | Refused> => {
-      const once = await nonce()
-      if (typeof once !== 'string') return once
-      const authorization = await authorizeWithApple(identity, appleSettings, once)
-      if (!authorization.ok) return refused(authorization.refusal)
-      return authorization.authorized.code ?? refused('apple-again')
-    }
+          : withApple()
   }
 }
 

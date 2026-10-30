@@ -39,13 +39,13 @@ export type AccountRequest =
   | { account: 'sign-in'; with: SignInWay }
   | { account: 'sign-out' }
   | { account: 'delete'; with: SignInWay }
-  | { account: 'delete-with-apple' }
   | { account: 'went-to-subscribe' }
 
 export type Refusal =
   | 'wrong-code'
   | 'new-code'
   | 'other-way'
+  | 'has-other-way'
   | 'no-email'
   | 'wait'
   | 'cancelled'
@@ -62,6 +62,7 @@ export type AccountAnswer =
   | { type: 'code-sent' }
   | { type: 'deleted'; appStoreSubscriptionContinues: boolean }
   | { type: 'apple-needed' }
+  | { type: 'access'; signedIn: boolean; cloudAccess: CloudAccess | null }
   | Refused
   | Failure
 

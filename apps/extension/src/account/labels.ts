@@ -20,6 +20,8 @@ export const accountLabels = {
     'wrong-code': "That code isn't right. Check it, or send a new one.",
     'new-code': 'That code has run out or was tried too often. Send a new one.',
     'other-way': "This email's account signs in with Apple or Google. Sign in that way.",
+    'has-other-way':
+      'This email already has an account that signs in another way, such as an emailed code. Sign in that way.',
     'no-email': "Codes can't be emailed right now. Sign in another way.",
     wait: 'Too many tries. Wait a moment, then try again.',
     cancelled: 'Signing in was cancelled.',
