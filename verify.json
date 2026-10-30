@@ -558,7 +558,7 @@
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
-          "^src/content/(youtube|page-lookup)\\.ts$",
+          "^src/content/(youtube|netflix|netflix-player|page-lookup)\\.ts$",
           "^test-pages/test-content-script\\.tsx$",
           "^e2e/[\\w-]+\\.spec\\.ts$",
           "^e2e/serve\\.ts$",

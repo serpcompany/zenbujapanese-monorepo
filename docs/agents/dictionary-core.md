@@ -28,7 +28,7 @@ The app asks `embedded/` for each of these; [The app's side](#the-apps-side) say
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`), with `segmentationFurigana`. `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
 | `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them; the school lists Grade filters (`school-kanji.ts`). | `SchoolKanjiClient` |
 | `sources/` | The source credits every client shows (`docs/data-sources.md`). | `CreditsView` |
-| `captions/` | Caption rules on timed lines from any source (sound tags, line ends, a translation's sentences, pairing); YouTube's answers, read without a DOM. | `YouTubeCaptionClient` |
+| `captions/` | Caption rules on timed lines from any source (sound tags, line ends, a translation's sentences, pairing); YouTube's and Netflix's tracks. | `YouTubeCaptionClient` |
 | `fixtures/` | The app's rows for twelve words and their forms (50 examples each), the kanji 要, kanji sharing a radical with 要, and searches' leading words, for development and tests only. | — |
 
 ## Rules

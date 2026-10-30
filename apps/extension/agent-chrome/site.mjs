@@ -3,7 +3,7 @@ import { createHash, X509Certificate } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { createServer } from 'node:https'
 import { extname, join, normalize } from 'node:path'
-import { standInPlayer, standInTimedText } from './paths.mjs'
+import { standInNetflixTracks, standInPlayer, standInTimedText } from './paths.mjs'
 
 const types = {
   '.html': 'text/html; charset=utf-8',
@@ -68,22 +68,40 @@ const youTubeAnswers = {
   'api/timedtext': async () => ({ type: 'text/xml', body: readFileSync(standInTimedText, 'utf8') })
 }
 
-async function answerYouTube(answer, request, response, log) {
-  const { type, body } = await answer(request)
-  log(`${request.headers.host}${request.url} -> ${type}`)
-  response.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' })
-  response.end(body)
+const sitePages = { 'www.netflix.com': 'netflix.html' }
+
+const netflixTrackHost = /\.oca\.nflxvideo\.net$/
+
+function netflixTrack(request) {
+  const trackId = new URL(request.url ?? '/', 'https://site').searchParams.get('t') ?? ''
+  const file = standInNetflixTracks[trackId]
+  return async () => file && { type: 'text/xml', body: readFileSync(file, 'utf8') }
+}
+
+async function sendAnswer(answer, request, response, log) {
+  const found = await answer(request)
+  if (!found) {
+    log(`${request.headers.host}${request.url} -> 404`)
+    response.writeHead(404, { 'cache-control': 'no-store' })
+    return void response.end()
+  }
+  log(`${request.headers.host}${request.url} -> ${found.type}`)
+  response.writeHead(200, { 'content-type': found.type, 'cache-control': 'no-store' })
+  response.end(found.body)
 }
 
 export async function startStandInSite({ hosts, root, folder, log }) {
   const { key, cert, spki } = selfSignedCertificate(hosts, folder)
   const server = createServer({ key, cert }, (request, response) => {
+    const host = (request.headers.host ?? '').replace(/:\d+$/, '')
     const path = normalize(new URL(request.url ?? '/', 'https://site').pathname).replace(/^\/+/, '')
-    const youTube = youTubeAnswers[path]
-    if (youTube) return void answerYouTube(youTube, request, response, log)
+    const answer = netflixTrackHost.test(host) ? netflixTrack(request) : youTubeAnswers[path]
+    if (answer) return void sendAnswer(answer, request, response, log)
     const file = join(root, path)
     const served =
-      path && file.startsWith(root) && existsSync(file) ? file : join(root, 'index.html')
+      path && file.startsWith(root) && existsSync(file)
+        ? file
+        : join(root, sitePages[host] ?? 'index.html')
     log(`${request.headers.host}${request.url} -> ${served.slice(root.length + 1)}`)
     response.writeHead(200, {
       'content-type': types[extname(served)] ?? 'application/octet-stream',

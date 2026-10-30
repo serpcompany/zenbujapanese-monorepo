@@ -1,7 +1,9 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { afterEach, describe, expect, it } from 'vitest'
+import { fakeFrames, mutationsSeen } from '../test/fake-frames'
+import { siteCaptionsAttribute } from './element-follower'
 import { type Playback, playingLine, type VideoFollower } from './follower'
-import { siteCaptionsAttribute, youTubeFollower } from './youtube-follower'
+import { youTubeFollower } from './youtube-follower'
 
 const videoId = 'zenbuJa0001'
 
@@ -20,29 +22,6 @@ function watchPage() {
   if (!player || !video) throw new Error('the stand-in watch page has no player')
   return { player, video }
 }
-
-function fakeFrames() {
-  const waiting = new Map<number, FrameRequestCallback>()
-  let handles = 0
-  return {
-    waiting,
-    requestAnimationFrame(callback: FrameRequestCallback) {
-      handles += 1
-      waiting.set(handles, callback)
-      return handles
-    },
-    cancelAnimationFrame(handle: number) {
-      waiting.delete(handle)
-    },
-    runFrame() {
-      const callbacks = [...waiting.values()]
-      waiting.clear()
-      for (const callback of callbacks) callback(0)
-    }
-  }
-}
-
-const mutationsSeen = () => new Promise(resolve => setTimeout(resolve))
 
 const followers: VideoFollower[] = []
 
@@ -157,6 +136,17 @@ describe('youTubeFollower', () => {
     expect(video.playbackRate).toBe(0.75)
     setRate(video, 1.25)
     expect(follower.playback?.rate).toBe(1.25)
+  })
+
+  it('takes a speed the learner picks just after a seek as their speed', () => {
+    const { video } = watchPage()
+    const follower = follow()
+    follower.setRate(0.75)
+    video.dispatchEvent(new Event('seeking'))
+    video.dispatchEvent(new Event('seeked'))
+    setRate(video, 1.5)
+    expect(video.playbackRate).toBe(1.5)
+    expect(follower.playback?.rate).toBe(1.5)
   })
 
   it("hides YouTube's captions on the player while asked, and gives the player as the caption host", () => {

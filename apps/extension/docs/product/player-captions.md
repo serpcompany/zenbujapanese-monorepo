@@ -17,6 +17,10 @@ video, a stand-in Translator, and the fixture words; `src/video/youtube-page-cap
 `e2e/player-captions.spec.ts` (Browser) and `e2e/caption-drag.spec.ts` (Browser drag), in Playwright's Chromium with the test build on the agent
 Chrome harness's stand-in watch page under `www.youtube.com`, which asks YouTube nothing.
 
+On a Netflix watch page it is the same caption and controls on Netflix's player: Netflix's own
+subtitles are hidden while it shows and back with Zenbu Captions off, and every control seeks,
+plays, and sets the speed through Netflix's player ([`netflix.md`](netflix.md)).
+
 ## The caption
 
 | Behavior | Check |
@@ -86,5 +90,5 @@ word's popup is open; otherwise they fade out (Controls: "when the controls show
 Neither box has a keyboard move, and moved to the top right one can cover the line controls
 until it is dragged away. Touch drags are built as pointer events but checked only with a mouse. After the extension updates or reloads, a watch page that was already open shows no caption until
 the learner reloads it (#1114). Live Captions for a video with no Japanese captions are #968's, and the share of the video's words
-the learner knows is #965's. Netflix's player is #966's. The fullscreen screenshots and a counted
+the learner knows is #965's. The fullscreen screenshots and a counted
 Repeat run in branded Chrome are the agent Chrome harness's, by hand.

@@ -96,6 +96,21 @@ download failure.
 For a fullscreen screenshot in headless Chrome, emulate the viewport again after
 `requestFullscreen()` (CDP `Emulation.setDeviceMetricsOverride`); otherwise it crops to 800 × 600.
 
+## Netflix
+
+Check a Netflix feature on the stand-in Netflix page, offline, never on netflix.com, the same way,
+mapping Netflix's page and the stand-in's track server too:
+
+```sh
+pnpm --silent agent-chrome start --ext dist-test --map-host www.netflix.com --map-host ipv4-c001-tyo001-ix.1.oca.nflxvideo.net --host-rule '<hostRule>'
+pnpm --silent agent-chrome open 'https://www.netflix.com/watch/81234567'
+```
+
+The page is the harness's (`apps/extension/agent-chrome/README.md`, The stand-in Netflix page).
+`[netflix]` lines in `console.log` show each track turned on, each seek, play, pause, and speed
+that went through the stand-in player, and an M7375 line for a seek that didn't; `[site]` lines
+count the track fetches.
+
 ## YouTube's request budget
 
 An online Chrome counts each request to `youtube.com`, `youtube-nocookie.com`, and `youtu.be` in

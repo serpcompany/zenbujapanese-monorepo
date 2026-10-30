@@ -32,9 +32,12 @@ export function PlayerCaption({
   pick,
   keepPlace
 }: Props) {
-  const text = lines[line].text
-  const next = lines[line + 1]?.text ?? null
-  const translation = useLineEnglish(english, text, next, settings['readingAids.translations'])
+  const { text, translation: own } = lines[line]
+  const following = lines[line + 1]
+  const next = following && !following.translation ? following.text : null
+  const on = settings['readingAids.translations']
+  const asked = useLineEnglish(english, own ? null : text, next, on)
+  const translation = on ? (own ?? asked) : undefined
   return (
     <div className={captionRoomClass}>
       <CaptionBox

@@ -6,7 +6,7 @@ so the side panel's Player tab ([`video-tab.md`](video-tab.md)) and the caption 
 [`docs/agents/extension.md`](../../../../docs/agents/extension.md), Captions and the video.
 
 The page is `https://www.youtube.com/watch?v=<id>`, also when YouTube moves to it without loading
-a page. No other YouTube page, and no other site, is followed.
+a page. No other YouTube page is followed; Netflix's watch page is in [`netflix.md`](netflix.md).
 
 ## Captions
 
@@ -44,6 +44,7 @@ minutes." Then:
 | It knows the time, whether the video plays, and its speed, and seeks, plays, pauses, and sets the speed of YouTube's own video. | `src/video/youtube-follower.interaction.test.tsx` |
 | It knows which line is playing, from its start up to its end, and that none is between lines. | `src/video/follower.test.ts` |
 | While an ad shows, no line is playing, the time holds where the video was, nothing plays, and the controls do nothing. After the ad, the learner's speed, such as 0.75×, comes back. | `src/video/follower.test.ts`, `src/video/youtube-follower.interaction.test.tsx` |
+| A speed the learner picks in YouTube's own menu or with its keys is their speed, also just after a seek or a Repeat loop: the extension never puts the old one back. | `src/video/youtube-follower.interaction.test.tsx`: "takes a speed the learner picks just after a seek as their speed" |
 | It can hide YouTube's own captions on the player, and show them again. | `src/video/youtube-follower.interaction.test.tsx` |
 | It waits for the player when YouTube hasn't drawn it yet. | `src/video/youtube-follower.interaction.test.tsx` |
 

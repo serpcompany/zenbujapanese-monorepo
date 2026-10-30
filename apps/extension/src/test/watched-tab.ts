@@ -1,5 +1,6 @@
 import { captionsService } from '../captions/captions-service'
 import { memoryStorage } from '../captions/fixtures/memory-storage'
+import { netflixStandIn, trackHost } from '../captions/fixtures/netflix-stand-in'
 import { youTubeStandIn } from '../captions/fixtures/youtube-stand-in'
 import type {
   CaptionsAnswer,
@@ -7,19 +8,23 @@ import type {
   CaptionsEnvelope,
   CaptionsRequest
 } from '../captions/messages'
-import { askCaptions } from '../captions/messages'
+import { askCaptions, askTabTracks } from '../captions/messages'
 import { answerCaptions } from '../captions/serve-captions'
-import { watchedVideoId } from '../video/watch-page'
-import type { youTubeFollower } from '../video/youtube-follower'
-import { followYouTubePage, type PlayerCaptions } from '../video/youtube-page'
+import {
+  followVideoPage,
+  type PageListener,
+  type PlayerCaptions,
+  type VideoSitePage
+} from '../video/video-page'
+import { youTubePage } from '../video/video-sites'
+import { watchedVideo } from '../video/watch-page'
 import { videoTabPortsStandIn } from './video-tab-ports'
-
-type ContentListener = (message: unknown) => false
 
 type Options = {
   tabId?: number
   captionsOn?: boolean
-  follow?: typeof youTubeFollower
+  site?: VideoSitePage
+  follow?: VideoSitePage['follow']
   contentScript?: boolean
   captions?: PlayerCaptions
 }
@@ -27,12 +32,20 @@ type Options = {
 export function watchedTab({
   tabId = 5,
   captionsOn = true,
-  follow,
+  site = youTubePage,
+  follow = site.follow,
   contentScript: injected = true,
   captions
 }: Options = {}) {
   const youTube = youTubeStandIn()
-  const contentScript = new Set<ContentListener>()
+  const netflix = netflixStandIn()
+  const contentScript = new Set<PageListener>()
+  const tabs = {
+    sendMessage: (_tab: number, message: unknown) =>
+      new Promise(resolve => {
+        if (![...contentScript].some(listener => listener(message, {}, resolve))) resolve(undefined)
+      })
+  }
   const sidePanel = new Set<(change: CaptionsChange) => void>()
   const settings = { captionsOn }
   const opened: string[] = []
@@ -41,9 +54,10 @@ export function watchedTab({
   const serviceWorker = answerCaptions(
     captionsService({
       storage: memoryStorage(),
-      fetch: youTube.fetch,
+      fetch: (url, init) => (url.includes(trackHost) ? netflix : youTube).fetch(url, init),
       prepareRequests: async () => undefined,
-      tabVideo: async () => watchedVideoId(location.href),
+      tabVideo: async () => watchedVideo(location.href),
+      askTracks: (asked, videoId, wanted) => askTabTracks(asked, videoId, wanted, tabs),
       captionsOn: async () => settings.captionsOn,
       announce: change => {
         announced.push(change.captions.state)
@@ -59,26 +73,30 @@ export function watchedTab({
     (message: CaptionsEnvelope): Promise<CaptionsAnswer> =>
       new Promise(resolve => serviceWorker(message, sender, resolve))
   const load = () =>
-    followYouTubePage(document, {
-      runtime: {
-        sendMessage: message => {
-          if (message.captions.type === 'video-opened') opened.push(message.captions.videoId)
-          return sendFrom({ tab: { id: tabId } })(message)
+    followVideoPage(
+      document,
+      { ...site, follow },
+      {
+        runtime: {
+          sendMessage: message => {
+            if (message.captions.type === 'video-opened') opened.push(message.captions.videoId)
+            return sendFrom({ tab: { id: tabId } })(message)
+          },
+          onMessage: {
+            addListener: listener => contentScript.add(listener),
+            removeListener: listener => contentScript.delete(listener)
+          },
+          onConnect: ports.onConnect(tabId)
         },
-        onMessage: {
-          addListener: listener => contentScript.add(listener),
-          removeListener: listener => contentScript.delete(listener)
-        },
-        onConnect: ports.onConnect(tabId)
-      },
-      follow,
-      captions
-    })
+        captions
+      }
+    )
   let stop = injected ? load() : () => undefined
   const fromPanel = { sendMessage: sendFrom({}) }
   return {
     tabId,
     youTube,
+    netflix,
     settings,
     opened,
     announced,

@@ -27,6 +27,7 @@ function useTranslator(on: boolean, services: EnglishServices) {
 }
 
 export type English = {
+  translating: boolean
   english: ReadonlyMap<string, string>
   failed: ReadonlySet<string>
   translator: ModelState
@@ -39,12 +40,17 @@ export function useEnglish(
   on: boolean,
   services: EnglishServices
 ): English {
-  const { translator, setTranslator, download } = useTranslator(on, services)
+  const translating = on && lines.some(line => !line.translation)
+  const { translator, setTranslator, download } = useTranslator(translating, services)
   const known = useRef(new Map<string, string>())
   const failed = useRef(new Set<string>())
   const mounted = useRef(false)
   const [, redraw] = useReducer((count: number) => count + 1, 0)
-  const ready = on && translator.state === 'available'
+  const ready = translating && translator.state === 'available'
+  const own = useMemo(
+    () => new Map(lines.flatMap(line => (line.translation ? [[line.text, line.translation]] : []))),
+    [lines]
+  )
 
   const translateLine = useCallback(
     async (text: string): Promise<boolean> => {
@@ -76,7 +82,7 @@ export function useEnglish(
     if (!ready) return
     let live = true
     const waiting = [...new Set(lines.map(line => line.text))].filter(
-      text => !known.current.has(text)
+      text => !known.current.has(text) && !own.has(text)
     )
     const translateNext = async (): Promise<void> => {
       const text = waiting.shift()
@@ -91,7 +97,7 @@ export function useEnglish(
     return () => {
       live = false
     }
-  }, [ready, lines, translateLine])
+  }, [ready, lines, own, translateLine])
 
   const retry = useCallback(
     (text: string) => {
@@ -100,5 +106,6 @@ export function useEnglish(
     },
     [translateLine]
   )
-  return { english: known.current, failed: failed.current, translator, download, retry }
+  const english = own.size > 0 ? new Map([...known.current, ...own]) : known.current
+  return { translating, english, failed: failed.current, translator, download, retry }
 }

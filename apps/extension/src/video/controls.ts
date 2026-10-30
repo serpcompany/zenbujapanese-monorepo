@@ -12,7 +12,7 @@ export type VideoControlMessage = { target: 'video'; control: VideoControl }
 const isTime = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0
 const isRate = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value > 0
 
-function isVideoControl(value: unknown): value is VideoControl {
+export function isVideoControl(value: unknown): value is VideoControl {
   const control = fields(value)
   if (control?.type === 'seek') return isTime(control.time)
   if (control?.type === 'rate') return isRate(control.rate)

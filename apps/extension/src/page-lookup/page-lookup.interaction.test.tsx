@@ -8,6 +8,7 @@ import {
   stopPageLookups
 } from '../test/page-lookup'
 import { sentence } from '../test/word-cards'
+import { siteCaptionsAttribute } from '../video/element-follower'
 import { decidedEvent } from './page-lookup'
 
 const watching = new Set<MutationObserver>()
@@ -115,4 +116,26 @@ describe('the page lookup', () => {
     await vi.waitFor(() => expect(document.querySelectorAll('#read rt, #added rt')).toHaveLength(4))
     expect(underlines.draw).toHaveBeenCalled()
   })
+  const players = {
+    Netflix: (hidden: string) =>
+      `<div class="watch-video--player-view"${hidden}><video></video><div class="player-timedtext"><span>${sentence}</span></div></div>`,
+    YouTube: (hidden: string) =>
+      `<div id="movie_player"${hidden}><video></video><div class="ytp-caption-window-container"><span>${sentence}</span></div></div>`
+  }
+
+  for (const [site, player] of Object.entries(players)) {
+    for (const zenbuCaptions of [true, false]) {
+      it(`leaves ${site}'s own captions unmarked with Zenbu Captions ${zenbuCaptions ? 'on' : 'off'}`, async () => {
+        const hidden = zenbuCaptions ? ` ${siteCaptionsAttribute}="hidden"` : ''
+        document.body.innerHTML = `<p id="read">${sentence}</p>${player(hidden)}`
+        const captions = document.querySelector('span')
+        lookUpOn({ 'readingAids.furigana': true, 'readingAids.wordMeanings': true })
+        await vi.waitFor(() => expect(document.querySelectorAll('#read rt')).toHaveLength(2))
+        await later()
+        expect(captions?.textContent).toBe(sentence)
+        expect(captions?.querySelectorAll('rt, [data-zenbu-aid]')).toHaveLength(0)
+        expect(captions?.parentElement?.innerHTML).toBe(`<span>${sentence}</span>`)
+      })
+    }
+  }
 })

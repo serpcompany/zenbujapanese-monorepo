@@ -31,21 +31,26 @@ describe('manifest', () => {
     }
   })
 
-  const youTubeScript = {
-    matches: ['https://www.youtube.com/*'],
-    js: ['youtube.js'],
-    run_at: 'document_idle'
-  }
+  const videoScripts = [
+    { matches: ['https://www.youtube.com/*'], js: ['youtube.js'], run_at: 'document_idle' },
+    {
+      matches: ['https://www.netflix.com/*'],
+      js: ['netflix-player.js'],
+      run_at: 'document_start',
+      world: 'MAIN'
+    },
+    { matches: ['https://www.netflix.com/*'], js: ['netflix.js'], run_at: 'document_idle' }
+  ]
 
-  it('ships only the YouTube content script in the release build', () => {
+  it("ships only the YouTube and Netflix content scripts in the release build, with Netflix's player read from the page's own world before the page runs", () => {
     const release = manifest('release')
-    expect(release.content_scripts).toEqual([youTubeScript])
+    expect(release.content_scripts).toEqual(videoScripts)
   })
 
   it('runs the test content script only on local test pages in the test build', () => {
     const test = manifest('test')
     expect(test.content_scripts).toEqual([
-      youTubeScript,
+      ...videoScripts,
       {
         matches: ['http://localhost/*', 'http://127.0.0.1/*'],
         js: ['test-content-script.js'],
@@ -70,7 +75,7 @@ describe('manifest', () => {
     expect(manifest('release').content_scripts[0].matches).toEqual(['https://www.youtube.com/*'])
   })
 
-  it('needs a Chrome with the Translator API, asks only for what the offline dictionary, scripting, YouTube and signing in need, and asks for other sites only when the learner allows one', () => {
+  it('needs a Chrome with the Translator API, asks only for what the offline dictionary, scripting, YouTube, Netflix and signing in need, and asks for other sites only when the learner allows one', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)
     expect(release.minimum_chrome_version).toBe(minimumChromeVersion)
@@ -89,22 +94,28 @@ describe('manifest', () => {
     expect(release.background).toEqual({ service_worker: 'service-worker.js', type: 'module' })
   })
 
+  const videoHosts = [
+    'https://www.youtube.com/*',
+    'https://www.netflix.com/*',
+    'https://*.oca.nflxvideo.net/*'
+  ]
+
   it("downloads the language data only from its one host, calls only its own build's API host, and runs SQLite as WebAssembly", () => {
     const release = manifest('release')
     expect(release.host_permissions).toEqual([
       'https://data.zenbujapanese.com/*',
       'https://api.zenbujapanese.com/*',
-      'https://www.youtube.com/*'
+      ...videoHosts
     ])
     expect(manifest('release', 'staging').host_permissions).toEqual([
       'https://data.zenbujapanese.com/*',
       'https://api-staging.zenbujapanese.com/*',
-      'https://www.youtube.com/*'
+      ...videoHosts
     ])
     expect(manifest('test').host_permissions).toEqual([
       'http://language-data.localhost/*',
       'http://account-api.localhost/*',
-      'https://www.youtube.com/*',
+      ...videoHosts,
       'http://allowed.localhost/*'
     ])
     expect(release.content_security_policy.extension_pages).toBe(

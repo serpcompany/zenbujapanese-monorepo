@@ -84,10 +84,10 @@ card on the active tab. It connects `chrome.tabs.connect(tabId, { name: 'word-po
 and posts `{ target: 'word-popup', show: { text, ids, fromBottom, side } }`: `fromBottom` is the
 word's distance from the panel's bottom, and `side` is `chrome.sidePanel.getLayout()`'s, read only
 where it exists (Chrome 140; the extension's minimum is 138), else `right`. Both content scripts,
-`youtube.ts` and `page-lookup.ts`, serve the port with `servePagePopups`
-(`src/word-popup/page-popup-server.ts`). With Every Site given, both run on YouTube and share the
+`video-content.ts` (which `youtube.ts` and `netflix.ts` start) and `page-lookup.ts`, serve the port with `servePagePopups`
+(`src/word-popup/page-popup-server.ts`). With Every Site given, both run on YouTube or Netflix and share the
 isolated world, so both hear one port: a frame keeps its servers under
-`Symbol.for('zenbujapanese.page-popup-servers')`, and only one answers, YouTube's (`preferred`)
+`Symbol.for('zenbujapanese.page-popup-servers')`, and only one answers, the video site's (`preferred`)
 where it runs, else the first still running. With Zenbu on for the site, the page's popup host opens
 the card at the window's edge, `innerHeight - fromBottom` from its top
 (`edgePlacement` in `position.ts`), and answers `{ shown: true }`. The page closing the card

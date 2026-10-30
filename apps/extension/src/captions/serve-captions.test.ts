@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { captionLabels } from './labels'
 import {
   askCaptions,
+  askTabTracks,
   type CaptionsAnswer,
   type CaptionsRequest,
   isCaptionsChange
@@ -35,7 +36,7 @@ function reply(
 describe('answerCaptions', () => {
   it("answers captions requests with the sender's tab, and leaves every other message alone", async () => {
     const { asked, answer } = listener()
-    const opened = { type: 'video-opened', videoId: 'zenbuJa0001' }
+    const opened = { type: 'video-opened', site: 'youtube', videoId: 'zenbuJa0001' }
     expect(
       await reply(answer, { target: 'service-worker', captions: opened }, { tab: { id: 7 } })
     ).toEqual([true, loading])
@@ -45,6 +46,7 @@ describe('answerCaptions', () => {
       { target: 'offscreen', captions: opened },
       { target: 'service-worker', captions: { type: 'captions', tabId: 'seven' } },
       { target: 'service-worker', captions: { type: 'video-opened' } },
+      { target: 'service-worker', captions: { ...opened, site: 'vimeo' } },
       null
     ]) {
       expect(answer(message, {}, () => undefined)).toBe(false)
@@ -71,6 +73,77 @@ describe('askCaptions', () => {
       type: 'failed',
       reason: 'Could not establish connection. Receiving end does not exist.'
     })
+  })
+})
+
+describe('askTabTracks', () => {
+  const tracks = { state: 'tracks', japanese: 'https://a.oca.nflxvideo.net/ja', english: null }
+
+  const noWait = async () => undefined
+
+  const always = () => true
+
+  function tab(...answers: (() => Promise<unknown>)[]) {
+    const sent: unknown[] = []
+    return {
+      sent,
+      sendMessage: (...message: unknown[]) => {
+        sent.push(message)
+        return answers.shift()?.() ?? Promise.resolve(undefined)
+      }
+    }
+  }
+
+  it("asks the tab's top frame for a video's tracks, and takes a wrong answer as no player", async () => {
+    const asked = tab(async () => tracks)
+    expect(await askTabTracks(4, '81234567', always, asked, noWait)).toEqual(tracks)
+    expect(asked.sent).toEqual([
+      [4, { target: 'captions-tracks', videoId: '81234567' }, { frameId: 0 }]
+    ])
+    for (const answer of [{ state: 'tracks', japanese: 7 }, { state: 'lines' }]) {
+      expect(
+        await askTabTracks(
+          4,
+          '81234567',
+          always,
+          tab(async () => answer),
+          noWait
+        )
+      ).toEqual({
+        state: 'no-player'
+      })
+    }
+  })
+
+  it("asks again while the tab's content script isn't there yet or hasn't opened the video, then takes it as no player", async () => {
+    const absent = () => Promise.reject(new Error('Receiving end does not exist.'))
+    const late = tab(
+      absent,
+      async () => undefined,
+      async () => tracks
+    )
+    expect(await askTabTracks(4, '81234567', always, late, noWait)).toEqual(tracks)
+    expect(late.sent).toHaveLength(3)
+    const never = tab()
+    expect(await askTabTracks(4, '81234567', always, never, noWait)).toEqual({ state: 'no-player' })
+    expect(never.sent).toHaveLength(20)
+  })
+
+  it('stops asking once the tab is no longer wanted, such as when it closed', async () => {
+    const closed = () => Promise.reject(new Error('No tab with id: 4.'))
+    const gone = tab(closed, closed, closed)
+    let open = true
+    const asking = askTabTracks(
+      4,
+      '81234567',
+      () => open,
+      gone,
+      async () => {
+        open = gone.sent.length < 2
+      }
+    )
+    expect(await asking).toEqual({ state: 'no-player' })
+    expect(gone.sent).toHaveLength(2)
   })
 })
 
