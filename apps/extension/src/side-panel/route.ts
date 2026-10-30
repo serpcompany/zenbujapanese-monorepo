@@ -1,4 +1,4 @@
-export const panelTabs = ['video', 'translate', 'images', 'words', 'recent'] as const
+export const panelTabs = ['translate', 'player', 'account'] as const
 
 export type PanelTab = (typeof panelTabs)[number]
 
@@ -6,6 +6,7 @@ export type PanelPage =
   | { page: 'word'; entSeq: number; entries?: number[] }
   | { page: 'kanji'; character: string }
   | { page: 'form'; form: string }
+  | { page: 'image-search' }
   | { page: 'test'; text: string }
 
 export type PanelRoute = { tab?: PanelTab; page?: PanelPage }
@@ -43,6 +44,7 @@ const pageShapes: { [K in PanelPage['page']]: (page: Fields) => boolean } = {
   word: page => Number.isSafeInteger(page.entSeq) && isEntSeqList(page.entries),
   kanji: page => typeof page.character === 'string',
   form: page => typeof page.form === 'string',
+  'image-search': () => true,
   test: page => isTestBuild() && typeof page.text === 'string'
 }
 

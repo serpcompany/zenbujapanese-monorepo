@@ -11,7 +11,11 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
 
 - **Pages:** each page the manifest names (`side_panel.default_path` and `options_ui.page`; there
   is no toolbar popup) is in the build, opens, and shows its title and text, so a build missing a
-  page fails. The side panel shows its header and the Video tab's empty state.
+  page fails. The side panel shows its header and Translate's Use Selection.
+- **The side panel's tabs:** the app's Translate, Player, and Account, Translate first and chosen
+  on a first open; Translate's box and its Image row opening Image Search; Player's empty state
+  and Recent; Account's and its Words'; and a last tab kept from the five tabs before them opening
+  on the tab that took it over, and one kept as `lookUp` on Translate (`side-panel-tabs.spec.ts`).
 - **Content script:** on `hostile.html`, the test content script's surface shows `食べる` and
   "The dictionary is ready.", and answers again after `chrome.offscreen.closeDocument()`.
 - **Language data:** an extension page downloads `releases.json`, the fixture release's manifest,
@@ -24,7 +28,10 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   and taken back with `chrome.developerPrivate` from a `chrome://extensions` page, and the popup's
   card, choice, placement, closing, its More menu over it with one Escape each for the menu and
   the popup, links, Open Full Entry, Share, and Copy Link; the More menu also over a caption
-  word's popup on the YouTube stand-in, in and out of fullscreen (`word-popup.spec.ts`). The
+  word's popup on the YouTube stand-in, in and out of fullscreen; and Word Detail on the side
+  panel page in a tab, opened by its pending route, whose Open on zenbujapanese.com opens the
+  word's page in a new tab, fulfilled by `context.route` and taken off `outsideRequests`
+  (`word-popup.spec.ts`). The
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
@@ -44,7 +51,7 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   `enterFullscreen`, from a real click on the page's heading, since Chrome refuses
   `requestFullscreen` without a fresh input. The line change goes to the track's short last line,
   so the width changes whatever fonts the machine has.
-- **The Video tab's word meanings:** `side-panel.html` at 380 and 360 pixels wide, in light and
+- **The Player tab's word meanings:** `side-panel.html` at 380 and 360 pixels wide, in light and
   dark. An init script on that page alone stands in for the active tab (a YouTube watch page),
   its port (playback in the second line, so that row is the line being played), and the
   `sendMessage` answers for the captions and the dictionary's segment and popup requests, since
@@ -71,7 +78,8 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
 The local server (`e2e/local-server.ts`) serves the test pages and a fixture release in the
 bucket's layout, which `e2e/fixture-release.ts` builds when the tests start: every first- and
 later-set file the installer names, tiny, with SQLite files from `node:sqlite` carrying the
-metadata the installer checks, laid out by `src/test/publish-release.ts` (the unit tests' fake
+metadata the installer checks, and the fixture words' entries with empty example tables, so a word's page answers, laid out
+by `src/test/publish-release.ts` (the unit tests' fake
 bucket uses it too) as `releases.json`, the manifest, `compressed.json`, and gzipped parts.
 Nothing is read from Git LFS, and no binary is committed. A failed run keeps its trace and screenshot in
 `e2e`'s `results` folder, which Git ignores.

@@ -89,7 +89,7 @@ The page is the harness's (`apps/extension/agent-chrome/README.md`, The stand-in
 muted local video in `#movie_player`, the player and `timedtext` answers from the fixtures, with
 lines whose words are in the fixture dictionary that the language-data server gives. `[site]` lines in `console.log` count the player and `timedtext` requests. The
 side panel docks only from a user gesture: send `{ target: 'service-worker', openPanel: { tab:
-'video' } }` with `chrome.runtime.sendMessage` from the content script's isolated world, by CDP
+'player' } }` with `chrome.runtime.sendMessage` from the content script's isolated world, by CDP
 `Runtime.evaluate` with `userGesture: true`. Set `video.muted = true` before playing. Chrome's own
 Translator model download needs its hosts let through (`--host-rule`), or English shows its
 download failure.

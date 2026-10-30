@@ -119,7 +119,7 @@ async function openTranscript(page: Page, extension: Extension, width: number) {
   await page.setViewportSize({ width, height: 720 })
   await standInVideo(page)
   await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
-  await page.getByRole('tab', { name: labels.tabs.video }).click()
+  await page.getByRole('tab', { name: labels.tabs.player }).click()
   const transcript = page.getByRole('list', { name: videoTabLabels.transcript })
   await expect(transcript.locator('[data-aid="meaning"]')).toHaveCount(9)
   await expect(transcript.locator('[data-line="1"][data-current]')).toBeVisible()

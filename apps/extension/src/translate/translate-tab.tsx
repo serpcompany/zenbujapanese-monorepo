@@ -1,5 +1,7 @@
 import { Button } from '@zenbu/ui/components/button'
+import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@zenbu/ui/components/item'
 import { Textarea } from '@zenbu/ui/components/textarea'
+import { ChevronRight, ScanText } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { DownloadProgress } from '../shared/translation-model'
 import type { PanelTabProps } from '../side-panel/route'
@@ -48,6 +50,26 @@ function ResultView({
 
 type TranslateTabProps = Partial<PanelTabProps> & { services?: TranslateServices }
 
+function ImageRow({ open }: { open: PanelTabProps['open'] }) {
+  return (
+    <Item
+      variant="outline"
+      render={<button type="button" onClick={() => open({ page: 'image-search' })} />}
+      className="w-full cursor-pointer text-left"
+    >
+      <ItemMedia variant="icon">
+        <ScanText />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>{translateLabels.image}</ItemTitle>
+      </ItemContent>
+      <ItemActions>
+        <ChevronRight className="size-4 text-muted-foreground" />
+      </ItemActions>
+    </Item>
+  )
+}
+
 export function TranslateTab({ services = onDeviceServices, open }: TranslateTabProps) {
   const [text, setText] = useState('')
   const [selectionNotice, setSelectionNotice] = useState<Notice | null>(null)
@@ -95,6 +117,7 @@ export function TranslateTab({ services = onDeviceServices, open }: TranslateTab
           {translateLabels.translate}
         </Button>
       </div>
+      {open && <ImageRow open={open} />}
       {selectionNotice && <NoticeText notice={selectionNotice} />}
       <div aria-live="polite">
         <ResultView result={result} services={services} open={open} />

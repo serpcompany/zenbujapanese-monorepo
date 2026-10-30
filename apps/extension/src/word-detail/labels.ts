@@ -53,7 +53,8 @@ export const wordDetailLabels = {
     share: 'Share {name}',
     moreActions: 'More actions for {name}',
     copyLink: 'Copy Link',
-    linkCopied: 'Link copied'
+    linkCopied: 'Link copied',
+    openOnWebsite: 'Open on zenbujapanese.com'
   },
   strokes: {
     downloading: 'Stroke order is downloading. It shows here once it has.'

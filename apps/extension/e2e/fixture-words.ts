@@ -50,7 +50,12 @@ const entryTables = `
   CREATE TABLE reading_form_restrictions (
     entry_id BLOB NOT NULL, reading TEXT NOT NULL, written_form TEXT NOT NULL,
     PRIMARY KEY(entry_id, reading, written_form)
-  ) WITHOUT ROWID;`
+  ) WITHOUT ROWID;
+  CREATE TABLE example_sentences (id BLOB PRIMARY KEY, japanese TEXT NOT NULL, english TEXT NOT NULL);
+  CREATE TABLE sense_examples (
+    entry_id BLOB NOT NULL, sense_order INTEGER NOT NULL, example_order INTEGER NOT NULL,
+    pair_id BLOB NOT NULL
+  );`
 
 const formKinds = { written: 0, reading: 1 } as const
 
