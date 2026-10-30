@@ -7,6 +7,7 @@ import {
   isZenbuOn,
   onSettingsChanged,
   readSettings,
+  readsPageText,
   type Settings,
   settingDefaults,
   settingsChanged,
@@ -98,6 +99,23 @@ describe('settings', () => {
     expect(off).toEqual(['a.example', 'b.example'])
     expect(isZenbuOn('b.example', { ...settings, 'sites.off': off })).toBe(false)
     expect(sitesOffWith('a.example', true, settings)).toEqual([])
+  })
+
+  it('reads page text on every site at first, keeps Page Text off once it is turned off, and leaves the site switch apart', async () => {
+    const { chrome, items } = fakeChrome()
+    const first = await readSettings(chrome.storage.local)
+    expect(first['pages.pageText']).toBe(true)
+    expect(readsPageText('a.example', first)).toBe(true)
+    await writeSettings({ 'pages.pageText': false }, chrome.storage.local)
+    expect(items).toEqual({ 'pages.pageText': false })
+    const off = await readSettings(chrome.storage.local)
+    expect(off['pages.pageText']).toBe(false)
+    expect(readsPageText('a.example', off)).toBe(false)
+    expect(isZenbuOn('a.example', off)).toBe(true)
+    const siteOff = { ...first, 'sites.off': ['a.example'] }
+    expect(readsPageText('a.example', siteOff)).toBe(false)
+    expect(readsPageText('b.example', siteOff)).toBe(true)
+    expect(settingsFrom({ 'pages.pageText': 'off' })['pages.pageText']).toBe(true)
   })
 })
 
