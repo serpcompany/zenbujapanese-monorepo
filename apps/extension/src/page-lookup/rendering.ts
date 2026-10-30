@@ -91,7 +91,7 @@ export function pageRendering({ doc, view, underlines, aids, glosses, quiet }: O
     if (needsWords(entry.tokens, shown, glosses)) {
       quiet(() => {
         node.data = ''
-        entry.annotation = annotate(node, entry.tokens, shown, glosses, toneOf(color))
+        entry.annotation = annotate(node, entry.tokens, shown, glosses)
       })
       for (const piece of entry.annotation?.pieces ?? []) underline(piece.node, [piece], color)
     } else {

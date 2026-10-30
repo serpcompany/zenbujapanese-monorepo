@@ -55,6 +55,12 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   accessibility tree. Each width's screenshots, light and dark, and `contrast.json` go to its
   test's folder under `e2e/results/` (`transcript-meanings.spec.ts`). Both contrast checks use
   `e2e/contrast.ts`.
+- **A page's word meanings:** `words.html` with Word Meanings on, light and dark, and a paragraph
+  of two neighbouring words added. By their boxes, a meaning after plain text and a meaning after
+  another meaning are the transcript's gap, half the page's root font size, from it, and a meaning
+  that starts its element is not indented. Each meaning is not the underline's blue, and its
+  contrast over the page's backgrounds is at least 4.5:1, with `e2e/contrast.ts`
+  (`page-lookup.spec.ts`).
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1` and maps
   the test build's data host, `language-data.localhost`, to the local server, and, with
   `youTubeStandIn`, `www.youtube.com` to the stand-in site; the `outsideRequests` fixture fails any

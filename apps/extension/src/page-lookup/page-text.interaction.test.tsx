@@ -58,8 +58,7 @@ describe('the Japanese text on a page', () => {
       new Map([
         ['youkyuu', { short: 'demand', full: 'demand, firm request' }],
         ['iru', null]
-      ]),
-      'light'
+      ])
     )
     node.remove()
     expect(inserted).toHaveLength(3)
@@ -80,10 +79,35 @@ describe('the Japanese text on a page', () => {
     expect(romajiLine(document).lang).toBe('ja-Latn')
   })
 
+  it('puts the transcript’s gap before a word with a meaning unless it starts its block, and mutes the meaning in the page’s own text colour', () => {
+    const glossed = new Map([
+      ['youkyuu', { short: 'demand', full: 'demand, firm request' }],
+      ['iru', { short: 'to need', full: 'to be needed' }]
+    ])
+    const meanings = { furigana: false, romaji: false, meanings: true }
+    const body = page('<p id="starts"> 要求が要る。</p><p id="follows"><b>Note</b>要求が要る。</p>')
+    for (const paragraph of body.querySelectorAll('p')) {
+      const node = paragraph.lastChild as Text
+      annotate(node, tokens(), meanings, glossed)
+      node.remove()
+    }
+    const groups = (id: string) =>
+      [...body.querySelectorAll(`#${id} [data-zenbu-aid="meaning"]`)].map(meaning =>
+        meaning.parentElement?.getAttribute('style')
+      )
+    const column = 'display: inline-flex; flex-direction: column; align-items: center;'
+    const spaced = `${column} margin-inline-start: 0.5rem;`
+    expect(groups('starts')).toEqual([column, spaced])
+    expect(groups('follows')).toEqual([spaced, spaced])
+    expect(body.querySelector('[data-zenbu-aid="meaning"]')?.getAttribute('style')).toContain(
+      'color: color-mix(in srgb, currentColor 70%, transparent);'
+    )
+  })
+
   it('writes the words alone when every reading aid is off', () => {
     const body = page('<p>要求が要る。</p>')
     const node = body.querySelector('p')?.firstChild as Text
-    annotate(node, tokens(), noAids, new Map(), 'dark')
+    annotate(node, tokens(), noAids, new Map())
     node.remove()
     expect(body.querySelector('rt, [data-zenbu-aid="meaning"]')).toBeNull()
     expect(body.textContent).toBe(sentence)

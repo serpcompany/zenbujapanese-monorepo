@@ -1,4 +1,4 @@
-import { type Tone, underlineColors } from './underline'
+import { meaningGapRem, mutedMeaningColor } from '../shared/meaning-aid'
 import { aidAttribute } from './walker'
 import { type PageToken, wordGroups } from './words'
 
@@ -12,9 +12,24 @@ export type Gloss = { short: string; full: string }
 
 export type Glosses = ReadonlyMap<string, Gloss | null>
 
-const meaningStyle = (tone: Tone) =>
+const meaningStyle =
   'display: block; max-width: 8em; overflow: hidden; text-overflow: ellipsis; ' +
-  `white-space: nowrap; font-size: 0.7em; line-height: 1.3; color: ${underlineColors[tone]};`
+  `white-space: nowrap; font-size: 0.7em; line-height: 1.3; color: ${mutedMeaningColor};`
+
+const groupWithMeaningStyle = (spaced: boolean) =>
+  'display: inline-flex; flex-direction: column; align-items: center;' +
+  (spaced ? ` margin-inline-start: ${meaningGapRem}rem;` : '')
+
+const shows = (node: Node) =>
+  node.nodeType === Node.ELEMENT_NODE ||
+  (node.nodeType === Node.TEXT_NODE && /\S/.test(node.textContent ?? ''))
+
+function anythingShownBefore(node: Node) {
+  for (let sibling = node.previousSibling; sibling; sibling = sibling.previousSibling) {
+    if (shows(sibling)) return true
+  }
+  return false
+}
 
 const spokenStyle =
   'position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;'
@@ -51,12 +66,12 @@ export function annotate(
   node: Text,
   tokens: readonly PageToken[],
   aids: Aids,
-  glosses: Glosses,
-  tone: Tone
+  glosses: Glosses
 ): Annotation {
   const doc = node.ownerDocument
   const pieces: Piece[] = []
-  const inserted = wordGroups(tokens).map(group => {
+  const startsShown = anythingShownBefore(node)
+  const inserted = wordGroups(tokens).map((group, index) => {
     const gloss = aids.meanings ? glossOf(group, glosses) : null
     const plain = group.every(token => token.ids.length === 0)
     const word = aid(
@@ -64,7 +79,7 @@ export function annotate(
       'span',
       plain ? 'text' : 'word',
       gloss
-        ? 'display: inline-flex; flex-direction: column; align-items: center;'
+        ? groupWithMeaningStyle(index > 0 || startsShown)
         : plain
           ? undefined
           : 'white-space: nowrap;'
@@ -77,7 +92,7 @@ export function annotate(
     const line = doc.createElement('span')
     line.setAttribute('style', 'white-space: nowrap;')
     line.append(...written)
-    const meaning = aid(doc, 'span', 'meaning', meaningStyle(tone))
+    const meaning = aid(doc, 'span', 'meaning', meaningStyle)
     meaning.title = gloss.full
     const shown = doc.createElement('span')
     shown.setAttribute('aria-hidden', 'true')

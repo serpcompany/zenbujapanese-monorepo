@@ -53,7 +53,18 @@ page's text is as it was, under its underlines.
 | --- | --- |
 | Furigana | The reading in hiragana over each word's kanji. |
 | Romaji | A line in romaji under each paragraph. |
-| Word Meanings | Each word's short meaning under it, in the underline's blue; its sense's full text is its tooltip and what a screen reader reads. |
+| Word Meanings | Each word's short meaning under it, muted in the page's own text colour, with the transcript's gap before it; its sense's full text is its tooltip and what a screen reader reads. |
+
+A word with a meaning has the Video tab's transcript's gap before it, half the page's root font
+size, and none after, so two neighbouring meanings and a meaning after plain text are that far
+apart. A word that starts its element, with nothing shown before it, has no gap. The gap comes
+from `src/shared/meaning-aid.ts`, which the transcript, Translate's linked words, and the caption
+on the player read too.
+
+The meaning is the page's own text colour at 70%. On a page with dark text on light and one with
+light text on dark it measures 4.5:1 or better; on a page whose own text is faint it is fainter in
+proportion. The side panel and the caption on the player keep their theme's muted text colour
+instead, which their contrast checks measure (#1127): they know their theme, and a page has none.
 
 Use Selection, in Translate, takes the selected text without them
 ([`translate.md`](translate.md)).

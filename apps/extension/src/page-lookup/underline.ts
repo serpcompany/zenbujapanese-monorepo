@@ -5,7 +5,7 @@ export const highlightNames: Record<Tone, string> = {
   dark: 'zenbu-japanese-word-on-dark'
 }
 
-export const underlineColors: Record<Tone, string> = {
+const underlineColors: Record<Tone, string> = {
   light: 'rgb(37 99 235)',
   dark: 'rgb(96 165 250)'
 }
