@@ -72,6 +72,7 @@ export function accountSync(parts: SyncParts) {
   let backedOffUntil = 0
   let failures = 0
   let retrying = false
+  let rereadInRun = false
 
   function retryIn(wait: number) {
     if (retrying) return
@@ -105,14 +106,17 @@ export function accountSync(parts: SyncParts) {
       await parts.readSubscription()
       return 'stopped'
     }
-    if (answer.status === 410 && batch.cursor !== null) {
-      await copy.edit(draft => {
-        if (!draft.meta) return
-        Object.assign(draft.meta, { cursor: null, fullRead: [], deferred: [], held: [] })
-      })
-      return 'more'
-    }
     if (answer.status === 410) {
+      const readingInFull = await copy.edit(draft => {
+        if (!draft.meta) return false
+        const reading = draft.meta.fullRead !== null
+        Object.assign(draft.meta, { cursor: null, fullRead: [], deferred: [], held: [] })
+        return reading
+      })
+      if (batch.cursor !== null && !readingInFull && !rereadInRun) {
+        rereadInRun = true
+        return 'more'
+      }
       parts.reportFailure('account-sync-reread')
       return backOff(false)
     }
@@ -178,6 +182,7 @@ export function accountSync(parts: SyncParts) {
   }
 
   async function runAll() {
+    rereadInRun = false
     do {
       again = false
       let stepped: Step = 'more'

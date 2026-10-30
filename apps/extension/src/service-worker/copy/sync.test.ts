@@ -265,7 +265,7 @@ describe('syncing the copy', () => {
     let fullReads = 0
     const world = copyWorld(
       answeringSync(body => {
-        if (body.cursor === 'cursor-1') return refusal(410, 'cursor_expired')
+        if (body.cursor === 'cursor-1') return refusal(410, 'invalid_cursor')
         fullReads += 1
         return json(
           200,

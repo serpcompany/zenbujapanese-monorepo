@@ -164,10 +164,37 @@ describe("the copy's sync when the account service fails", () => {
   })
 
   it('reports a second read of everything that the service will not start', async () => {
-    const world = copyWorld(failingFirst(1, () => refusal(410, 'cursor_expired')))
+    const world = copyWorld(failingFirst(1, () => refusal(410, 'invalid_cursor')))
     await markedIn(world)
     expect(world.failures).toEqual(['account-sync-reread'])
     await expect(world.read()).resolves.toMatchObject({ sync: 'waiting' })
+  })
+
+  it('reports, waits, and reads from the start again after the wait, when the service refuses each cursor it gave', async () => {
+    const world = copyWorld(
+      answeringSync(body =>
+        body.cursor === null
+          ? json(200, syncAnswer(appliedTo(body), [], 'cursor-1', true))
+          : refusal(410, 'invalid_cursor')
+      )
+    )
+    await markedIn(world)
+    expect(world.syncs().map(asked => (asked.body as { cursor: unknown }).cursor)).toEqual([
+      null,
+      'cursor-1'
+    ])
+    expect(world.failures).toEqual(['account-sync-reread'])
+    expect(world.waits.map(each => each.wait)).toEqual([2_000])
+    await expect(world.read()).resolves.toMatchObject({ sync: 'waiting' })
+    world.later(2_000)
+    world.waits[0]?.run()
+    await vi.waitFor(() => expect(world.waits).toHaveLength(2))
+    expect(world.syncs().map(asked => (asked.body as { cursor: unknown }).cursor)).toEqual([
+      null,
+      'cursor-1',
+      null,
+      'cursor-1'
+    ])
   })
 
   it('keeps the copy it had when it cannot save a change', async () => {
