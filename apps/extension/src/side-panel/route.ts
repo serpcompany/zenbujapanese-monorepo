@@ -1,4 +1,4 @@
-export const panelTabs = ['translate', 'player', 'account'] as const
+export const panelTabs = ['player', 'translate', 'account'] as const
 
 export type PanelTab = (typeof panelTabs)[number]
 

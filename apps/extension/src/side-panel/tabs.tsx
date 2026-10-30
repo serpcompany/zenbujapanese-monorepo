@@ -15,16 +15,16 @@ export type PanelTabDefinition = {
 
 export const tabs: PanelTabDefinition[] = [
   {
-    id: 'translate',
-    label: labels.tabs.translate,
-    icon: Languages,
-    Content: TranslateTab
-  },
-  {
     id: 'player',
     label: labels.tabs.player,
     icon: SquarePlay,
     Content: VideoTab
+  },
+  {
+    id: 'translate',
+    label: labels.tabs.translate,
+    icon: Languages,
+    Content: TranslateTab
   },
   {
     id: 'account',

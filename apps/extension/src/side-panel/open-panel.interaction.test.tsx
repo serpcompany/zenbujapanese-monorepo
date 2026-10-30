@@ -128,7 +128,7 @@ describe('the openPanel message, through the service worker, to the side panel',
     await browser.click(() => browser.openPanel(onTestPage, 7))
     expect(browser.state.panelOpen).toBe(true)
     await drawPanel()
-    expect(selectedTab()).toBe('Translate')
+    expect(selectedTab()).toBe('Player')
     expect(testPageText()).toEqual(['猫'])
     expect(browser.session.size).toBe(0)
     closePanel()
@@ -156,9 +156,9 @@ describe('the openPanel message, through the service worker, to the side panel',
   it("leaves a panel alone when the click was in another window's tab", async () => {
     const browser = fakeBrowser()
     await drawPanel()
-    await browser.click(() => browser.openPanel({ tab: 'player' }, 8))
-    expect(selectedTab()).toBe('Translate')
-    expect(browser.session.get('sidePanel.route.8')).toEqual({ tab: 'player' })
+    await browser.click(() => browser.openPanel({ tab: 'translate' }, 8))
+    expect(selectedTab()).toBe('Player')
+    expect(browser.session.get('sidePanel.route.8')).toEqual({ tab: 'translate' })
   })
 
   it('leaves no route behind when it is not called from a click', async () => {

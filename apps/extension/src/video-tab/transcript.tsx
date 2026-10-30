@@ -1,132 +1,65 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
-import { Button } from '@zenbu/ui/components/button'
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
-import { captionLabels } from '../captions/labels'
-import type { GlossCache } from '../page-lookup/glosses'
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import type { Settings } from '../shared/settings'
-import { lineGlosses, SourceLine } from '../translate/source-words'
-import { type Playback, playingLine } from '../video/follower'
-import { popupPause } from '../video/popup-pause'
+import type { Playback } from '../video/follower'
+import { CaptionCard } from './caption-card'
+import { ControlBar } from './control-bar'
 import { videoTabLabels } from './labels'
+import { currentCard, usePanelLines } from './panel-line-controls'
 import type { VideoTabServices } from './services'
+import { captionGlosses, useKnownWords } from './word-marks'
+import { type OpenedWord, useWordSheet, WordSheet } from './word-sheet'
 
-type PopupChanged = (id: number, open: boolean, dismiss: () => void) => void
+const sheetGap = 16
 
-type RowProps = {
-  line: Caption
-  current: boolean
-  english: string | undefined
-  englishFailed: boolean
-  retryEnglish(text: string): void
-  glosses: GlossCache
+const still = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true
+
+function center(box: HTMLElement | null, id: number) {
+  const card = box?.querySelector(`[data-line="${id}"]`)
+  card?.scrollIntoView?.({ block: 'center', behavior: still() ? 'auto' : 'smooth' })
+}
+
+function useFollow(current: number | null, shown: boolean, opened: OpenedWord | null) {
+  const box = useRef<HTMLDivElement>(null)
+  const list = useRef<HTMLOListElement>(null)
+  const sheet = useRef<HTMLDivElement>(null)
+  const covered = useRef<number | null>(null)
+  useEffect(() => {
+    if (current !== null && shown && !sheet.current) center(box.current, current)
+  }, [current, shown])
+  const line = opened?.line.id
+  const full = opened?.full
+  useLayoutEffect(() => {
+    const scroller = box.current
+    const cards = list.current
+    if (!scroller || !cards) return
+    if (line === undefined) {
+      covered.current = null
+      scroller.style.scrollPaddingBottom = ''
+      cards.style.paddingBottom = ''
+      return
+    }
+    if (full) return
+    const bottom = scroller.getBoundingClientRect().bottom
+    covered.current ??= Math.max(0, bottom - (sheet.current?.getBoundingClientRect().top ?? bottom))
+    scroller.style.scrollPaddingBottom = `${covered.current}px`
+    cards.style.paddingBottom = `${covered.current + sheetGap}px`
+    center(scroller, line)
+  }, [line, full])
+  return { box, list, sheet }
+}
+
+type TranscriptProps = {
+  lines: readonly Caption[]
+  english: ReadonlyMap<string, string>
+  failed: ReadonlySet<string>
+  retry(text: string): void
+  playback: Playback | null
+  watched: { tabId: number; videoId: string }
+  shown: boolean
   settings: Settings | null
   services: VideoTabServices
-  seek(time: number): void
-  popupChanged: PopupChanged
-}
-
-const rowClass =
-  'relative flex gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted/60 data-current:bg-muted motion-reduce:transition-none'
-
-const timeClass =
-  'shrink-0 cursor-pointer pt-1 text-xs text-muted-foreground tabular-nums outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-3 focus-visible:after:ring-ring/50'
-
-const textClass =
-  'pointer-events-none relative flex min-w-0 flex-1 flex-col gap-1 data-current:[&_[data-source]]:text-foreground data-current:[&_[data-aid=meaning]]:text-foreground [&_[data-word-popup]]:pointer-events-auto [&_button]:pointer-events-auto'
-
-const Row = memo(function Row({
-  line,
-  current,
-  english,
-  englishFailed,
-  retryEnglish,
-  glosses,
-  settings,
-  services,
-  seek,
-  popupChanged
-}: RowProps) {
-  const onPopup = useCallback(
-    (opened: boolean, dismiss: () => void) => popupChanged(line.id, opened, dismiss),
-    [line.id, popupChanged]
-  )
-  const marked = current ? '' : undefined
-  return (
-    <li
-      data-line={line.id}
-      data-current={marked}
-      aria-current={current ? 'true' : undefined}
-      className={rowClass}
-    >
-      <button
-        type="button"
-        aria-label={videoTabLabels.goTo(line.start)}
-        className={timeClass}
-        onClick={() => seek(line.start)}
-      >
-        {videoTabLabels.clock(line.start)}
-      </button>
-      <div data-current={marked} className={textClass}>
-        <SourceLine
-          source={line.text}
-          settings={settings}
-          services={services}
-          onPopup={onPopup}
-          glosses={glosses}
-        />
-        {english ? (
-          <p lang="en" data-english className="text-sm">
-            {english}
-          </p>
-        ) : null}
-        {!english && englishFailed ? (
-          <div data-english-failed className="flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">{videoTabLabels.englishFailed}</p>
-            <Button variant="outline" size="sm" onClick={() => retryEnglish(line.text)}>
-              {captionLabels.tryAgain}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-    </li>
-  )
-})
-
-function usePopupPause(services: VideoTabServices, tabId: number, playing: () => boolean) {
-  const open = useRef(new Map<number, () => void>())
-  const pause = useMemo(
-    () =>
-      popupPause({
-        playing,
-        play: () => services.control(tabId, { type: 'play' }),
-        pause: () => services.control(tabId, { type: 'pause' })
-      }),
-    [services, tabId, playing]
-  )
-  const popupChanged = useCallback<PopupChanged>(
-    (id, opened, dismiss) => {
-      const popups = open.current
-      if (opened) {
-        for (const [other, close] of popups) if (other !== id) close()
-        popups.set(id, dismiss)
-      } else popups.delete(id)
-      pause.changed(popups.size > 0)
-    },
-    [pause]
-  )
-  const popupOpen = useCallback(() => open.current.size > 0, [])
-  return { popupChanged, popupOpen }
-}
-
-function useFollowCurrent(current: number | null, shown: boolean, popupOpen: () => boolean) {
-  const list = useRef<HTMLOListElement>(null)
-  useEffect(() => {
-    if (current === null || !shown || popupOpen()) return
-    const row = list.current?.querySelector(`[data-line="${current}"]`)
-    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true
-    row?.scrollIntoView?.({ block: 'center', behavior: still ? 'auto' : 'smooth' })
-  }, [current, shown, popupOpen])
-  return list
+  notices: ReactNode
 }
 
 export function Transcript({
@@ -135,52 +68,73 @@ export function Transcript({
   failed,
   retry,
   playback,
-  tabId,
+  watched,
   shown,
-  ...shared
-}: {
-  lines: readonly Caption[]
-  english: ReadonlyMap<string, string>
-  failed: ReadonlySet<string>
-  retry(text: string): void
-  playback: Playback | null
-  tabId: number
-  shown: boolean
-  settings: Settings | null
-  services: VideoTabServices
-}) {
-  const latest = useRef(playback)
-  latest.current = playback
-  const playing = useCallback(() => latest.current?.playing === true, [])
-  const { services } = shared
-  const glosses = useMemo(() => lineGlosses(services), [services])
-  const { popupChanged, popupOpen } = usePopupPause(services, tabId, playing)
-  const at = playingLine(lines, playback)
+  settings,
+  services,
+  notices
+}: TranscriptProps) {
+  const { tabId, videoId } = watched
+  const { controls, view, video } = usePanelLines(services, tabId, videoId, lines, playback)
+  const latest = useRef({ playback, ready: false })
+  latest.current = { playback, ready: view.ready && !view.ad }
+  const playing = useCallback(() => latest.current.playback?.playing === true, [])
+  const sheet = useWordSheet(video, playing)
+  const glosses = useMemo(() => captionGlosses(services), [services])
+  const known = useKnownWords(services)
+  const at = currentCard(lines, playback, view)
   const current = at === null ? null : lines[at].id
-  const list = useFollowCurrent(current, shown, popupOpen)
-  const seek = useCallback(
-    (time: number) => {
-      if (latest.current?.ad) return
-      services.control(tabId, { type: 'seek', time })
+  const { box, list, sheet: sheetRef } = useFollow(current, shown, sheet.opened)
+  const { closeQuietly, open } = sheet
+  const playFrom = useCallback(
+    (line: Caption) => {
+      if (!latest.current.ready) return
+      closeQuietly()
+      controls.seek(line.start)
+      video.play()
     },
-    [services, tabId]
+    [closeQuietly, controls, video]
   )
+  const chosen = sheet.opened
   return (
-    <ol ref={list} aria-label={videoTabLabels.transcript} className="flex flex-col gap-0.5">
-      {lines.map(line => (
-        <Row
-          key={line.id}
-          line={line}
-          current={line.id === current}
-          english={english.get(line.text)}
-          englishFailed={failed.has(line.text)}
-          retryEnglish={retry}
-          glosses={glosses}
-          seek={seek}
-          popupChanged={popupChanged}
-          {...shared}
+    <>
+      <ControlBar controls={controls} view={view} time={playback?.time ?? 0} />
+      {notices}
+      <div ref={box} className="relative min-h-0 flex-1 overflow-y-auto">
+        <ol
+          ref={list}
+          aria-label={videoTabLabels.transcript}
+          className="flex flex-col gap-2.5 p-2 pb-12"
+        >
+          {lines.map(line => (
+            <CaptionCard
+              key={line.id}
+              line={line}
+              current={line.id === current}
+              english={english.get(line.text)}
+              englishFailed={failed.has(line.text)}
+              retryEnglish={retry}
+              settings={settings}
+              services={services}
+              glosses={glosses}
+              known={known}
+              selected={chosen?.line.id === line.id ? chosen.token.start : null}
+              playFrom={playFrom}
+              open={open}
+            />
+          ))}
+        </ol>
+      </div>
+      {chosen && settings ? (
+        <WordSheet
+          ref={sheetRef}
+          opened={chosen}
+          settings={settings}
+          services={services}
+          toggleFull={sheet.toggleFull}
+          dismiss={sheet.dismiss}
         />
-      ))}
-    </ol>
+      ) : null}
+    </>
   )
 }

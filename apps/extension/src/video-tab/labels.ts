@@ -12,7 +12,12 @@ export const videoTabLabels = {
   loading: "Getting this video's captions…",
   transcript: 'Transcript',
   clock,
-  goTo: (seconds: number) => `Go to ${clock(seconds)}`,
+  timeRange: (start: number, end: number) => `${clock(start)} – ${clock(end)}`,
+  playFrom: (seconds: number) => `Play from ${clock(seconds)}`,
+  controls: 'Player controls',
+  closeWord: 'Close',
+  fullHeight: 'Full height',
+  halfHeight: 'Half height',
   englishNeedsDownload:
     "To see each line in English, download Chrome's own Japanese translation. It's apart from Zenbu's dictionary.",
   noAnswer: "Zenbu didn't answer. Try again.",

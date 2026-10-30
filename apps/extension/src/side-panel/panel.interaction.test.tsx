@@ -105,12 +105,12 @@ describe('SidePanel', () => {
     expect(drawn.map(node => node.textContent).join('')).toBe('')
   })
 
-  it("shows the app's Translate, Player and Account tabs, in its order, with its labels and icons", async () => {
+  it("shows the app's Player, Translate and Account tabs, in its order, with its labels and icons", async () => {
     await draw(fakeHost())
-    expect(tabs().map(each => each.textContent)).toEqual(['Translate', 'Player', 'Account'])
+    expect(tabs().map(each => each.textContent)).toEqual(['Player', 'Translate', 'Account'])
     expect(tabs().map(each => each.querySelector('svg')?.classList[1])).toEqual([
-      'lucide-languages',
       'lucide-square-play',
+      'lucide-languages',
       'lucide-circle-user-round'
     ])
     expect(document.querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe(
@@ -146,10 +146,11 @@ describe('SidePanel', () => {
     await draw(fakeHost())
     act(() => tab('Translate').focus())
     await press(tab('Translate'), 'ArrowRight')
+    expect(selectedTab()?.textContent).toBe('Account')
+    expect(document.activeElement).toBe(tab('Account'))
+    await press(tab('Account'), 'ArrowRight')
     expect(selectedTab()?.textContent).toBe('Player')
-    expect(document.activeElement).toBe(tab('Player'))
     await press(tab('Player'), 'ArrowLeft')
-    await press(tab('Translate'), 'ArrowLeft')
     expect(selectedTab()?.textContent).toBe('Account')
   })
 
