@@ -151,18 +151,16 @@ function usePicked(source: RefObject<HTMLParagraphElement | null>, pagePopup?: P
   const pick = useCallback(
     (token: PageToken, word: HTMLElement, keys: boolean) => {
       const id = ++asked.current
-      if (!pagePopup || keys) {
-        closeOnPage.current?.()
-        closeOnPage.current = null
-        return setPicked({ token, at: 'inline', id })
-      }
+      if (!pagePopup) return setPicked({ token, at: 'inline', id })
       const fromBottom = window.innerHeight - word.getBoundingClientRect().top
       const current = () => asked.current === id
-      setPicked({ token, at: 'asking', id })
+      const onPage = () => current() && setPicked({ token, at: 'page', id })
+      setPicked({ token, at: keys ? 'inline' : 'asking', id })
       closeOnPage.current = pagePopup(
-        { text: token.text, ids: token.ids, fromBottom },
+        { text: token.text, ids: token.ids, fromBottom, ...(keys && { inPanel: true }) },
         {
-          shown: () => current() && setPicked({ token, at: 'page', id }),
+          shown: () => keys || onPage(),
+          replaced: onPage,
           closed: () => current() && drop(),
           unavailable: () => current() && setPicked({ token, at: 'inline', id })
         }

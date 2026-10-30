@@ -9,14 +9,18 @@ export type PagePopupRequest = {
   ids: readonly string[]
   fromBottom: number
   side: PanelSide
+  inPanel?: boolean
 }
 
 type ShowOnPage = { target: 'word-popup'; show: PagePopupRequest }
 
 type ShownOnPage = { target: 'word-popup'; shown: true }
 
+type ReplacedOnPage = { target: 'word-popup'; replaced: true }
+
 export type PagePopupHeard = {
   shown(): void
+  replaced(): void
   closed(): void
   unavailable(): void
 }
@@ -27,7 +31,7 @@ type PortEvent<Listener> = { addListener(listener: Listener): void }
 
 export type PagePopupPort = {
   readonly name: string
-  postMessage(message: ShowOnPage | ShownOnPage): void
+  postMessage(message: ShowOnPage | ShownOnPage | ReplacedOnPage): void
   disconnect(): void
   onMessage: PortEvent<(message: unknown) => void>
   onDisconnect: PortEvent<() => void>
@@ -39,15 +43,16 @@ export function shownRequest(message: unknown): PagePopupRequest | null {
   const envelope = fields(message)
   const show = fields(envelope?.show)
   if (envelope?.target !== 'word-popup' || !show) return null
-  const { text, ids, fromBottom, side } = show
+  const { text, ids, fromBottom, side, inPanel } = show
   if (typeof text !== 'string' || !Array.isArray(ids) || !isSide(side)) return null
   if (!ids.every(id => typeof id === 'string') || !Number.isFinite(fromBottom)) return null
-  return { text, ids, fromBottom: fromBottom as number, side }
+  const request = { text, ids, fromBottom: fromBottom as number, side }
+  return inPanel === true ? { ...request, inPanel } : request
 }
 
-const isShown = (message: unknown) => {
+const says = (message: unknown, what: 'shown' | 'replaced') => {
   const envelope = fields(message)
-  return envelope?.target === 'word-popup' && envelope.shown === true
+  return envelope?.target === 'word-popup' && envelope[what] === true
 }
 
 export type ActiveTabBrowser = {
@@ -118,7 +123,8 @@ export function popupOnActiveTab(browser: ActiveTabBrowser = chromeBrowser): Pag
       port = connected
       state = 'connected'
       connected.onMessage.addListener(message => {
-        if (state !== 'connected' || !isShown(message)) return
+        if (state === 'shown' && says(message, 'replaced')) return heard.replaced()
+        if (state !== 'connected' || !says(message, 'shown')) return
         state = 'shown'
         heard.shown()
       })
