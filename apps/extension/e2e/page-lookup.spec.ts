@@ -205,7 +205,7 @@ test('takes the underlines and reading aids off every open page when Page Text t
   await expect
     .poll(() =>
       page.evaluate(
-        () => !document.dispatchEvent(new Event('zenbujapanese-page-lookup', { cancelable: true }))
+        () => !document.dispatchEvent(new Event('zenbujapanese-page-text', { cancelable: true }))
       )
     )
     .toBe(true)

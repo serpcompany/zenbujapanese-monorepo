@@ -29,7 +29,10 @@ pieces are tested apart:
 - **Settings:** `askSettings()` once, then `onSettingsChanged()`. `readsPageText(host,
   settings)`, from Page Text (`pages.pageText`, one switch for every site) and `sites.off`, starts
   and stops it; a reading aid's change redraws in place. The caption on the player follows
-  `isZenbuOn` and Zenbu Captions alone, so Page Text leaves it as it is.
+  `isZenbuOn` and Zenbu Captions alone, so Page Text leaves it as it is. Once it has the
+  settings and has decided, it cancels a `zenbujapanese-page-text` event the page sends
+  (`decidedEvent`), so a browser test after a reload can wait for that before it checks that
+  nothing is drawn.
 - **Text:** `japaneseText` (`walker.ts`) finds the text nodes to read and leaves out controls,
   editable text, navigation, fixed and sticky elements, and Zenbu's own. A `MutationObserver`
   hands it what the page adds.

@@ -24,6 +24,8 @@ export type PageLookupBrowser = {
 
 export type PageLookup = { stop(): void }
 
+export const decidedEvent = 'zenbujapanese-page-text'
+
 const aidsOf = (settings: Settings): Aids => ({
   furigana: settings['readingAids.furigana'],
   romaji: settings['readingAids.romaji'],
@@ -189,6 +191,10 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
     heard = true
     show(next)
   })
+  const answerDecided = (event: Event) => {
+    if (settings) event.preventDefault()
+  }
+  doc.addEventListener(decidedEvent, answerDecided)
   browser.askSettings().then(
     next => {
       if (!heard) show(next)
@@ -201,6 +207,7 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
       running?.stop()
       running = null
       stopListening()
+      doc.removeEventListener(decidedEvent, answerDecided)
     }
   }
 }

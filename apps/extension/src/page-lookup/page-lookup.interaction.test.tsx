@@ -8,6 +8,7 @@ import {
   stopPageLookups
 } from '../test/page-lookup'
 import { sentence } from '../test/word-cards'
+import { decidedEvent } from './page-lookup'
 
 const watching = new Set<MutationObserver>()
 
@@ -67,6 +68,15 @@ describe('the page lookup', () => {
       expect(pageAids()).toBe(0)
     })
   }
+
+  it('answers that it has decided only once it has the settings, and not after it stops', async () => {
+    const decided = () => !document.dispatchEvent(new Event(decidedEvent, { cancelable: true }))
+    const { lookup } = lookUpOn({ 'pages.pageText': false })
+    expect(decided()).toBe(false)
+    await vi.waitFor(() => expect(decided()).toBe(true))
+    lookup.stop()
+    expect(decided()).toBe(false)
+  })
 
   it('reads no page text while Page Text is off, and starts when it turns on, with no reload', async () => {
     document.body.innerHTML = `<p id="read">${sentence}</p>`

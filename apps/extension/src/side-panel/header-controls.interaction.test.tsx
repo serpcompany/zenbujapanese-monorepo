@@ -119,13 +119,21 @@ describe("the side panel's header", () => {
     expect(isOn(switchFor(settings, 'videos.zenbuCaptions'))).toBe(false)
   })
 
-  it("turns Page Text off and on from its menu, as Settings does, apart from the site's switch, and the open page hears it without a reload", async () => {
+  it("turns Page Text off and on from its menu, under Pages between Reading Aids and Videos, as Settings does, apart from the site's switch, and the open page hears it without a reload", async () => {
     const fake = startExtension({ tabs: [article], granted })
     const underlines = lookUpInTab(fake)
     await vi.waitFor(() => expect(pageAids()).toBeGreaterThan(0))
     const header = await drawHeader()
     const settings = await openSettings('#reading-aids')
     const menu = await openMenu(header)
+    const titles = [...menu.querySelectorAll('[data-slot="dropdown-menu-label"]')].map(
+      label => label.textContent
+    )
+    expect(titles.slice(-3)).toEqual(['Reading Aids', 'Pages', 'Videos'])
+    const pageGroup = menuSwitch(menu, 'pages.pageText').closest(
+      '[data-slot="dropdown-menu-group"]'
+    )
+    expect(pageGroup?.querySelector('[data-slot="dropdown-menu-label"]')?.textContent).toBe('Pages')
     expect(isChecked(menuSwitch(menu, 'pages.pageText'))).toBe(true)
 
     await click(menuSwitch(menu, 'pages.pageText'))
