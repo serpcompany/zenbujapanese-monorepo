@@ -58,6 +58,13 @@ const asked = async (port: FakePort, message: unknown = show()) => {
   await settled()
 }
 
+const askedInstead = async (page: ReturnType<typeof aPage>, earlier: FakePort) => {
+  const later = page.connect()
+  await asked(later, show({ text: '要る', ids: ['iru'] }))
+  expect(earlier.disconnected).toBe(true)
+  expect(later.disconnected).toBe(false)
+}
+
 describe('the page’s side of a card the side panel asks for', () => {
   it('shows the word at the panel’s edge, level with the word, and says so', async () => {
     const page = aPage()
@@ -112,10 +119,7 @@ describe('the page’s side of a card the side panel asks for', () => {
     const page = aPage()
     const first = page.connect()
     await asked(first)
-    const second = page.connect()
-    await asked(second, show({ text: '要る', ids: ['iru'] }))
-    expect(first.disconnected).toBe(true)
-    expect(second.disconnected).toBe(false)
+    await askedInstead(page, first)
     expect(page.host.close).not.toHaveBeenCalled()
     first.drop()
     expect(page.host.close).not.toHaveBeenCalled()
@@ -187,10 +191,7 @@ describe('the page’s side of a card the side panel asks for', () => {
     const first = page.connect()
     await asked(first)
     captions.open({ text: '要る', ids: ['iru'], edge: { side: 'right', top: 0 } })
-    const second = page.connect()
-    await asked(second, show({ text: '要る', ids: ['iru'] }))
-    expect(first.disconnected).toBe(true)
-    expect(second.disconnected).toBe(false)
+    await askedInstead(page, first)
     expect(captions.shown()).toBeNull()
   })
 
