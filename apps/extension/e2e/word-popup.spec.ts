@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { wordDetailLabels } from '../src/word-detail/labels.ts'
 import { wordPopupLabels as labels } from '../src/word-popup/labels.ts'
+import { savingLabels as saving } from '../src/word-saving/labels.ts'
 import { type Extension, expect, test } from './fixtures.ts'
 import {
   changeSettings,
@@ -16,8 +17,6 @@ import {
   wordUrl
 } from './words-page.ts'
 import { standInWatchPage } from './youtube-stand-in.ts'
-
-const saving = wordDetailLabels.saving
 
 test.use({ youTubeStandIn: true })
 

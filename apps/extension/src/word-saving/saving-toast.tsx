@@ -8,12 +8,10 @@ import {
   ItemTitle
 } from '@zenbu/ui/components/item'
 import { accountPage } from '../shared/account'
-import { wordDetailLabels } from '../word-detail/labels'
+import { savingLabels as labels } from './labels'
 import { type SavingToast, useSaving } from './saving'
 
-const labels = wordDetailLabels.saving
-
-function toastText(toast: SavingToast) {
+function toastText(toast: SavingToast): { title: string; text?: string; action: string } {
   if (toast.kind === 'known') {
     return { ...labels.known, title: fill(labels.known.title, { name: toast.headword }) }
   }
@@ -59,7 +57,7 @@ export function SavingToastView({ className }: { className?: string }) {
     <Item variant="outline" role="status" data-saving-toast={toast.kind} className={className}>
       <ItemContent>
         <ItemTitle>{title}</ItemTitle>
-        <ItemDescription className="line-clamp-none">{text}</ItemDescription>
+        {text ? <ItemDescription className="line-clamp-none">{text}</ItemDescription> : null}
       </ItemContent>
       <ItemActions>
         <ToastAction toast={toast} />

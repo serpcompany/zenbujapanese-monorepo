@@ -9,6 +9,7 @@ import {
   heldCopy,
   noLists,
   otherWord,
+  pulledCopy,
   subscribed,
   word
 } from '../../test/copy-world'
@@ -93,7 +94,7 @@ describe("a word's state in the copy", () => {
 
 describe("the copy's Favorites and new lists", () => {
   it('shows an empty Favorites first, and makes it with the first word added to it', async () => {
-    const world = await heldCopy()
+    const world = await pulledCopy()
     await expect(world.read()).resolves.toMatchObject({ lists: noLists })
     await world.change({ change: 'add-word', list: favorites, ...word })
     await expect(world.read()).resolves.toMatchObject({
@@ -115,7 +116,7 @@ describe("the copy's Favorites and new lists", () => {
   })
 
   it('refuses a word for Favorites once the account has deleted it, and shows none', async () => {
-    const world = await heldCopy()
+    const world = await pulledCopy()
     await world.change({ change: 'add-word', list: favorites, ...word })
     await world.settled()
     await world.change({ change: 'delete-list', list: favorites })
@@ -126,8 +127,32 @@ describe("the copy's Favorites and new lists", () => {
     await expect(world.read()).resolves.toMatchObject({ lists: [] })
   })
 
+  it('offers no Favorites before the first pull, so a word for it is refused, not lost to a deleted Favorites pulled after', async () => {
+    const deleted = {
+      entity: 'list',
+      entityId: favorites,
+      operation: 'delete',
+      version: 2,
+      data: null
+    }
+    const world = await heldCopy(
+      answeringSync(body => json(200, syncAnswer(appliedTo(body), [deleted])))
+    )
+    await expect(world.read()).resolves.toMatchObject({ lists: [] })
+    await expect(world.ask({ copy: 'word', item: word.item })).resolves.toMatchObject({
+      word: { lists: [] }
+    })
+    await expect(world.change({ change: 'add-word', list: favorites, ...word })).resolves.toEqual({
+      type: 'refused',
+      refusal: 'invalid'
+    })
+    await world.settled()
+    expect(world.sent()).toEqual([])
+    await expect(world.read()).resolves.toMatchObject({ lists: [], unsynced: 0 })
+  })
+
   it('makes a named list after the last with the first word added to it', async () => {
-    const world = await heldCopy()
+    const world = await pulledCopy()
     await world.change({ change: 'create-list', list, name: 'N5', position: 3 })
     const added = '6b4e3d2f-9c8e-4f7a-8b1c-2d3e4f5a6b7c'
     await world.change({ change: 'add-word', list: added, ...word, name: 'Verbs' })
@@ -142,7 +167,7 @@ describe("the copy's Favorites and new lists", () => {
 
 describe("one word's part of the copy", () => {
   async function withNotes() {
-    const world = await heldCopy()
+    const world = await pulledCopy()
     await world.change(set('learning'))
     await world.change({ change: 'create-list', list, name: 'N5', position: 1 })
     await world.change({ change: 'add-word', list, ...word })

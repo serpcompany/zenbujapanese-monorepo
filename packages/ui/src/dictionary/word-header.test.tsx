@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { WordHeader } from './word-header'
@@ -7,7 +8,7 @@ const text = {
   conjugations: { showsConjugations: 'Shows conjugations' }
 }
 
-const header = (headwordSize?: 'page' | 'panel') =>
+const header = (headwordSize?: 'page' | 'panel', tag?: ReactNode) =>
   renderToStaticMarkup(
     <WordHeader
       headword="食べる"
@@ -20,6 +21,7 @@ const header = (headwordSize?: 'page' | 'panel') =>
       text={text}
       onUnsupported={() => undefined}
       headwordSize={headwordSize}
+      tag={tag}
     />
   )
 
@@ -31,5 +33,12 @@ describe('WordHeader', () => {
     expect(headwordClass(header())).toContain('text-5xl')
     expect(headwordClass(header('panel'))).toContain('text-4xl')
     expect(headwordClass(header('panel'))).not.toContain('text-5xl')
+  })
+
+  test('draws a tag under the headword and its readings, and none unless given', () => {
+    const tagged = header('panel', <span data-tag="known">✓ Known</span>)
+    const tag = '<span data-tag="known">✓ Known</span>'
+    expect(tagged.indexOf(tag)).toBeGreaterThan(tagged.indexOf('</h1>'))
+    expect(header()).not.toContain('data-tag')
   })
 })

@@ -104,6 +104,11 @@ export function accountCopy(parts: CopyParts) {
       : kept.user
   }
 
+  async function refusal(): Promise<SavingRefusal | null> {
+    const user = await saver()
+    return typeof user === 'string' ? user : null
+  }
+
   function syncAfter(tellSender?: TellSender) {
     const before = sync.state()
     void sync.chance('change').then(() => {
@@ -137,9 +142,9 @@ export function accountCopy(parts: CopyParts) {
   }
 
   const word = async (item: string): Promise<WordView> => {
-    const user = await saver()
+    const refused = await refusal()
     const view = await copy.look(draft => wordViewOf(draft, item))
-    return { ...view, refusal: typeof user === 'string' ? user : null }
+    return { ...view, refusal: refused }
   }
 
   const known = (items: string[]) =>
@@ -176,9 +181,7 @@ export function accountCopy(parts: CopyParts) {
 
   const chance = (reason: Reason) => void sync.chance(reason)
 
-  const saves = async () => typeof (await saver()) !== 'string'
-
-  return { answer, signedIn, settingsChanged, forget, chance, saves }
+  return { answer, signedIn, settingsChanged, forget, chance, refusal }
 }
 
 export type AccountCopy = ReturnType<typeof accountCopy>

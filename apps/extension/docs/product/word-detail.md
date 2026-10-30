@@ -43,9 +43,9 @@ word popup, against a stand-in for the service worker.
 | Behavior | Check |
 | --- | --- |
 | ••• is the word popup's menu ([`word-popup.md`](word-popup.md), Its actions): Status, Add to List…, and Add Note, with the same toasts when saving is refused. | word: Share gives the word's page…, and ••• has no Copy Link; saving: "shows the ◐ Learning and ✓ Known tags…" |
-| A Learning word shows ◐ Learning, and a Known word ✓ Known, under its headword; an Unknown word shows neither. They follow Status at once, here and on the card. | saving: "shows the ◐ Learning and ✓ Known tags, the lists that hold the word, and its own ••• follows the state" |
+| A Learning word shows ◐ Learning, and a Known word ✓ Known, under its headword; an Unknown word shows neither. They follow Status at once. | saving: "shows the ◐ Learning and ✓ Known tags, the lists that hold the word, and its own ••• follows the state" |
 | Lists shows the lists that hold the word, or "No list holds it yet." | saving: the same |
-| Notes shows the word's note in a field, or an empty one. Typing saves a second after it stops and when the field is left; emptying the field deletes the note. Add Note focuses it. | saving: "Add Note expands the card with the note focused; a note saves after a pause and on blur, and an empty one goes" |
+| Notes shows the word's note in a field, or an empty one, of up to 10,000 characters. Typing saves a second after it stops, when the field is left, and when the card goes; emptying the field deletes the note and keeps the field and its focus. Add Note focuses it. | saving: "Add Note expands the card with the note focused; a note saves after a pause and on blur, and an empty one goes", "saves a note typed just before the card goes…", and "keeps the field, and its focus…" |
 
 ## The kanji and the form
 
@@ -66,7 +66,7 @@ word popup, against a stand-in for the service worker.
 ## Not built yet
 
 A kanji's page and a form's page have no link to the website; only a word's has. A kanji's page
-has no Status, Lists, or Notes (#962).
+has no Status, Lists, or Notes (#1189).
 
 Checks in Chrome on the whole dictionary (食べる, 食, and で) wait for the extension's final check
 in Chrome.

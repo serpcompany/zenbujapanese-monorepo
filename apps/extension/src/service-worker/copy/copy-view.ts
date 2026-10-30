@@ -7,7 +7,7 @@ import {
   type WordState,
   type WordView
 } from '../../shared/account-copy'
-import { favoritesName, stateOf } from './copy-changes'
+import { favoritesName, favoritesOffered, stateOf } from './copy-changes'
 import { type Draft, type Item, keyOf } from './kept'
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -59,8 +59,7 @@ export function listsOf(draft: Draft): CopiedList[] {
         first.createdAt.localeCompare(second.createdAt) ||
         first.id.localeCompare(second.id)
     )
-  const noFavorites = draft.meta !== null && !draft.get(keyOf('list', favoritesList))
-  return noFavorites ? [emptyFavorites, ...lists] : lists
+  return favoritesOffered(draft) ? [emptyFavorites, ...lists] : lists
 }
 
 export const notesOf = (items: Item[]): CopiedNote[] =>

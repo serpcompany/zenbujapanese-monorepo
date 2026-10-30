@@ -114,7 +114,7 @@ export function startAccount(parts: Parts): void {
   parts.onMessage.addListener(answerCopy(copy, parts.reportFailure, pagesOrigin, tell.sender))
   parts.copy.settings.onChanged.addListener(changes => {
     if (accountKey in changes) {
-      void copy.saves().then(saves => saves && tell.everyone({ target: 'saving', refusal: null }))
+      void copy.refusal().then(refusal => tell.everyone({ target: 'saving', refusal }))
     }
     if (!Object.keys(changes).some(isSyncedSetting)) return
     void copy.settingsChanged().catch(() => parts.reportFailure('account-copy'))

@@ -280,6 +280,9 @@ function deleteList(draft: Draft, { list }: Change<'delete-list'>, clock: Clock)
 
 export const favoritesName = 'Favorites'
 
+export const favoritesOffered = (draft: Draft) =>
+  draft.meta?.lastSyncedAt != null && !draft.get(keyOf('list', favoritesList))
+
 const nextPosition = (draft: Draft) =>
   Math.min(
     listLimits.position,
@@ -297,7 +300,9 @@ function listFor(draft: Draft, { list, name }: Change<'add-word'>, clock: Clock)
   if (kept) return kept.data !== null
   const made =
     list === favoritesList
-      ? { name: favoritesName, position: 0 }
+      ? favoritesOffered(draft)
+        ? { name: favoritesName, position: 0 }
+        : null
       : name === undefined
         ? null
         : { name, position: nextPosition(draft) }

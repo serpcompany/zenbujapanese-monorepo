@@ -106,7 +106,6 @@ describe("the copy's changes", () => {
     await world.change({ change: 'update-list', list, name: 'N5 verbs' })
     await world.change({ change: 'add-word', list, ...word })
     expect((await world.read()).lists).toEqual([
-      ...noLists,
       {
         id: list,
         name: 'N5 verbs',

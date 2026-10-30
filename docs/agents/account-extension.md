@@ -172,7 +172,7 @@ answers `apple-again`, Continue with Apple again.
   once if no access token is kept that has more than a minute left, so a session ended
   elsewhere shows signed out then. The subscription is read again when a page comes back into
   view after Subscribe… or Manage Subscription, and again each time until a read is kept;
-  `cloudAccess` is kept with it, for saving (#962).
+  `cloudAccess` is kept with it, for saving.
 - **Deleting** asks for a fresh sign-in to the same account, which keeps the subscription it
   had. When the service needs Apple, Continue with Apple signs in with Apple again, so the delete
   goes with that fresh session and its `code`, never an earlier session over 10 minutes old.
@@ -242,8 +242,9 @@ answers `apple-again`, Continue with Apple again.
   it; deleting the account keeps it too, and forgets that account's queue and cursor.
 - **Asking it** (`copy-channel.ts`, `src/shared/account-copy.ts`): a page sends `askCopy()`
   (`{ target: 'service-worker', copy }`) to read it, change it, sync now, or say it opened. A
-  content script may only ask `known` for at most 1,000 items, and hears `{ target: 'known' }`
-  when that changes; it never opens IndexedDB, which is the page's own in a content script.
+  content script may only ask `known` for at most 1,000 items, and `word` and `word-change` for
+  one word's state, lists, and notes, and hears `{ target: 'known' }` when that changes and
+  `{ target: 'saving' }` with the current refusal, or none, when the account changes; it never opens IndexedDB, which is the page's own in a content script.
 - **Errors** report only `account-copy`, `account-sync`, and `account-sync-reread`
   ([`extension-error-reports.md`](extension-error-reports.md)).
 - **Its tests** run the real copy on in-memory storage and a stand-in service

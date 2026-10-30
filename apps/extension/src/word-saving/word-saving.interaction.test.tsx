@@ -1,3 +1,4 @@
+import { noteTextLength } from '@zenbu/account-rules/notes'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
 import { PronounceWithoutLocalVoice } from '@zenbu/ui/dictionary/pronounce-button'
@@ -18,9 +19,10 @@ import {
 } from '../test/render'
 import { savingStandIn } from '../test/saving-stand-in'
 import { openFullEntryButton, youkyuu } from '../test/word-cards'
-import { wordDetailLabels } from '../word-detail/labels'
 import { notePause } from '../word-detail/word-saved'
 import { WordPopup } from '../word-popup/word-popup'
+import { savingLabels as labels } from './labels'
+import { chromeSaving, toastShown } from './saving'
 
 vi.mock('../shared/dictionary', async importOriginal => {
   const { fixtureWordRows: fixtures } = await import('@zenbu/dictionary-core/fixtures')
@@ -33,8 +35,6 @@ vi.mock(
   '../shared/dictionary-progress',
   async () => (await import('../test/data-state')).fakeDictionaryProgress
 )
-
-const labels = wordDetailLabels.saving
 
 const item = fixtureWordRows.find(rows => rows.entry.entSeq === youkyuu.entSeq)?.entry.id ?? ''
 
@@ -87,6 +87,15 @@ const checked = (menu: HTMLElement, role: string) =>
 
 const toast = () => popup().querySelector<HTMLElement>('[data-saving-toast]')
 
+const noteField = () =>
+  find(popup(), `textarea[aria-label="${fill(labels.note, { name: '要求' })}"]`)
+
+async function openNote() {
+  await click(byText(await openMenu(), '[role="menuitem"]', labels.addNote))
+  await settle()
+  return noteField()
+}
+
 async function choose(name: string) {
   await click(byText(await openMenu(), '[role="menuitemradio"]', name))
 }
@@ -126,11 +135,37 @@ describe('the word’s ••• menu', () => {
       reading: 'ようきゅう',
       state: 'known'
     })
-    expect(toast()?.textContent).toContain(fill(labels.known.title, { name: '要求' }))
-    expect(toast()?.textContent).toContain(labels.known.text)
+    expect(toast()?.textContent).toBe(
+      fill(labels.known.title, { name: '要求' }) + labels.known.action
+    )
     expect(checked(await openMenu(), 'menuitemradio')[2]).toEqual(['Known', 'true'])
     await click(byText(popup(), 'button', labels.known.action))
     expect(saving.changes.at(-1)).toMatchObject({ change: 'set', state: 'learning' })
+    expect(toast()).toBeNull()
+  })
+
+  it('keeps Status shut until the word’s state has loaded', async () => {
+    const waiting: (() => void)[] = []
+    const { ask } = saving.port
+    saving.port.ask = item => new Promise(done => waiting.push(() => done(ask(item))))
+    await showPopup()
+    const menu = await openMenu()
+    const known = byText(menu, '[role="menuitemradio"]', 'Known')
+    expect(known.getAttribute('aria-disabled')).toBe('true')
+    await click(known)
+    expect(saving.changes).toEqual([])
+    for (const answer of waiting.splice(0)) act(answer)
+    await settle()
+    expect(known.hasAttribute('aria-disabled')).toBe(false)
+  })
+
+  it('takes the Known toast away by itself after a while', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await showPopup()
+    await choose('Known')
+    await act(async () => vi.advanceTimersByTime(toastShown - 200))
+    expect(toast()?.dataset.savingToast).toBe('known')
+    await act(async () => vi.advanceTimersByTime(200))
     expect(toast()).toBeNull()
   })
 
@@ -185,11 +220,10 @@ describe('the word’s ••• menu', () => {
 describe('Word Detail’s saving', () => {
   it('Add Note expands the card with the note focused; a note saves after a pause and on blur, and an empty one goes', async () => {
     await showPopup()
-    await click(byText(await openMenu(), '[role="menuitem"]', labels.addNote))
+    const field = await openNote()
     expect(popup().hasAttribute('data-expanded')).toBe(true)
-    await settle()
-    const field = find(popup(), `textarea[aria-label="${fill(labels.note, { name: '要求' })}"]`)
     expect(document.activeElement).toBe(field)
+    expect(field.getAttribute('maxlength')).toBe(String(noteTextLength))
     vi.useFakeTimers()
     typeNote(field, 'From the news')
     expect(saving.changes).toEqual([])
@@ -204,6 +238,37 @@ describe('Word Detail’s saving', () => {
     await act(async () => vi.advanceTimersByTime(notePause))
     expect(saving.changes.at(-1)).toMatchObject({ change: 'delete-note' })
     expect(saving.changes).toHaveLength(2)
+  })
+
+  it('saves a note typed just before the card goes, without waiting for the pause', async () => {
+    await showPopup()
+    const field = await openNote()
+    vi.useFakeTimers()
+    typeNote(field, 'Seen on a sign')
+    shown?.unmount()
+    shown = undefined
+    expect(saving.changes).toEqual([
+      expect.objectContaining({ change: 'write-note', item, text: 'Seen on a sign' })
+    ])
+  })
+
+  it('keeps the field, and its focus, when emptying the only note deletes it', async () => {
+    const written = { item, headword: '要求', reading: 'ようきゅう' }
+    await saving.port.change(item, { change: 'write-note', note: 'kept', text: 'Old', ...written })
+    await showPopup()
+    const field = await openNote()
+    expect(field.dataset.note).toBe('kept')
+    vi.useFakeTimers()
+    typeNote(field, '')
+    await act(async () => vi.advanceTimersByTime(notePause))
+    expect(saving.changes.at(-1)).toEqual({ change: 'delete-note', note: 'kept' })
+    expect(saving.view(item).notes).toEqual([])
+    expect(noteField()).toBe(field)
+    expect(document.activeElement).toBe(field)
+    typeNote(field, 'Again')
+    await act(async () => vi.advanceTimersByTime(notePause))
+    expect(saving.changes.at(-1)).toMatchObject({ change: 'write-note', text: 'Again' })
+    expect(noteField()).toBe(field)
   })
 
   it('shows the ◐ Learning and ✓ Known tags, the lists that hold the word, and its own ••• follows the state', async () => {
@@ -236,5 +301,24 @@ describe('a refusal told later', () => {
     await settle()
     await click(byText(await openMenu(), '[role="menuitem"]', labels.addToList))
     expect(byText(document, '[role="menuitemcheckbox"]', 'Favorites')).not.toBeNull()
+  })
+
+  it('leaves a Known toast up when told saving works', async () => {
+    await showPopup()
+    await choose('Known')
+    act(() => saving.tell({ refusal: null }))
+    expect(toast()?.dataset.savingToast).toBe('known')
+  })
+})
+
+describe('the Chrome saving port', () => {
+  it('Sign In opens the side panel on the Account tab', () => {
+    const sendMessage = vi.fn(async () => undefined)
+    vi.stubGlobal('chrome', { runtime: { sendMessage } })
+    chromeSaving.signIn()
+    expect(sendMessage).toHaveBeenCalledExactlyOnceWith({
+      target: 'service-worker',
+      openPanel: { tab: 'account' }
+    })
   })
 })

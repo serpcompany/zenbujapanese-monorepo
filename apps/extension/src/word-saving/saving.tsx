@@ -45,7 +45,7 @@ export type SavingToast =
   | { kind: SavingRefusal }
   | { kind: 'known'; headword: string; undo(): void }
 
-const toastShown = 5_000
+export const toastShown = 5_000
 
 type Saving = {
   port: SavingPort
@@ -70,6 +70,9 @@ function useToast() {
     setToast(next)
   }, [])
   const dismiss = useCallback(() => put(null), [put])
+  const dismissRefusal = useCallback(() => {
+    if (shown.current && shown.current.kind !== 'known') put(null)
+  }, [put])
   const show = useCallback(
     (next: SavingToast) => {
       if (next.kind !== 'known' && shown.current?.kind === next.kind) return
@@ -79,13 +82,13 @@ function useToast() {
     [put, dismiss]
   )
   useEffect(() => () => clearTimeout(timer.current), [])
-  return { toast, show, dismiss }
+  return { toast, show, dismiss, dismissRefusal }
 }
 
 export function SavingProvider({ port, children }: { port: SavingPort; children: ReactNode }) {
   const [views, setViews] = useState<Record<string, WordView>>({})
   const [noteFor, focusNote] = useState<string | null>(null)
-  const { toast, show, dismiss } = useToast()
+  const { toast, show, dismiss, dismissRefusal } = useToast()
   const asked = useRef(new Set<string>())
   const refresh = useCallback(
     async (item: string) => {
@@ -99,10 +102,10 @@ export function SavingProvider({ port, children }: { port: SavingPort; children:
     () =>
       port.onRefused(({ refusal, page }) => {
         for (const item of asked.current) void refresh(item)
-        if (refusal === null) return dismiss()
-        if (page === undefined || page === port.page()) show({ kind: refusal })
+        if (refusal === null) return dismissRefusal()
+        if (page === port.page()) show({ kind: refusal })
       }),
-    [port, refresh, show, dismiss]
+    [port, refresh, show, dismissRefusal]
   )
   const saving = useMemo(
     () => ({ port, views, refresh, toast, show, dismiss, noteFor, focusNote }),

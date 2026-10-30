@@ -161,10 +161,11 @@ describe("the copy's messages", () => {
     await expect(askCopy({ copy: 'read' }, tab)).resolves.toMatchObject({ type: 'failed' })
   })
 
-  it('lets a content script read and change one word, refused while signed out, and tells it once saving works', async () => {
+  it('lets a content script read and change one word, refused while signed out, and tells it whether saving works', async () => {
     const fake = startExtension({ tabs: [{ id: 4, url: 'https://www.youtube.com/watch?v=x' }] })
     startAccountOn(fake, {
       'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-1'),
+      'POST /v1/auth/sign-out': () => json(200, {}),
       ...syncing
     })
     const tab = fake.inTab(4)
@@ -182,12 +183,18 @@ describe("the copy's messages", () => {
     await expect(changeWord(word.item, { ...known, ...otherWord }, tab)).resolves.toMatchObject({
       refusal: 'invalid'
     })
-    await expect(askWord(word.item, tab)).resolves.toEqual({
-      state: 'known',
-      lists: [{ id: favorites, name: 'Favorites', holds: false }],
-      notes: [],
-      refusal: null
-    })
+    await vi.waitFor(() =>
+      expect(askWord(word.item, tab)).resolves.toEqual({
+        state: 'known',
+        lists: [{ id: favorites, name: 'Favorites', holds: false }],
+        notes: [],
+        refusal: null
+      })
+    )
+    await askAccount({ account: 'sign-out' })
+    await vi.waitFor(() =>
+      expect(heard.at(-1)).toEqual({ target: 'saving', refusal: 'signed-out' })
+    )
   })
 
   it("hands the copy to the account the website signs in, as the extension's own sign-in does, and syncs it", async () => {

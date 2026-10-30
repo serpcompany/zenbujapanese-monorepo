@@ -110,8 +110,9 @@ function renderSaving(status: SavedItemStatus, page: SavedItemPage) {
   )
 }
 
-function savingMenu() {
+function savingMenu(disabled?: boolean) {
   const status = {
+    disabled,
     label: 'Status',
     value: 'learning',
     choices: [
@@ -163,6 +164,15 @@ describe('saved item actions with a status and a page of choices', () => {
     await act(async () => named('dropdown-menu-radio-item', 'Known').click())
     expect(status.onValueChange).toHaveBeenCalledExactlyOnceWith('known')
     await vi.waitFor(() => expect(open()).toBe(false))
+  })
+
+  test('a disabled Status shows its choices but takes none', async () => {
+    const { status } = savingMenu(true)
+    await openMenu()
+    const known = named('dropdown-menu-radio-item', 'Known')
+    expect(known.getAttribute('aria-disabled')).toBe('true')
+    await act(async () => known.click())
+    expect(status.onValueChange).not.toHaveBeenCalled()
   })
 
   test('a page opens in place with Back, its checked choices and its actions, and stays open on a choice', async () => {

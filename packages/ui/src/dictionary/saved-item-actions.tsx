@@ -46,6 +46,7 @@ export interface SavedItemStatus {
   value: string
   choices: { value: string; label: string }[]
   onValueChange: (value: string) => void
+  disabled?: boolean
 }
 
 type SavedItemEntry = SavedItemAction | SavedItemPage
@@ -70,7 +71,12 @@ function StatusChoices({ status }: { status: SavedItemStatus }) {
     >
       <DropdownMenuLabel>{status.label}</DropdownMenuLabel>
       {status.choices.map(choice => (
-        <DropdownMenuRadioItem key={choice.value} value={choice.value} closeOnClick>
+        <DropdownMenuRadioItem
+          key={choice.value}
+          value={choice.value}
+          disabled={status.disabled}
+          closeOnClick
+        >
           {choice.label}
         </DropdownMenuRadioItem>
       ))}

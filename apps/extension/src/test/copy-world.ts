@@ -149,3 +149,10 @@ export async function heldCopy(sync: Route = answeringSync(), routes: Record<str
   await world.settled()
   return world
 }
+
+export async function pulledCopy(sync: Route = answeringSync()) {
+  const world = copyWorld(sync)
+  await world.signIn()
+  await world.settled()
+  return world
+}

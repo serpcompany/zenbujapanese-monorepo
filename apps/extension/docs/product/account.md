@@ -35,8 +35,9 @@ Each check is in `src/account/account-view.interaction.test.tsx` unless it names
 
 The extension keeps its own copy of the account's known words and kanji, lists with Favorites,
 the words in each list, and notes, with the changes not yet synced, in IndexedDB on the
-extension's own origin; only the service worker opens it (`src/service-worker/copy/`). Nothing in
-the extension saves a word yet (#962): the copy holds what the account syncs. Each check is in
+extension's own origin; only the service worker opens it (`src/service-worker/copy/`). The ••• menus
+save words to it ([`word-popup.md`](word-popup.md), Its actions), and it holds what the account
+syncs. Each check is in
 `src/service-worker/copy/` unless it names another; `e2e/account-sync.spec.ts` syncs with the
 account service from the checkout.
 
@@ -71,7 +72,8 @@ How the extension signs in is in
 
 ## Not built yet
 
-The Account tab's view of the copy and Sync Now, and pages that follow Known words, are #962. Watched videos
+The Account tab's view of the copy and Sync Now are #1188, pages that follow Known words #1187,
+saving kanji #1189, and the saving's browser tests and screenshots #1190. Watched videos
 sync with #965. Google and Apple are checked against stand-ins: a real sign-in with each is #987.
 The website's handover is checked locally, with the website and the account service from the
 checkout; on staging it waits on #960.

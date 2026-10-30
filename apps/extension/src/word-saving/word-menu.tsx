@@ -15,10 +15,8 @@ import {
 import { ListPlusIcon, PencilIcon, PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import type { WordState } from '../shared/account-copy'
-import { wordDetailLabels } from '../word-detail/labels'
+import { savingLabels as labels } from './labels'
 import { type SavingWord, useWordSaving } from './use-word-saving'
-
-const labels = wordDetailLabels.saving
 
 const states: WordState[] = ['unknown', 'learning', 'known']
 
@@ -126,6 +124,7 @@ export function WordMenu({
         status={{
           label: labels.status,
           value: view?.state ?? 'unknown',
+          disabled: view === null,
           choices: states.map(state => ({ value: state, label: labels.states[state] })),
           onValueChange: value => {
             if (isState(value)) void saving.setState(value)

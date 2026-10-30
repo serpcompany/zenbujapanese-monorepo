@@ -91,9 +91,11 @@ the card, on the page's shadow root and in the panel (`src/word-popup/open-layer
 address and says "Link copied"; closing the sheet does nothing more.
 - **More actions (•••)** saves the word to the learner's Zenbu account, as the app's Word Detail
   does, and has no Copy Link: Share copies where there is no share sheet. **Status** comes first,
-  Unknown, Learning, or Known, with the word's state checked; a choice saves it and closes the
-  menu. Known says "要求 is known" with Undo, which puts back the state it had. **Add to List…**
-  turns the menu to a page with Back and the lists, Favorites first, each checked when it holds
+  Unknown, Learning, or Known, with the word's state checked, and takes no choice until that state
+  has loaded; a choice saves it and closes the menu. Known shows only "要求 is known" with Undo,
+  which puts back the state it had: pages and captions still underline a Known word (#1187).
+  **Add to List…** turns the menu to a page with Back and the lists, Favorites first once the copy
+  has synced, each checked when it holds
   the word: a click adds or removes it at once, and New List asks a name and makes a list with
   the word in it. **Add Note** expands the card into Word Detail with the word's note focused.
   Word Detail's own ••• is the same menu ([`word-detail.md`](word-detail.md), Saving).
@@ -102,9 +104,10 @@ address and says "Link copied"; closing the sheet does nothing more.
   Subscribe…, which opens the account page on zenbujapanese.com in a new tab. Add to List… and
   Add Note say so before anything opens. The toast shows at the card's foot for 5 seconds, isn't
   shown again while it's up, and goes when the account changes so that saving is allowed, when an
-  open card saves again at once. A
-  refusal the service worker learns later, when a sync is refused for the subscription, shows
-  only on the page whose change it refused.
+  open card saves again at once; a Known toast stays. A refusal the service worker learns later,
+  when a sync is refused for the subscription, shows only on the page whose change it refused,
+  and only while its card is open: once the card has closed, nothing says so, and the change
+  stays applied and queued, as #979 designed.
 - **Pronounce**, and a click on the pitch accent, speak the reading as the app does: in the best
   Japanese voice on this computer, at 0.82 of the default rate. A premium voice comes first,
   then an enhanced one, then any other on this computer, with Apple's Eloquence voices (Eddy, Flo,
