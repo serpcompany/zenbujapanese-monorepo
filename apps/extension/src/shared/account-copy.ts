@@ -88,7 +88,7 @@ export type CopyView = {
   sync: SyncState
 }
 
-export type WordList = { id: string; name: string; holds: boolean }
+type WordList = { id: string; name: string; holds: boolean }
 
 export type WordView = { state: WordState; lists: WordList[]; notes: CopiedNote[] }
 
