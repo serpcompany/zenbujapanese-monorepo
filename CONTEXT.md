@@ -65,16 +65,23 @@ _Avoid_: content script (alone, where the YouTube one or the test one could be m
 **Side panel**:
 The browser extension's panel beside the page, Chrome's side panel: a tab bar with Player,
 Translate, and Account, each tab with its own pages, such as Image Search. A word's card
-and full entry are not its pages: they open in the Word popup (#1124). It has no Look Up,
+and full entry are not its pages: they open in the Word popup (#1124), or from the Player tab in
+the Word sheet. It has no Look Up,
 since the extension has no dictionary search; the website has one (#1129, D3).
 _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)
 
 **Word popup**:
 What the browser extension shows for the word a learner clicks, over a page, or for a word in
-the Side panel, on the page beside the panel (in the panel where the page can't show it): the
+Translate, on the page beside the panel (in the panel where the page can't show it): the
 surface, which draws that word's Word card and its romaji, and expands in place into its full
-entry.
+entry. A word in the Transcript opens in the Word sheet instead.
 _Avoid_: word card (the Word card is the entry the popup draws, not the popup), tooltip
+
+**Word sheet**:
+The sheet over the lower half of the browser extension's Player tab that a word clicked in the
+Transcript opens, pausing the video: the Word popup's surface drawn in the panel, never on the
+page, with a handle to full height and an X that plays the video again (#1172).
+_Avoid_: Word popup (the popup is over a page; the sheet is in the panel), drawer, bottom sheet
 
 **Zenbu Captions**:
 The Japanese lines the browser extension gets for a YouTube video and shows itself, in the side
@@ -84,9 +91,10 @@ site's, which the extension hides while it draws its own.
 _Avoid_: subtitles, YouTube captions (for the extension's), Live Captions (heard speech, not built)
 
 **Transcript**:
-The side panel's Player tab in the browser extension: a YouTube video's Zenbu Captions, one row
-for each line with the time it starts, the line playing highlighted, and a row's click moving the
-video to it. The caption on the player shows one line at a time instead.
+The side panel's Player tab in the browser extension: a YouTube video's Zenbu Captions under a
+control bar, one card for each line with its time range, the line playing marked, a card's click
+playing from its line, and a word's click opening the Word sheet. The caption on the player shows
+one line at a time instead.
 _Avoid_: subtitles, captions (the lines themselves, or the player's caption)
 
 **Player tab**:

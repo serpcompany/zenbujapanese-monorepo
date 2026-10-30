@@ -35,6 +35,7 @@ function knownWords({
   watchKnown
 }: Pick<VideoTabServices, 'knownWords' | 'watchKnown'>): KnownWords {
   const known = new Map<string, boolean>()
+  const missed = new Set<string>()
   const listeners = new Set<() => void>()
   let pending: string[] = []
   let version = 0
@@ -55,12 +56,17 @@ function knownWords({
   const flush = () => {
     const asked = pending
     pending = []
-    for (let at = 0; at < asked.length; at += knownAtOnce)
-      ask(asked.slice(at, at + knownAtOnce)).then(heard, () => undefined)
+    for (let at = 0; at < asked.length; at += knownAtOnce) {
+      const some = asked.slice(at, at + knownAtOnce)
+      ask(some).then(heard, () => {
+        for (const id of some) if (known.get(id) === false && known.delete(id)) missed.add(id)
+      })
+    }
   }
 
   const fetch = (ids: readonly string[]) => {
-    const fresh = [...new Set(ids)].filter(id => !known.has(id))
+    const fresh = [...new Set([...ids, ...missed])].filter(id => !known.has(id))
+    missed.clear()
     if (fresh.length === 0) return
     for (const id of fresh) known.set(id, false)
     if (pending.length === 0) queueMicrotask(flush)
@@ -68,7 +74,10 @@ function knownWords({
   }
 
   const stop = watchKnown(change => {
-    if (change) return heard(change)
+    if (change) {
+      heard(change)
+      return fetch([])
+    }
     const asked = [...known.keys()]
     known.clear()
     tell()

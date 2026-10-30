@@ -10,7 +10,8 @@ the watch page ([`youtube-captions.md`](youtube-captions.md)); the words, their 
 English are Translate's ([`translate.md`](translate.md), [`word-popup.md`](word-popup.md)). The
 text is in `src/video-tab/labels.ts`. The tests named here are in `src/video-tab/` unless a path
 says otherwise: `video-tab.interaction.test.tsx` (Video tab), `control-bar.interaction.test.tsx`
-(Control bar) and `transcript.interaction.test.tsx` (Transcript), in happy-dom, with a stand-in
+(Control bar), `transcript.interaction.test.tsx` (Transcript) and
+`known-words.interaction.test.tsx` (Known words), in happy-dom, with a stand-in
 YouTube, the real captions service and watch page, a stand-in for YouTube's video, and a stand-in
 Translator; and the browser tests in `e2e/`.
 
@@ -71,7 +72,7 @@ video only once it is shown").
 | Each word of a line is underlined, as in Translate, with the reading aids turned on in Settings: furigana, a romaji line, and each word's short meaning. Turning one on or off changes the cards with no reload. | Transcript: "follows the reading aids in the settings" |
 | Each word has its own underline, apart from the next, with Word Meanings off or on. A word stays together under furigana wider than it, centred under it as on the canvas, rather than spread apart. | `e2e/transcript-meanings.spec.ts`: "gives each word in the transcript its own underline…"; `e2e/transcript-long-lines.spec.ts` |
 | A particle has no meaning, and with Word Meanings on stays with the word before it. A particle is a word whose dictionary entry's parts of speech are only particles. | Transcript: "puts no meaning under a particle…"; `e2e/transcript-meanings.spec.ts` |
-| A known word has no underline and no meaning, and with Hide Furigana on Known Words, no furigana. | Transcript: "gives a known word no underline and no meaning…" |
+| A known word has no underline and no meaning, and with Hide Furigana on Known Words, no furigana. A word a failed request missed is asked for again once the known words next change. | Known words: "gives a known word no underline and no meaning…", "asks again for the known words a failed request missed…" |
 | A meaning never touches its neighbour's, at 380 pixels and at 360. It is blue, at least 4.5:1 against the card in light and dark. One wider than 8em is cut with an ellipsis, and its sense's full text is its tooltip and what a screen reader reads. | `e2e/transcript-meanings.spec.ts`: "spaces long neighbouring word meanings apart…", "gives a cut word meaning its full text…" |
 | A word's short meaning is looked up once for the whole transcript, however many cards it is in. | Transcript: "looks up a word's meaning once for the whole transcript" |
 

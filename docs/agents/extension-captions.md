@@ -137,9 +137,9 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
 - **The word popup** is the page lookup's (`wordPopupHost`, with `popupSettings` from
   `src/word-popup/popup-settings.ts`), and the words are Translate's `SourceLine` with a `pick`
   that opens it. `holdForPopups` (`popup-hold.ts`) hears `wordPopupEvents()` and pauses through
-  `popupPause` (`src/video/popup-pause.ts`), which the Player tab's transcript uses too: it plays
-  again on close, or when the caption stops with the popup open, only if the video was playing, and a close during a pointer press waits for the
-  press to end, so moving from word to word doesn't play it.
+  `popupPause` (`src/video/popup-pause.ts`): it plays again on close, or when the caption stops
+  with the popup open, only if the video was playing, and a close during a pointer press waits for
+  the press to end, so moving from word to word doesn't play it.
 - **English** (`line-english.ts`) asks `translate` for the line and the next one and keeps each
   answer; `not-available` shows none. The content script never calls `downloadTranslator`.
 - **When the controls show** (`presence.ts`): the pointer moving over the player, with a 3-second
