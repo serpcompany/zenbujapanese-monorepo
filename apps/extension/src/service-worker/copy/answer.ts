@@ -147,15 +147,24 @@ class Applying {
   }
 }
 
+function rebase(run: Applying, key: string, version: number) {
+  for (const later of run.queue.filter(each => queuedKey(each) === key && !each.sent)) {
+    later.mutation = { ...later.mutation, baseVersion: version }
+  }
+  const item = run.draft.get(key)
+  if (item) run.draft.put({ ...item, version })
+}
+
+const rebasedOnConflict = (mutation: Mutation) =>
+  mutation.entity !== 'setting' &&
+  !(mutation.entity === 'wordNote' && mutation.operation === 'write')
+
 function applied(run: Applying, queued: Queued, version: number) {
   const key = queuedKey(queued)
   const item = run.draft.get(key)
   const { mutation } = queued
   if (run.queuedFor(key)) {
-    for (const later of run.queue.filter(each => queuedKey(each) === key && !each.sent)) {
-      later.mutation = { ...later.mutation, baseVersion: version }
-    }
-    if (item) run.draft.put({ ...item, version })
+    rebase(run, key, version)
     return
   }
   const deferred = run.deferred(key)
@@ -215,6 +224,7 @@ function conflicted(run: Applying, queued: Queued, current: Item) {
   const key = queuedKey(queued)
   if (run.queuedFor(key)) {
     run.defer(current)
+    if (rebasedOnConflict(queued.mutation)) rebase(run, key, current.version)
     return
   }
   run.undefer(key)

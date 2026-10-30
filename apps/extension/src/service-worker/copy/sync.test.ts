@@ -116,6 +116,28 @@ describe('syncing the copy', () => {
     await expect(world.read()).resolves.toMatchObject({ knownWords: [], unsynced: 0 })
   })
 
+  it("sends a change made while a sync is on its way at the account's version when the one before it conflicted", async () => {
+    const { gate, open } = gated()
+    const world = copyWorld(
+      answeringSync(async body => {
+        const sent = body.mutations[0]
+        if (sent?.operation === 'mark') await gate
+        const results = body.mutations.map(each =>
+          each.operation === 'clear' && each.baseVersion === 3
+            ? { id: each.id, status: 'applied' as const, version: 4 }
+            : { id: each.id, status: 'conflict' as const, version: 3, current: knownWord(3) }
+        )
+        return json(200, syncAnswer(results))
+      })
+    )
+    await world.markedAndSending()
+    await world.change({ change: 'clear', item: word.item })
+    open()
+    await world.settled()
+    expect(world.sent().at(-1)).toMatchObject({ operation: 'clear', baseVersion: 3 })
+    await expect(world.read()).resolves.toMatchObject({ knownWords: [], unsynced: 0 })
+  })
+
   it('sends at most fifty changes in one request, and the rest in the next', async () => {
     const world = copyWorld()
     await world.signIn()
