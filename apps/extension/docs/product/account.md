@@ -35,8 +35,9 @@ Each check is in `src/account/account-view.interaction.test.tsx` unless it names
 
 The extension keeps its own copy of the account's known words and kanji, lists with Favorites,
 the words in each list, and notes, with the changes not yet synced, in IndexedDB on the
-extension's own origin; only the service worker opens it (`src/service-worker/copy/`). Nothing in
-the extension saves a word yet (#962): the copy holds what the account syncs. Each check is in
+extension's own origin; only the service worker opens it (`src/service-worker/copy/`). The ••• menus
+save words to it ([`word-popup.md`](word-popup.md), Its actions), and it holds what the account
+syncs. Each check is in
 `src/service-worker/copy/` unless it names another; `e2e/account-sync.spec.ts` syncs with the
 account service from the checkout.
 
@@ -58,14 +59,21 @@ token). A content script can read only whether the learner is signed in and the 
 cloud access, never the email or the rest of the subscription, and can't sign in or out, or
 delete the account (`channel.test.ts`, "answers a content script only a read…" and "answers a
 content script's read of a signed-in account…"). It can ask whether words or kanji are known,
-and hears when that changes, but never opens the copy, and the page it runs on holds none
-(`src/service-worker/copy/copy-channel.test.ts`; `e2e/account-sync.spec.ts`, a content script).
+and hears when that changes, and can read and change one word's part of the copy, its state, the
+lists that hold it, and its notes, but never opens the copy, and the page it runs on holds none
+(`src/service-worker/copy/copy-channel.test.ts`; `copy-words.test.ts`, "one word's part of the
+copy"; `e2e/account-sync.spec.ts`, a content script). The service worker refuses a change
+signed out, or while the account needs the subscription, and keeps nothing; when a sync is
+refused for the subscription later, it tells the page that made the change once
+(`copy-words.test.ts`, "saving refused by the service worker"). The word popup shows each as a
+toast ([`word-popup.md`](word-popup.md), Its actions).
 How the extension signs in is in
 [`account-extension.md`](../../../../docs/agents/account-extension.md).
 
 ## Not built yet
 
-Saving words, and the Account tab's view of the copy and Sync Now, are #962. Watched videos
+The Account tab's view of the copy and Sync Now are #1188, pages that follow Known words #1187,
+saving kanji #1189, and the saving's browser tests and screenshots #1190. Watched videos
 sync with #965. Google and Apple are checked against stand-ins: a real sign-in with each is #987.
 The website's handover is checked locally, with the website and the account service from the
 checkout; on staging it waits on #960.

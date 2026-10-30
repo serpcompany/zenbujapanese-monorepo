@@ -27,8 +27,8 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   the page's layout kept, the reading aids, a site turned off, words added later, a site given
   and taken back with `chrome.developerPrivate` from a `chrome://extensions` page, and the popup's
   card, choice, placement, closing, its More menu over it with one Escape each for the menu and
-  the popup, links, Open Full Entry expanding the card in place and scrolling inside it, Share,
-  and Copy Link; the More menu also over a caption word's popup on the YouTube stand-in, in and
+  the popup, links, Open Full Entry expanding the card in place and scrolling inside it, Share, and
+  the ••• menu's Status, Add to List… and Add Note, saving nothing signed out; the More menu also over a caption word's popup on the YouTube stand-in, in and
   out of fullscreen; and the expanded card's Open on zenbujapanese.com, which opens the word's
   page in a new tab, fulfilled by `context.route` and taken off `outsideRequests`
   (`word-popup.spec.ts`). A transcript word's sheet beside the stand-in watch page: the side

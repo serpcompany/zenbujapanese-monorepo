@@ -65,8 +65,8 @@ the same box, at the window's height, and the host places it again for its new s
 scrolls in a `<section>` named "Full entry for …" with `tabIndex={0}`, and it takes focus when a
 page opens, so the arrow and Page keys scroll the entry, not the page behind; Back is before it in
 the tab order. Biome's `noNoninteractiveTabindex` is off for that one file (`biome.json`), since a
-scroll region is focusable by design (axe's `scrollable-region-focusable`). Share and
-Copy Link use `websiteOrigin` and `wordPath`. The same host shows a card the side panel asks for,
+scroll region is focusable by design (axe's `scrollable-region-focusable`). Share uses
+`websiteOrigin` and `wordPath`. The same host shows a card the side panel asks for,
 at the window's edge ([`extension-side-panel.md`](extension-side-panel.md#a-words-card-on-the-page)),
 and one popup per page across hosts. Where the page can't, the panel draws the same popup itself
 (`src/translate/source-words.tsx`).

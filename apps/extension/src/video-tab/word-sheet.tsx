@@ -3,6 +3,7 @@ import { XIcon } from 'lucide-react'
 import { type RefObject, useCallback } from 'react'
 import type { Settings } from '../shared/settings'
 import { WordPopup } from '../word-popup/word-popup'
+import { chromeSaving } from '../word-saving/saving'
 import { videoTabLabels } from './labels'
 import type { VideoTabServices } from './services'
 import type { OpenedWord } from './use-word-sheet'
@@ -63,6 +64,7 @@ export function WordSheet({
           ids={token.ids}
           lookUp={lookUp}
           settings={settings}
+          saving={chromeSaving}
         />
       </div>
     </div>

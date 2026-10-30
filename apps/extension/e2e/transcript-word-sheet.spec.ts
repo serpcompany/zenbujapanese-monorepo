@@ -4,6 +4,7 @@ import { playerCaptionLabels } from '../src/player-captions/labels.ts'
 import { labels } from '../src/side-panel/labels.ts'
 import { videoTabLabels } from '../src/video-tab/labels.ts'
 import { wordPopupLabels } from '../src/word-popup/labels.ts'
+import { savingLabels } from '../src/word-saving/labels.ts'
 import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
 import { caption, openAt, overlay, videoState } from './watch-page.ts'
 import { wordPopup } from './words-page.ts'
@@ -137,6 +138,25 @@ test('a transcript word opened with Enter shows its sheet with focus in the card
   }
   expect(await paused(page)).toBe(true)
   expect(await plays(page)).toBe('0')
+})
+
+test('a transcript word’s sheet offers the ••• menu’s Status, and signed out Known says to sign in in the sheet', async ({
+  extension,
+  page
+}) => {
+  await openAt(page, 1)
+  const { panel, transcript } = await panelBeside(extension, await watchTab(extension))
+  await transcriptWord(transcript).click()
+  await sheetCard(panel)
+    .getByRole('button', { name: fill(wordPopupLabels.share.moreActions, { name: '要求' }) })
+    .click()
+  await expect(panel.getByRole('menuitemradio')).toHaveText(['Unknown', 'Learning', 'Known'])
+  await expect(panel.getByRole('menuitemradio', { name: 'Unknown' })).toBeChecked()
+  await panel.getByRole('menuitemradio', { name: 'Known', exact: true }).click()
+  await expect(sheetOf(panel).locator('[data-saving-toast="signed-out"]')).toContainText(
+    savingLabels.signedOut.title
+  )
+  await expect(sheetOf(panel)).toBeVisible()
 })
 
 test('a card clicked while a word’s sheet is open closes the sheet and plays from its line', async ({

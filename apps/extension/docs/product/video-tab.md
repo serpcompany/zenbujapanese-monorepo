@@ -128,7 +128,9 @@ tab: "in a tab with no content script, says to reload it…"). How it's built is
 ## Not built yet
 
 The share of the video's words the learner knows, beside the title, is #965's, and No Japanese
-Captions' Live Captions is #968's. Where the Player tab differs from the canvas:
+Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing on the caption on
+the player: the ••• menu marks a word Known, and the transcript follows it, but the caption doesn't
+yet (#1187). Where the Player tab differs from the canvas:
 
 - The video's title stays in the tab, not the header, which is #1184's.
 - No scrubber and no length: Playback has no duration, and #1186 is changing the follower.

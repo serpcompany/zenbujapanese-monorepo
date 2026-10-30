@@ -1,5 +1,6 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { vi } from 'vitest'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -22,6 +23,16 @@ export function render(node: ReactNode): Rendered {
       container.remove()
     }
   }
+}
+
+export function stubIntersectionObserver(): void {
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      observe() {}
+      disconnect() {}
+    }
+  )
 }
 
 export async function settle(): Promise<void> {

@@ -152,9 +152,16 @@ test('another account signing in replaces the copy, after the signed-out Account
   const view = await signedIn(page, extension, first)
   await change(page, { change: 'mark', ...word })
   await expect.poll(() => synced(page)).toBe(0)
+  await extension.context.route(syncAt(extension), route => route.abort('internetdisconnected'))
+  await change(page, { change: 'mark', ...kanji })
+  await expect.poll(async () => (await readCopy(page)).sync).toBe('offline')
   await view.getByRole('button', { name: accountLabels.signOut }).click()
   await expect(view.getByText(signedOutTitle)).toBeVisible()
-  await change(page, { change: 'mark', ...kanji })
+  await expect(change(page, { change: 'mark', ...word })).resolves.toEqual({
+    type: 'refused',
+    refusal: 'signed-out'
+  })
+  await extension.context.unroute(syncAt(extension))
   await page.reload()
   await expect(view.locator('[data-account-unsynced]')).toHaveText(accountLabels.unsynced(1, first))
   await signInWithGoogle(view, account(extension), second)

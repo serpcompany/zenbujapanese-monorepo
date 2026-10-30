@@ -2,7 +2,15 @@ import type { SyncedChange } from '@zenbu/account-rules/account-copy'
 import { describe, expect, it } from 'vitest'
 import { json, refusal } from '../../test/account-stand-in'
 import { appliedTo, type Sync, syncAnswer } from '../../test/copy-stand-in'
-import { answeringSync, copyWorld, gated, otherWord, word } from '../../test/copy-world'
+import {
+  answeringSync,
+  copyWorld,
+  favorites,
+  gated,
+  heldCopy,
+  otherWord,
+  word
+} from '../../test/copy-world'
 
 const list = '5a3f2c1e-8b7d-4e6f-9a0b-1c2d3e4f5a6b'
 
@@ -79,7 +87,7 @@ describe('syncing the copy', () => {
     expect(world.syncs()[0]?.body).toEqual({ cursor: null, limit: 500, mutations: [] })
     await expect(world.read()).resolves.toMatchObject({
       knownWords: [word],
-      lists: [{ id: list, name: 'N5', words: [{ ...word, addedAt: 'x' }] }],
+      lists: [{ id: favorites }, { id: list, name: 'N5', words: [{ ...word, addedAt: 'x' }] }],
       notes: [{ id: note, item: word.item, text: 'Ichidan.' }],
       lastSyncedAt: Date.parse('2026-10-30T09:00:00Z'),
       sync: 'synced'
@@ -138,15 +146,12 @@ describe('syncing the copy', () => {
   })
 
   it('sends at most fifty changes in one request, and the rest in the next', async () => {
-    const world = copyWorld()
-    await world.signIn()
-    await world.signOut()
+    const world = await heldCopy()
     for (let at = 0; at < 60; at += 1) {
       await world.change({ change: 'mark', ...word, item: String(at).padStart(32, '0') })
     }
-    await world.signIn()
     await world.settled()
-    expect(world.syncs().map(asked => (asked.body as Sync).mutations.length)).toEqual([50, 10])
+    expect(world.syncs().map(asked => (asked.body as Sync).mutations.length)).toEqual([0, 50, 10])
     await expect(world.read()).resolves.toMatchObject({ unsynced: 0 })
   })
 
@@ -174,7 +179,7 @@ describe('syncing the copy', () => {
   })
 
   it('undoes a change the account refused, and keeps the list it did make', async () => {
-    const world = copyWorld(
+    const world = await heldCopy(
       answeringSync(body =>
         json(
           200,
@@ -192,14 +197,11 @@ describe('syncing the copy', () => {
         )
       )
     )
-    await world.signIn()
-    await world.signOut()
     await world.change({ change: 'create-list', list, name: 'N5', position: 1 })
     await world.change({ change: 'add-word', list, ...word })
-    await world.signIn()
     await world.settled()
     await expect(world.read()).resolves.toMatchObject({
-      lists: [{ id: list, words: [] }],
+      lists: [{ id: favorites }, { id: list, words: [] }],
       unsynced: 0
     })
   })
@@ -277,6 +279,7 @@ describe('syncing the copy', () => {
     await world.settled()
     const { lists } = await world.read()
     expect(lists.map(kept => kept.words.map(each => each.item))).toEqual([
+      [],
       [word.item, otherWord.item]
     ])
     expect(world.syncs()).toHaveLength(2)
@@ -284,7 +287,7 @@ describe('syncing the copy', () => {
 
   it('reads everything again when the account no longer knows where the copy was', async () => {
     let fullReads = 0
-    const world = copyWorld(
+    const world = await heldCopy(
       answeringSync(body => {
         if (body.cursor === 'cursor-1') return refusal(410, 'invalid_cursor')
         fullReads += 1
@@ -294,9 +297,7 @@ describe('syncing the copy', () => {
         )
       })
     )
-    await world.signIn()
     await world.settled()
-    await world.signOut()
     const kept = '9b2f8c1e-0a4d-4c3b-8e7f-6a5b4c3d2e1f'
     await world.change({
       change: 'write-note',
@@ -306,9 +307,9 @@ describe('syncing the copy', () => {
       headword: null,
       reading: null
     })
-    await world.signIn()
     await world.settled()
     expect(world.syncs().map(asked => (asked.body as Sync).cursor)).toEqual([
+      null,
       null,
       'cursor-1',
       null

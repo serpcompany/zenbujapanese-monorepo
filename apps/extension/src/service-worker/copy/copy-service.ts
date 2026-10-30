@@ -1,26 +1,19 @@
 import type {
-  CopiedList,
-  CopiedNote,
-  CopiedWord,
   CopyAnswer,
+  CopyChange,
   CopyRequest,
   CopyView,
-  KnownChanged
+  KnownChanged,
+  SavingRefusal,
+  WordView
 } from '../../shared/account-copy'
 import { knownAtOnce } from '../../shared/account-copy'
 import { readSettings, type SettingsStore } from '../../shared/settings'
 import type { AccountStore, User } from '../account/store'
 import type { AccessTokens } from '../account/tokens'
 import { applyChange, changeOf, studyChanges } from './copy-changes'
-import {
-  type CopyStorage,
-  type Draft,
-  freshMeta,
-  type Item,
-  keptCopy,
-  keyOf,
-  ownedBy
-} from './kept'
+import { aboutOnly, listsOf, notesOf, wordsIn, wordViewOf } from './copy-view'
+import { type CopyStorage, type Draft, freshMeta, keptCopy, keyOf, ownedBy } from './kept'
 import { accountSync, type CopyFailure, type Reason } from './sync'
 import { accountSettingsOf, reconcile } from './synced-settings'
 
@@ -38,50 +31,15 @@ export type CopyParts = {
   newId?: () => string
 }
 
-const text = (value: unknown) => (typeof value === 'string' ? value : '')
-
-const textOrNull = (value: unknown) => (typeof value === 'string' ? value : null)
-
 const knownIn = (draft: Draft, item: string) =>
   draft.get(keyOf('knownWord', item))?.data?.known === true
 
-const shown = (items: Item[], entity: Item['entity']) =>
-  items.filter(item => item.entity === entity && item.data !== null)
+const aboutKnown = (change: CopyChange) =>
+  change.change === 'mark' || change.change === 'clear' || change.change === 'set'
+    ? change.item
+    : null
 
-const wordOf = (data: Record<string, unknown>): CopiedWord => ({
-  item: text(data.itemId),
-  headword: text(data.headword),
-  reading: text(data.reading)
-})
-
-function listsOf(items: Item[]): CopiedList[] {
-  const words = shown(items, 'listWord')
-  return shown(items, 'list')
-    .map(({ entityId, data }) => ({
-      id: entityId,
-      name: text(data?.name),
-      position: typeof data?.position === 'number' ? data.position : 0,
-      createdAt: text(data?.createdAt),
-      words: words
-        .filter(word => word.entityId.startsWith(`${entityId}/`))
-        .map(word => ({ ...wordOf(word.data ?? {}), addedAt: text(word.data?.addedAt) }))
-    }))
-    .sort(
-      (first, second) =>
-        first.position - second.position ||
-        first.createdAt.localeCompare(second.createdAt) ||
-        first.id.localeCompare(second.id)
-    )
-}
-
-const notesOf = (items: Item[]): CopiedNote[] =>
-  shown(items, 'wordNote').map(({ entityId, data }) => ({
-    id: entityId,
-    item: text(data?.itemId),
-    text: text(data?.text),
-    headword: textOrNull(data?.headword),
-    reading: textOrNull(data?.reading)
-  }))
+export type TellSender = (refusal: SavingRefusal) => void
 
 export function accountCopy(parts: CopyParts) {
   const now = parts.now ?? Date.now
@@ -111,10 +69,9 @@ export function accountCopy(parts: CopyParts) {
       const items = draft.all()
       return {
         owner: draft.meta?.email ?? null,
-        knownWords: shown(items, 'knownWord')
-          .filter(item => item.data?.known === true)
-          .map(item => wordOf(item.data ?? {})),
-        lists: listsOf(items),
+        knownWords: wordsIn(items, 'known'),
+        learningWords: wordsIn(items, 'learning'),
+        lists: listsOf(draft),
         notes: notesOf(items),
         accountSettings: accountSettingsOf(items),
         unsynced: studyChanges(draft.meta?.queue ?? []),
@@ -128,11 +85,6 @@ export function accountCopy(parts: CopyParts) {
     if (await copy.edit(draft => ownedBy(draft, user))) parts.tell({ target: 'known', known: null })
   }
 
-  async function keptUser(): Promise<User | null> {
-    if ((await parts.store.sessionToken()) === null) return null
-    return (await parts.store.keptAccount())?.user ?? null
-  }
-
   async function settingsChanged(): Promise<void> {
     const browser = await readSettings(parts.settings)
     const queued = await copy.edit(async draft => {
@@ -144,22 +96,55 @@ export function accountCopy(parts: CopyParts) {
     if (queued) await sync.chance('settings')
   }
 
-  async function change(raw: unknown): Promise<CopyAnswer> {
+  async function saver(): Promise<User | SavingRefusal> {
+    const kept = await parts.store.keptAccount()
+    if ((await parts.store.sessionToken()) === null || kept === null) return 'signed-out'
+    return kept.subscription?.cloudAccess === 'subscription_required'
+      ? 'subscription-required'
+      : kept.user
+  }
+
+  async function refusal(): Promise<SavingRefusal | null> {
+    const user = await saver()
+    return typeof user === 'string' ? user : null
+  }
+
+  function syncAfter(tellSender?: TellSender) {
+    const before = sync.state()
+    void sync.chance('change').then(() => {
+      if (before !== 'subscription-required' && sync.state() === 'subscription-required') {
+        tellSender?.('subscription-required')
+      }
+    })
+  }
+
+  async function change(
+    raw: unknown,
+    tellSender?: TellSender,
+    about?: string
+  ): Promise<CopyAnswer> {
     const asked = changeOf(raw)
     if (asked === null) return { type: 'refused', refusal: 'invalid' }
-    const word = asked.change === 'mark' || asked.change === 'clear' ? asked.item : null
+    const word = aboutKnown(asked)
     const outcome = await copy.edit(async draft => {
-      const user = await keptUser()
-      if (user && ownedBy(draft, user)) parts.tell({ target: 'known', known: null })
-      if (draft.meta === null) return 'no-copy' as const
+      const user = await saver()
+      if (typeof user === 'string') return user
+      if (ownedBy(draft, user)) parts.tell({ target: 'known', known: null })
+      if (about !== undefined && !aboutOnly(draft, asked, about)) return 'invalid' as const
       const was = word !== null && knownIn(draft, word)
       if (!applyChange(draft, asked, clock)) return 'invalid' as const
       return word !== null && knownIn(draft, word) !== was ? { [word]: !was } : null
     })
-    if (outcome === 'no-copy' || outcome === 'invalid') return { type: 'refused', refusal: outcome }
+    if (typeof outcome === 'string') return { type: 'refused', refusal: outcome }
     if (outcome) parts.tell({ target: 'known', known: outcome })
-    void sync.chance('change')
+    syncAfter(tellSender)
     return { type: 'changed' }
+  }
+
+  const word = async (item: string): Promise<WordView> => {
+    const refused = await refusal()
+    const view = await copy.look(draft => wordViewOf(draft, item))
+    return { ...view, refusal: refused }
   }
 
   const known = (items: string[]) =>
@@ -167,12 +152,16 @@ export function accountCopy(parts: CopyParts) {
       Object.fromEntries(items.slice(0, knownAtOnce).map(item => [item, knownIn(draft, item)]))
     )
 
-  async function answer(request: CopyRequest): Promise<CopyAnswer> {
+  async function answer(request: CopyRequest, tellSender?: TellSender): Promise<CopyAnswer> {
     switch (request.copy) {
       case 'read':
         return { type: 'copy', copy: await view() }
       case 'change':
-        return change(request.change)
+        return change(request.change, tellSender)
+      case 'word':
+        return { type: 'word', word: await word(request.item) }
+      case 'word-change':
+        return change(request.change, tellSender, request.item)
       case 'sync':
         await sync.chance('sync-now')
         return { type: 'copy', copy: await view() }
@@ -192,7 +181,7 @@ export function accountCopy(parts: CopyParts) {
 
   const chance = (reason: Reason) => void sync.chance(reason)
 
-  return { answer, signedIn, settingsChanged, forget, chance }
+  return { answer, signedIn, settingsChanged, forget, chance, refusal }
 }
 
 export type AccountCopy = ReturnType<typeof accountCopy>
