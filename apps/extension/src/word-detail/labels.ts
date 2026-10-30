@@ -52,7 +52,6 @@ export const wordDetailLabels = {
   share: {
     share: 'Share {name}',
     moreActions: 'More actions for {name}',
-    copyLink: 'Copy Link',
     linkCopied: 'Link copied',
     openOnWebsite: 'Open on zenbujapanese.com'
   },

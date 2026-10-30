@@ -10,6 +10,7 @@ import {
 import { type Settings, settingDefaults } from '../shared/settings'
 import type { TranslatorState } from '../translation/messages'
 import { clockFollower, clockVideo } from './clock-follower'
+import { savingStandIn } from './saving-stand-in'
 import { lineText } from './video-tab-harness'
 import { popupAnswer } from './word-cards'
 
@@ -42,6 +43,7 @@ export function captionServices(translator: TranslatorState = 'available') {
     })),
     wait: vi.fn<CaptionServices['wait']>(() => new Promise(() => {})),
     popupCard: vi.fn(async (id: string) => popupAnswer(id)),
+    saving: savingStandIn().port,
     keepCaptionPlaces: vi.fn<CaptionServices['keepCaptionPlaces']>(),
     translate: vi.fn<CaptionServices['translate']>(async request => {
       if (request.type !== 'translate') return { type: 'availability', state: state.translator }

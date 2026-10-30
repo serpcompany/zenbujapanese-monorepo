@@ -16,6 +16,7 @@ import { followYouTubePage } from '../video/youtube-page'
 import { servePagePopups } from '../word-popup/page-popup-server'
 import { wordPopupHost } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
+import { chromeSaving } from '../word-saving/saving'
 
 const { report } = contentScriptErrorReports(toServiceWorker(chrome.runtime))
 
@@ -35,6 +36,7 @@ followYouTubePage(document, {
         segment: text => segmentText(text),
         wait: afterTimeout,
         popupCard,
+        saving: chromeSaving,
         translate: request => translate(request),
         keepCaptionPlaces: places => void askToWriteSettings(places).catch(report)
       }
@@ -52,6 +54,6 @@ servePagePopups({
     wordPopupHost({
       report,
       prepare: keptInside,
-      settings: () => popupSettings(settings(), { popupCard })
+      settings: () => popupSettings(settings(), { popupCard, saving: chromeSaving })
     })
 })

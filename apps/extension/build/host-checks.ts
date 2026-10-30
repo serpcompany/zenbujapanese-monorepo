@@ -1,4 +1,4 @@
-import { type Environment, hosts } from './hosts.ts'
+import { type Environment, hosts, stagingPassword } from './hosts.ts'
 
 export type Fetch = (url: string, init?: RequestInit) => Promise<Response>
 
@@ -46,9 +46,18 @@ export async function hostProblems(environment: Environment, fetcher: Fetch): Pr
   const timeout = () => AbortSignal.timeout(answerSeconds * 1000)
 
   const handoverUrl = `${website}${handoverPath}`
-  const handover = await answer(fetcher(handoverUrl, { signal: timeout() }), `GET ${handoverUrl}`)
+  const handoverInit: RequestInit =
+    environment === 'staging'
+      ? {
+          headers: { Authorization: `Basic ${btoa(`zenbu:${stagingPassword}`)}` },
+          signal: timeout()
+        }
+      : { signal: timeout() }
+  const handover = await answer(fetcher(handoverUrl, handoverInit), `GET ${handoverUrl}`)
   if (typeof handover === 'string') problems.push(handover)
-  else if (handover.status !== 200) {
+  else if (environment === 'staging' && handover.status === 401) {
+    problems.push(`GET ${handoverUrl} answered 401: staging refused the password.`)
+  } else if (handover.status !== 200) {
     problems.push(
       `GET ${handoverUrl} answered ${handover.status}, not 200: the website has no handover page for the extension's sign-in.`
     )

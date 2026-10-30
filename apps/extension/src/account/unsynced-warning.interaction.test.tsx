@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { askCopy } from '../shared/account-copy'
-import { json, signedInAnswer, startAccountOn, subscription, user } from '../test/account-stand-in'
-import { word } from '../test/copy-world'
+import { json, signedInAnswer, startAccountOn, user } from '../test/account-stand-in'
+import { subscribed, word } from '../test/copy-world'
 import { startExtension } from '../test/extension'
 import { byText, click, find, type Rendered, render, settle, typeInto } from '../test/render'
 import { AccountView } from './account-view'
@@ -36,7 +36,8 @@ describe('the warning before another account signs in', () => {
           (asked.body as { email: string }).email === other.email ? other : user
         ),
       'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
-      'GET /v1/me/subscription': () => json(200, subscription),
+      'GET /v1/me/subscription': () => json(200, subscribed),
+      'POST /v1/sync': () => json(503, {}),
       'POST /v1/auth/sign-out': () => json(200, { success: true })
     })
     shown = render(<AccountView />)

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { knownAtOnce } from '../../shared/account-copy'
 import { json } from '../../test/account-stand-in'
-import { answeringSync, copyWorld, favorites, otherWord, word } from '../../test/copy-world'
+import { answeringSync, copyWorld, heldCopy, noLists, otherWord, word } from '../../test/copy-world'
 
 const list = '5a3f2c1e-8b7d-4e6f-9a0b-1c2d3e4f5a6b'
 
@@ -9,21 +9,16 @@ const note = '7c9e6679-7425-40de-944b-e07fc1f90ae7'
 
 const at = '2026-10-30T09:00:00.000Z'
 
-async function signedOutWithCopy() {
-  const world = copyWorld()
-  await world.signIn()
-  await world.signOut()
-  return world
-}
-
 describe("the copy's changes", () => {
-  it('refuses a change before any account has signed in on this browser', async () => {
+  it('refuses a change while signed out, before any sign-in and after one', async () => {
     const world = copyWorld()
-    await expect(world.change({ change: 'mark', ...word })).resolves.toEqual({
-      type: 'refused',
-      refusal: 'no-copy'
-    })
+    const signedOut = { type: 'refused', refusal: 'signed-out' }
+    await expect(world.change({ change: 'mark', ...word })).resolves.toEqual(signedOut)
+    await world.signIn()
+    await world.signOut()
+    await expect(world.change({ change: 'mark', ...word })).resolves.toEqual(signedOut)
     expect(world.syncs()).toEqual([])
+    await expect(world.read()).resolves.toMatchObject({ knownWords: [], unsynced: 0 })
   })
 
   it.each([
@@ -43,7 +38,7 @@ describe("the copy's changes", () => {
     ],
     ['a change it does not know', { change: 'forget', item: word.item }]
   ])('refuses %s', async (_, asked) => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     await expect(world.ask({ copy: 'change', change: asked as never })).resolves.toEqual({
       type: 'refused',
       refusal: 'invalid'
@@ -71,7 +66,7 @@ describe("the copy's changes", () => {
   })
 
   it('keeps a kanji known by its kanji ID', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     await world.change({ change: 'mark', item: 'kanji:食', headword: '食', reading: '' })
     await expect(world.ask({ copy: 'known', items: ['kanji:食', word.item] })).resolves.toEqual({
       type: 'known',
@@ -80,7 +75,7 @@ describe("the copy's changes", () => {
   })
 
   it('keeps only the last of two changes to one word made while neither has gone', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     await world.change({ change: 'mark', ...word })
     await world.change({ change: 'clear', item: word.item })
     expect(world.told.at(-1)).toEqual({ target: 'known', known: { [word.item]: false } })
@@ -88,7 +83,7 @@ describe("the copy's changes", () => {
   })
 
   it('tells nobody and keeps nothing to send for a word cleared that was not known', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     const told = world.told.length
     await world.change({ change: 'clear', item: word.item })
     expect(world.told.slice(told)).toEqual([])
@@ -96,7 +91,7 @@ describe("the copy's changes", () => {
   })
 
   it('answers whether words are known for at most a thousand at once', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     const items = Array.from(
       { length: knownAtOnce + 5 },
       (_, at) => `kanji:${String.fromCodePoint(0x4e00 + at)}`
@@ -106,7 +101,7 @@ describe("the copy's changes", () => {
   })
 
   it('makes, renames, and fills a list, folding a rename into a make that has not gone', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     await world.change({ change: 'create-list', list: list.toUpperCase(), name: 'N5', position: 1 })
     await world.change({ change: 'update-list', list, name: 'N5 verbs' })
     await world.change({ change: 'add-word', list, ...word })
@@ -120,7 +115,6 @@ describe("the copy's changes", () => {
       }
     ])
     await expect(world.read()).resolves.toMatchObject({ unsynced: 2 })
-    await world.signIn()
     await world.settled()
     expect(world.sent().map(sent => [sent.operation, sent.fields])).toEqual([
       ['create', { name: 'N5 verbs', position: 1 }],
@@ -129,7 +123,7 @@ describe("the copy's changes", () => {
   })
 
   it('refuses a word for a list the copy does not have, and a second list with one ID', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     await expect(world.change({ change: 'add-word', list, ...word })).resolves.toEqual({
       type: 'refused',
       refusal: 'invalid'
@@ -141,18 +135,17 @@ describe("the copy's changes", () => {
   })
 
   it('drops a list that never went, with its words, and sends nothing for it', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     await world.change({ change: 'create-list', list, name: 'N5', position: 1 })
     await world.change({ change: 'add-word', list, ...word })
     await world.change({ change: 'delete-list', list })
-    await world.signIn()
     await world.settled()
     expect(world.sent()).toEqual([])
-    await expect(world.read()).resolves.toMatchObject({ lists: [], unsynced: 0 })
+    await expect(world.read()).resolves.toMatchObject({ lists: noLists, unsynced: 0 })
   })
 
   it("deletes a list the account has, drops its words here, and sends only the list's delete", async () => {
-    const world = copyWorld(
+    const world = await heldCopy(
       answeringSync(body =>
         json(200, {
           results: body.mutations.map(sent => ({ id: sent.id, status: 'applied', version: 3 })),
@@ -162,14 +155,11 @@ describe("the copy's changes", () => {
         })
       )
     )
-    await world.signIn()
     await world.change({ change: 'create-list', list, name: 'N5', position: 1 })
     await world.change({ change: 'add-word', list, ...word })
     await world.settled()
-    await world.signOut()
     await world.change({ change: 'add-word', list, ...otherWord })
     await world.change({ change: 'delete-list', list })
-    await world.signIn()
     await world.settled()
     expect(world.sent().at(-1)).toMatchObject({
       entity: 'list',
@@ -178,11 +168,11 @@ describe("the copy's changes", () => {
       baseVersion: 3
     })
     expect(world.sent().filter(sent => sent.entityId.endsWith(otherWord.item))).toEqual([])
-    await expect(world.read()).resolves.toMatchObject({ lists: [], unsynced: 0 })
+    await expect(world.read()).resolves.toMatchObject({ lists: noLists, unsynced: 0 })
   })
 
   it('writes and deletes a note, keeping the word it was written on', async () => {
-    const world = await signedOutWithCopy()
+    const world = await heldCopy()
     await world.change({
       change: 'write-note',
       note,
@@ -196,12 +186,5 @@ describe("the copy's changes", () => {
     ])
     await world.change({ change: 'delete-note', note })
     await expect(world.read()).resolves.toMatchObject({ notes: [] })
-  })
-
-  it('keeps Favorites as any other list', async () => {
-    const world = await signedOutWithCopy()
-    await world.change({ change: 'create-list', list: favorites, name: 'Favorites', position: 0 })
-    await world.change({ change: 'add-word', list: favorites, ...word })
-    expect((await world.read()).lists.map(kept => kept.id)).toEqual([favorites])
   })
 })
