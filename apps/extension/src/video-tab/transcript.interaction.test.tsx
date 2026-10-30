@@ -84,7 +84,7 @@ function cardsOnActiveTab() {
   const elsewhere = () =>
     pagePopup(
       { text: '要求', ids: ['youkyuu'], fromBottom: 0 },
-      { shown: () => {}, closed: () => {}, unavailable: () => {} }
+      { shown: () => {}, replaced: () => {}, closed: () => {}, unavailable: () => {} }
     )
   return { active, ports, pagePopup, elsewhere }
 }
@@ -393,7 +393,7 @@ describe('the transcript’s words', () => {
     await shown.playsAt(12)
     const word = document.querySelector<HTMLElement>(walkWord('散歩'))
     await keyClick(word)
-    expect(pagePopup).not.toHaveBeenCalled()
+    expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '散歩', inPanel: true })
     expect(popup()?.closest('[data-line]')).not.toBeNull()
     expect(popup()?.contains(document.activeElement)).toBe(true)
     await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
@@ -408,7 +408,8 @@ describe('the transcript’s words', () => {
     await playsAgain(shown)
 
     await pointerClick(document.querySelector(walkWord('天気')))
-    expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '天気' })
+    expect(pagePopup.mock.calls[1]?.[0]).not.toHaveProperty('inPanel')
+    expect(pagePopup.mock.calls[1]?.[0]).toMatchObject({ text: '天気' })
     expect(popup()).toBeNull()
   })
 

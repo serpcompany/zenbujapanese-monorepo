@@ -112,6 +112,11 @@ disconnects the port; the panel disconnecting closes it.
   card on `pointerdown` and opens the next on `click`: the server waits for the press to end and
   lets the port go then only if no card is open. So the transcript keeps the video paused while
   any Zenbu card is open, and plays it when the last closes, if it was playing.
+- **A card the panel shows itself holds the page's place.** A word opened with Enter or Space
+  posts `show` with `inPanel: true`: the server hands over the page's card without opening one,
+  keeps its pause, holds the shown slot, and answers `shown`. A card on the page taking the slot
+  posts `{ replaced: true }`, and the panel puts its card away (#1185). The port dropping, or the
+  server stopping, lets the slot go, with a `close` only if the hold kept a card's pause.
 - **A press keeps a card when it lands in it or a layer it opened.** Base UI draws a menu or
   sheet in a `[data-base-ui-portal]` outside the card, so the page's host holds a press whose
   `composedPath()` has the card, and any open portal layer (`hasOpenLayer` in `open-layer.ts`, on
