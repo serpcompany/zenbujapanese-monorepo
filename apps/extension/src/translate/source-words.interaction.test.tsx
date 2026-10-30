@@ -191,14 +191,37 @@ describe('the Japanese source of a translation', () => {
     const container = await page.show()
     const word = find(container, '[data-word="要求"]')
     await keyClick(word, key)
-    expect(page.pagePopup).not.toHaveBeenCalled()
+    expect(page.asked.map(({ word }) => word.inPanel)).toEqual([true])
     expect(popup()?.getAttribute('aria-label')).toBe('Word 要求')
     expect(popup()?.parentElement?.closest('[data-reading-aids]')).not.toBeNull()
     expect(popup()?.contains(document.activeElement)).toBe(true)
     expect(page.onPopup).toHaveBeenLastCalledWith(true, expect.any(Function))
     await escapeOn(document.activeElement)
     expect(popup()).toBeNull()
+    expect(page.asked[0]?.close).toHaveBeenCalledOnce()
     expect(document.activeElement).toBe(word)
+    expect(page.onPopup).toHaveBeenLastCalledWith(false, expect.any(Function))
+  })
+
+  it('asks the page to take its card down for a card a key opens in the panel, and puts that card away, still open, when a card on the page takes its place', async () => {
+    const page = onThePage()
+    const container = await page.show()
+    const word = find(container, '[data-word="要求"]')
+    await keyClick(word)
+    expect(page.asked.map(({ word }) => word)).toEqual([
+      {
+        text: '要求',
+        ids: ['youkyuu'],
+        fromBottom: window.innerHeight - word.getBoundingClientRect().top,
+        inPanel: true
+      }
+    ])
+    await page.hear('shown')
+    expect(popup()?.getAttribute('aria-label')).toBe('Word 要求')
+    await page.hear('replaced')
+    expect(popup()).toBeNull()
+    expect(page.onPopup).toHaveBeenLastCalledWith(true, expect.any(Function))
+    await page.hear('closed')
     expect(page.onPopup).toHaveBeenLastCalledWith(false, expect.any(Function))
   })
 
@@ -207,12 +230,15 @@ describe('the Japanese source of a translation', () => {
     const container = await page.show()
     await keyClick(find(container, '[data-word="要る"]'))
     await press(find(container, '[data-word="要求"]'))
-    expect(page.asked.map(({ word }) => word.text)).toEqual(['要求'])
-    await page.hear('shown')
+    await page.hear('shown', 1)
     expect(popup()).toBeNull()
     await keyClick(find(container, '[data-word="要る"]'))
-    expect(page.asked[0]?.close).toHaveBeenCalledOnce()
-    expect(page.pagePopup).toHaveBeenCalledOnce()
+    expect(page.asked.map(({ word }) => [word.text, word.inPanel])).toEqual([
+      ['要る', true],
+      ['要求', undefined],
+      ['要る', true]
+    ])
+    expect(page.asked[1]?.close).not.toHaveBeenCalled()
     expect(popup()?.getAttribute('aria-label')).toBe('Word 要る')
     expect(popup()?.contains(document.activeElement)).toBe(true)
   })

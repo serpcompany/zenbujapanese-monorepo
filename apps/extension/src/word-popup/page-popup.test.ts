@@ -9,6 +9,7 @@ import {
 
 const word = { text: '要求', ids: ['youkyuu'], fromBottom: 240 }
 const shown = { target: 'word-popup', shown: true }
+const replaced = { target: 'word-popup', replaced: true }
 
 function onATab({ tab = 7 as number | null, side = 'left' as 'left' | 'right' } = {}) {
   const ports: FakePort[] = []
@@ -32,6 +33,7 @@ function listener(): PagePopupHeard & { said: string[] } {
   return {
     said,
     shown: () => void said.push('shown'),
+    replaced: () => void said.push('replaced'),
     closed: () => void said.push('closed'),
     unavailable: () => void said.push('unavailable')
   }
@@ -43,6 +45,9 @@ describe('a word’s card on the page, asked for from the side panel', () => {
   it('reads only a whole request to show a card', () => {
     const show = { ...word, side: 'right' }
     expect(shownRequest({ target: 'word-popup', show })).toEqual(show)
+    const inPanel = { ...show, inPanel: true }
+    expect(shownRequest({ target: 'word-popup', show: inPanel })).toEqual(inPanel)
+    expect(shownRequest({ target: 'word-popup', show: { ...show, inPanel: 'yes' } })).toEqual(show)
     expect(shownRequest({ target: 'word-popup', show: { ...show, side: 'top' } })).toBeNull()
     expect(shownRequest({ target: 'word-popup', show: { ...show, ids: [1] } })).toBeNull()
     expect(shownRequest({ target: 'word-popup', show: { ...show, fromBottom: NaN } })).toBeNull()
@@ -65,6 +70,21 @@ describe('a word’s card on the page, asked for from the side panel', () => {
     tab.ports[0]?.drop()
     expect(heard.said).toEqual(['shown', 'closed'])
     expect(tab.lastError).toHaveBeenCalled()
+  })
+
+  it('asks the page to hold the place of a card the panel shows itself, and hears when a card on the page takes it', async () => {
+    const tab = onATab({ side: 'left' })
+    const heard = listener()
+    tab.pagePopup({ ...word, inPanel: true }, heard)
+    await settled()
+    expect(tab.ports[0]?.posted).toEqual([
+      { target: 'word-popup', show: { ...word, inPanel: true, side: 'left' } }
+    ])
+    tab.ports[0]?.say(replaced)
+    tab.ports[0]?.say(shown)
+    tab.ports[0]?.say(replaced)
+    tab.ports[0]?.drop()
+    expect(heard.said).toEqual(['shown', 'replaced', 'closed'])
   })
 
   it('hears that the page can’t show one when nothing there answers, or there’s no tab', async () => {
