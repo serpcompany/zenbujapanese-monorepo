@@ -19,16 +19,17 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, Zenbu's icons (`assets/brand/extensions/`, 16 to 128), the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
+| `pnpm build` | The release build, in `dist/`: the manifest, Zenbu's icons, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
-| `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
+| `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port, the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
 | `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
 | `pnpm language-data` | The local language-data server, on a free port (or `PORT`); it prints its address. |
-| `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
-| `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([`extension-error-reports.md`](extension-error-reports.md)). `Extension packages` runs it on the Chrome Web Store package's build, only on `main`; the staging package's maps aren't uploaded ([`ci-deploys.md`](ci-deploys.md)). |
+| `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
+| `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and removes them ([`extension-error-reports.md`](extension-error-reports.md)). `Extension packages` runs it on the store package's build, only on `main` ([`ci-deploys.md`](ci-deploys.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
 | `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
+| `pnpm check-hosts <production\|staging>` | Fails unless the environment's `/account/extension/` answers 200 and its account service answers a made-up extension sign-in code 401 `invalid_code`, saying which and why. |
 
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
@@ -36,8 +37,7 @@ asks for Chrome 138 (`minimumChromeVersion` in `build/manifest.ts`), the first w
 API that the extension's translations use (#967); on-device speech recognition (#968) is
 outside the first version. It asks for `scripting` to register the page script for the sites
 Zenbu holds ([`extension-page-lookup.md`](extension-page-lookup.md)), and so that Use Selection
-can read the selected text on a tab with no page script, which `activeTab` reaches after a click
-on the toolbar icon.
+can read a tab with no page script, which `activeTab` reaches after a click on the toolbar icon.
 
 ## Builds and packages
 
@@ -74,6 +74,9 @@ on the toolbar icon.
   `externally_connectable` is anything but its environment's website, or whose files name the
   other environment's hosts, and any `.js` holding a `__ZENBU_` setting the build didn't fill in.
 
+  A hand-loaded build is handed over once `pnpm check-package` and `pnpm check-hosts` (it needs the
+  network; not in `pnpm check` or CI) pass for its environment, or with what fails said up front.
+
 ## Code layout
 
 | Folder | What it holds |
@@ -97,8 +100,8 @@ on the toolbar icon.
 | `src/settings/` | Settings and its pages ([`extension-settings.md`](extension-settings.md)). |
 | `src/shared/` | The messages and their types, the settings, the labels, Geist, the colour scheme, the language data's host and state, and what pages show: the dictionary status, the welcome tab, the dictionary's progress (`dictionary-progress.tsx`), and the Translator's ask (`translation-model.tsx`). Pages and content scripts look words up with `dictionary.ts`'s helpers, never raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist, and both with the reading aids' rules, since a content script imports no CSS. |
-| `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), error reports' recording transport, the Player tab's stand-ins (`video-tab-harness.tsx`), and the caption's stand-in clock for a video (`clock-follower.ts`) and player (`player-on.tsx`). Layers treat it as tests. |
-| `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
+| `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), error reports' recording transport, and stand-ins for the Player tab (`video-tab-harness.tsx`) and the caption's clock (`clock-follower.ts`, `player-on.tsx`). Layers treat it as tests. |
+| `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, `package.ts`, `check-package.ts`, `check-hosts.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, the test content script that mounts it and shows each reading aid's state (`settings-follower.tsx`), and the words page page lookup's browser tests read (`words.html`). |
 | `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), the local data server and its release (`local-server.ts`, `fixture-release.ts`), and the agent Chrome harness's stand-in site under `www.youtube.com` (`youtube-stand-in.ts`). |
 | `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
@@ -119,15 +122,12 @@ offscreen document ends it and starts a new one for the next request), and a wor
 answer within 10 seconds. The service worker keeps nothing between messages but a document it's
 waiting on, since Chrome stops it when it's idle.
 
-### Captions and the video
+### Captions, the video, and translation
 
 How the service worker gets a YouTube video's captions and the content script follows the video
-is in [`extension-captions.md`](extension-captions.md).
-
-### Translation
-
-How any surface translates through the offscreen document, and how a page downloads Chrome's
-model from a click, is in [`extension-translation.md`](extension-translation.md).
+is in [`extension-captions.md`](extension-captions.md). How any surface translates through the
+offscreen document, and how a page downloads Chrome's model from a click, is in
+[`extension-translation.md`](extension-translation.md).
 
 ### Drawing on a page
 
@@ -198,7 +198,7 @@ build declares only the YouTube content script, and registers the page script at
 - **Unit and DOM tests,** with `pnpm test`: the manifest of each build, with the store item's ID
   from its `key`, `package.json`'s version, and its environment's website; each environment's
   hosts in a bundle built with them, and not the other's; each package and each way
-  `pnpm check-package` fails one; the zips, which the system's `unzip` opens; the rem conversion and
+  `pnpm check-package` fails one; the zips; the rem conversion and
   the `@supports` unwrapping; the shadow root's stylesheet as the build makes it, with no rem and
   the `--tw-*` fallback outside any `@supports`, and the pages' with rem kept; the offscreen
   document opened once and again after Chrome closes it, once it says it has started; a ping from
