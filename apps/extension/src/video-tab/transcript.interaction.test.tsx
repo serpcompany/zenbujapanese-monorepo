@@ -369,6 +369,18 @@ describe('a word’s sheet', () => {
     expect(sheet()?.hasAttribute('data-full')).toBe(false)
   })
 
+  it('puts the notices above the cards away while it shows, so the word’s line fits above it', async () => {
+    const shown = await transcript({ translator: 'downloadable' })
+    const notice = () => shown.panel.querySelector('[data-translation-model]')
+    const putAway = () => notice()?.closest('[hidden]') != null
+    await vi.waitFor(() => expect(notice()).not.toBeNull())
+    expect(putAway()).toBe(false)
+    await click(word('散歩'))
+    expect(putAway()).toBe(true)
+    await click(sheetButton(videoTabLabels.closeWord))
+    expect(putAway()).toBe(false)
+  })
+
   it('shows another word in the same sheet at the same height, and plays again only once it closes', async () => {
     const shown = await pausedForAWord()
     await click(sheetButton(videoTabLabels.fullHeight))

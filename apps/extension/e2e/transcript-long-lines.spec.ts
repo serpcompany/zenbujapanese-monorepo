@@ -149,8 +149,6 @@ const lines = [
   ])
 ]
 
-const plainRows: Record<number, number[]> = { 320: [1, 2, 3, 4], 500: [1, 1, 2, 3] }
-
 const widths = [320, 500]
 
 async function openTranscript(page: Page, extension: Extension, width: number) {
@@ -169,7 +167,9 @@ function wrapping(page: Page) {
     const scroller = document.querySelector('[aria-label="Transcript"]')?.parentElement
     const cards = [...document.querySelectorAll<HTMLElement>('[data-line]')].map(card => {
       const inside = card.getBoundingClientRect()
-      const items = [...(card.querySelector('[data-source]')?.children ?? [])]
+      const source = card.querySelector('[data-source]')
+      const limit = source?.getBoundingClientRect().right ?? inside.right
+      const items = [...(source?.children ?? [])]
       const rows: Element[][] = []
       let left = Number.POSITIVE_INFINITY
       for (const item of items) {
@@ -182,6 +182,10 @@ function wrapping(page: Page) {
         row
           .flatMap(item => [item, ...item.querySelectorAll(selector)])
           .map(each => each.getBoundingClientRect())
+      const early = rows.slice(1).filter((row, index) => {
+        const before = rows[index].at(-1)?.getBoundingClientRect().right ?? 0
+        return before + row[0].getBoundingClientRect().width <= limit + 0.5
+      }).length
       const overlaps = rows.slice(1).flatMap((row, index) => {
         const above = Math.max(...boxes(rows[index], '*').map(box => box.bottom))
         const top = Math.min(...boxes(row, 'rt').map(box => box.top))
@@ -196,7 +200,7 @@ function wrapping(page: Page) {
       const spread = [...card.querySelectorAll('ruby')].filter(
         ruby => getComputedStyle(ruby).getPropertyValue('ruby-align') !== 'center'
       ).length
-      return { rows: rows.length, overlaps, outside, spread }
+      return { rows: rows.length, early, overlaps, outside, spread }
     })
     return {
       cards,
@@ -207,7 +211,7 @@ function wrapping(page: Page) {
 }
 
 for (const width of widths)
-  test(`wraps captions of one to four lines inside their cards at ${width} pixels, with no sideways scroll, no furigana over the line above, and no word spread apart under its furigana, with Word Meanings off and on, in light and dark`, async ({
+  test(`wraps short and long captions inside their cards at ${width} pixels, breaking a row only where the next word doesn't fit, with no sideways scroll, no furigana over the line above, and no word spread apart under its furigana, with Word Meanings off and on, in light and dark`, async ({
     extension,
     page
   }) => {
@@ -219,9 +223,9 @@ for (const width of widths)
       const layout = await wrapping(page)
       measured[aids] = layout
       expect(layout).toMatchObject({ pageScrollsSideways: false, transcriptScrollsSideways: false })
-      expect(layout.cards.map(card => [card.overlaps, card.outside, card.spread])).toEqual(
-        lines.map(() => [[], 0, 0])
-      )
+      expect(
+        layout.cards.map(card => [card.early, card.overlaps, card.outside, card.spread])
+      ).toEqual(lines.map(() => [0, [], 0, 0]))
       for (const tone of tones) {
         await page.emulateMedia({ colorScheme: tone })
         await expect(page.locator('html')).toHaveClass(tone === 'dark' ? /dark/ : /^(?!.*dark)/)
@@ -230,8 +234,11 @@ for (const width of widths)
         })
       }
     }
-    expect(
-      (measured.plain as Awaited<ReturnType<typeof wrapping>>).cards.map(card => card.rows)
-    ).toEqual(plainRows[width])
+    const rows = (measured.plain as Awaited<ReturnType<typeof wrapping>>).cards.map(
+      card => card.rows
+    )
+    expect(rows[0]).toBe(1)
+    expect(rows.at(-1)).toBeGreaterThan(1)
+    expect(rows).toEqual(rows.toSorted((a, b) => a - b))
     writeFileSync(test.info().outputPath('layout.json'), JSON.stringify(measured))
   })

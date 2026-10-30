@@ -20,6 +20,7 @@ async function panelBeside(extension: Extension, tabId: number) {
   const panel = await extension.context.newPage()
   await panel.setViewportSize({ width: 380, height: 720 })
   await panel.addInitScript(id => {
+    Object.assign(globalThis, { Translator: { availability: async () => 'downloadable' } })
     const query = chrome.tabs.query.bind(chrome.tabs)
     Object.assign(chrome.tabs, {
       query: async (info: chrome.tabs.QueryInfo) =>
@@ -35,6 +36,8 @@ async function panelBeside(extension: Extension, tabId: number) {
 
 const transcriptWord = (transcript: Locator) =>
   transcript.locator('[data-line] [data-source] [data-word="要求"]').last()
+
+const englishNotice = (panel: Page) => panel.locator('[data-translation-model]')
 
 const sheetOf = (panel: Page) => panel.locator('[data-word-sheet]')
 
@@ -87,10 +90,14 @@ test('a word clicked in the transcript pauses the video and opens its card in a 
   await openAt(page, 1)
   const { panel, transcript } = await panelBeside(extension, await watchTab(extension))
   await play(page)
+  const controls = panel.getByRole('toolbar', { name: videoTabLabels.controls })
+  await expect(controls.getByRole('button', { name: playerCaptionLabels.pause })).toBeVisible()
+  await expect(englishNotice(panel)).toBeVisible()
   await transcriptWord(transcript).click()
   await expect(sheetCard(panel).locator('[data-meaning]').first()).toContainText('demand')
   await expect.poll(() => paused(page)).toBe(true)
   await expect(wordPopup(page)).toHaveCount(0)
+  await expect(englishNotice(panel)).toBeHidden()
   await expect.poll(() => sheetLayout(panel)).toEqual({ share: 56, toBottom: 0, lineAbove: true })
   await panel.screenshot({ path: test.info().outputPath('sheet-half.png') })
 
@@ -104,6 +111,7 @@ test('a word clicked in the transcript pauses the video and opens its card in a 
   await countPlays(page)
   await sheetOf(panel).getByRole('button', { name: videoTabLabels.closeWord }).click()
   await expect(sheetOf(panel)).toHaveCount(0)
+  await expect(englishNotice(panel)).toBeVisible()
   await expect.poll(() => plays(page)).toBe('1')
   expect(await paused(page)).toBe(false)
   await stop(page)

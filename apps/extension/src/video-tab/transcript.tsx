@@ -100,7 +100,7 @@ export function Transcript({
   return (
     <>
       <ControlBar controls={controls} view={view} time={playback?.time ?? 0} />
-      {notices}
+      <div hidden={chosen !== null}>{notices}</div>
       <div ref={box} className="relative min-h-0 flex-1 overflow-y-auto">
         <ol
           ref={list}

@@ -24,7 +24,7 @@ Translator; and the browser tests in `e2e/`.
 | The card playing is kept in view, in the middle of the list. | Transcript: "keeps the playing card in view…" |
 | A click on a card, or Enter or Space on it, plays the video from the start of its line. The card is a button named for it, such as "Play from 0:11". | Video tab: "plays the video from a card's line from a click on the card", "plays from a card's line from Enter or Space on the card" |
 | While an ad plays, no card is lit and a click on a card does nothing; after it, the light comes back. | Video tab: "during an ad…" |
-| A long line wraps inside its card, onto as many as four lines, with no sideways scroll at 320 or 500 pixels, Word Meanings off or on, and no furigana over the line above. | `e2e/transcript-long-lines.spec.ts`: "wraps captions of one to four lines inside their cards…" |
+| A long line wraps inside its card onto as many rows as it needs, breaking a row only where the next word doesn't fit, with no sideways scroll at 320 or 500 pixels, Word Meanings off or on, and no furigana over the line above. | `e2e/transcript-long-lines.spec.ts`: "wraps short and long captions inside their cards…" |
 
 ## The control bar
 
@@ -79,7 +79,7 @@ video only once it is shown").
 
 | Behavior | Check |
 | --- | --- |
-| A click on a word pauses the video and opens the word's card in a sheet over the lower half of the tab, with the word in blue. Its line's card moves to the middle of the space above the sheet. No card opens on the watch page. | Transcript: "opens over the lower half of the tab from a click on a word…", "keeps the playing card in view, and moves the card of a word opened…"; `e2e/transcript-word-sheet.spec.ts`: "a word clicked in the transcript pauses the video and opens its card in a sheet…" |
+| A click on a word pauses the video and opens the word's card in a sheet over the lower half of the tab, with the word in blue. Its line's card moves to the middle of the space above the sheet, and the notices above the cards, such as the English download, are put away while the sheet shows, so the line fits. No card opens on the watch page. | Transcript: "opens over the lower half of the tab from a click on a word…", "keeps the playing card in view, and moves the card of a word opened…", "puts the notices above the cards away while it shows…"; `e2e/transcript-word-sheet.spec.ts`: "a word clicked in the transcript pauses the video and opens its card in a sheet…" |
 | Its X, or Esc, closes it and plays the video again, only if it was playing. | Transcript: "closes from its X…", "closes from Esc…", "leaves a paused video paused when it closes"; `e2e/transcript-word-sheet.spec.ts` |
 | Its handle switches it between half and full height. | Transcript: "goes to full height from its handle, and back to half"; `e2e/transcript-word-sheet.spec.ts` |
 | Another word shows in the same sheet, at the same height, and the video plays again only once the sheet closes. | Transcript: "shows another word in the same sheet…" |
