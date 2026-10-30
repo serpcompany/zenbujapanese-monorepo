@@ -1,12 +1,10 @@
 import { stopPageLookup } from '../page-lookup/messages'
-import { languageDataOrigin } from '../shared/hosts'
+import { ownHosts } from '../shared/hosts'
 import type { FailureCode } from './router'
 
 const pageScriptId = 'page-lookup'
 
 const pageScriptFile = 'page-lookup.js'
-
-const ownHosts = [`${languageDataOrigin}/*`, 'https://www.youtube.com/*']
 
 type Granted = { origins?: string[] }
 

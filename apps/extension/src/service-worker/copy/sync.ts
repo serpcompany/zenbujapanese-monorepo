@@ -43,6 +43,7 @@ function batchOf(draft: Draft, atMost: number): Batch | null {
   const sent = meta.queue.filter(queued => queued.sent)
   const inBatch = new Set(sent.map(queuedKey))
   const mutations: Mutation[] = sent.map(queued => queued.mutation)
+  const marked = new Set<string>()
   let bytes = sizeOf(mutations)
   for (const queued of sendable(meta.queue)) {
     if (queued.sent || inBatch.has(queuedKey(queued))) continue
@@ -50,11 +51,12 @@ function batchOf(draft: Draft, atMost: number): Batch | null {
     const size = sizeOf(queued.mutation) + 1
     if (mutations.length > 0 && bytes + size > bytesAtOnce) break
     queued.sent = true
+    marked.add(queued.mutation.id)
     inBatch.add(queuedKey(queued))
     mutations.push(queued.mutation)
     bytes += size
   }
-  return { cursor: meta.cursor, mutations }
+  return { cursor: meta.cursor, mutations, marked }
 }
 
 const fresh = (lastSyncedAt: number | null, now: number) =>
@@ -95,11 +97,10 @@ export function accountSync(parts: SyncParts) {
     return 'stopped'
   }
 
-  async function unsent(batch: Batch, refusedWith?: number) {
-    const ids = new Set(batch.mutations.map(mutation => mutation.id))
+  async function unsent(clearing: Set<string>, refusedWith?: number) {
     await copy.edit(draft => {
       for (const queued of draft.meta?.queue ?? []) {
-        if (!ids.has(queued.mutation.id)) continue
+        if (!clearing.has(queued.mutation.id)) continue
         queued.sent = false
         if (refusedWith !== undefined) queued.refusedWith = refusedWith
       }
@@ -108,7 +109,7 @@ export function accountSync(parts: SyncParts) {
 
   async function refusedBatch(status: number, batch: Batch): Promise<Step> {
     const alone = batch.mutations.length === 1
-    await unsent(batch, alone ? status : undefined)
+    await unsent(new Set(batch.mutations.map(mutation => mutation.id)), alone ? status : undefined)
     if (alone) parts.reportFailure('account-sync', status)
     else atMost = Math.ceil(batch.mutations.length / 2)
     return 'more'
@@ -151,7 +152,7 @@ export function accountSync(parts: SyncParts) {
     }
     if (answer.status === 0 || answer.status >= 500) return backOff(answer.status === 0)
     if (answer.status === 403 || answer.status === 404) {
-      await unsent(batch)
+      await unsent(batch.marked)
       parts.reportFailure('account-sync', answer.status)
       return backOff(false)
     }
@@ -181,7 +182,8 @@ export function accountSync(parts: SyncParts) {
         ownedBy(draft, kept.user)
         parts.tell(null)
       }
-      reconcile(draft, browser, parts.newId)
+      const writes = reconcile(draft, browser, parts.newId)
+      if (Object.keys(writes).length > 0) await parts.settings.set(writes)
       return batchOf(draft, atMost)
     })
     if (batch === null) {

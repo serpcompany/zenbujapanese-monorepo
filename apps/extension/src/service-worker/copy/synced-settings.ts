@@ -1,7 +1,7 @@
 import { type SettingValue, settingValue } from '@zenbu/account-rules/settings'
 import type { AccountOnlySetting } from '../../shared/account-copy'
 import { type Settings, settingDefaults } from '../../shared/settings'
-import { type Draft, type Item, keyOf, queuedKey } from './kept'
+import { type Draft, type Item, itemKey, keyOf, queuedKey } from './kept'
 
 const syncedSettings = [
   'readingAids.furigana',
@@ -40,9 +40,10 @@ function browserValueOf(name: Synced, value: unknown): Settings[Synced] | null {
 const accountHolds = (item: Item | undefined): SettingValue | undefined =>
   item?.data ? (item.data.value as SettingValue) : undefined
 
-export function reconcile(draft: Draft, browser: Settings, newId: () => string): void {
+export function reconcile(draft: Draft, browser: Settings, newId: () => string): Partial<Settings> {
   const meta = draft.meta
-  if (!meta) return
+  if (!meta) return {}
+  const taken: Item[] = []
   for (const name of syncedSettings) {
     const key = keyOf('setting', name)
     const item = draft.get(key)
@@ -56,7 +57,15 @@ export function reconcile(draft: Draft, browser: Settings, newId: () => string):
     const refused = meta.refused[name]
     if (refused !== undefined && refused !== JSON.stringify(ours)) delete meta.refused[name]
     if (ours === null || ours === latest || meta.refused[name] !== undefined) {
-      if (unsent) meta.queue = meta.queue.filter(each => each !== unsent)
+      if (unsent) {
+        meta.queue = meta.queue.filter(each => each !== unsent)
+        const deferred = sent ? undefined : meta.deferred.find(each => itemKey(each) === key)
+        if (deferred) {
+          meta.deferred = meta.deferred.filter(each => each !== deferred)
+          draft.put(deferred)
+          taken.push(deferred)
+        }
+      }
       continue
     }
     if (unsent) {
@@ -77,6 +86,7 @@ export function reconcile(draft: Draft, browser: Settings, newId: () => string):
       before: null
     })
   }
+  return browserWrites(taken, browser)
 }
 
 export function browserWrites(items: readonly Item[], browser: Settings): Partial<Settings> {

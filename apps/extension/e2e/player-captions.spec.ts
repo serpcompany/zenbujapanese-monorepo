@@ -4,6 +4,7 @@ import { playerCaptionLabels as labels } from '../src/player-captions/labels.ts'
 import { textContrast } from './contrast.ts'
 import { expect, test } from './fixtures.ts'
 import { caption, enterFullscreen, openAt, overlay, videoState } from './watch-page.ts'
+import { expectWordsApartWithMeaningsOffAndOn } from './word-underlines.ts'
 import { changeSettings, tones, wordPopup } from './words-page.ts'
 
 test.use({ youTubeStandIn: true })
@@ -79,6 +80,15 @@ test('draws word meanings on the caption at least 4.5:1 against its band over th
     expect(measured[tone]).toBeGreaterThanOrEqual(4.5)
   }
   writeFileSync(test.info().outputPath('contrast.json'), JSON.stringify(measured))
+  await changeSettings(extension, { 'readingAids.wordMeanings': false })
+})
+
+test('gives each word on the caption its own underline, apart from the next, with Word Meanings off and on', async ({
+  extension,
+  page
+}) => {
+  await openAt(page, 10.2)
+  await expectWordsApartWithMeaningsOffAndOn(extension, caption(page), [['要所', '要所', '要求']])
   await changeSettings(extension, { 'readingAids.wordMeanings': false })
 })
 
