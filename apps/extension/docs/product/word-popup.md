@@ -3,7 +3,7 @@
 The word popup opens from a click on an underlined word on a page
 ([`page-lookup.md`](page-lookup.md)), and on a word of the side panel's Japanese, in Translate
 ([`translate.md`](translate.md)) and the Player tab's transcript ([`video-tab.md`](video-tab.md)),
-where it opens on the page beside the panel. It is the word's card, as in the app: drawn with `@zenbu/ui`'s
+where a click opens it on the page beside the panel and Enter or Space opens it in the panel. It is the word's card, as in the app: drawn with `@zenbu/ui`'s
 word components in Zenbu's look, whatever the page's styles, light or dark as the system is set.
 The text is in `src/word-popup/labels.ts` and Word Detail's labels.
 
@@ -54,7 +54,14 @@ the panel or on the page, a press outside it in the panel, and Escape or a click
 the page close it. A page shows one popup: a click on a word on the page puts that word's card in
 the place of the panel's, and a panel word's in the place of the page's.
 
-Where the tab can't show one, the card opens in the panel instead, under the word's line, at
+A word opened from the keyboard, with Enter or Space, shows its card in the panel instead, under
+the word's line, with focus in the card, and opens none on the page; this is the one exception to
+the panel showing no cards, since focus can't move from the side panel into the page, so a card
+there is out of a keyboard user's reach (the owner's decision on #1124, 2026-10-30). Escape
+closes it and gives focus back to the word. A click on a word afterwards still opens its card on
+the page, and a key on a word closes a card the page shows for the panel.
+
+Where the tab can't show one, the card opens in the panel too, under the word's line, at
 this popup's size or the line's width where that is narrower: on a `chrome://` page, the Chrome
 Web Store, a PDF, a site where Zenbu is off, and a tab with no Zenbu in it, such as one opened before Zenbu was installed or updated. There
 Escape and a press outside it, its menu, or the line's words close it. Escape gives focus back to
@@ -132,10 +139,15 @@ that can't, one card replacing another, a card left on a tab the learner left) a
 closing either way, one answer with both content scripts in a frame, and a card replaced by
 another part's, by hand-over or across a press); `e2e/transcript-card-on-page.spec.ts`, "with
 Every Site given, one card answers a transcript word on YouTube, and Escape in the panel closes
-it"; in the panel,
+it", and "a transcript word opened with Enter or Space shows its card in the panel, with focus
+in it…"; in the panel,
 `src/translate/source-words.interaction.test.tsx` ("opens a word's card on the page…", "lets go
 of the word when the page closes its card…", "shows the card under the line… when the page
-can't show one") and `e2e/side-panel-popup.spec.ts`, "where the page can't show a word's card,
+can't show one", "shows a word's card in the panel, with focus in it, when Enter opens it…", the
+same for Space, and "opens a word's card on the page from a click after a key opened one in the
+panel…"), the keyboard's card for the transcript and Translate in
+`src/video-tab/transcript.interaction.test.tsx` and
+`src/translate/translate-tab.interaction.test.tsx` ("…when a key opens it"), and `e2e/side-panel-popup.spec.ts`, "where the page can't show a word's card,
 its popup opens in the side panel and stays inside it at its narrowest width".
 The voice: `packages/ui/src/dictionary/voice.test.ts` (the order above, and each surface's rule
 when only an online voice speaks Japanese), `packages/ui/src/dictionary/pronounce-button.interaction.test.tsx`

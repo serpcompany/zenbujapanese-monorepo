@@ -51,8 +51,9 @@ doesn't sign in yet (#961): Account is where it will show.
 - **Each tab keeps its own pages:** choosing another tab and coming back finds the page where it
   was (`panel.interaction.test.tsx`).
 - **Image Search,** over Translate ([`translate.md`](translate.md)). A word's card and its full
-  entry don't open as pages: a word clicked in the panel opens its card on the page, and Open Full
-  Entry expands the card in place ([`word-popup.md`](word-popup.md)).
+  entry don't open as pages: a word clicked in the panel opens its card on the page, one opened
+  with Enter or Space shows its card under its line, and Open Full Entry expands the card in place
+  ([`word-popup.md`](word-popup.md)).
 - **The test page,** in the test build only, shows its text and opens another page over itself.
   The release build refuses a route to it (`route.test.ts`).
 

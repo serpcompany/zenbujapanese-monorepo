@@ -119,3 +119,26 @@ test('a caption word clicked over a transcript word’s card takes its place, an
   await expect.poll(() => page.evaluate(() => document.body.dataset.plays)).toBe('1')
   await page.evaluate(() => document.querySelector('video')?.pause())
 })
+
+test('a transcript word opened with Enter or Space shows its card in the panel, with focus in it, and Escape gives focus back to the word', async ({
+  extension,
+  page
+}) => {
+  await openAt(page, 1)
+  const { panel, transcript } = await panelBeside(extension, await watchTab(extension))
+  const word = transcriptWord(transcript)
+  const card = panel.getByRole('dialog', { name: fill(wordPopupLabels.word, { name: '要求' }) })
+  for (const key of ['Enter', 'Space']) {
+    await word.focus()
+    await panel.keyboard.press(key)
+    await expect(card.locator('[data-meaning]').first()).toContainText('demand')
+    await expect(card).toBeFocused()
+    await expect(wordPopup(page)).toHaveCount(0)
+    await panel.keyboard.press('Escape')
+    await expect(card).toHaveCount(0)
+    await expect(word).toBeFocused()
+  }
+  await word.click()
+  await expect(wordPopup(page)).toHaveCount(1)
+  await expect(panel.locator('[data-word-popup]')).toHaveCount(0)
+})

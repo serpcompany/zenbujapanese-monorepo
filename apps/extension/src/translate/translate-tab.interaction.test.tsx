@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Failure } from '../shared/messages'
 import type { PanelTabProps } from '../side-panel/route'
 import { startExtension } from '../test/extension'
-import { click, find, settle } from '../test/render'
+import { click, find, keyClick, pointerClick, settle } from '../test/render'
 import { standInTranslator as standInChrome } from '../test/translator-stand-in'
 import {
   notReady,
@@ -115,14 +115,17 @@ describe('the Translate tab', () => {
     expect(tab.card()?.textContent).toContain(translateLabels.onThisDevice)
   })
 
-  async function sourceWordClicked(services: ReturnType<typeof servicesWith>) {
+  async function sourceWordClicked(
+    services: ReturnType<typeof servicesWith>,
+    activate: typeof pointerClick = pointerClick
+  ) {
     standInTranslator()
     services.segment.mockImplementation(async () => sentenceAnswer)
     const tab = await showTab(services)
     await tab.type(sentence)
     await tab.click(translateLabels.translate)
     await settle()
-    await click(find(document, '[data-source] [data-word="要求"]'))
+    await activate(find(document, '[data-source] [data-word="要求"]'))
   }
 
   it('links the words of a Japanese source to their card on the page, with no card in the panel', async () => {
@@ -135,6 +138,16 @@ describe('the Translate tab', () => {
     expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '要求', ids: ['youkyuu'] })
     expect(document.querySelector('[data-word-popup]')).toBeNull()
     expect(services.segment).toHaveBeenCalledWith(sentence)
+  })
+
+  it('shows a source word’s card in the panel, with focus in it, when a key opens it', async () => {
+    const pagePopup = vi.fn<PagePopup>(() => () => {})
+    const services = { ...servicesWith(), pagePopup }
+    await sourceWordClicked(services, keyClick)
+    const card = document.querySelector('[data-word-popup]')
+    expect(pagePopup).not.toHaveBeenCalled()
+    expect(card?.closest('[data-reading-aids]')).not.toBeNull()
+    expect(card?.contains(document.activeElement)).toBe(true)
   })
 
   it('expands a source word’s popup in place where the page can’t show its card', async () => {

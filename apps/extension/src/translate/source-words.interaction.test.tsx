@@ -2,7 +2,16 @@ import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { settingDefaults, writeSettings } from '../shared/settings'
 import { startExtension } from '../test/extension'
-import { click, find, openMenu, type Rendered, render, settle } from '../test/render'
+import {
+  click,
+  find,
+  keyClick,
+  openMenu,
+  pointerClick as press,
+  type Rendered,
+  render,
+  settle
+} from '../test/render'
 import {
   notReady,
   openFullEntryButton,
@@ -70,16 +79,6 @@ const words = (scope: ParentNode) =>
 
 const popup = () => document.querySelector('[data-word-popup]')
 
-const press = async (target: Element) => {
-  act(() => {
-    for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) {
-      const Press = type.startsWith('pointer') ? PointerEvent : MouseEvent
-      target.dispatchEvent(new Press(type, { bubbles: true, cancelable: true, button: 0 }))
-    }
-  })
-  await settle()
-}
-
 const outside = () => {
   const button = document.body.appendChild(document.createElement('button'))
   button.focus()
@@ -142,7 +141,7 @@ describe('the Japanese source of a translation', () => {
     const page = onThePage()
     const container = await page.show()
     const word = find(container, '[data-word="要求"]')
-    await click(word)
+    await press(word)
     expect(page.asked.map(({ word }) => word)).toEqual([
       {
         text: '要求',
@@ -161,12 +160,12 @@ describe('the Japanese source of a translation', () => {
   it('lets go of the word when the page closes its card, and puts it away on Escape with focus back on the word', async () => {
     const page = onThePage()
     const container = await page.show()
-    await click(find(container, '[data-word="要る"]'))
+    await press(find(container, '[data-word="要る"]'))
     await page.hear('shown')
     await page.hear('closed')
     expect(page.onPopup).toHaveBeenLastCalledWith(false, expect.any(Function))
     const word = find(container, '[data-word="要求"]')
-    await click(word)
+    await press(word)
     await page.hear('shown', 1)
     await escapeOn(document.body)
     expect(page.asked[1]?.close).toHaveBeenCalledOnce()
@@ -177,11 +176,45 @@ describe('the Japanese source of a translation', () => {
   it('shows the card under the line, at the popup’s size, when the page can’t show one', async () => {
     const page = onThePage()
     const container = await page.show()
-    await click(find(container, '[data-word="要求"]'))
+    await press(find(container, '[data-word="要求"]'))
     expect(popup()).toBeNull()
     await page.hear('unavailable')
     expect(popup()?.getAttribute('aria-label')).toBe('Word 要求')
     expect(popup()?.parentElement?.closest('[data-reading-aids]')).not.toBeNull()
+  })
+
+  it.each([
+    ['Enter', 'Enter'],
+    ['Space', ' ']
+  ] as const)('shows a word’s card in the panel, with focus in it, when %s opens it, and gives focus back to the word on Escape', async (_name, key) => {
+    const page = onThePage()
+    const container = await page.show()
+    const word = find(container, '[data-word="要求"]')
+    await keyClick(word, key)
+    expect(page.pagePopup).not.toHaveBeenCalled()
+    expect(popup()?.getAttribute('aria-label')).toBe('Word 要求')
+    expect(popup()?.parentElement?.closest('[data-reading-aids]')).not.toBeNull()
+    expect(popup()?.contains(document.activeElement)).toBe(true)
+    expect(page.onPopup).toHaveBeenLastCalledWith(true, expect.any(Function))
+    await escapeOn(document.activeElement)
+    expect(popup()).toBeNull()
+    expect(document.activeElement).toBe(word)
+    expect(page.onPopup).toHaveBeenLastCalledWith(false, expect.any(Function))
+  })
+
+  it('opens a word’s card on the page from a click after a key opened one in the panel, and the other way round', async () => {
+    const page = onThePage()
+    const container = await page.show()
+    await keyClick(find(container, '[data-word="要る"]'))
+    await press(find(container, '[data-word="要求"]'))
+    expect(page.asked.map(({ word }) => word.text)).toEqual(['要求'])
+    await page.hear('shown')
+    expect(popup()).toBeNull()
+    await keyClick(find(container, '[data-word="要る"]'))
+    expect(page.asked[0]?.close).toHaveBeenCalledOnce()
+    expect(page.pagePopup).toHaveBeenCalledOnce()
+    expect(popup()?.getAttribute('aria-label')).toBe('Word 要る')
+    expect(popup()?.contains(document.activeElement)).toBe(true)
   })
 
   it('puts the popup away on a press outside it and leaves focus and scroll where the press put them', async () => {

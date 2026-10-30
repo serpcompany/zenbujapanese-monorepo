@@ -1,6 +1,7 @@
 import { RomajiLine } from '@zenbu/ui/dictionary/reading-aid-lines'
 import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import {
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type RefObject,
   useCallback,
@@ -105,7 +106,7 @@ function Words({
         data-start={token.start}
         className={wordClass}
         onPointerDown={keep}
-        onClick={event => pick(token, event.currentTarget)}
+        onClick={event => pick(token, event.currentTarget, fromKeys(event))}
       >
         <RubyText segments={token.ruby} />
       </button>
@@ -133,7 +134,9 @@ const keptPresses = new WeakSet<Event>()
 
 const keep = (event: ReactPointerEvent) => void keptPresses.add(event.nativeEvent)
 
-type Picked = { token: PageToken; at: 'asking' | 'page' | 'inline' }
+const fromKeys = (event: ReactMouseEvent) => event.detail === 0
+
+type Picked = { token: PageToken; at: 'asking' | 'page' | 'inline'; id: number }
 
 function usePicked(source: RefObject<HTMLParagraphElement | null>, pagePopup?: PagePopup) {
   const [picked, setPicked] = useState<Picked | null>(null)
@@ -146,18 +149,22 @@ function usePicked(source: RefObject<HTMLParagraphElement | null>, pagePopup?: P
     setPicked(null)
   }, [])
   const pick = useCallback(
-    (token: PageToken, word: HTMLElement) => {
+    (token: PageToken, word: HTMLElement, keys: boolean) => {
       const id = ++asked.current
-      if (!pagePopup) return setPicked({ token, at: 'inline' })
+      if (!pagePopup || keys) {
+        closeOnPage.current?.()
+        closeOnPage.current = null
+        return setPicked({ token, at: 'inline', id })
+      }
       const fromBottom = window.innerHeight - word.getBoundingClientRect().top
       const current = () => asked.current === id
-      setPicked({ token, at: 'asking' })
+      setPicked({ token, at: 'asking', id })
       closeOnPage.current = pagePopup(
         { text: token.text, ids: token.ids, fromBottom },
         {
-          shown: () => current() && setPicked({ token, at: 'page' }),
+          shown: () => current() && setPicked({ token, at: 'page', id }),
           closed: () => current() && drop(),
-          unavailable: () => current() && setPicked({ token, at: 'inline' })
+          unavailable: () => current() && setPicked({ token, at: 'inline', id })
         }
       )
     },
@@ -187,7 +194,7 @@ function usePicked(source: RefObject<HTMLParagraphElement | null>, pagePopup?: P
   return { picked, pick, drop }
 }
 
-type PickWord = (token: PageToken, word: HTMLElement) => void
+type PickWord = (token: PageToken, word: HTMLElement, keys: boolean) => void
 
 type LineProps = {
   settings: Settings
@@ -238,7 +245,7 @@ function Linked({
       {picked?.at === 'inline' ? (
         <section className="pt-2 [&_[data-word-popup]]:max-w-full" onPointerDown={keep}>
           <WordPopup
-            key={picked.token.start}
+            key={picked.id}
             text={picked.token.text}
             ids={picked.token.ids}
             lookUp={lookUp}

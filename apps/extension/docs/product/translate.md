@@ -63,7 +63,9 @@ When the text is Japanese, each dictionary word in it is underlined as on a page
 one opens its card on the page in the tab the learner is on, as the word popup, beside the side
 panel's edge and level with the word; the panel shows no card ([`word-popup.md`](word-popup.md),
 A word's card from the side panel). Escape, in the panel or on the page, or a press outside it
-puts it away. Where that tab can't show one, such as a `chrome://` page, the Chrome Web Store, a
+puts it away. A word opened from the keyboard, with Enter or Space, shows its card under the text
+instead, with focus in it, since focus can't move from the panel into the page (the owner's
+decision on #1124); Escape gives focus back to the word. Where that tab can't show one, such as a `chrome://` page, the Chrome Web Store, a
 PDF, or a site where Zenbu is off, the popup opens under the text instead, at its size on a page.
 There Escape or a press outside the popup puts it away; Escape gives focus back to the word, and
 a press leaves focus where it lands. While the popup's ••• menu is open, a press closes only the
@@ -78,9 +80,12 @@ each time as page lookup does, and links the words once it is ready.
 Check: `src/translate/source-words.interaction.test.tsx` ("opens a word's card on the page…",
 "lets go of the word when the page closes its card…", "shows the card under the line, at the
 popup's size, when the page can't show one", "opens the word popup under the line where nothing
-can show it on the page, and Open Full Entry expands it there"), and the tab's test, "links the
-words of a Japanese source to their card on the page, with no card in the panel" and "expands a
-source word's popup in place where the page can't show its card". The spacing, colour and tooltip are checked in the Player tab's transcript,
+can show it on the page, and Open Full Entry expands it there", "shows a word's card in the
+panel, with focus in it, when Enter opens it…", the same for Space, and "opens a word's card on
+the page from a click after a key opened one in the panel…"), and the tab's test, "links the
+words of a Japanese source to their card on the page, with no card in the panel", "shows a source
+word's card in the panel, with focus in it, when a key opens it" and "expands a source word's
+popup in place where the page can't show its card". The spacing, colour and tooltip are checked in the Player tab's transcript,
 which draws the same line (`e2e/transcript-meanings.spec.ts`).
 
 ## Downloading and unavailable

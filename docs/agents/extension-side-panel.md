@@ -25,7 +25,8 @@ state only, when no video is open; the code keeps the Video tab's names. It read
 for the video's captions, and follows the video on its port
 ([`extension-captions.md`](extension-captions.md#the-player-tabs-port)) only while shown. The
 panel has no Word Detail pages (#1124): a word clicked in Translate or the transcript opens its
-card on the page through a `word-popup` port, and Open Full Entry expands a card in place
+card on the page through a `word-popup` port, one opened from the keyboard shows its card in
+the panel, and Open Full Entry expands a card in place
 ([A word's card on the page](#a-words-card-on-the-page)).
 
 - **The toolbar icon opens it.** The manifest's `action` has no popup, and the service worker
@@ -111,6 +112,15 @@ disconnects the port; the panel disconnecting closes it.
   `composedPath()` has the card, and any open portal layer (`hasOpenLayer` in `open-layer.ts`, on
   the shadow root) holds it too. In the panel, a press inside a word or the inline card is marked
   through React's events, which pass through portals, and an open layer holds it as on the page.
+- **A word opened from the keyboard stays in the panel.** Focus can't move from the side panel
+  into the page, so a card there is out of a keyboard user's reach (the owner's decision on
+  #1124, 2026-10-30). Enter and Space on a button fire a `click` whose `detail` is 0, and a
+  pointer's has its click count, 1 or more, so `Words` passes `event.detail === 0` to `pick`,
+  which then draws the card inline, asks the page for none, and closes any the page shows for
+  the panel. `WordPopup` focuses its card when it mounts, keyed by each pick, and Escape gives
+  focus back to the word. A screen reader's activation is a `click` with `detail` 0 too, so it
+  gets the inline card as well. The caption on the player passes its own `pick`, which ignores
+  the flag: its words are on the page.
 
 ## The header's site
 

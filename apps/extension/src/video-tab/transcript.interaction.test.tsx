@@ -7,7 +7,7 @@ import { settingDefaults, writeSettings } from '../shared/settings'
 import { recheckMs } from '../shared/translation-model'
 import { portPair } from '../test/fake-port'
 import { fakePopupHost, fakeRuntime } from '../test/page-frame'
-import { click, settle } from '../test/render'
+import { click, keyClick, pointerClick, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
 import { openFullEntryButton, popupAnswer } from '../test/word-cards'
 import { translateLabels } from '../translate/labels'
@@ -92,7 +92,7 @@ async function aWordCardOnThePage() {
   })
   const shown = await transcript({ pagePopup })
   await shown.playsAt(12)
-  await click(document.querySelector(walkWord('散歩')))
+  await pointerClick(document.querySelector(walkWord('散歩')))
   await vi.waitFor(() => expect(panelCards.shown()).not.toBeNull())
   await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
   return { shown, panelCards, captionCards: fakePopupHost() }
@@ -341,13 +341,13 @@ describe('the transcript’s words', () => {
     })
     const shown = await transcript({ pagePopup })
     await shown.playsAt(12)
-    await click(document.querySelector(walkWord('散歩')))
+    await pointerClick(document.querySelector(walkWord('散歩')))
     await act(async () => heard[0]?.shown())
     expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '散歩' })
     expect(popup()).toBeNull()
     await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
 
-    await click(document.querySelector(walkWord('天気')))
+    await pointerClick(document.querySelector(walkWord('天気')))
     await act(async () => heard[1]?.shown())
     expect(closes[0]).toHaveBeenCalledOnce()
     expect(popup()).toBeNull()
@@ -356,6 +356,31 @@ describe('the transcript’s words', () => {
     await act(async () => heard[1]?.closed())
     await playsAgain(shown)
   })
+  it('shows a word’s card in the panel, with focus in it and the video paused, when a key opens it, and a click still opens one on the page', async () => {
+    const pagePopup = vi.fn<PagePopup>(() => () => {})
+    const shown = await transcript({ pagePopup })
+    await shown.playsAt(12)
+    const word = document.querySelector<HTMLElement>(walkWord('散歩'))
+    await keyClick(word)
+    expect(pagePopup).not.toHaveBeenCalled()
+    expect(popup()?.closest('[data-line]')).not.toBeNull()
+    expect(popup()?.contains(document.activeElement)).toBe(true)
+    await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+    await act(async () =>
+      document.activeElement?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+      )
+    )
+    await settle()
+    expect(popup()).toBeNull()
+    expect(document.activeElement).toBe(word)
+    await playsAgain(shown)
+
+    await pointerClick(document.querySelector(walkWord('天気')))
+    expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '天気' })
+    expect(popup()).toBeNull()
+  })
+
   it('keeps the video paused while another card on the page takes the place of a word’s card, and plays it when the last one closes', async () => {
     const { shown, panelCards, captionCards } = await aWordCardOnThePage()
     await act(async () => captionCards.open(captionWord))
