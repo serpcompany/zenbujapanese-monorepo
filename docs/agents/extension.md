@@ -29,7 +29,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and removes them ([`extension-error-reports.md`](extension-error-reports.md)). `Extension packages` runs it on the store package's build, only on `main` ([`ci-deploys.md`](ci-deploys.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
 | `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
-| `pnpm check-hosts <production\|staging>` | Fails unless the environment's `/account/extension/` answers 200 and its account service answers a made-up extension sign-in code 401 `invalid_code`, saying which and why. |
+| `pnpm check-hosts <production\|staging>` | Fails unless the environment's `/account/extension/` answers 200 (staging's request sends its public password, `stagingpassword`, as Basic auth; a 401 there says the password was refused) and its account service answers a made-up extension sign-in code 401 `invalid_code`, saying which and why. |
 
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
