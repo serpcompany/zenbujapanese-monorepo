@@ -1,14 +1,23 @@
 import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
 import type { CaptionPlace } from '../shared/settings'
-import { type Box, dragSlop, followed, type Point, placeOf } from './caption-place'
+import { type Box, followed, type Point, placeOf } from './caption-place'
 
 export type KeepPlace = (place: CaptionPlace | null) => void
+
+export const holdTime = 280
+
+const holdSlop = 6
+
+export type DragStage = 'pressed' | 'lifted'
 
 type Press = {
   pointer: number
   x: number
   y: number
   grip: Point
+  box: HTMLElement
+  timer: ReturnType<typeof setTimeout>
+  lifted: boolean
   place: CaptionPlace | null
 }
 
@@ -22,58 +31,93 @@ const onWord = (target: EventTarget) =>
 
 export function useCaptionDrag(keep: KeepPlace) {
   const press = useRef<Press | null>(null)
+  const eatClick = useRef(false)
+  const [stage, setStage] = useState<DragStage | null>(null)
   const [moving, setMoving] = useState<CaptionPlace | null>(null)
 
   useEffect(
     () => () => {
       const held = press.current
       press.current = null
-      if (held?.place) keep(held.place)
+      if (!held) return
+      clearTimeout(held.timer)
+      if (held.place) keep(held.place)
     },
     [keep]
   )
 
+  const release = () => {
+    const held = press.current
+    press.current = null
+    if (!held) return
+    clearTimeout(held.timer)
+    eatClick.current = held.lifted
+    if (held.place) keep(held.place)
+    setStage(null)
+    setMoving(null)
+  }
+
+  const lift = () => {
+    const held = press.current
+    if (!held) return
+    held.lifted = true
+    held.box.setPointerCapture(held.pointer)
+    setStage('lifted')
+  }
+
   const follow = (event: PointerEvent<HTMLElement>) => {
     const held = press.current
     if (held?.pointer !== event.pointerId) return
-    const x = event.clientX - held.x
-    const y = event.clientY - held.y
+    if (!held.lifted) {
+      if (Math.hypot(event.clientX - held.x, event.clientY - held.y) > holdSlop) release()
+      return
+    }
     const room = event.currentTarget.parentElement
-    if (!room || (!held.place && Math.hypot(x, y) < dragSlop)) return
+    if (!room) return
     const pointer = { x: event.clientX, y: event.clientY }
     held.place = placeOf(followed(boxOf(event.currentTarget), pointer, held.grip), boxOf(room))
     setMoving(held.place)
   }
 
-  const drop = () => {
-    const held = press.current
-    press.current = null
-    if (held?.place) keep(held.place)
-    setMoving(null)
-  }
-
   return {
     moving,
+    stage,
     handlers: {
       onPointerDown(event: PointerEvent<HTMLElement>) {
-        if (event.button !== 0 || onWord(event.target)) return
-        const box = boxOf(event.currentTarget)
+        eatClick.current = false
+        if (event.button !== 0 || press.current) return
+        const box = event.currentTarget
+        const { left, top } = boxOf(box)
         press.current = {
           pointer: event.pointerId,
           x: event.clientX,
           y: event.clientY,
-          grip: { x: event.clientX - box.left, y: event.clientY - box.top },
+          grip: { x: event.clientX - left, y: event.clientY - top },
+          box,
+          timer: setTimeout(lift, holdTime),
+          lifted: false,
           place: null
         }
-        event.currentTarget.setPointerCapture(event.pointerId)
+        setStage('pressed')
       },
       onPointerMove: follow,
       onPointerUp(event: PointerEvent<HTMLElement>) {
         follow(event)
-        drop()
+        release()
       },
-      onPointerCancel: drop,
-      onLostPointerCapture: drop,
+      onPointerCancel: release,
+      onPointerLeave() {
+        if (!press.current?.lifted) release()
+      },
+      onLostPointerCapture(event: PointerEvent<HTMLElement>) {
+        if (event.target === event.currentTarget) release()
+      },
+      onClickCapture(event: MouseEvent<HTMLElement>) {
+        if (!eatClick.current) return
+        eatClick.current = false
+        event.stopPropagation()
+        event.preventDefault()
+      },
       onDoubleClick(event: MouseEvent<HTMLElement>) {
         if (!onWord(event.target)) keep(null)
       }

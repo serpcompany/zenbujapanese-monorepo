@@ -42,7 +42,7 @@ export function captionServices(translator: TranslatorState = 'available') {
     })),
     wait: vi.fn<CaptionServices['wait']>(() => new Promise(() => {})),
     popupCard: vi.fn(async (id: string) => popupAnswer(id)),
-    keepCaptionPlace: vi.fn<CaptionServices['keepCaptionPlace']>(),
+    keepCaptionPlaces: vi.fn<CaptionServices['keepCaptionPlaces']>(),
     translate: vi.fn<CaptionServices['translate']>(async request => {
       if (request.type !== 'translate') return { type: 'availability', state: state.translator }
       if (state.translator !== 'available')
@@ -89,6 +89,7 @@ async function playerOn({ settings = {}, translator, duration }: Options = {}) {
     player.querySelector<HTMLElement>(`[${playerCaptionsAttribute}]`)?.shadowRoot ?? null
   const toolbar = () => root()?.querySelector<HTMLElement>('[role="toolbar"]') ?? null
   const caption = () => root()?.querySelector<HTMLElement>('[data-player-caption]') ?? null
+  const translation = () => root()?.querySelector<HTMLElement>('[data-player-translation]') ?? null
   const wait = (milliseconds: number) =>
     act(async () => {
       await vi.advanceTimersByTimeAsync(milliseconds)
@@ -101,6 +102,7 @@ async function playerOn({ settings = {}, translator, duration }: Options = {}) {
     root,
     toolbar,
     caption,
+    translation,
     wait,
     shown: () => shown as ShownCaptions,
     button: (label: string) =>
@@ -108,7 +110,7 @@ async function playerOn({ settings = {}, translator, duration }: Options = {}) {
     word: (text: string) =>
       root()?.querySelector<HTMLElement>(`[data-player-caption] [data-word="${text}"]`) ?? null,
     line: () => lineText(caption()),
-    english: () => caption()?.querySelector('[data-aid="translation"]')?.textContent ?? null,
+    english: () => translation()?.textContent ?? null,
     status: () => root()?.querySelector('output')?.textContent ?? '',
     controlsShown: () => toolbar() !== null && !toolbar()?.hasAttribute('data-hidden'),
     async playFrom(time: number) {
