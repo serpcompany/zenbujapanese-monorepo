@@ -1,6 +1,7 @@
 import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/detail/pitch'
 import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
+import type { ReactNode } from 'react'
 import { Card, CardContent } from '../components/card'
 import { Separator } from '../components/separator'
 import { ConjugationsLink } from './conjugations'
@@ -22,7 +23,8 @@ export function WordHeader({
   text,
   onUnsupported,
   onOpenConjugations,
-  headwordSize = 'page'
+  headwordSize = 'page',
+  tag
 }: {
   headword: string
   ruby: RubySegment[]
@@ -35,6 +37,7 @@ export function WordHeader({
   onUnsupported: OnUnsupported
   onOpenConjugations?: () => void
   headwordSize?: keyof typeof headwordSizes
+  tag?: ReactNode
 }) {
   return (
     <Card>
@@ -50,6 +53,7 @@ export function WordHeader({
             </h1>
             <RomajiLine romaji={romaji(reading)} className="text-base" />
             {reading === headword ? null : <ReadingLine reading={reading} className="text-2xl" />}
+            {tag}
           </div>
           {pitch ? (
             <PitchAccent

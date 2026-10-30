@@ -8,6 +8,8 @@ import { wordAddress } from '../shared/word-address'
 import type { EntryPage } from '../word-detail/entry-page'
 import { FullEntry } from '../word-detail/full-entry'
 import type { Notices } from '../word-detail/notice'
+import { type SavingPort, SavingProvider } from '../word-saving/saving'
+import { SavingToastView } from '../word-saving/saving-toast'
 import { copyText, type Sharing } from './copy'
 import { wordPopupLabels } from './labels'
 import { shareText } from './shown'
@@ -19,6 +21,7 @@ export type WordPopupProps = {
   ids: readonly string[]
   lookUp: WordLookUp
   settings: Settings
+  saving: SavingPort
   sharing?: Sharing
 }
 
@@ -129,7 +132,15 @@ function usePopupNotices(frame: RefObject<HTMLDivElement | null>, sharing?: Shar
   return { notice, notices }
 }
 
-export function WordPopup({ text, ids, lookUp, settings, sharing }: WordPopupProps) {
+export function WordPopup({ saving, ...props }: WordPopupProps) {
+  return (
+    <SavingProvider port={saving}>
+      <PopupFrame {...props} />
+    </SavingProvider>
+  )
+}
+
+function PopupFrame({ text, ids, lookUp, settings, sharing }: Omit<WordPopupProps, 'saving'>) {
   const cards = useCards(ids, lookUp)
   const [chosen, setChosen] = useState<string | null>(ids.length === 1 ? ids[0] : null)
   const [expanded, setExpanded] = useState<EntryPage | null>(null)
@@ -143,7 +154,6 @@ export function WordPopup({ text, ids, lookUp, settings, sharing }: WordPopupPro
   const copyLink = (shown: WordCard) =>
     void notices.copy(wordAddress(shown), labels.share.linkCopied)
   const actions: CardActions = {
-    copyLink,
     share(shown) {
       const share = sharing?.share ?? navigator.share?.bind(navigator)
       if (!share) return void copyLink(shown)
@@ -154,6 +164,7 @@ export function WordPopup({ text, ids, lookUp, settings, sharing }: WordPopupPro
       )
     },
     openFullEntry: shown => setExpanded(entryPage(shown, ids, cards)),
+    addNote: shown => setExpanded(entryPage(shown, ids, cards)),
     onUnsupported: notices.notify
   }
   const name = card ? card.headword : text
@@ -182,6 +193,7 @@ export function WordPopup({ text, ids, lookUp, settings, sharing }: WordPopupPro
             {notice}
           </output>
         ) : null}
+        <SavingToastView className="m-2 w-auto shrink-0" />
       </div>
     )
   }
@@ -219,6 +231,7 @@ export function WordPopup({ text, ids, lookUp, settings, sharing }: WordPopupPro
           {notice}
         </output>
       ) : null}
+      <SavingToastView />
     </div>
   )
 }

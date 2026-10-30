@@ -6,6 +6,7 @@ import {
   type CopyWorld,
   copyWorld,
   gated,
+  heldCopy,
   otherWord,
   word
 } from '../../test/copy-world'
@@ -143,18 +144,13 @@ describe("the copy's sync when the account service fails", () => {
   })
 
   it('sends nothing while the account needs a subscription for cloud access', async () => {
-    const world = copyWorld(
-      undefined,
-      {},
-      {
-        'GET /v1/me/subscription': () => json(200, subscription)
-      }
-    )
-    await world.signIn()
-    await world.store.keepSubscription('session-user-1', subscription)
+    const world = await heldCopy(undefined, {
+      'GET /v1/me/subscription': () => json(200, subscription)
+    })
     await world.change({ change: 'mark', ...word })
+    await world.store.keepSubscription('session-user-1', subscription)
     await world.settled()
-    expect(world.syncs()).toEqual([])
+    expect(world.sent()).toEqual([])
     await expect(world.read()).resolves.toMatchObject({
       sync: 'subscription-required',
       unsynced: 1
@@ -165,10 +161,9 @@ describe("the copy's sync when the account service fails", () => {
     ['Sync Now', { copy: 'sync' }],
     ['a page opening', { copy: 'opened' }]
   ] as const)('reads the subscription again on %s, and syncs once the account has subscribed elsewhere', async (_, asked) => {
-    const world = copyWorld()
-    await world.signIn()
-    await world.store.keepSubscription('session-user-1', subscription)
+    const world = await heldCopy()
     await world.change({ change: 'mark', ...word })
+    await world.store.keepSubscription('session-user-1', subscription)
     await world.settled()
     await world.ask(asked)
     await vi.waitFor(() => expect(world.sent()).toHaveLength(1))
@@ -349,13 +344,12 @@ const words = (count: number) =>
     item: `${String(at).padStart(2, '0')}${word.item.slice(2)}`
   }))
 
-async function queuedWhileSignedOut(world: CopyWorld, marked: (typeof word)[]) {
-  await world.signIn()
-  await world.settled()
-  await world.signOut()
+async function queuedWhileHeld(sync: Parameters<typeof heldCopy>[0], marked: (typeof word)[]) {
+  const world = await heldCopy(sync)
   for (const each of marked) await world.change({ change: 'mark', ...each })
-  await world.signIn()
   await world.settled()
+  world.later(2_000)
+  return world
 }
 
 function refusingWhen(refuses: (body: Sync) => Response | null) {
@@ -385,8 +379,7 @@ async function oneRefusedUntilFixed(marked: (typeof word)[], at: number) {
       ? refusal(400, 'bad_request')
       : null
   )
-  const world = copyWorld(service.sync)
-  await queuedWhileSignedOut(world, marked)
+  const world = await queuedWhileHeld(service.sync, marked)
   return {
     world,
     service,
@@ -406,8 +399,7 @@ describe("the copy's sync when the service refuses a whole request", () => {
         ? refusal(400, 'bad_request')
         : null
     )
-    const world = copyWorld(service.sync)
-    await queuedWhileSignedOut(world, marked)
+    const world = await queuedWhileHeld(service.sync, marked)
     await expectRefusedAlone(world, { up: service.up, marked, refused, status: 400 })
     const asked = world.syncs().length
     await world.change({ change: 'mark', ...otherWord })
@@ -468,9 +460,8 @@ describe("the copy's sync when the service refuses a whole request", () => {
       const ids = body.mutations.map(mutation => mutation.entityId)
       return ids.includes(refused ?? '') ? refusal(status, 'refused') : null
     })
-    const world = copyWorld(service.sync)
-    await queuedWhileSignedOut(world, marked)
-    expect(world.syncs()).toHaveLength(2)
+    const world = await queuedWhileHeld(service.sync, marked)
+    expect(unavailable).toBe(false)
     await world.settled()
     expect(world.syncs().length).toBeLessThan(10)
     await expectRefusedAlone(world, { up: service.up, marked, refused, status })
@@ -481,8 +472,7 @@ describe("the copy's sync when the service refuses a whole request", () => {
     const service = refusingWhen(body =>
       body.mutations.length > 2 ? refusal(413, 'too_large') : null
     )
-    const world = copyWorld(service.sync)
-    await queuedWhileSignedOut(world, marked)
+    const world = await queuedWhileHeld(service.sync, marked)
     expect(world.failures).toEqual([])
     expect(service.up.toSorted()).toEqual(marked.map(each => each.item))
     await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })

@@ -80,7 +80,7 @@ set in Sentry.
   reading aids, and a click on a word. Where Zenbu runs, and the site switch.
 - [Word popup](word-popup.md): the word's card that a click opens, on a page or, for a word in
   the side panel, on the page beside it, or in the panel when opened from the keyboard, its choice of words, and Open Full Entry, which expands
-  it in place, Share, and Copy Link.
+  it in place, Share, and •••, which saves the word's Status, lists, and note to the account.
 - [YouTube captions and playback](youtube-captions.md): on a YouTube watch page, the video's
   Japanese captions, what happens when YouTube refuses them, and following the video. The side
   panel's Player tab shows them ([`video-tab.md`](video-tab.md)).
@@ -90,7 +90,9 @@ set in Sentry.
 
 ## Not built yet
 
-Saving isn't built (#962), so the side panel's Words, Player's Recent, and Translate's Image
-Search show only their empty states. Hide Furigana on Known Words is stored but
-changes nothing yet. Sentence Translations shows English only in the Player tab and under the
+Words save from the word popup and Word Detail, and Word Detail shows the word's tag, lists, and
+notes, but nothing else shows them yet: the Account tab's Known Words, Learning, Lists, Notes,
+and Sync Now are #1188; the side panel's Words, Player's Recent, and Translate's Image Search
+show only their empty states; and a Known word keeps its underline, meaning, and furigana on
+pages and captions, and Hide Furigana on Known Words is stored but changes nothing yet (#1187). Sentence Translations shows English only in the Player tab and under the
 caption on the player, not on other pages.

@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { wordDetailLabels } from '../src/word-detail/labels.ts'
 import { wordPopupLabels as labels } from '../src/word-popup/labels.ts'
+import { savingLabels as saving } from '../src/word-saving/labels.ts'
 import { type Extension, expect, test } from './fixtures.ts'
 import {
   changeSettings,
@@ -271,7 +272,7 @@ for (const { name, aids } of readingAidCases) {
       await expect(wordPopup(page)).toHaveCount(0)
     })
 
-    test('Share and Copy Link put the word’s address on the clipboard where there is no share sheet', async ({
+    test('Share puts the word’s address on the clipboard where there is no share sheet', async ({
       extension,
       page
     }) => {
@@ -287,13 +288,30 @@ for (const { name, aids } of readingAidCases) {
       await popup.getByRole('button', { name: fill(labels.share.share, { name: '要求' }) }).click()
       await expect(popup.getByText(labels.share.linkCopied)).toBeVisible()
       expect(await clipboard()).toBe(address)
+    })
 
-      await page.evaluate(() => navigator.clipboard.writeText(''))
+    test('••• offers Status, Add to List… and Add Note, and signed out Known says to sign in and saves nothing', async ({
+      extension,
+      page
+    }) => {
+      await readyPage(page, extension)
+      await clickWord(page, '#sentence', '要求')
+      const popup = popupFor(page, '要求')
       await popup
         .getByRole('button', { name: fill(labels.share.moreActions, { name: '要求' }) })
         .click()
-      await page.getByRole('menuitem', { name: labels.share.copyLink }).click()
-      await expect.poll(clipboard).toBe(address)
+      const states = page.getByRole('menuitemradio')
+      await expect(states).toHaveText(['Unknown', 'Learning', 'Known'])
+      await expect(page.getByRole('menuitemradio', { name: 'Unknown' })).toBeChecked()
+      await expect(page.getByRole('menuitem')).toHaveText(['Add to List…', 'Add Note'])
+      await page.getByRole('menuitemradio', { name: 'Known', exact: true }).click()
+      const toast = popup.locator('[data-saving-toast="signed-out"]')
+      await expect(toast).toContainText(saving.signedOut.title)
+      await expect(toast.getByRole('button', { name: saving.signedOut.action })).toBeVisible()
+      await popup
+        .getByRole('button', { name: fill(labels.share.moreActions, { name: '要求' }) })
+        .click()
+      await expect(page.getByRole('menuitemradio', { name: 'Unknown' })).toBeChecked()
       await expect(popup).toBeVisible()
     })
   })
