@@ -59,7 +59,7 @@ export function SavingToastView({ className }: { className?: string }) {
     <Item variant="outline" role="status" data-saving-toast={toast.kind} className={className}>
       <ItemContent>
         <ItemTitle>{title}</ItemTitle>
-        <ItemDescription>{text}</ItemDescription>
+        <ItemDescription className="line-clamp-none">{text}</ItemDescription>
       </ItemContent>
       <ItemActions>
         <ToastAction toast={toast} />
