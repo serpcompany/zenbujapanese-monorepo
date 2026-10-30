@@ -24,10 +24,25 @@ export function frequencyRows(settings: Settings): FrequencyRow[] {
     .map(dictionary => ({ dictionary, chosen: chosen.includes(dictionary.id) }))
 }
 
-function choiceOf(rows: FrequencyRow[]): FrequencyChoice {
+const bundled: ReadonlySet<string> = new Set(defaultFrequencyPacks.map(pack => pack.id))
+
+function chosenKeeping(was: string[], ours: string[]): string[] {
+  const left = [...ours]
+  const chosen = was.flatMap(id => {
+    if (!bundled.has(id)) return [id]
+    const next = left.shift()
+    return next === undefined ? [] : [next]
+  })
+  return [...chosen, ...left]
+}
+
+function choiceOf(settings: Settings, rows: FrequencyRow[]): FrequencyChoice {
   return {
     'frequencyDictionaries.order': rows.map(row => row.dictionary.id),
-    'frequencyDictionaries.chosen': rows.filter(row => row.chosen).map(row => row.dictionary.id)
+    'frequencyDictionaries.chosen': chosenKeeping(
+      settings['frequencyDictionaries.chosen'],
+      rows.filter(row => row.chosen).map(row => row.dictionary.id)
+    )
   }
 }
 
@@ -35,14 +50,15 @@ export function moved(settings: Settings, id: string, by: -1 | 1): FrequencyChoi
   const rows = frequencyRows(settings)
   const from = rows.findIndex(row => row.dictionary.id === id)
   const to = from + by
-  if (from === -1 || to < 0 || to >= rows.length) return choiceOf(rows)
+  if (from === -1 || to < 0 || to >= rows.length) return choiceOf(settings, rows)
   const reordered = [...rows]
   ;[reordered[from], reordered[to]] = [reordered[to], reordered[from]]
-  return choiceOf(reordered)
+  return choiceOf(settings, reordered)
 }
 
 export function chosenWith(settings: Settings, id: string, chosen: boolean): FrequencyChoice {
   return choiceOf(
+    settings,
     frequencyRows(settings).map(row => (row.dictionary.id === id ? { ...row, chosen } : row))
   )
 }

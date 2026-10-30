@@ -1,6 +1,7 @@
 import type { MutationResult, SyncedChange } from '@zenbu/account-rules/account-copy'
 import { describe, expect, it } from 'vitest'
-import { settingDefaults } from '../../shared/settings'
+import { chosenWith, moved } from '../../settings/frequency-order'
+import { readSettings, settingDefaults } from '../../shared/settings'
 import { json } from '../../test/account-stand-in'
 import { appliedTo, type Sync, syncAnswer } from '../../test/copy-stand-in'
 import { answeringSync, copyWorld } from '../../test/copy-world'
@@ -125,6 +126,33 @@ describe("the copy's settings", () => {
       'frequencyDictionaries.chosen': [third],
       'frequencyDictionaries.order': [third, second, first]
     })
+  })
+
+  it("keeps the account's frequency dictionaries this browser doesn't have through a toggle and a reorder here", async () => {
+    const jiten = 'zenbu.jiten.anime.ja.ordered-v2'
+    const wikipedia = 'zenbu.wikipedia.written.ja.unidic-3.1'
+    const world = copyWorld(
+      answering((_, request) => ({
+        changes:
+          request === 1
+            ? [setting('frequencyDictionaries.chosen', `${first},${jiten},${wikipedia}`, 7)]
+            : []
+      }))
+    )
+    await world.signIn()
+    await world.settled()
+    const edit = async (change: typeof chosenWith) => {
+      const settings = await readSettings(world.settings.store)
+      await world.settings.store.set(change(settings, second, true))
+      await world.copy.settingsChanged()
+      await world.settled()
+    }
+    await edit(chosenWith)
+    await edit(settings => moved(settings, second, -1))
+    expect(settingsSent(world).map(sent => sent.fields?.value)).toEqual([
+      `${first},${jiten},${wikipedia},${second}`,
+      `${second},${jiten},${wikipedia},${first}`
+    ])
   })
 
   it("sends a setting changed in the browser later at the account's version", async () => {
