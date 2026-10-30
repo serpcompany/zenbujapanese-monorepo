@@ -317,6 +317,26 @@ function refusingWhen(refuses: (body: Sync) => Response | null) {
   return { sync, up }
 }
 
+async function oneRefusedUntilFixed(marked: (typeof word)[], at: number) {
+  const refused = marked[at]?.item
+  let fixed = false
+  const service = refusingWhen(body =>
+    !fixed && body.mutations.some(mutation => mutation.entityId === refused)
+      ? refusal(400, 'bad_request')
+      : null
+  )
+  const world = copyWorld(service.sync)
+  await queuedWhileSignedOut(world, marked)
+  return {
+    world,
+    service,
+    refused,
+    fix: () => {
+      fixed = true
+    }
+  }
+}
+
 describe("the copy's sync when the service refuses a whole request", () => {
   it('sends the other changes, and keeps out of later requests the one it refuses alone, reported once', async () => {
     const marked = words(5)
@@ -349,22 +369,13 @@ describe("the copy's sync when the service refuses a whole request", () => {
   })
 
   it('tries a refused change again on each Sync Now, refused again alone without holding the others', async () => {
-    const marked = words(3)
-    const refused = marked[1]?.item
-    let fixed = false
-    const service = refusingWhen(body =>
-      !fixed && body.mutations.some(mutation => mutation.entityId === refused)
-        ? refusal(400, 'bad_request')
-        : null
-    )
-    const world = copyWorld(service.sync)
-    await queuedWhileSignedOut(world, marked)
+    const { world, service, refused, fix } = await oneRefusedUntilFixed(words(3), 1)
     await world.change({ change: 'mark', ...otherWord })
     await world.settled()
     expect(world.failures).toEqual(['account-sync 400', 'account-sync 400'])
     expect(service.up).toContain(otherWord.item)
     await expect(world.read()).resolves.toMatchObject({ sync: 'failed', unsynced: 1 })
-    fixed = true
+    fix()
     await world.settled()
     expect(service.up.at(-1)).toBe(refused)
     await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
@@ -375,17 +386,8 @@ describe("the copy's sync when the service refuses a whole request", () => {
     ['a page opening', (world: CopyWorld) => world.ask({ copy: 'opened' })],
     ['access', (world: CopyWorld) => world.copy.chance('access')]
   ])('leaves a refused change out of a sync that %s starts', async (_, starts) => {
-    const marked = words(2)
-    const refused = marked[0]?.item
-    let fixed = false
-    const service = refusingWhen(body =>
-      !fixed && body.mutations.some(mutation => mutation.entityId === refused)
-        ? refusal(400, 'bad_request')
-        : null
-    )
-    const world = copyWorld(service.sync)
-    await queuedWhileSignedOut(world, marked)
-    fixed = true
+    const { world, service, refused, fix } = await oneRefusedUntilFixed(words(2), 0)
+    fix()
     world.later(3_600_000)
     const asked = world.syncs().length
     await starts(world)
