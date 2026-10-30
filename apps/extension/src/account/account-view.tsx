@@ -69,8 +69,12 @@ function SignedInAccount({ account, className, onDeleted }: SignedInProps) {
           </ItemMedia>
           <ItemContent>
             <ItemTitle>{accountLabels.subscription.heading}</ItemTitle>
-            <ItemDescription data-subscription-state>{subscription.line}</ItemDescription>
-            {subscription.detail && <ItemDescription>{subscription.detail}</ItemDescription>}
+            <ItemDescription className="line-clamp-none" data-subscription-state>
+              {subscription.line}
+            </ItemDescription>
+            {subscription.detail && (
+              <ItemDescription className="line-clamp-none">{subscription.detail}</ItemDescription>
+            )}
           </ItemContent>
           {subscription.action && (
             <ItemActions>
@@ -90,7 +94,9 @@ function SignedInAccount({ account, className, onDeleted }: SignedInProps) {
             <UserPen />
           </ItemMedia>
           <ItemContent>
-            <ItemDescription>{accountLabels.manageAccountDetail}</ItemDescription>
+            <ItemDescription className="line-clamp-none">
+              {accountLabels.manageAccountDetail}
+            </ItemDescription>
           </ItemContent>
           <ItemActions>
             <AccountLink label={accountLabels.manageAccount} />
@@ -101,7 +107,9 @@ function SignedInAccount({ account, className, onDeleted }: SignedInProps) {
             <LogOut />
           </ItemMedia>
           <ItemContent>
-            <ItemDescription>{accountLabels.signOutDetail}</ItemDescription>
+            <ItemDescription className="line-clamp-none">
+              {accountLabels.signOutDetail}
+            </ItemDescription>
           </ItemContent>
           <ItemActions>
             <Button variant="outline" size="sm" disabled={busy} onClick={signOut}>

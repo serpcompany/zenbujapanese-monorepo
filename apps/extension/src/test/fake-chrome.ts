@@ -1,5 +1,8 @@
+export const extensionId = 'kaalpflpefadijdemimciikalgpgjmok'
+
 type Respond = (answer: unknown) => void
-type MessageListener = (message: unknown, sender: unknown, respond: Respond) => boolean | undefined
+type Sender = { origin?: string; tab?: { id: number } }
+type MessageListener = (message: unknown, sender: Sender, respond: Respond) => boolean | undefined
 type Changes = Record<string, { oldValue?: unknown; newValue?: unknown }>
 type ChangeListener = (changes: Changes) => void
 type TabUpdated = (tabId: number, change: { status?: string }) => void
@@ -16,7 +19,7 @@ function chromeEvent<Listener>() {
   }
 }
 
-const deliver = (listeners: Set<MessageListener>, message: unknown, sender: unknown) =>
+const deliver = (listeners: Set<MessageListener>, message: unknown, sender: Sender) =>
   new Promise<unknown>((resolve, reject) => {
     let answering = false
     for (const listener of [...listeners]) {
@@ -114,7 +117,7 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
       onMessage: messages.event,
       sendMessage: (message: unknown) => {
         sent.push(message)
-        return deliver(messages.listeners, message, {})
+        return deliver(messages.listeners, message, { origin: `chrome-extension://${extensionId}` })
       },
       openOptionsPage: () => {
         opened.optionsPage += 1

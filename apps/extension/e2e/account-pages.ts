@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import { accountLabels } from '../src/account/labels.ts'
-import { sessionTokenKey } from '../src/service-worker/account/store.ts'
+import { sessionTokenKey } from '../src/service-worker/account/token-keys.ts'
 import type { AccountService } from './account-service.ts'
 import { type Extension, expect, extensionUrl } from './fixtures.ts'
 

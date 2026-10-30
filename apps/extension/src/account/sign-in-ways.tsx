@@ -31,10 +31,14 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
   const [email, setEmail] = useState(fixedEmail ?? '')
   const [code, setCode] = useState('')
   const [sentTo, setSentTo] = useState<string | null>(null)
+  const [problemAt, setProblemAt] = useState<'code' | 'provider'>('code')
   const asking = useAsking()
   const { busy, problem } = asking
+  const codeProblem = problemAt === 'code' ? problem : null
+  const providerProblem = problemAt === 'provider' ? problem : null
 
-  async function ask(answering: Promise<AccountAnswer>) {
+  async function ask(answering: Promise<AccountAnswer>, at: 'code' | 'provider' = 'code') {
+    setProblemAt(at)
     const answer = await asking.ask(answering)
     onAnswer?.(answer)
     return answer
@@ -55,7 +59,8 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
     ask(
       askAccount(
         purpose === 'delete' ? { account: 'delete', with: way } : { account: 'sign-in', with: way }
-      )
+      ),
+      way.way === 'code' ? 'code' : 'provider'
     )
 
   function verify(event: FormEvent) {
@@ -75,7 +80,7 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
           value={email}
           onChange={event => setEmail(event.target.value)}
         />
-        <Problem problem={problem} />
+        <Problem problem={codeProblem} />
         <Button type="submit" disabled={busy}>
           {accountLabels.sendCode}
         </Button>
@@ -94,7 +99,7 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
           value={code}
           onChange={event => setCode(event.target.value)}
         />
-        <Problem problem={problem} />
+        <Problem problem={codeProblem} />
         <Button type="submit" disabled={busy}>
           {accountLabels.signIn}
         </Button>
@@ -134,24 +139,27 @@ export function SignInWays({ purpose, email: fixedEmail, onAnswer }: Props) {
         {accountLabels.or}
         <Separator className="flex-1" />
       </div>
-      {googleClientId !== null && (
+      <div data-sign-in-providers className="flex flex-col gap-3">
+        {googleClientId !== null && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => signIn({ way: 'google' })}
+          >
+            {accountLabels.google}
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"
           disabled={busy}
-          onClick={() => signIn({ way: 'google' })}
+          onClick={() => signIn({ way: 'apple' })}
         >
-          {accountLabels.google}
+          {accountLabels.apple}
         </Button>
-      )}
-      <Button
-        type="button"
-        variant="outline"
-        disabled={busy}
-        onClick={() => signIn({ way: 'apple' })}
-      >
-        {accountLabels.apple}
-      </Button>
+        <Problem problem={providerProblem} />
+      </div>
     </div>
   )
 }

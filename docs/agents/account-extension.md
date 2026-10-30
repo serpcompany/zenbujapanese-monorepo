@@ -3,8 +3,8 @@
 The Chrome extension ([`extension.md`](extension.md)) signs in to the Zenbu account as an app,
 `zenbu-extension`, with its own bearer session, never the website's cookie
 ([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md), #960). The
-[client guide](account-clients.md) holds for it; this is what a browser changes. The extension's
-side is #961.
+[client guide](account-clients.md) holds for it; this is what a browser changes. How the
+extension does it, #961's, is in In the extension, below.
 
 ## What the service lists
 
@@ -95,6 +95,38 @@ As the client guide's Deleting the account says. The extension has no `account`,
 through the return route, and sends that sign-in's `code` as `appleAuthorizationCode`, never
 `appleRedirectUri`. The service exchanges the code as the website's Services ID, with the return
 route's URL as `redirect_uri`, since that's where Apple sent it (`src/auth/apple-revoke.ts`).
+
+## In the extension
+
+- **The service worker makes every call** (`src/service-worker/account/`): `api.ts` sends each
+  with `credentials: 'omit'`, the client header on a sign-in, and a bearer token on the others;
+  `sign-in.ts` holds the three ways in and turns the service's refusals into the learner's
+  (`Refusal` in `src/shared/account.ts`); `identity.ts` opens Google's and Apple's windows;
+  `tokens.ts` keeps the access token and asks again once after a `401`; `store.ts` keeps them;
+  `account-service.ts` signs in, reads the subscription, signs out, and deletes; and `channel.ts`
+  closes `chrome.storage.local` to content scripts at each start, answers a page's ask, and reads
+  the subscription when the browser starts. Only the extension's own pages, by the sender's
+  origin, may sign in or out, delete, or send a code: a content script's ask is answered only
+  when it reads the account, so a page that took over its renderer can't sign the learner out.
+- **A page asks by message,** `askAccount()` in `src/shared/account.ts` (`{ target:
+  'service-worker', account }`), and reads the account the service worker keeps under `account` in
+  `chrome.storage.local`: the email and the subscription, never a token. `onAccountChanged` tells
+  it of a change, so the side panel and Settings show the same account. The subscription is read
+  again when a page comes back into view after Subscribe… or Manage Subscription; `cloudAccess`
+  is kept with it, for saving (#962).
+- **The account component,** `src/account/`, is the one the side panel's Account tab and
+  Settings' Account page both draw ([product docs](../../apps/extension/docs/product/account.md)).
+  It shows each answer's problem inline, by the field or the button it belongs to, with no toast.
+- **The hosts and IDs** follow `ZENBU_ENVIRONMENT` (`build/hosts.ts`): the API host is
+  `https://api.zenbujapanese.com`, `https://api-staging.zenbujapanese.com` in staging, and
+  `http://account-api.localhost` in the test build, and is in `host_permissions`. Apple's ID is
+  the website's Services ID. The Google client ID is `null` until #987 makes the client, so a
+  release build draws no Continue with Google and asks Google nothing; the test build's is a
+  stand-in the browser tests' service takes.
+- **Its tests:** the modules' own, on a stand-in service and stand-in windows
+  (`src/test/account-stand-in.ts`); the component's, in happy-dom; and `e2e/account.spec.ts`,
+  against the account service from the checkout
+  ([`extension-browser-tests.md`](extension-browser-tests.md), The account service).
 
 ## Setting it up
 

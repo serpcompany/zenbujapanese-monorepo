@@ -1,5 +1,6 @@
 import { type Account, accountKey, type KeptSubscription } from '../../shared/account'
 import { fields } from '../../shared/messages'
+import { accessTokenKey, sessionTokenKey } from './token-keys'
 
 export type StorageArea = {
   get(keys: string[]): Promise<Record<string, unknown>>
@@ -18,10 +19,6 @@ export type KeptAccount = {
 }
 
 export type AccessToken = { token: string; expiresAt: number }
-
-export const sessionTokenKey = 'account.sessionToken'
-
-export const accessTokenKey = 'account.accessToken'
 
 const textOf = (value: unknown): string | null => (typeof value === 'string' ? value : null)
 

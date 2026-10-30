@@ -31,6 +31,7 @@ report counts the three files' rows together.
 | No test buys the subscription through the App Store's sandbox: the package's tests use a stand-in store, `StoreKitPurchasesTests` StoreKit's local testing, and the UI tests `StandInAppStore` ([`ios-subscription.md`](agents/ios-subscription.md)). | A purchase signed by Apple's sandbox, and its notifications, reach the service only by hand. | #868 | medium |
 | StoreKit's own purchase sheet is checked only by hand: `xcodebuild` doesn't give the UI tests' app the scheme's StoreKit configuration, so they buy through a stand-in ([`ios-subscription.md`](agents/ios-subscription.md)). | A change to how the paywall presents the sheet could ship untested. | #868 | medium |
 | The signed-in UI tests, `SubscriptionUITests` and `AccountSignedInUITests`, skip the Mac: a build signed to run locally has no keychain access group to keep the session in ([`ios.md`](agents/ios.md), Tests on every platform). | Sign-in, sync, and the subscription's screens on the Mac are checked only by hand. | No issue yet | medium |
+| The extension's sign-in with Google and Apple is checked only against stand-ins (`apps/extension/e2e/sign-in-providers.ts`), and release builds draw no Continue with Google until the extension's Google client exists (`apps/extension/build/hosts.ts`). Nothing has signed in from the extension against staging. | A fault in the real providers' answers, or in the consoles' redirect URIs, shows only on a learner's first sign-in. | #987 | medium |
 
 ## Delivery
 

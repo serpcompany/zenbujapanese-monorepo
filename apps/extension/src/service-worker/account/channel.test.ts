@@ -29,9 +29,9 @@ function started(routes: Parameters<typeof standInService>[0] = {}) {
     send: service.send,
     reportFailure
   })
-  const ask = (message: unknown) =>
+  const ask = (message: unknown, sender = { origin: `chrome-extension://${extensionId}` }) =>
     new Promise<{ keeps: boolean; answer: unknown }>(resolve => {
-      const keeps = listeners[0]?.(message, {}, answer => resolve({ keeps, answer })) ?? false
+      const keeps = listeners[0]?.(message, sender, answer => resolve({ keeps, answer })) ?? false
       if (!keeps) resolve({ keeps, answer: undefined })
     })
   return { ask, startups, local, session, setAccessLevel, reportFailure, service }
@@ -55,6 +55,29 @@ describe('startAccount', () => {
     })
   })
 
+  it("answers a content script only a read: signing in, out, or deleting is the extension's own pages'", async () => {
+    const { ask, service } = started()
+    const page = { origin: 'https://www.youtube.com', tab: { id: 7 } }
+    await expect(
+      ask({ target: 'service-worker', account: { account: 'read' } }, page)
+    ).resolves.toEqual({ keeps: true, answer: { type: 'account', account: { signedIn: false } } })
+    for (const account of [
+      { account: 'sign-out' },
+      { account: 'send-code', email: user.email },
+      { account: 'sign-in', with: { way: 'google' } },
+      { account: 'delete', with: { way: 'apple' } },
+      { account: 'delete-with-apple' },
+      { account: 'opened' },
+      { account: 'went-to-subscribe' }
+    ]) {
+      await expect(ask({ target: 'service-worker', account }, page)).resolves.toEqual({
+        keeps: false,
+        answer: undefined
+      })
+    }
+    expect(service.routes()).toEqual([])
+  })
+
   it('reads the subscription when the browser starts, for a learner who is signed in', async () => {
     const { startups, local, session, service } = started({
       'GET /v1/auth/token': () => json(200, { token: 'access-1' }),
@@ -75,10 +98,15 @@ describe('startAccount', () => {
         answer: () => Promise.reject(new Error(user.email)),
         readSubscription: async () => undefined
       },
-      reportFailure
+      reportFailure,
+      `chrome-extension://${extensionId}`
     )
     const answer = await new Promise(resolve =>
-      listener({ target: 'service-worker', account: { account: 'read' } }, {}, resolve)
+      listener(
+        { target: 'service-worker', account: { account: 'read' } },
+        { origin: `chrome-extension://${extensionId}` },
+        resolve
+      )
     )
     expect(answer).toMatchObject({ type: 'failed' })
     expect(reportFailure).toHaveBeenCalledWith('account-answer')

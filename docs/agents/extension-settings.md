@@ -11,11 +11,12 @@ the active tab's site is in [`extension-side-panel.md`](extension-side-panel.md)
 - `src/shared/settings.ts`: the keys, their defaults (`settingDefaults`), how a stored value reads
   (`settingFrom`, `settingsFrom`), and the channel to content scripts. It has no React, since the
   service worker imports it. `use-settings.ts` is the hook pages read them with.
-- `src/settings/`: Settings, the sidebar and its five pages; the switch row and when Hide
+- `src/settings/`: Settings, the sidebar and its six pages, the Account page being the shared
+  account component ([`account-extension.md`](account-extension.md), In the extension); the switch row and when Hide
   Furigana on Known Words waits (`setting-switch.tsx`), which the header's menu shares; the
   frequency dictionaries' order (`frequency-order.ts`); and the text both use (`labels.ts`).
-- `src/service-worker/settings.ts`: answers a content script's ask and tells open tabs of a
-  change.
+- `src/service-worker/settings.ts`: answers a content script's ask and its write, and tells open
+  tabs of a change.
 - `test-pages/settings-follower.tsx`: the test content script's follower, which draws nothing on
   a site Zenbu is off on, draws again when a setting changes, without a reload, and lists each
   reading aid's state.
@@ -31,7 +32,12 @@ storage: it asks the service worker with `askSettings()` (`{ target: 'service-wo
 'read' }`), and the service worker, which watches the storage, sends `{ target: 'settings',
 settings }` to every open tab when one changes, which `onSettingsChanged` hears. One content
 script writes one key: the YouTube one keeps `videos.captionPlace`, where the learner dragged the
-caption, with `writeSettings`, and hears it back the same way. A tab that can't
+caption, or `null` once a double-click puts it back. It asks the service worker to write it, with
+`askToWriteSettings()` (`{ target: 'service-worker', settings: 'write', changes }`), since the
+service worker closes `chrome.storage.local` to content scripts to keep the account's session
+token from them ([`account-extension.md`](account-extension.md)); the service worker keeps only
+the changes whose key and kind fit (`fittingChanges`), and the content script hears them back the
+same way. A tab that can't
 take the message (a closed tab, a page with no content script) stops none of the others. Whether
 Zenbu runs on a site is `isZenbuOn(host, settings)`, from `sites.off`.
 
@@ -41,14 +47,19 @@ The manifest's `permissions` are `offscreen`, for the offscreen document that ho
 dictionary; `sidePanel`, for the side panel; `storage`, for the settings; `activeTab`, so a click
 on the toolbar icon shows the header the tab's address; `unlimitedStorage`, for the language data
 the extension keeps on the device; `alarms`, for the daily language-data update check;
-`scripting`, to register the page lookup script on the sites the user allows; and
+`scripting`, to register the page lookup script on the sites the user allows;
 `declarativeNetRequestWithHostAccess`, for the rule that removes the `origin` header from the
-extension's own YouTube caption requests. Its `host_permissions` are the language data host
-(`https://data.zenbujapanese.com/*`, in the test build `http://language-data.localhost/*`) and
-`https://www.youtube.com/*`, for the YouTube content script and the caption requests; the test
-build adds `http://allowed.localhost/*`, which the tests use as an allowed site. The two hosts together add one install
-warning, which names both: "Read and change your data on data.zenbujapanese.com and
-www.youtube.com" (Chrome 156, production and staging alike); the other permissions add none. It asks
+extension's own YouTube caption requests; and `identity`, for Google's and Apple's sign-in windows
+(`chrome.identity.launchWebAuthFlow`). Its `host_permissions` are the language data host
+(`https://data.zenbujapanese.com/*`, in the test build `http://language-data.localhost/*`), the
+account service's (`https://api.zenbujapanese.com/*`, `https://api-staging.zenbujapanese.com/*`
+in staging, `http://account-api.localhost/*` in the test build), and `https://www.youtube.com/*`,
+for the YouTube content script and the caption requests; the test build adds
+`http://allowed.localhost/*`, which the tests use as an allowed site. The hosts together add one
+install warning, which names the three: "Read and change your data on api.zenbujapanese.com,
+data.zenbujapanese.com, and www.youtube.com" (`chrome.management.getPermissionWarningsById` on the
+production build, in Playwright's Chromium 153, by an agent on 2026-10-30; staging names its own
+API host); the other permissions add none, `identity` included. It asks
 for no other site at install: `http://*/*` and `https://*/*` are the only
 `optional_host_permissions`, the only access asked for later, and the header menu's Allow on This
 Site asks Chrome for one site with `chrome.permissions.request`, as Turn On for Every Site does

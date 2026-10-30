@@ -180,6 +180,23 @@ test('with the subscription answering subscription_required, the Account page sh
   )
 })
 
+test('at the side panel’s narrowest, 360 pixels, the Account tab cuts none of its signed-in lines', async ({
+  extension,
+  page
+}) => {
+  await stubSubscription(extension)
+  await page.setViewportSize({ width: 360, height: 720 })
+  const tab = await openAccountTab(page, extension)
+  await signInWithGoogle(tab, account(extension), newEmail('narrow'))
+  await expect(signedInAs(tab)).toBeVisible()
+  const lines = tab.locator('[data-slot="item-description"]')
+  await expect(lines).toHaveCount(3)
+  const cut = await lines.evaluateAll(all =>
+    all.filter(line => line.scrollHeight > line.clientHeight).map(line => line.textContent)
+  )
+  expect(cut).toEqual([])
+})
+
 async function isolatedWorld(cdp: CDPSession, extension: Extension): Promise<number> {
   const worlds: { id: number; origin: string; auxData?: { type?: string } }[] = []
   cdp.on('Runtime.executionContextCreated', ({ context }) => worlds.push(context))

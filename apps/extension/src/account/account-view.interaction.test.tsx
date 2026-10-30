@@ -159,9 +159,9 @@ describe('The account, signed out', () => {
     )
     typeInto(find(view, 'input[type="email"]'), user.email)
     await click(byText(view, 'button', accountLabels.sendCode))
-    expect(problem(view)).toBe(accountLabels.waitFor(30))
+    expect(problem(find(view, 'form'))).toBe(accountLabels.waitFor(30))
     await signInByCode(view)
-    expect(problem(view)).toBe(accountLabels.refusals['wrong-code'])
+    expect(problem(find(view, 'form'))).toBe(accountLabels.refusals['wrong-code'])
     expect(stateOf(view)).toBe('signed-out')
   })
 
@@ -183,12 +183,16 @@ describe('The account, signed out', () => {
     expect(service.routes()).toContain('POST /v1/auth/sign-out')
   })
 
-  it('says so when the learner closes the Google window', async () => {
+  it('says so under Google and Apple when the learner closes the Google window, not in the code form', async () => {
     const { view } = await showAccount(signInRoutes(), () =>
       Promise.reject(new Error('The user did not approve access.'))
     )
     await click(byText(view, 'button', accountLabels.google))
     expect(problem(view)).toBe(accountLabels.refusals.cancelled)
+    expect(problem(find(view, 'form'))).toBeUndefined()
+    expect(find(view, '[data-sign-in-providers] [role="alert"]').textContent).toBe(
+      accountLabels.refusals.cancelled
+    )
   })
 })
 

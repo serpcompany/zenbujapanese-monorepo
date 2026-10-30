@@ -9,7 +9,7 @@ import {
   subscription,
   user
 } from '../../test/account-stand-in'
-import { sessionTokenKey } from './store'
+import { sessionTokenKey } from './token-keys'
 
 const code = { way: 'code', email: user.email, code: '123456' } as const
 

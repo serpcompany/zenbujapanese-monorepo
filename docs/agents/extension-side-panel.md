@@ -17,7 +17,9 @@ The tabs are the app's Translate, Player, and Account, in its order (#1129). The
 has no tab: the extension has no dictionary search. Translate's `Content` is `TranslateTab` (`src/translate/translate-tab.tsx`,
 [`translate.md`](../../apps/extension/docs/product/translate.md)), whose Image row opens
 `{ page: 'image-search' }` (`src/translate/image-search-page.tsx`). Account's is `AccountTab`
-(`src/side-panel/account-tab.tsx`), the place sign-in will show (#960, #961). Player's is
+(`src/side-panel/account-tab.tsx`): the shared account component, `AccountView`
+(`src/account/`, [`account-extension.md`](account-extension.md), In the extension), over the
+profile's Words. Player's is
 `VideoTab` (`src/video-tab/video-tab.tsx`,
 [`video-tab.md`](../../apps/extension/docs/product/video-tab.md)), with Recent under its empty
 state; the code keeps the Video tab's names. It reads the active tab

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { json, jwtWith, refusal, signedInWorld } from '../../test/account-stand-in'
-import { accessTokenKey, sessionTokenKey } from './store'
+import { accessTokenKey, sessionTokenKey } from './token-keys'
 
 const now = Date.parse('2026-10-30T09:00:00Z')
 

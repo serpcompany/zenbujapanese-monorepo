@@ -10,6 +10,8 @@ import { accessTokens } from './tokens'
 
 type Events = { addListener(listener: () => void): void }
 
+type Sender = { origin?: string }
+
 type Parts = {
   storage: AccountStorage & {
     local: { setAccessLevel(details: { accessLevel: 'TRUSTED_CONTEXTS' }): Promise<void> }
@@ -20,7 +22,7 @@ type Parts = {
     addListener(
       listener: (
         message: unknown,
-        sender: unknown,
+        sender: Sender,
         respond: (answer: AccountAnswer) => void
       ) => boolean
     ): void
@@ -30,13 +32,14 @@ type Parts = {
   reportFailure(code: 'account-answer' | 'account-storage'): void
 }
 
-export function answerAccount(service: AccountService, reportFailure: Parts['reportFailure']) {
-  return (
-    message: unknown,
-    _sender: unknown,
-    respond: (answer: AccountAnswer) => void
-  ): boolean => {
+export function answerAccount(
+  service: AccountService,
+  reportFailure: Parts['reportFailure'],
+  pagesOrigin: string
+) {
+  return (message: unknown, sender: Sender, respond: (answer: AccountAnswer) => void): boolean => {
     if (!isAccountEnvelope(message)) return false
+    if (message.account.account !== 'read' && sender.origin !== pagesOrigin) return false
     service.answer(message.account).then(respond, (error: unknown) => {
       reportFailure('account-answer')
       respond(failure(error))
@@ -62,6 +65,8 @@ export function startAccount(parts: Parts): void {
       extensionId: parts.extensionId
     })
   })
-  parts.onMessage.addListener(answerAccount(service, parts.reportFailure))
+  parts.onMessage.addListener(
+    answerAccount(service, parts.reportFailure, `chrome-extension://${parts.extensionId}`)
+  )
   parts.onStartup.addListener(() => void service.readSubscription().catch(() => undefined))
 }

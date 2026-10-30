@@ -7,8 +7,9 @@ import { accountStore, type StorageArea } from '../service-worker/account/store'
 import { accessTokens } from '../service-worker/account/tokens'
 import type { KeptSubscription } from '../shared/account'
 import type { FakeExtension } from './extension'
+import { extensionId } from './fake-chrome'
 
-export const extensionId = 'kaalpflpefadijdemimciikalgpgjmok'
+export { extensionId }
 
 export const origin = 'http://account-api.localhost'
 

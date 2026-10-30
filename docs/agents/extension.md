@@ -3,7 +3,7 @@
 `apps/extension` is the Zenbu Japanese extension for Chrome, in Manifest V3. It moves into this
 repository to read the shared language data (ADR 0006) and replaces the 1.1.0 prototype, whose
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
-only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
+only, offline, and signs in to a Zenbu account. It looks like zenbujapanese.com because it
 draws with `@zenbu/ui` ([`ui.md`](ui.md)). It keeps its interface text in `src/shared/labels.ts`,
 and a surface's own in its folder's `labels.ts`, such as `src/side-panel/labels.ts` and
 `src/translate/labels.ts`. What it does for a learner, and the check for each behavior, is in its
@@ -50,13 +50,13 @@ on the toolbar icon.
   one, set `publishedVersion` in `build/packages.ts` to the uploaded version, in the change that
   records the release, so `pnpm check-package` keeps refusing a version the store would.
 - **The hosts.** One build setting, `ZENBU_ENVIRONMENT`, names the website's host
-  (`build/hosts.ts`): `production` by default, or `staging` (`staging.zenbujapanese.com`). The
-  code reads it from `src/shared/hosts.ts`, which the build fills in, and the manifest's
-  `homepage_url` is the website. Nothing in `apps/extension` writes the website's host. The core can: `detail/links.ts` writes the website's, and #956's
-  language data host is `https://data.zenbujapanese.com`, or the test build's
-  `http://language-data.localhost`, which fails a package's check, as does a bundle that takes
-  the website's host from the core in staging (#958). The extension names no API host, in
-  its build or its `host_permissions`, until it calls one (#961).
+  (`build/hosts.ts`): `production` by default, or `staging` (`staging.zenbujapanese.com`). The code
+  reads it from `src/shared/hosts.ts`, which the build fills in, and the manifest's `homepage_url`
+  is the website. Nothing in `apps/extension` writes the website's host. The core can:
+  `detail/links.ts` writes the website's, and #956's language data host is
+  `https://data.zenbujapanese.com`, or the test build's `http://language-data.localhost`, which
+  fails a package's check, as does a bundle that takes the website's host from the core in staging
+  (#958). The API host follows the setting too ([`account-extension.md`](account-extension.md)).
 - **The packages.** `Extension packages` ([`ci-deploys.md`](ci-deploys.md)) builds both from
   `main`: the staging package, unpacked with the `key`, for loading by hand, and the store
   package, from the production build, for the owner to upload (#972). Agents never upload to the
@@ -80,6 +80,7 @@ on the toolbar icon.
 | --- | --- |
 | `src/pages/` | The side panel, the Settings page (the manifest's `options_ui`, opened in a tab), and the welcome tab; there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
 | `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`), passes on the settings (`settings.ts`), opens the side panel on a route (`side-panel.ts`), and opens the welcome tab on install and asks for updates (`language-data-updates.ts`). |
+| `src/account/` | The account component ([`account-extension.md`](account-extension.md)). |
 | `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, `active-site.ts`), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |

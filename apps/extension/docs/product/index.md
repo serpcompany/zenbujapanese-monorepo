@@ -4,8 +4,8 @@ This folder describes what the Zenbu Japanese browser extension does for a learn
 check that holds each behavior. It is updated with the implementation and is not a roadmap. How
 it's built is in [`docs/agents/extension.md`](../../../../docs/agents/extension.md).
 
-The extension is for Chrome 138 or later. Its first version works offline and has no account:
-nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as the system is set.
+The extension is for Chrome 138 or later. It works offline, and signs in to a Zenbu account only
+for the account itself: [`account.md`](account.md). It looks like zenbujapanese.com, in Geist, light or dark as the system is set.
 
 ## Surfaces
 
@@ -13,7 +13,8 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 | --- | --- | --- |
 | Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with the app's Translate, Player, and Account, what each tab shows, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). The app's Look Up has no tab here: the extension has no dictionary search. Its Translate tab, with Image Search: [`translate.md`](translate.md). Its Player tab, a YouTube video's transcript and Recent: [`video-tab.md`](video-tab.md). | The tests and Chrome checks there; `e2e/pages.spec.ts`, `e2e/side-panel-tabs.spec.ts` |
 | Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try again. Under it, English translations: while Chrome's Japanese translation isn't on this computer, "English translations use Chrome's own Japanese download, made once for every site." and Download, whose click starts Chrome's download, with its progress; then "English translations are ready.", or "The download didn't finish. Try again." and Download. Where Chrome reports its download already under way (`downloading`), "Chrome is downloading its Japanese translation…" with no Download, until a check every 2 seconds finds it in. Chrome 156 reports `downloadable` during a download, so there a tab opened mid-download shows Download, and its click joins the running download. Where Chrome can't translate Japanese, nothing about it. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. Then "Zenbu underlines Japanese only on the sites you allow." and Turn On for Every Site, which asks Chrome for every site, or, once it has them, "Zenbu can underline Japanese on every site." | `src/shared/welcome.interaction.test.tsx`, `src/shared/welcome-translation.interaction.test.tsx`; in the headful agent Chrome |
-| Settings | Reading Aids, Frequency Dictionaries, Dictionary Data, Sites, and Credits, in a tab of its own. | [`settings.md`](settings.md) |
+| Settings | Reading Aids, Frequency Dictionaries, Dictionary Data, Sites, Account, and Credits, in a tab of its own. | [`settings.md`](settings.md) |
+| Account | Signing in with an emailed code, Google, or Apple, the email and the subscription, Sign Out, and Delete Account, in the side panel's Account tab and Settings' Account page alike: [`account.md`](account.md). | `src/account/account-view.interaction.test.tsx`; `e2e/account.spec.ts` |
 | Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from the word popup's Open Full Entry ([`word-popup.md`](word-popup.md)), and a word's page opens on zenbujapanese.com from its Open on zenbujapanese.com. | `src/word-detail/*.interaction.test.tsx`; `e2e/word-popup.spec.ts`, Word Detail's Open on zenbujapanese.com |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
@@ -87,7 +88,7 @@ set in Sentry.
 
 ## Not built yet
 
-Saving and signing in aren't built, so the side panel's Account, its Words, Player's Recent, and
-Translate's Image Search show only their empty states. Hide Furigana on Known Words is stored but
+Saving isn't built (#962), so the side panel's Words, Player's Recent, and Translate's Image
+Search show only their empty states. Hide Furigana on Known Words is stored but
 changes nothing yet. Sentence Translations shows English only in the Player tab and under the
 caption on the player, not on other pages.
