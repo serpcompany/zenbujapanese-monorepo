@@ -44,6 +44,35 @@ export function typeInto(field: HTMLElement, text: string): void {
   })
 }
 
+export async function pointerClick(element: Element | null | undefined): Promise<void> {
+  if (!(element instanceof HTMLElement)) throw new Error('Nothing to click.')
+  act(() => {
+    for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) {
+      const Press = type.startsWith('pointer') ? PointerEvent : MouseEvent
+      element.dispatchEvent(
+        new Press(type, { bubbles: true, cancelable: true, button: 0, detail: 1 })
+      )
+    }
+  })
+  await settle()
+}
+
+export async function keyClick(
+  element: Element | null | undefined,
+  key: 'Enter' | ' ' = 'Enter'
+): Promise<void> {
+  if (!(element instanceof HTMLElement)) throw new Error('Nothing to activate.')
+  act(() => {
+    element.focus()
+    element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+    if (key === 'Enter')
+      element.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
+    element.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true }))
+    if (key === ' ') element.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
+  })
+  await settle()
+}
+
 export function find(scope: ParentNode, selector: string): HTMLElement {
   const found = scope.querySelector(selector)
   if (!(found instanceof HTMLElement)) throw new Error(`Nothing matches ${selector}.`)

@@ -5,13 +5,13 @@ import type { NotReady, WordAnswer } from '../shared/answers'
 import type { Lookup } from '../shared/dictionary'
 import type { Failure } from '../shared/messages'
 import type { Settings } from '../shared/settings'
-import type { PanelPage } from '../side-panel/route'
+import type { EntryPage, OpenEntry } from './entry-page'
 import { wordDetailLabels } from './labels'
 import { dictionaryLookups, useLookup, type WordLookups } from './lookups'
-import { type FramedProps, framed, NotFound, UnansweredLookup } from './page-states'
+import { type EntryPageProps, NotFound, UnansweredLookup } from './page-states'
 import { WordDetailView } from './word-detail-view'
 
-type WordPage = Extract<PanelPage, { page: 'word' }>
+type WordPage = Extract<EntryPage, { page: 'word' }>
 type EntriesAnswer = { type: 'entries'; rows: WordRows[] }
 
 const unanswered = (answer: WordAnswer | NotReady | Failure): answer is NotReady | Failure =>
@@ -34,7 +34,7 @@ type EntriesProps = {
   entSeqs: number[]
   first: number
   settings: Settings
-  open: (page: PanelPage) => void
+  open: OpenEntry
   lookups: WordLookups
 }
 
@@ -76,12 +76,12 @@ function WordEntries({ entSeqs, first, settings, open, lookups }: EntriesProps) 
   )
 }
 
-function WordDetailContent({
+export function WordDetailPage({
   page,
   open,
   settings,
   lookups = dictionaryLookups
-}: FramedProps<WordPage>) {
+}: EntryPageProps<WordPage>) {
   const entries = page.entries ?? []
   const key = entries.length > 1 ? entries.join() : String(page.entSeq)
   const entSeqs = useMemo(() => key.split(',').map(Number), [key])
@@ -96,5 +96,3 @@ function WordDetailContent({
     />
   )
 }
-
-export const WordDetailPage = framed(WordDetailContent)

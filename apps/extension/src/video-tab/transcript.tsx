@@ -4,7 +4,6 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { captionLabels } from '../captions/labels'
 import type { GlossCache } from '../page-lookup/glosses'
 import type { Settings } from '../shared/settings'
-import type { PanelPage } from '../side-panel/route'
 import { lineGlosses, SourceLine } from '../translate/source-words'
 import { type Playback, playingLine } from '../video/follower'
 import { popupPause } from '../video/popup-pause'
@@ -22,7 +21,6 @@ type RowProps = {
   glosses: GlossCache
   settings: Settings | null
   services: VideoTabServices
-  open(page: PanelPage): void
   seek(time: number): void
   popupChanged: PopupChanged
 }
@@ -45,7 +43,6 @@ const Row = memo(function Row({
   glosses,
   settings,
   services,
-  open,
   seek,
   popupChanged
 }: RowProps) {
@@ -74,7 +71,6 @@ const Row = memo(function Row({
           source={line.text}
           settings={settings}
           services={services}
-          open={open}
           onPopup={onPopup}
           glosses={glosses}
         />
@@ -152,7 +148,6 @@ export function Transcript({
   shown: boolean
   settings: Settings | null
   services: VideoTabServices
-  open(page: PanelPage): void
 }) {
   const latest = useRef(playback)
   latest.current = playback

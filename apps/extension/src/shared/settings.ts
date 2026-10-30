@@ -168,6 +168,11 @@ export function askToWriteSettings(
     })
 }
 
+export type PageSettings = {
+  ask(): Promise<Settings>
+  onChanged(listener: (settings: Settings) => void): () => void
+}
+
 export function onSettingsChanged(
   listener: (settings: Settings) => void,
   events: MessageEvents = chrome.runtime.onMessage

@@ -116,7 +116,7 @@ function Lines({
         tabId={video.tabId}
         shown={shown}
         settings={settings}
-        {...shared}
+        services={shared.services}
       />
     </>
   )

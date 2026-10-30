@@ -64,13 +64,16 @@ _Avoid_: content script (alone, where the YouTube one or the test one could be m
 
 **Side panel**:
 The browser extension's panel beside the page, Chrome's side panel: a tab bar with the app's
-Translate, Player, and Account, each tab with its own pages, such as a word's. It has no Look Up,
+Translate, Player, and Account, each tab with its own pages, such as Image Search. A word's card
+and full entry are not its pages: they open in the Word popup (#1124). It has no Look Up,
 since the extension has no dictionary search; the website has one (#1129, D3).
 _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)
 
 **Word popup**:
-What the browser extension shows for the word a learner clicks, over a page or under Translate's
-text: the surface, which draws that word's Word card and its romaji.
+What the browser extension shows for the word a learner clicks, over a page, or for a word in
+the Side panel, on the page beside the panel (in the panel where the page can't show it): the
+surface, which draws that word's Word card and its romaji, and expands in place into its full
+entry.
 _Avoid_: word card (the Word card is the entry the popup draws, not the popup), tooltip
 
 **Zenbu Captions**:
@@ -87,8 +90,8 @@ video to it. The caption on the player shows one line at a time instead.
 _Avoid_: subtitles, captions (the lines themselves, or the player's caption)
 
 **Player tab**:
-The browser extension's side panel tab that holds the Transcript and Recent, which was its Video
-tab. Its code keeps the old name: `VideoTab`, `src/video-tab/`, `video-tab-port.ts`, the product
+The browser extension's side panel tab that holds the Transcript, or Recent when no video is open,
+which was its Video tab. Its code keeps the old name: `VideoTab`, `src/video-tab/`, `video-tab-port.ts`, the product
 doc `video-tab.md`, and the tests' "Video tab:" check names are all the Player tab.
 _Avoid_: Video tab (for the tab; the code's name only)
 

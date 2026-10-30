@@ -8,15 +8,15 @@ import { PronounceButton } from '@zenbu/ui/dictionary/pronounce-button'
 import { Section } from '@zenbu/ui/dictionary/section'
 import { useCallback } from 'react'
 import type { FormExamplesAnswer } from '../shared/answers'
-import type { PanelPage } from '../side-panel/route'
+import type { EntryPage, OpenEntry } from './entry-page'
 import { PagedExamples } from './examples'
 import { wordDetailLabels } from './labels'
 import { answered, dictionaryLookups, useLookup, type WordLookups } from './lookups'
-import { notify } from './notice'
-import { type FramedProps, framed, UnansweredLookup } from './page-states'
+import { useNotices } from './notice'
+import { type EntryPageProps, UnansweredLookup } from './page-states'
 import { useWordLinks } from './word-links'
 
-type FormPage = Extract<PanelPage, { page: 'form' }>
+type FormPage = Extract<EntryPage, { page: 'form' }>
 
 function FormExamplesView({
   form,
@@ -26,10 +26,11 @@ function FormExamplesView({
 }: {
   form: string
   answer: FormExamplesAnswer
-  open: (page: PanelPage) => void
+  open: OpenEntry
   lookups: WordLookups
 }) {
   const renderWordLink = useWordLinks(open, lookups.resolveWord)
+  const { notify } = useNotices()
   const { lookUpFormExamples } = lookups
   const load = useCallback(
     async (from: number) =>
@@ -68,7 +69,11 @@ function FormExamplesView({
   )
 }
 
-function FormExamplesContent({ page, open, lookups = dictionaryLookups }: FramedProps<FormPage>) {
+export function FormExamplesPage({
+  page,
+  open,
+  lookups = dictionaryLookups
+}: EntryPageProps<FormPage>) {
   const { lookUpFormExamples } = lookups
   const lookup = useCallback(
     () => lookUpFormExamples(page.form, 0),
@@ -78,5 +83,3 @@ function FormExamplesContent({ page, open, lookups = dictionaryLookups }: Framed
   if (result.state !== 'answered') return <UnansweredLookup result={result} retry={retry} />
   return <FormExamplesView form={page.form} answer={result.answer} open={open} lookups={lookups} />
 }
-
-export const FormExamplesPage = framed(FormExamplesContent)

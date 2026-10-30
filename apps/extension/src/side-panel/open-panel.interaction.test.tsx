@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { startSidePanel } from '../service-worker/side-panel'
 import { SidePanel } from './panel'
 import { chromePanelHost } from './panel-host'
-import { type OpenPanel, openPanel, type PanelRoute } from './route'
+import type { PanelRoute } from './route'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -79,9 +79,14 @@ function fakeBrowser(windowId = 7) {
     }
   })
   startSidePanel(vi.fn())
-  const inTab = (tabWindowId: number) => ({
-    sendMessage: (message: OpenPanel) => deliver(message, { tab: { windowId: tabWindowId } })
-  })
+  const openPanel = (route: PanelRoute, tabWindowId?: number) =>
+    deliver(
+      { target: 'service-worker', openPanel: route },
+      tabWindowId === undefined ? {} : { tab: { windowId: tabWindowId } }
+    ).then(
+      () => undefined,
+      () => undefined
+    )
   const click = (handler: () => Promise<void>) =>
     act(async () => {
       state.gesture = true
@@ -89,7 +94,7 @@ function fakeBrowser(windowId = 7) {
       state.gesture = false
       await done
     })
-  return { state, local: local.items, session: session.items, inTab, click }
+  return { state, local: local.items, session: session.items, openPanel, click }
 }
 
 async function drawPanel() {
@@ -110,7 +115,7 @@ const testPageText = () =>
     .filter(page => !page.closest('[hidden]'))
     .map(page => page.textContent)
 
-describe('openPanel, through the service worker, to the side panel', () => {
+describe('the openPanel message, through the service worker, to the side panel', () => {
   it('has Chrome open the panel when the toolbar icon is clicked', () => {
     fakeBrowser()
     expect(chrome.sidePanel.setPanelBehavior).toHaveBeenCalledExactlyOnceWith({
@@ -120,7 +125,7 @@ describe('openPanel, through the service worker, to the side panel', () => {
 
   it('opens the closed panel on the test page from a click on a page, and the route is used once', async () => {
     const browser = fakeBrowser()
-    await browser.click(() => openPanel(onTestPage, browser.inTab(7)))
+    await browser.click(() => browser.openPanel(onTestPage, 7))
     expect(browser.state.panelOpen).toBe(true)
     await drawPanel()
     expect(selectedTab()).toBe('Translate')
@@ -134,7 +139,7 @@ describe('openPanel, through the service worker, to the side panel', () => {
   it('moves the open panel to the route, on its tab', async () => {
     const browser = fakeBrowser()
     await drawPanel()
-    await browser.click(() => openPanel({ tab: 'account', ...onTestPage }, browser.inTab(7)))
+    await browser.click(() => browser.openPanel({ tab: 'account', ...onTestPage }, 7))
     expect(selectedTab()).toBe('Account')
     expect(testPageText()).toEqual(['猫'])
     expect(browser.session.size).toBe(0)
@@ -142,7 +147,7 @@ describe('openPanel, through the service worker, to the side panel', () => {
 
   it('opens the panel from an extension page that has no tab, in the focused window', async () => {
     const browser = fakeBrowser()
-    await browser.click(() => openPanel({ tab: 'translate' }))
+    await browser.click(() => browser.openPanel({ tab: 'translate' }))
     expect(browser.state.panelOpen).toBe(true)
     await drawPanel()
     expect(selectedTab()).toBe('Translate')
@@ -151,14 +156,14 @@ describe('openPanel, through the service worker, to the side panel', () => {
   it("leaves a panel alone when the click was in another window's tab", async () => {
     const browser = fakeBrowser()
     await drawPanel()
-    await browser.click(() => openPanel({ tab: 'player' }, browser.inTab(8)))
+    await browser.click(() => browser.openPanel({ tab: 'player' }, 8))
     expect(selectedTab()).toBe('Translate')
     expect(browser.session.get('sidePanel.route.8')).toEqual({ tab: 'player' })
   })
 
   it('leaves no route behind when it is not called from a click', async () => {
     const browser = fakeBrowser()
-    await act(() => openPanel(onTestPage, browser.inTab(7)))
+    await act(() => browser.openPanel(onTestPage, 7))
     expect(browser.state.panelOpen).toBe(false)
     expect(browser.session.size).toBe(0)
   })

@@ -7,7 +7,7 @@ import {
 } from '../captions/messages'
 import type { CaptionedVideo } from '../player-captions/line-controls'
 import type { ShowCaptions, ShownCaptions } from '../player-captions/player-captions'
-import { isZenbuOn, type Settings } from '../shared/settings'
+import { isZenbuOn, type PageSettings, type Settings } from '../shared/settings'
 import { applyControl, isVideoControlMessage } from './controls'
 import type { VideoFollower } from './follower'
 import { type TabPort, videoTabPort, videoTabPorts } from './video-tab-port'
@@ -24,11 +24,6 @@ type PageRuntime = {
   sendMessage(message: CaptionsEnvelope): Promise<CaptionsAnswer>
   onMessage: { addListener(listener: Listener): void; removeListener(listener: Listener): void }
   onConnect: { addListener(listener: Connected): void; removeListener(listener: Connected): void }
-}
-
-type PageSettings = {
-  ask(): Promise<Settings>
-  onChanged(listener: (settings: Settings) => void): () => void
 }
 
 export type PlayerCaptions = { settings: PageSettings; show: ShowCaptions }

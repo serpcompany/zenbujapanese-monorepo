@@ -18,29 +18,14 @@ function NoticeText({ notice }: { notice: Notice }) {
   )
 }
 
-function ResultView({
-  result,
-  services,
-  open
-}: {
-  result: Result
-  services: TranslateServices
-  open?: PanelTabProps['open']
-}) {
+function ResultView({ result, services }: { result: Result; services: TranslateServices }) {
   switch (result.state) {
     case 'translating':
       return <p className="text-sm text-muted-foreground">{translateLabels.translating}</p>
     case 'downloading':
       return <DownloadProgress fraction={result.fraction} />
     case 'translated':
-      return (
-        <TranslationCard
-          key={result.id}
-          translated={result.translated}
-          services={services}
-          open={open}
-        />
-      )
+      return <TranslationCard key={result.id} translated={result.translated} services={services} />
     case 'notice':
       return <NoticeText notice={result.notice} />
     default:
@@ -120,7 +105,7 @@ export function TranslateTab({ services = onDeviceServices, open }: TranslateTab
       {open && <ImageRow open={open} />}
       {selectionNotice && <NoticeText notice={selectionNotice} />}
       <div aria-live="polite">
-        <ResultView result={result} services={services} open={open} />
+        <ResultView result={result} services={services} />
       </div>
     </section>
   )

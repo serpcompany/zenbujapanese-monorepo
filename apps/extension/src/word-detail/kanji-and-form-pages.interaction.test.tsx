@@ -8,19 +8,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { FormExamplesAnswer, KanjiAnswer } from '../shared/answers'
 import type { DataState } from '../shared/data-state'
 import type { Lookup } from '../shared/dictionary'
-import { pages } from '../side-panel/pages'
+import { settingDefaults } from '../shared/settings'
 import '../test/act-environment'
 import { setDataState } from '../test/data-state'
+import { fakeNotices, WithNotices } from '../test/notices'
 import { FormExamplesPage } from './form-examples-page'
 import { KanjiDetailPage } from './kanji-detail-page'
 import { wordDetailLabels } from './labels'
 import type { WordLookups } from './lookups'
-import { WordDetailPage } from './word-detail-page'
-
-vi.mock('../shared/use-settings', async () => {
-  const { settingDefaults } = await import('../shared/settings')
-  return { useSettings: () => settingDefaults }
-})
 
 vi.mock('../shared/dictionary-progress', async () => {
   const { fakeDictionaryProgress } = await import('../test/data-state')
@@ -57,13 +52,20 @@ async function draw(page: ReactNode) {
   const element = document.body.appendChild(document.createElement('main'))
   const root = createRoot(element)
   mounted.push(() => root.unmount())
-  await act(async () => root.render(page))
+  await act(async () =>
+    root.render(<WithNotices notices={fakeNotices().notices}>{page}</WithNotices>)
+  )
   return element
 }
 
 const kanjiPage = (lookups: WordLookups) =>
   draw(
-    <KanjiDetailPage page={{ page: 'kanji', character: '要' }} open={vi.fn()} lookups={lookups} />
+    <KanjiDetailPage
+      page={{ page: 'kanji', character: '要' }}
+      open={vi.fn()}
+      settings={settingDefaults}
+      lookups={lookups}
+    />
   )
 
 describe('Kanji detail', () => {
@@ -177,7 +179,12 @@ describe('Kanji detail', () => {
 describe('Form examples', () => {
   async function formPage(form: string, lookups = answering(notAsked)) {
     const element = await draw(
-      <FormExamplesPage page={{ page: 'form', form }} open={vi.fn()} lookups={lookups} />
+      <FormExamplesPage
+        page={{ page: 'form', form }}
+        open={vi.fn()}
+        settings={settingDefaults}
+        lookups={lookups}
+      />
     )
     return { element, lookups }
   }
@@ -210,15 +217,5 @@ describe('Form examples', () => {
     expect(element.querySelectorAll('li[data-example]')).toHaveLength(
       fixtureFormExamples.get('いる')?.length ?? -1
     )
-  })
-})
-
-describe('The side panel’s pages', () => {
-  it('draws a word, a kanji, and a form with Word Detail’s pages', () => {
-    expect(pages).toMatchObject({
-      word: WordDetailPage,
-      kanji: KanjiDetailPage,
-      form: FormExamplesPage
-    })
   })
 })

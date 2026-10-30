@@ -1,5 +1,4 @@
 import { isZenbuOn, type Settings } from '../shared/settings'
-import type { PanelRoute } from '../side-panel/route'
 import type { PopupHost, PopupSettings } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
 import type { Aids } from './annotate'
@@ -17,7 +16,6 @@ export type PageLookupBrowser = {
   onSettingsChanged(listener: (settings: Settings) => void): () => void
   segment: Segment
   popupCard(languageReferenceID: string, frequency: readonly string[]): ReturnType<GlossLookUp>
-  openPanel(route: PanelRoute): void
   underlines(): Underlines
   popup(settings: () => PopupSettings): PopupHost
   report(error: unknown): void
@@ -59,7 +57,7 @@ export function startPageLookup(browser: PageLookupBrowser): PageLookup {
   let heard = false
   const reported = new Set<ScanProblem>()
   const glosses = glossCache(id => browser.popupCard(id, []))
-  const popup = browser.popup(() => popupSettings(settings as Settings, browser, popup.close))
+  const popup = browser.popup(() => popupSettings(settings as Settings, browser))
 
   const problem = (found: ScanProblem) => {
     if (reported.has(found)) return

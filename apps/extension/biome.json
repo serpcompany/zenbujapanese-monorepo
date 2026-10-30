@@ -35,6 +35,16 @@
   },
   "overrides": [
     {
+      "includes": ["src/word-detail/full-entry.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noNoninteractiveTabindex": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": [
         "src/**",
         "test-pages/**",

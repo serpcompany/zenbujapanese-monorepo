@@ -9,12 +9,12 @@ import { WordHeader } from '@zenbu/ui/dictionary/word-header'
 import { WordSections } from '@zenbu/ui/dictionary/word-sections'
 import { useCallback, useMemo, useState } from 'react'
 import type { Settings } from '../shared/settings'
-import type { PanelPage } from '../side-panel/route'
+import type { OpenEntry } from './entry-page'
 import { PagedExamples } from './examples'
 import { wordDetailLabels } from './labels'
 import { answered, type WordLookups } from './lookups'
 import { MeaningWithMenu } from './meaning-menu'
-import { notify } from './notice'
+import { useNotices } from './notice'
 import { ReadingAids } from './reading-aids'
 import { shownConjugations, shownWordSections } from './shown'
 import { useWordLinks } from './word-links'
@@ -31,7 +31,7 @@ export function WordDetailView({
 }: {
   rows: WordRows
   settings: Settings
-  open: (page: PanelPage) => void
+  open: OpenEntry
   lookups: WordLookups
 }) {
   const detail = useMemo(() => wordDetail(rows), [rows])
@@ -41,6 +41,7 @@ export function WordDetailView({
   )
   const [conjugationsOpen, setConjugationsOpen] = useState(false)
   const renderWordLink = useWordLinks(open, lookups.resolveWord)
+  const { notify } = useNotices()
   const actions = useMemo(
     () =>
       new Map(
@@ -75,6 +76,7 @@ export function WordDetailView({
         text={wordDetailLabels}
         onUnsupported={notify}
         onOpenConjugations={() => setConjugationsOpen(true)}
+        headwordSize="panel"
       />
       <WordSections
         word={shownWordSections(detail, settings['frequencyDictionaries.chosen'])}
