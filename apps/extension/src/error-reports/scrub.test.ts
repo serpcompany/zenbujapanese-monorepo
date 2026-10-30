@@ -115,6 +115,17 @@ describe('scrubEvent', () => {
     expect(scrubbed.extra).toBeUndefined()
     expect(scrubbed.user).toBeUndefined()
   })
+
+  it("keeps a failure's HTTP status tag, and drops a status that isn't one", () => {
+    const tagged = (tags: Record<string, string>) =>
+      scrubEvent({ ...eventFromAPage(), tags: { part: 'service-worker', ...tags } }).tags
+    expect(tagged({ status: '403', word: selectedWord })).toEqual({
+      part: 'service-worker',
+      status: '403'
+    })
+    expect(tagged({ status: selectedWord })).toEqual({ part: 'service-worker' })
+    expect(tagged({ status: '4031' })).toEqual({ part: 'service-worker' })
+  })
 })
 
 describe('scrubText', () => {
