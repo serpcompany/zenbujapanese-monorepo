@@ -59,7 +59,8 @@ for the voice.
 
 ## Words in Japanese text
 
-When the text is Japanese, each dictionary word in it is underlined as on a page, and a click on
+When the text is Japanese, each dictionary word in it is underlined, half a rem from the word
+before it as in the Player tab's transcript ([`video-tab.md`](video-tab.md), Words), and a click on
 one opens its card on the page in the tab the learner is on, as the word popup, beside the side
 panel's edge and level with the word; the panel shows no card ([`word-popup.md`](word-popup.md),
 A word's card from the side panel). Escape, in the panel or on the page, or a press outside it
