@@ -24,6 +24,13 @@ async function markedIn(world: CopyWorld) {
   await world.stopped()
 }
 
+async function retriedAfterWait(world: CopyWorld) {
+  world.later(2_000)
+  world.waits[0]?.run()
+  await vi.waitFor(() => expect(world.syncs()).toHaveLength(2))
+  await world.stopped()
+}
+
 async function sentOnlyOnSyncNow(world: CopyWorld, waited = 0) {
   await world.change({ change: 'clear', item: word.item })
   world.later(waited)
@@ -229,10 +236,7 @@ describe("the copy's sync when the account service fails", () => {
     await world.change({ change: 'mark', ...otherWord })
     await world.stopped()
     expect(world.syncs()).toHaveLength(1)
-    world.later(2_000)
-    world.waits[0]?.run()
-    await vi.waitFor(() => expect(world.syncs()).toHaveLength(2))
-    await world.stopped()
+    await retriedAfterWait(world)
     expect(world.syncs()).toHaveLength(2)
     expect(
       world
@@ -286,10 +290,7 @@ describe("the copy's sync when the account service fails", () => {
     )
     await markedIn(world)
     await world.change({ change: 'mark', ...otherWord })
-    world.later(2_000)
-    world.waits[0]?.run()
-    await vi.waitFor(() => expect(world.syncs()).toHaveLength(2))
-    await world.stopped()
+    await retriedAfterWait(world)
     expect(
       world.storage.meta()?.queue.map(queued => [queued.mutation.entityId, queued.sent])
     ).toEqual([

@@ -29,6 +29,16 @@ const answering = (
   })
 }
 
+async function romajiChangedWhileSending(world: ReturnType<typeof copyWorld>) {
+  await world.signIn()
+  const sending = world.settled()
+  await vi.waitFor(() => expect(world.syncs()).toHaveLength(1))
+  await world.settings.store.set({ 'readingAids.romaji': true })
+  const changed = world.copy.settingsChanged()
+  await vi.waitFor(() => expect(world.storage.meta()?.queue).toHaveLength(1))
+  return { sending, changed }
+}
+
 const settingsSent = (world: ReturnType<typeof copyWorld>) =>
   world.sent().filter(sent => sent.entity === 'setting')
 
@@ -130,12 +140,7 @@ describe("the copy's settings", () => {
           )
         })
       )
-      await world.signIn()
-      const sending = world.settled()
-      await vi.waitFor(() => expect(world.syncs()).toHaveLength(1))
-      await world.settings.store.set({ 'readingAids.romaji': true })
-      const changed = world.copy.settingsChanged()
-      await vi.waitFor(() => expect(world.storage.meta()?.queue).toHaveLength(1))
+      const { sending, changed } = await romajiChangedWhileSending(world)
       open()
       await Promise.all([sending, changed])
       await world.settled()
@@ -169,12 +174,7 @@ describe("the copy's settings", () => {
         return json(200, syncAnswer(appliedTo(body), [setting('readingAids.romaji', true, 2)]))
       })
     )
-    await world.signIn()
-    const sending = world.settled()
-    await vi.waitFor(() => expect(world.syncs()).toHaveLength(1))
-    await world.settings.store.set({ 'readingAids.romaji': true })
-    const changed = world.copy.settingsChanged()
-    await vi.waitFor(() => expect(world.storage.meta()?.queue).toHaveLength(1))
+    const { sending, changed } = await romajiChangedWhileSending(world)
     await world.settings.store.set({ 'readingAids.romaji': false })
     open()
     await Promise.all([sending, changed])
