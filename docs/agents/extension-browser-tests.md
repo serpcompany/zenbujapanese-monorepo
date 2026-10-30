@@ -40,6 +40,10 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
+- **The panel's headword:** Vite serves `test-pages/word-header.html` on a free port, with
+  `test-pages/vite.config.ts`, and it draws `@zenbu/ui`'s `WordHeader` from props at the panel's
+  size. テーブル and 食べる, with た over 食, each sit on one line inside the card at 380 px, with
+  nothing overflowing (`word-header.spec.ts`). Neither word is in the fixture release.
 - **The caption on the player:** the `youTubeStandIn` option serves the agent Chrome harness's
   stand-in site (`agent-chrome/site.mjs`) over HTTPS as `www.youtube.com`, trusted by its SPKI
   hash, so the YouTube content script runs on its watch page and the service worker's two
