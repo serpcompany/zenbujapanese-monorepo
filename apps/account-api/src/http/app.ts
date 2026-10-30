@@ -14,6 +14,7 @@ import { accountRoutes } from './accounts'
 import { appleExtensionRoutes } from './apple-extension'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
+import { extensionCodeContract } from './extension-code-contract'
 import { kindReadRoutes } from './kind-reads'
 import { type PhotoRoutesFiles, photoBodyLimit, photoRoutes } from './photos'
 import {
@@ -147,6 +148,7 @@ export function createApp(options: AppOptions) {
   webhookRoutes(app, options.billing)
   photoRoutes(app, options.photoFiles)
   signInContract(app)
+  extensionCodeContract(app)
   appleExtensionRoutes(app)
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context => {

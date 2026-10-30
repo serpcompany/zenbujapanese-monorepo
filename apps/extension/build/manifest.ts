@@ -1,5 +1,12 @@
 import packageJson from '../package.json' with { type: 'json' }
-import { defaultEnvironment, type Environment, hosts, hostsOf, type Variant } from './hosts.ts'
+import {
+  defaultEnvironment,
+  type Environment,
+  hosts,
+  hostsOf,
+  type Variant,
+  websitesOf
+} from './hosts.ts'
 import { storeKey } from './key.ts'
 
 export type ContentScript = { name: string; entry: string; matches: string[] }
@@ -90,6 +97,9 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
       ...(variant === 'test' ? [`${testAllowedSite}/*`] : [])
     ],
     optional_host_permissions: optionalSites,
+    externally_connectable: {
+      matches: websitesOf(variant, environment).map(website => `${website}/*`)
+    },
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     },

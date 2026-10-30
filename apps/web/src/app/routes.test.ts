@@ -42,6 +42,7 @@ const decidedRoutes = [
   'page /[locale]/forgot-password',
   'page /[locale]/account',
   'page /[locale]/account/[area]',
+  'page /[locale]/account/extension',
   'page /[locale]/dictionary',
   'page /[locale]/dictionary/search',
   'page /[locale]/dictionary/search/[query]',
@@ -84,6 +85,6 @@ const decidedRoutes = [
 test('the site serves only the pages and data routes that have been decided', () => {
   expect(
     servedRoutes().sort(),
-    'Every page and data route is decided (docs/adr/0010-give-the-dictionary-three-page-types.md, #544, #614, #844 for the products pages, #579 for the tools pages, #849 for the Kanji to Furigana converter’s readings, #832 for the radical panel’s data, #663 for the sitemap files, #871 for the rank bands’ pages, #468 for the account pages, #934 for the pages of what an account syncs and the word pages they link to, and #847 for the language segment that serves each in English and Japanese): the dictionary has its home, search, and word pages, and the browse pages that link to them, and what the app drills into lives on the word page. A new page or route needs an owner decision recorded first; then add it here.'
+    'Every page and data route is decided (docs/adr/0010-give-the-dictionary-three-page-types.md, #544, #614, #844 for the products pages, #579 for the tools pages, #849 for the Kanji to Furigana converter’s readings, #832 for the radical panel’s data, #663 for the sitemap files, #871 for the rank bands’ pages, #468 for the account pages, #934 for the pages of what an account syncs and the word pages they link to, #1130 for the page that signs the Chrome extension in, and #847 for the language segment that serves each in English and Japanese): the dictionary has its home, search, and word pages, and the browse pages that link to them, and what the app drills into lives on the word page. A new page or route needs an owner decision recorded first; then add it here.'
   ).toEqual([...decidedRoutes].sort())
 })

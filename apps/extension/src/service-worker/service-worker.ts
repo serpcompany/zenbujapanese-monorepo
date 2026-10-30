@@ -20,6 +20,7 @@ startAccount({
   identity: chrome.identity,
   extensionId: chrome.runtime.id,
   onMessage: chrome.runtime.onMessage,
+  onMessageExternal: chrome.runtime.onMessageExternal,
   onStartup: chrome.runtime.onStartup,
   reportFailure
 })

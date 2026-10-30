@@ -120,6 +120,28 @@ describe('The account, signed out', () => {
     }
   })
 
+  it('offers zenbujapanese.com first, and shows the account once the website hands over a code', async () => {
+    const { fake, view, service } = await showAccount(
+      signInRoutes({
+        'POST /v1/auth/sign-in/extension-code': () => signedInAnswer('session-website')
+      })
+    )
+    const first = find(view, '[data-sign-in="sign-in"]').querySelector('a, button, input')
+    expect(first?.textContent).toBe(accountLabels.website)
+    expect(first?.getAttribute('href')).toBe('https://zenbujapanese.com/account/extension/')
+    const website = fake.fromPage('https://zenbujapanese.com')
+    await expect(website.sendMessage({ type: 'sign-in', code: 'website-code' })).resolves.toEqual({
+      signedIn: true
+    })
+    await settle()
+    expect(stateOf(view)).toBe('signed-in')
+    expect(find(view, '[data-account-email]').textContent).toBe(user.email)
+    const redeemed = service.asked.find(
+      ({ route }) => route === 'POST /v1/auth/sign-in/extension-code'
+    )
+    expect(redeemed?.body).toEqual({ code: 'website-code' })
+  })
+
   it('offers no Google sign-in in a build without a Google client', async () => {
     ids.google = null
     const { view } = await showAccount(signInRoutes())
@@ -260,6 +282,7 @@ describe('Deleting the account', () => {
     await click(byText(view, 'button', words.deleteAccount))
     await click(byText(dialog(), 'button', words.confirm))
     expect(dialog().getAttribute('data-delete-step')).toBe('sign-in')
+    expect(dialog().querySelector('[data-sign-in-website]')).toBeNull()
     const email = find(dialog(), 'input[type="email"]') as HTMLInputElement
     expect([email.value, email.readOnly]).toEqual([user.email, true])
     await click(byText(dialog(), 'button', accountLabels.sendCode))

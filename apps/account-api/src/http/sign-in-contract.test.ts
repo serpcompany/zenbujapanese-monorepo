@@ -1,10 +1,13 @@
 import type { z } from '@hono/zod-openapi'
 import { describe, expect, test } from 'vitest'
 import { authPath, offeredRoutes, routeScopes } from '../auth/routes'
-import { sessionToken, useSignInService } from '../test/sign-in'
-import { signInRoutes } from './sign-in-contract'
+import { fromTheWebsite, sessionToken, useSignInService, websiteSession } from '../test/sign-in'
+import { extensionCodeRoutes } from './extension-code-contract'
+import { signInRoutes as theSignInRoutes } from './sign-in-contract'
 
 const running = useSignInService({ providers: true })
+
+const signInRoutes = { ...theSignInRoutes, ...extensionCodeRoutes }
 
 type Route = (typeof signInRoutes)[keyof typeof signInRoutes]
 
@@ -107,6 +110,16 @@ describe("sign-in's contract", () => {
     await holds(
       signInRoutes.revokeOtherSessions,
       call('/v1/auth/revoke-other-sessions', { token: session, body: {} })
+    )
+    const website = websiteSession(await as.withCode('contract@example.com', fromTheWebsite()))
+    const handed = await call('/v1/auth/extension-code', { ...fromTheWebsite(website), body: {} })
+    await holds(signInRoutes.extensionCode, Promise.resolve(handed))
+    await holds(
+      signInRoutes.signInWithExtensionCode,
+      call('/v1/auth/sign-in/extension-code', {
+        client: 'zenbu-extension',
+        body: { code: handed.body?.code }
+      })
     )
     await holds(signInRoutes.signOut, call('/v1/auth/sign-out', { token: session, body: {} }))
     const last = sessionToken(await as.withCode('contract@example.com'))

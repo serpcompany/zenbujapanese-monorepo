@@ -79,6 +79,7 @@ which only the log records.
 | `POST /v1/auth/sign-in/email-otp` | Signs in with a code: `{ "email": "...", "otp": "123456" }`. |
 | `POST /v1/auth/sign-in/nonce` | A nonce for one Apple or Google sign-in: `{ "nonce": "...", "expiresIn": 600 }`. |
 | `POST /v1/auth/sign-in/social` | Signs in with an ID token from Sign in with Apple or Google on a device, with the nonce: `{ "provider": "apple", "idToken": { "token": "...", "nonce": "..." } }`. Without an ID token, it starts the web sign-in, which comes back to `/v1/auth/callback/<provider>`. |
+| `POST /v1/auth/extension-code`, `/sign-in/extension-code` | A code that signs the extension in. |
 | `POST /v1/auth/apple/extension` | Not Better Auth's: Apple's form post for the extension's Sign in with Apple, sent on to it with a `303` ([`account-extension.md`](account-extension.md)). |
 | `POST /v1/auth/link-social` | Signed in in the last 10 minutes, adds a way in, the same way. |
 | `GET /v1/auth/list-accounts`, `POST /v1/auth/unlink-account` | Signed in, the ways the learner signs in, and removing one by its `id` from the list: `{ "accountId": "..." }`, within 10 minutes of signing in, never the last, and the account's email is told. |
@@ -358,7 +359,7 @@ are in `src/db/schema.ts`:
   or none, and the profile's version);
 - `user_identities`: each way an account signs in;
 - `sessions`: what an app or the website holds, and which app (`client_id`);
-- `verifications`: the codes, encrypted, and the sign-in nonces;
+- `verifications`: the codes, encrypted, the sign-in nonces, and the extension's codes, hashed;
 - `signing_keys`: the access tokens' keys, encrypted with `ACCOUNT_API_SECRET`;
 - `rate_limits`;
 - `known_words`, `word_lists`, and `list_words`: the synced known words, lists, and their words,
@@ -417,9 +418,8 @@ checks of a real token run. They sign new and existing learners in each way, and
 The profile and sync tests (`src/http/me.test.ts` and `sync.test.ts`) sign learners in the same
 way and call the routes with their access tokens. They show:
 
-- **Access:** the session token, a token signed with another key, a forged one, a malformed one,
-  an expired one, and one for a deleted account are all refused alike, and `X-User-Id` lets no one
-  in.
+- **Access:** the session token, a token signed with another key, a forged one, a malformed one, an
+  expired one, and one for a deleted account are all refused alike, and `X-User-Id` lets no one in.
 - **Profiles:** a change's normalized fields, its version and `updatedAt` moving on, an unchanged
   write, a stale version's conflict with the current profile, three changes from one version at
   once (one goes through), a username taken whatever its case, and each refused field.

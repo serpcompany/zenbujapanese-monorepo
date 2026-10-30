@@ -30,6 +30,7 @@ export type AccountService = {
   mailTo(email: string): Promise<number>
   codeFor(email: string, sentBefore: number): Promise<string>
   call(path: string, sessionToken: string, method?: string): Promise<Answer>
+  websiteCode(email: string): Promise<string>
   close(): Promise<void>
 }
 
@@ -52,7 +53,7 @@ async function untilHealthy(local: string, exited: () => boolean, logged: string
   throw new Error(`The account service didn't start:\n${logged.join('').slice(-2000)}`)
 }
 
-export async function startAccountService(): Promise<AccountService> {
+export async function startAccountService(website: string): Promise<AccountService> {
   const db = await PGlite.create()
   const postgres = new PGLiteSocketServer({ db, host: '127.0.0.1', port: 0, maxConnections: 10 })
   await postgres.start()
@@ -78,6 +79,7 @@ export async function startAccountService(): Promise<AccountService> {
         ACCOUNT_API_SECRET: randomBytes(32).toString('hex'),
         ACCOUNT_API_EMAIL: 'dev-mailbox',
         PORT: String(port),
+        ACCOUNT_API_TRUSTED_ORIGINS: website,
         GOOGLE_CLIENT_IDS: testGoogleClientId,
         APPLE_SERVICES_IDS: signInIds.production.appleServicesId,
         APPLE_TEAM_ID: 'ZENBUTEAM1',
@@ -127,6 +129,31 @@ export async function startAccountService(): Promise<AccountService> {
     }
   }
 
+  async function fromTheWebsite(path: string, body: unknown, cookie = '') {
+    const answer = await fetch(`${local}${path}`, {
+      method: 'POST',
+      headers: { origin: website, 'content-type': 'application/json', cookie },
+      body: JSON.stringify(body)
+    })
+    if (!answer.ok) throw new Error(`${path} answered ${answer.status}: ${await answer.text()}`)
+    return answer
+  }
+
+  async function websiteCode(email: string): Promise<string> {
+    const { nonce } = await (await fromTheWebsite('/v1/auth/sign-in/nonce', {})).json()
+    const token = providers.googleIdToken(email, nonce)
+    const signedIn = await fromTheWebsite('/v1/auth/sign-in/social', {
+      provider: 'google',
+      idToken: { token, nonce }
+    })
+    const cookie = signedIn.headers
+      .getSetCookie()
+      .map(line => line.split(';')[0])
+      .join('; ')
+    const issued = await fromTheWebsite('/v1/auth/extension-code', {}, cookie)
+    return String((await issued.json()).code)
+  }
+
   return {
     origin: testApiHost,
     origins: [testApiHost, googleOrigin, appleOrigin],
@@ -136,6 +163,7 @@ export async function startAccountService(): Promise<AccountService> {
     mailTo,
     codeFor,
     call,
+    websiteCode,
     async close() {
       service.kill()
       providers.close()

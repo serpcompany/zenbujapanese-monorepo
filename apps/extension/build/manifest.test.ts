@@ -134,6 +134,19 @@ describe('manifest', () => {
     expect(manifest('test', 'staging').version).toBe(packageJson.version)
   })
 
+  it("lets only its own environment's website, and no other extension, message it; the test build also local pages", () => {
+    expect(manifest('release').externally_connectable).toEqual({
+      matches: ['https://zenbujapanese.com/*']
+    })
+    expect(manifest('release', 'staging').externally_connectable).toEqual({
+      matches: ['https://staging.zenbujapanese.com/*']
+    })
+    expect(manifest('test').externally_connectable).toEqual({
+      matches: ['https://zenbujapanese.com/*', 'http://localhost/*', 'http://127.0.0.1/*']
+    })
+    expect(manifest('release').externally_connectable).not.toHaveProperty('ids')
+  })
+
   it("links to its own environment's website", () => {
     expect(manifest('release').homepage_url).toBe('https://zenbujapanese.com')
     expect(manifest('release', 'staging').homepage_url).toBe('https://staging.zenbujapanese.com')

@@ -4,6 +4,7 @@ import { createServer, type Server } from 'node:https'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { testGoogleClientId } from '../build/hosts.ts'
 import { appleAuthorizeUrl, googleAuthorizeUrl } from '../src/service-worker/account/identity.ts'
 
 type Claims = Record<string, unknown>
@@ -110,6 +111,14 @@ export async function startSignInProviders() {
     keys: { google: google.jwks, apple: apple.jwks },
     learner,
     asked,
+    googleIdToken: (email: string, nonce: string) =>
+      google.signed({
+        aud: testGoogleClientId,
+        sub: `google-${email}`,
+        email,
+        email_verified: true,
+        nonce
+      }),
     hostRules: hosts.map(host => `MAP ${host} 127.0.0.1:${address.port}`),
     spki,
     close() {

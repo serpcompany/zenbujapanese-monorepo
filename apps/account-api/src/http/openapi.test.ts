@@ -105,7 +105,7 @@ describe('the OpenAPI contract', () => {
       '/v1/webhooks/apple',
       '/v1/webhooks/stripe'
     ])
-    expect(paths.filter(path => path.startsWith('/v1/auth/'))).toHaveLength(17)
+    expect(paths.filter(path => path.startsWith('/v1/auth/'))).toHaveLength(19)
     expect(Object.keys(document.paths?.['/v1/me'] ?? {}).sort()).toEqual(['delete', 'get', 'patch'])
     expect(Object.keys(document.paths?.['/v1/photos/{photoId}'] ?? {}).sort()).toEqual([
       'get',

@@ -5,7 +5,7 @@ import { type Client, clientById, clients, webClient } from '../domain/clients'
 
 const clientHeader = 'x-zenbu-client'
 
-function signInClient(
+export function signInClient(
   headers: Headers | undefined,
   path: string | undefined,
   trustedOrigins: readonly string[]
