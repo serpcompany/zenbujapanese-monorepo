@@ -13,6 +13,7 @@ export const settingDefaults = {
   'frequencyDictionaries.chosen': bundledPacks,
   'frequencyDictionaries.order': bundledPacks,
   'sites.off': [] as string[],
+  'pages.pageText': true,
   'videos.zenbuCaptions': true,
   'videos.captionPlace': null as CaptionPlace | null,
   'videos.translationPlace': null as CaptionPlace | null,
@@ -136,6 +137,9 @@ export function watchSettings(
 
 export const isZenbuOn = (host: string, settings: Settings): boolean =>
   !settings['sites.off'].includes(host)
+
+export const readsPageText = (host: string, settings: Settings): boolean =>
+  settings['pages.pageText'] && isZenbuOn(host, settings)
 
 export function sitesOffWith(host: string, on: boolean, settings: Settings): string[] {
   const others = settings['sites.off'].filter(site => site !== host)
