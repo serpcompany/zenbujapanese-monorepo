@@ -115,33 +115,30 @@ describe('the Translate tab', () => {
     expect(tab.card()?.textContent).toContain(translateLabels.onThisDevice)
   })
 
-  it('links the words of a Japanese source to their card on the page, with no card in the panel', async () => {
+  async function sourceWordClicked(services: ReturnType<typeof servicesWith>) {
     standInTranslator()
-    const pagePopup = vi.fn<PagePopup>((_word, heard) => {
-      heard.shown()
-      return () => {}
-    })
-    const services = { ...servicesWith(), pagePopup }
     services.segment.mockImplementation(async () => sentenceAnswer)
     const tab = await showTab(services)
     await tab.type(sentence)
     await tab.click(translateLabels.translate)
     await settle()
     await click(find(document, '[data-source] [data-word="要求"]'))
+  }
+
+  it('links the words of a Japanese source to their card on the page, with no card in the panel', async () => {
+    const pagePopup = vi.fn<PagePopup>((_word, heard) => {
+      heard.shown()
+      return () => {}
+    })
+    const services = { ...servicesWith(), pagePopup }
+    await sourceWordClicked(services)
     expect(pagePopup.mock.calls[0]?.[0]).toMatchObject({ text: '要求', ids: ['youkyuu'] })
     expect(document.querySelector('[data-word-popup]')).toBeNull()
     expect(services.segment).toHaveBeenCalledWith(sentence)
   })
 
   it('expands a source word’s popup in place where the page can’t show its card', async () => {
-    standInTranslator()
-    const services = servicesWith()
-    services.segment.mockImplementation(async () => sentenceAnswer)
-    const tab = await showTab(services)
-    await tab.type(sentence)
-    await tab.click(translateLabels.translate)
-    await settle()
-    await click(find(document, '[data-source] [data-word="要求"]'))
+    await sourceWordClicked(servicesWith())
     await click(openFullEntryButton(document))
     expect(document.querySelector('[data-word-popup]')?.hasAttribute('data-expanded')).toBe(true)
   })

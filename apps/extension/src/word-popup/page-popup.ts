@@ -2,7 +2,7 @@ import { fields } from '../shared/messages'
 
 export const pagePopupPort = 'word-popup'
 
-export type PanelSide = 'left' | 'right'
+type PanelSide = 'left' | 'right'
 
 export type PagePopupRequest = {
   text: string
@@ -11,9 +11,9 @@ export type PagePopupRequest = {
   side: PanelSide
 }
 
-export type ShowOnPage = { target: 'word-popup'; show: PagePopupRequest }
+type ShowOnPage = { target: 'word-popup'; show: PagePopupRequest }
 
-export type ShownOnPage = { target: 'word-popup'; shown: true }
+type ShownOnPage = { target: 'word-popup'; shown: true }
 
 export type PagePopupHeard = {
   shown(): void

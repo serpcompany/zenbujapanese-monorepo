@@ -54,10 +54,12 @@ or resizes. Escape and a click outside close it and give focus back; while its M
 popup's layer (`position: fixed`, the highest `z-index`), and the placed box inside it has none,
 so the More menu, which portals to the shadow root's surface, stacks over the card; a `z-index`
 on the box made a stacking context the menu's `z-50` was below. Open Full Entry
-calls `openPanel(route)` from the click: the service worker opens the side panel before it awaits
-anything, so the click's activation carries through one message (checked in Chromium by the
-browser tests; no fallback is built). Share and Copy Link use `websiteOrigin` and `wordPath`.
-Translate's Japanese source draws the same popup in the panel (`src/translate/source-words.tsx`).
+expands the card in place: `WordPopup` draws `FullEntry` (`src/word-detail/full-entry.tsx`) inside
+the same box, at the window's height, and the host places it again for its new size. Share and
+Copy Link use `websiteOrigin` and `wordPath`. The same host shows a card the side panel asks for,
+at the window's edge ([`extension-side-panel.md`](extension-side-panel.md#a-words-card-on-the-page)),
+and one popup per page across hosts. Where the page can't, the panel draws the same popup itself
+(`src/translate/source-words.tsx`).
 
 An error's message never holds the page's text or a word.
 

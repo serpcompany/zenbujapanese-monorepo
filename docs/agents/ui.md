@@ -39,7 +39,8 @@ root, so a check refuses anything only one of them has:
   indirectly (`ui-needs-no-next`, `verify.json`).
 - **One Toaster.** shadcn's Sonner, `components/sonner.tsx`, is the one file that imports
   `sonner`. It takes the theme as a prop, so each client passes its own: the website its
-  `next-themes` theme, the extension's side panel the system's. Nothing else in the package
+  `next-themes` theme. The extension mounts none: Word Detail's notices show in the word popup
+  that holds it (#1124). Nothing else in the package
   reaches it, however indirectly (`ui-toasts-only-in-toaster`, `verify.json`), so Biome doesn't
   list `sonner` and lifts nothing for that file: a component takes a notice as a callback, and the
   client shows the toast. Sonner adds its styles to the page's head, so a shadow root mounts no

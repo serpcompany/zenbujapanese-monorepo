@@ -1,4 +1,4 @@
-import type { Settings } from '../shared/settings'
+import type { PageSettings, Settings } from '../shared/settings'
 import { type PagePopupPort, pagePopupPort, shownRequest } from './page-popup'
 import type { PopupHost } from './popup-host'
 
@@ -6,11 +6,6 @@ type Connected = (port: PagePopupPort) => void
 
 type PageRuntime = {
   onConnect: { addListener(listener: Connected): void; removeListener(listener: Connected): void }
-}
-
-type PageSettings = {
-  ask(): Promise<Settings>
-  onChanged(listener: (settings: Settings) => void): () => void
 }
 
 type Options = {

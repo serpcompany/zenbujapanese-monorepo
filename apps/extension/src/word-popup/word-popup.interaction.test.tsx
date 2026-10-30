@@ -120,18 +120,25 @@ describe('the word popup', () => {
     expect(find(currentPopup(), '[data-meaning]').textContent).toContain('demand')
   })
 
-  it('shows Word Detail’s own header actions in the expanded card, Open on zenbujapanese.com among them', async () => {
-    const { popup } = await showPopup('要求', ['youkyuu'])
+  it('shows Word Detail’s own header actions in the expanded card, Open on zenbujapanese.com among them, and its notices at the card’s foot', async () => {
+    const writeText = vi.fn(async (_text: string) => {})
+    const { popup } = await showPopup('要求', ['youkyuu'], { sharing: { writeText } })
     await click(openFullEntryButton(popup))
     const label = wordDetailLabels.share.openOnWebsite
     const link = find(shownEntry(), `a[aria-label="${label}"]`) as HTMLAnchorElement
     expect(link.getAttribute('href')).toBe(address)
     expect(link.target).toBe('_blank')
-    expect(
-      link.nextElementSibling?.querySelector(
-        `button[aria-label="${fill(labels.share.share, { name: '要求' })}"]`
-      )
-    ).not.toBeNull()
+    const share = link.nextElementSibling?.querySelector(
+      `button[aria-label="${fill(labels.share.share, { name: '要求' })}"]`
+    )
+    expect(share).not.toBeNull()
+
+    await click(share as HTMLElement)
+    expect(writeText).toHaveBeenLastCalledWith(address)
+    const notice = find(currentPopup(), '[data-notice]')
+    expect(notice.textContent).toBe(labels.share.linkCopied)
+    expect(notice.tagName).toBe('OUTPUT')
+    expect(shownEntry().contains(notice)).toBe(false)
   })
 
   it('asks which word is meant when the text has several, and offers them all in the full entry', async () => {

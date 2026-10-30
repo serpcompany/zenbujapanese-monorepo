@@ -1,33 +1,37 @@
 # Word Detail
 
-Word Detail is the side panel's page for one dictionary word, as the app's Word Detail
+Word Detail is one dictionary word's full entry, as the app's Word Detail
 ([`dictionary.md`](../../../ios/docs/product/dictionary.md)) without its saving: there are no
-Lists, Notes, Mark as Known, Add Photo, or Look Up. Two more pages open from it: a kanji's detail
-and the examples for one conjugated form. Each page draws only its content; the side panel draws
-Back over it and opens a page from a route ([`side-panel.md`](side-panel.md)). The word popup's
-Open Full Entry opens a word's ([`word-popup.md`](word-popup.md)).
+Lists, Notes, Mark as Known, Add Photo, or Look Up. It opens inside the word popup, when Open Full
+Entry expands the card in place ([`word-popup.md`](word-popup.md), Its actions), on a page and,
+where the page can't show a card, in the side panel. Two more pages open from it: a kanji's
+detail and the examples for one conjugated form. Each page draws only its content; the full entry
+(`src/word-detail/full-entry.tsx`) draws a row of Back over it and keeps the pages opened inside
+it. The side panel has no Word Detail pages of its own: nothing in it opens one.
 
-Every check below is in `src/word-detail/`, in happy-dom, on the dictionary core's fixtures
-answered through a fixture source in the test, with Back drawn by the side panel itself: `word-detail-page.interaction.test.tsx` (word) and
-`kanji-and-form-pages.interaction.test.tsx` (kanji and form). A check marked Chrome is a
-browser test in `e2e/word-popup.spec.ts`, on the side panel page in a tab with the fixture release.
+Every check below is in `src/word-detail/` unless it names another file, in happy-dom, on the dictionary core's fixtures
+answered through a fixture source in the test, with Back drawn by the full entry: `word-detail-page.interaction.test.tsx` (word) and
+`kanji-and-form-pages.interaction.test.tsx` (kanji and form); popup is
+`src/word-popup/word-popup.interaction.test.tsx`. A check marked Chrome is a
+browser test in `e2e/word-popup.spec.ts`, in the expanded word popup on a page, with the fixture
+release.
 
 ## The word
 
 | Behavior | Check |
 | --- | --- |
-| The top: the headword with furigana, pitch with its speaker or a Pronounce button, which speak in the word popup's voice ([`word-popup.md`](word-popup.md), Its actions), and the part of speech. Then Meaning, Frequency, Alternatives, Kanji, Alternative Kanji, Related Words, and Examples, each only when the word has it. 要る shows Meaning, Frequency, Kanji, and Examples. | word: 要る's top and sections |
+| The top: the headword with furigana, at `@zenbu/ui`'s panel size (`headwordSize="panel"`, `text-4xl`; the website keeps `text-5xl`), so a long headword such as テーブル fits the card at 380 px, pitch with its speaker or a Pronounce button, which speak in the word popup's voice ([`word-popup.md`](word-popup.md), Its actions), and the part of speech. Then Meaning, Frequency, Alternatives, Kanji, Alternative Kanji, Related Words, and Examples, each only when the word has it. 要る shows Meaning, Frequency, Kanji, and Examples. | word: 要る's top and sections; `packages/ui/src/dictionary/word-header.test.tsx`, "draws the headword at the website's size unless asked for the panel's"; popup: "expands in place into the word's full entry…" (`text-4xl`) |
 | Reading Aids follow Settings: with Furigana off, the furigana goes and the reading shows under the headword. | word: Furigana off |
 | Frequency lists the learner's chosen dictionaries in their chosen order (`frequencyDictionaries.chosen`, JLPT among them), and leaves the section out when none has the word. | word: Frequency follows the chosen dictionaries |
 | A word with several entries, such as 要, shows each entry's reading as a tab, starting on the one that was chosen. | word: 要's two entries |
 | The part of speech opens the conjugation table in a sheet. A form in it opens that form's examples. | word: the conjugation table |
 | Each meaning has a menu: Speak reads it in the best US English voice on this computer, or another English one when it has none, chosen as Pronounce chooses a Japanese one, at the same rate, or says "This browser can’t speak English." when the computer has only online ones or Chrome lists none, and Copy puts it on the clipboard and says "Meaning copied". | word: a meaning's Speak; a meaning's Copy |
-| A page's notices, such as "Meaning copied", "Link copied", a browser that can't speak, or a related word not found, show as a toast over the side panel, where they're seen however far the page is scrolled. The toast is a live region. One Toaster, `@zenbu/ui`'s shadcn Sonner, sits in the side panel. | word: a meaning's Copy; Share without a share sheet; a browser that can't speak; a related word with no target |
+| A page's notices, such as "Meaning copied", "Link copied", a browser that can't speak, or a related word not found, go to the card that holds it, which shows them in a line at its foot, under the entry, where they're seen however far the entry is scrolled. The line is an `output`, which a screen reader reads out. | word: a meaning's Copy; Share without a share sheet; a meaning's Speak in a browser that can't speak; a related word with no target; `src/word-popup/word-popup.interaction.test.tsx`: "shows Word Detail's own header actions in the expanded card…, and its notices at the card's foot" |
 | Share sends the word's zenbujapanese.com page to the system's share sheet; Copy Link, under •••, copies it. Without a share sheet, Share copies the link and says "Link copied". | word: Share and Copy Link; Share without a share sheet |
-| Open on zenbujapanese.com, an icon button beside Share with Share's size and look, opens the word's zenbujapanese.com page, the address Share gives, in a new tab; the side panel stays on the word. Its label is its accessible name and its tooltip. The extension has no dictionary search, so this is how a learner goes on to the website. | word: Open on zenbujapanese.com opens the word's page in a new tab; Chrome: Word Detail's Open on zenbujapanese.com |
+| Open on zenbujapanese.com, an icon button beside Share with Share's size and look, opens the word's zenbujapanese.com page, the address Share gives, in a new tab; the card stays open on the word. Its label is its accessible name and its tooltip. The extension has no dictionary search, so this is how a learner goes on to the website. | word: Open on zenbujapanese.com opens the word's page in a new tab; Chrome: "the expanded card's Open on zenbujapanese.com opens the word's page in a new tab and keeps the card" |
 | Examples show 25 sentences; Load more examples fetches the next 25. When that fails, the button says Try again, and Try again fetches them. | word: Load More; Load More that fails |
-| A linked word in a sentence, a kanji, an alternative kanji, or a related word opens its own page. A Kanji or Alternative Kanji row opens the kanji's page (on the website, a row with no details stays plain text). | word: an example's word; Back through the pages; いる's Alternative Kanji row |
-| Back, in the side panel, returns to each page as it was left: the side panel keeps it drawn, so it isn't asked again. | word: Back through the pages |
+| A linked word in a sentence, a kanji, an alternative kanji, or a related word opens its own page. A Kanji or Alternative Kanji row opens the kanji's page (on the website, a row with no details stays plain text). | word: an example's word; full entry: Back returns through the pages; いる's Alternative Kanji row |
+| Back returns to each page as it was left: the full entry keeps it drawn, so it isn't asked again. Focus goes to the Back of the page shown. The last Back leaves the full entry, folding it back into the card. | full entry: "Back returns through the pages each link opened, each as it was left, then leaves" |
 | A related word the dictionary doesn't have opens a page that says "This word isn’t in the dictionary." | word: いる's related word 有る |
 | A related word given only by its spelling is looked up by it first: it opens the word that matches, says "有る isn’t in the dictionary." when nothing does, and "The dictionary couldn’t answer. Try again." when the lookup fails. | word: a related word with no target; its spelling resolves; can't resolve |
 
@@ -37,7 +41,6 @@ browser test in `e2e/word-popup.spec.ts`, on the side panel page in a tab with t
 | --- | --- |
 | A kanji's page shows its readings, meanings, sections, and stroke order, and its words open their own pages. | kanji: 要's details |
 | While the stroke order is still downloading, the page says so and shows the rest. It asks again each time the dictionary's data changes, and every second while the data is ready but the strokes are not, and shows the stroke order once it has downloaded. It stops asking once the data has failed or its update has, since the strokes won't arrive until the next try. | kanji: downloading; asks again when the data changes; a kanji page opened while the strokes download; stops asking when the update failed, and when the data failed (`strokes-arrive.interaction.test.tsx`) |
-| The side panel draws its word, kanji, and form pages with these three. | kanji: the side panel's pages |
 | A form's page shows the form with a Pronounce button and the sentences that use it, 25 at a time, or "No example sentences use this form yet." | form: いる; a form none uses |
 
 ## While the dictionary can't answer
