@@ -137,7 +137,8 @@ export function accountCopy(parts: CopyParts) {
     const browser = await readSettings(parts.settings)
     const queued = await copy.edit(async draft => {
       if (!(await signedInAsOwner(draft))) return false
-      reconcile(draft, browser, newId)
+      const writes = reconcile(draft, browser, newId)
+      if (Object.keys(writes).length > 0) await parts.settings.set(writes)
       return draft.meta?.queue.some(each => !each.sent) === true
     })
     if (queued) await sync.chance('settings')
