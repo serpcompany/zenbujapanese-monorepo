@@ -13,7 +13,7 @@ the manifest. The service worker registers it at run time for the sites Zenbu ho
 `chrome.scripting.registerContentScripts`: at its start, and on `permissions.onAdded` and
 `onRemoved`. On a site just given it also runs the script in the site's open tabs, so they start
 with no reload; on a site taken back it sends `stopPageLookup` to each tab whose address Chrome
-now hides, and the script takes away what it drew. The language-data host and YouTube, which the
+now hides, and the script takes away what it drew. The language-data host, YouTube and Netflix (with its caption host), which the
 manifest holds for other reasons, are never registered. The test build also holds
 `http://allowed.localhost/*`, where the browser tests' words page is served.
 

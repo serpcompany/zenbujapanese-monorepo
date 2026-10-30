@@ -19,7 +19,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, Zenbu's icons, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
+| `pnpm build` | The release build, in `dist/`: the manifest, Zenbu's icons, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube and Netflix content scripts. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port, the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
@@ -124,10 +124,10 @@ waiting on, since Chrome stops it when it's idle.
 
 ### Captions, the video, and translation
 
-How the service worker gets a YouTube video's captions and the content script follows the video
-is in [`extension-captions.md`](extension-captions.md). How any surface translates through the
-offscreen document, and how a page downloads Chrome's model from a click, is in
-[`extension-translation.md`](extension-translation.md).
+How the service worker gets a YouTube or Netflix video's captions and the content script
+follows the video is in [`extension-captions.md`](extension-captions.md). How any surface
+translates through the offscreen document, and how a page downloads Chrome's model from a click, is
+in [`extension-translation.md`](extension-translation.md).
 
 ### Drawing on a page
 
@@ -171,8 +171,8 @@ and the theme's own token names set to other values), and `tailwind.html`, built
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
 Dialog, and Test error, which throws while drawing so the content script reports it. The release
-build declares only the YouTube content script, and registers the page script at run time;
-`build/manifest.test.ts` checks that. How each part reports its errors is in
+build declares only YouTube's and Netflix's content scripts, and registers the page script at run
+time; `build/manifest.test.ts` checks that. How each part reports its errors is in
 [`extension-error-reports.md`](extension-error-reports.md).
 
 ## Layers

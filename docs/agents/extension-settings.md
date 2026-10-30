@@ -31,7 +31,7 @@ the same way. The side panel's header and Settings read and write the storage di
 storage: it asks the service worker with `askSettings()` (`{ target: 'service-worker', settings:
 'read' }`), and the service worker, which watches the storage, sends `{ target: 'settings',
 settings }` to every open tab when one changes, which `onSettingsChanged` hears. One content
-script writes one key: the YouTube one keeps `videos.captionPlace`, where the learner dragged the
+script writes one key: the video one (YouTube and Netflix) keeps `videos.captionPlace`, where the learner dragged the
 caption, or `null` once a double-click puts it back. It asks the service worker to write it, with
 `askToWriteSettings()` (`{ target: 'service-worker', settings: 'write', changes }`), since the
 service worker closes `chrome.storage.local` to content scripts to keep the account's session
@@ -54,17 +54,16 @@ on the toolbar icon shows the header the tab's address; `unlimitedStorage`, for 
 the extension keeps on the device; `alarms`, for the daily language-data update check;
 `scripting`, to register the page lookup script on the sites the user allows;
 `declarativeNetRequestWithHostAccess`, for the rule that removes the `origin` header from the
-extension's own YouTube caption requests; and `identity`, for Google's and Apple's sign-in windows
+extension's own YouTube and Netflix caption requests; and `identity`, for Google's and Apple's sign-in windows
 (`chrome.identity.launchWebAuthFlow`). Its `host_permissions` are the language data host
 (`https://data.zenbujapanese.com/*`, in the test build `http://language-data.localhost/*`), the
 account service's (`https://api.zenbujapanese.com/*`, `https://api-staging.zenbujapanese.com/*`
-in staging, `http://account-api.localhost/*` in the test build), and `https://www.youtube.com/*`,
-for the YouTube content script and the caption requests; the test build adds
+in staging, `http://account-api.localhost/*` in the test build), `https://www.youtube.com/*`, for the YouTube content script and its caption requests, and `https://www.netflix.com/*` and `https://*.oca.nflxvideo.net/*`, for the Netflix content scripts and the service worker's fetch of Netflix's caption files; the test build adds
 `http://allowed.localhost/*`, which the tests use as an allowed site. The hosts together add one
-install warning, which names the three: "Read and change your data on api.zenbujapanese.com,
-data.zenbujapanese.com, and www.youtube.com" (`chrome.management.getPermissionWarningsById` on the
-production build, in Playwright's Chromium 153, by an agent on 2026-10-30; staging names its own
-API host); the other permissions add none, `identity` included. It asks
+install warning, which no longer names the hosts but says "Read and change your data on a number
+of websites" (`chrome.management.getPermissionWarningsById` on the production build, in Chromium
+153, by an agent on 2026-10-31; with only the data host, the API host and `www.youtube.com`, on
+2026-10-30, it named the three); staging swaps its own API host; the other permissions add none, `identity` included. It asks
 for no other site at install: `http://*/*` and `https://*/*` are the only
 `optional_host_permissions`, the only access asked for later, and the header menu's Allow on This
 Site asks Chrome for one site with `chrome.permissions.request`, as Turn On for Every Site does
