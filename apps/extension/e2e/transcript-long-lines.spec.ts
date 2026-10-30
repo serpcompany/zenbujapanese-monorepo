@@ -202,7 +202,10 @@ function wrapping(page: Page) {
           return box.left < inside.left - 0.5 || box.right > inside.right + 0.5
         }
       ).length
-      return { rows: rows.length, overlaps, outside }
+      const spread = [...card.querySelectorAll('ruby')].filter(
+        ruby => getComputedStyle(ruby).getPropertyValue('ruby-align') !== 'center'
+      ).length
+      return { rows: rows.length, overlaps, outside, spread }
     })
     return {
       cards,
@@ -213,7 +216,7 @@ function wrapping(page: Page) {
 }
 
 for (const width of widths)
-  test(`wraps captions of one to four lines inside their cards at ${width} pixels, with no sideways scroll and no furigana over the line above, with Word Meanings off and on, in light and dark`, async ({
+  test(`wraps captions of one to four lines inside their cards at ${width} pixels, with no sideways scroll, no furigana over the line above, and no word spread apart under its furigana, with Word Meanings off and on, in light and dark`, async ({
     extension,
     page
   }) => {
@@ -225,8 +228,8 @@ for (const width of widths)
       const layout = await wrapping(page)
       measured[aids] = layout
       expect(layout).toMatchObject({ pageScrollsSideways: false, transcriptScrollsSideways: false })
-      expect(layout.cards.map(card => [card.overlaps, card.outside])).toEqual(
-        lines.map(() => [[], 0])
+      expect(layout.cards.map(card => [card.overlaps, card.outside, card.spread])).toEqual(
+        lines.map(() => [[], 0, 0])
       )
       for (const tone of tones) {
         await page.emulateMedia({ colorScheme: tone })

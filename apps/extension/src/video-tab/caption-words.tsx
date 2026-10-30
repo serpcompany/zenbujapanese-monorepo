@@ -12,7 +12,8 @@ import { type CaptionGlosses, type KnownWords, useKnown } from './word-marks'
 
 type OpenWord = (token: PageToken, from: HTMLElement) => void
 
-const lineClass = 'flex flex-wrap items-baseline text-base leading-[1.35] text-foreground'
+const lineClass =
+  'flex flex-wrap items-baseline text-base leading-[1.35] text-foreground [&_ruby]:[ruby-align:center]'
 
 const wordClass =
   'group/word inline-flex cursor-pointer flex-col items-center rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
