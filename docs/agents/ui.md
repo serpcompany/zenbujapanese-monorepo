@@ -87,8 +87,8 @@ which may be an online one; the extension's roots (`mountPage` and `mountInShado
 `unsupported`, so it calls `onUnsupported` and speaks nothing (#1122's D4 is the extension's). An
 empty list after the wait gets the `lang`-only utterance on the website, and `unsupported` in the
 extension. `onUnsupported` also gets a `clearWhen`, which runs the clear it is given once a
-`voiceschanged` lists a local voice of the language, so the popup's notice and Word Detail's toast
-go and the next click speaks. `useWithoutLocalVoice` asks for
+`voiceschanged` lists a local voice of the language, so the popup's notice, on its card or in its
+full entry, goes and the next click speaks. `useWithoutLocalVoice` asks for
 `getVoices()` when a speaker mounts, so a click usually speaks inside its handler and keeps the user
 gesture. A click before the voices load waits for a `voiceschanged` that lists a local voice of the
 language, up to a second, and a later click drops that wait. Each click cancels what is being

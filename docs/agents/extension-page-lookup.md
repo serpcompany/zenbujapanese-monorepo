@@ -49,8 +49,9 @@ pieces are tested apart:
 
 `wordPopupHost` (`src/word-popup/popup-host.tsx`) mounts `WordPopup` with `mountInShadowRoot`
 next to the word, places it inside the window (`position.ts`), and moves it as the page scrolls
-or resizes. Escape and a click outside close it and give focus back; while its More menu is open
-(`[role="menu"][data-open]`, `open-menu.ts`), Escape is the menu's. The shadow host is the
+or resizes. Escape and a click outside close it and give focus back; while any Base UI layer is
+open over it, such as its More menu (`[data-base-ui-portal] [data-open]`,
+`src/word-popup/open-layer.ts`), Escape and the click are the layer's. The shadow host is the
 popup's layer (`position: fixed`, the highest `z-index`), and the placed box inside it has none,
 so the More menu, which portals to the shadow root's surface, stacks over the card; a `z-index`
 on the box made a stacking context the menu's `z-50` was below. Open Full Entry
