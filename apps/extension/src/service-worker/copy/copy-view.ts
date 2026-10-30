@@ -72,7 +72,7 @@ export const notesOf = (items: Item[]): CopiedNote[] =>
     reading: textOrNull(data?.reading)
   }))
 
-export const wordViewOf = (draft: Draft, item: string): WordView => ({
+export const wordViewOf = (draft: Draft, item: string): Omit<WordView, 'refusal'> => ({
   state: stateOf(draft.get(keyOf('knownWord', item))?.data),
   lists: listsOf(draft).map(({ id, name, words }) => ({
     id,

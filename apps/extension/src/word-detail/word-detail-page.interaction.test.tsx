@@ -18,6 +18,8 @@ import { type Settings, settingDefaults } from '../shared/settings'
 import '../test/act-environment'
 import { setDataState } from '../test/data-state'
 import { fakeNotices } from '../test/notices'
+import { stubIntersectionObserver } from '../test/render'
+import { WithSaving } from '../test/saving-stand-in'
 import type { EntryPage } from './entry-page'
 import { FullEntry } from './full-entry'
 import { wordDetailLabels } from './labels'
@@ -94,13 +96,7 @@ beforeEach(() => {
   notices = fakeNotices()
   aids.furigana = true
   aids.chosen = null
-  vi.stubGlobal(
-    'IntersectionObserver',
-    class {
-      observe() {}
-      disconnect() {}
-    }
-  )
+  stubIntersectionObserver()
   Object.defineProperty(navigator, 'clipboard', {
     value: { writeText: clipboard },
     configurable: true
@@ -121,15 +117,17 @@ afterEach(() => {
 async function show(first: EntryPage) {
   await act(async () =>
     root.render(
-      <FullEntry
-        first={first}
-        settings={settingsNow()}
-        notices={notices.notices}
-        backLabel={backLabel}
-        entryLabel={entryLabel}
-        back={back}
-        lookups={lookups}
-      />
+      <WithSaving>
+        <FullEntry
+          first={first}
+          settings={settingsNow()}
+          notices={notices.notices}
+          backLabel={backLabel}
+          entryLabel={entryLabel}
+          back={back}
+          lookups={lookups}
+        />
+      </WithSaving>
     )
   )
 }
@@ -179,6 +177,8 @@ describe('Word Detail', () => {
       'Meaning',
       'Frequency',
       'Kanji',
+      'Lists',
+      'Notes',
       'Examples'
     ])
   })
@@ -280,15 +280,15 @@ describe('Word Detail', () => {
     await toasted(wordDetailLabels.meaning.copied)
   })
 
-  test('Share and Copy Link give the word’s page on the website’s origin', async () => {
+  test('Share gives the word’s page on the website’s origin, and ••• has no Copy Link', async () => {
     await show({ page: 'word', entSeq: iru })
     const link = `${websiteOrigin}${encodeURI(wordPath(wordDetail(entry(iru) as WordRows)))}`
     await click(container.querySelector('button[aria-label="Share 要る"]'))
     expect(share.mock.calls[0]?.[0].url).toBe(link)
-    await openMenu('More actions for 要る')
-    await click(named('[data-slot="dropdown-menu-item"]', 'Copy Link', document))
-    expect(clipboard).toHaveBeenCalledExactlyOnceWith(link)
     expect(link.startsWith(websiteOrigin)).toBe(true)
+    await openMenu('More actions for 要る')
+    const items = [...document.querySelectorAll('[data-slot="dropdown-menu-item"]')]
+    expect(items.map(item => item.textContent)).toEqual(['Add to List…', 'Add Note'])
   })
 
   test('Open on zenbujapanese.com opens the word’s page in a new tab', async () => {

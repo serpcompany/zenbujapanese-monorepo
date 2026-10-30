@@ -23,6 +23,7 @@ import { wordPopupLabels } from '../word-popup/labels'
 import { hasOpenLayer } from '../word-popup/open-layer'
 import type { PagePopup } from '../word-popup/page-popup'
 import { WordPopup } from '../word-popup/word-popup'
+import { chromeSaving } from '../word-saving/saving'
 
 export type SourceServices = {
   segment: Segment
@@ -250,6 +251,7 @@ function Linked({
             ids={picked.token.ids}
             lookUp={lookUp}
             settings={settings}
+            saving={chromeSaving}
           />
         </section>
       ) : null}

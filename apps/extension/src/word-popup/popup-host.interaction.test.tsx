@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { hostElementName, type ShadowMount } from '../content/shadow-mount'
 import { settingDefaults } from '../shared/settings'
 import '../test/act-environment'
+import { savingStandIn } from '../test/saving-stand-in'
 import { popupAnswer } from '../test/word-cards'
 import { wordPopupEvents } from './popup-events'
 import { wordPopupHost } from './popup-host'
@@ -48,7 +49,11 @@ const target = (text: string) => ({
 
 const pageHost = (mount: (content: ReactNode) => ShadowMount) =>
   wordPopupHost({
-    settings: () => ({ lookUp: async id => popupAnswer(id), settings: settingDefaults }),
+    settings: () => ({
+      lookUp: async id => popupAnswer(id),
+      settings: settingDefaults,
+      saving: savingStandIn().port
+    }),
     mount
   })
 

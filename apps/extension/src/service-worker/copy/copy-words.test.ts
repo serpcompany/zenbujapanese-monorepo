@@ -173,7 +173,8 @@ describe("one word's part of the copy", () => {
           { id: favorites, name: 'Favorites', holds: false },
           { id: list, name: 'N5', holds: true }
         ],
-        notes: [{ id: note, item: word.item, text: '食べる', headword: '食べる', reading: null }]
+        notes: [{ id: note, item: word.item, text: '食べる', headword: '食べる', reading: null }],
+        refusal: null
       }
     })
   })
@@ -228,6 +229,9 @@ describe('saving refused by the service worker', () => {
       refusal: 'subscription-required'
     })
     await expect(world.read()).resolves.toMatchObject({ knownWords: [], unsynced: 0 })
+    await expect(world.ask({ copy: 'word', item: word.item })).resolves.toMatchObject({
+      word: { refusal: 'subscription-required' }
+    })
   })
 
   it('tells the page that made a change once when the account turns out to need a subscription', async () => {

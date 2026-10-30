@@ -171,6 +171,7 @@ describe("the copy's messages", () => {
     const heard: unknown[] = []
     onSavingRefused(told => heard.push(told), tab.onMessage)
     const known = { change: 'set', ...word, state: 'known' } as const
+    await expect(askWord(word.item, tab)).resolves.toMatchObject({ refusal: 'signed-out' })
     await expect(changeWord(word.item, known, tab)).resolves.toEqual({
       type: 'refused',
       refusal: 'signed-out'
@@ -184,7 +185,8 @@ describe("the copy's messages", () => {
     await expect(askWord(word.item, tab)).resolves.toEqual({
       state: 'known',
       lists: [{ id: favorites, name: 'Favorites', holds: false }],
-      notes: []
+      notes: [],
+      refusal: null
     })
   })
 

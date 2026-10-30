@@ -9,6 +9,7 @@ import { WordHeader } from '@zenbu/ui/dictionary/word-header'
 import { WordSections } from '@zenbu/ui/dictionary/word-sections'
 import { useCallback, useMemo, useState } from 'react'
 import type { Settings } from '../shared/settings'
+import { StateTag } from '../word-saving/word-menu'
 import type { OpenEntry } from './entry-page'
 import { PagedExamples } from './examples'
 import { wordDetailLabels } from './labels'
@@ -18,6 +19,7 @@ import { useNotices } from './notice'
 import { ReadingAids } from './reading-aids'
 import { shownConjugations, shownWordSections } from './shown'
 import { useWordLinks } from './word-links'
+import { WordLists, WordNotes } from './word-saved'
 import { OpenOnWebsite, WordShare } from './word-share'
 
 const examplesAnchor = 'examples'
@@ -35,6 +37,10 @@ export function WordDetailView({
   lookups: WordLookups
 }) {
   const detail = useMemo(() => wordDetail(rows), [rows])
+  const saved = useMemo(
+    () => ({ item: rows.entry.id, headword: detail.headword, reading: detail.reading }),
+    [rows, detail]
+  )
   const table = useMemo(
     () => (detail.conjugations ? shownConjugations(detail.conjugations) : null),
     [detail]
@@ -63,7 +69,7 @@ export function WordDetailView({
     <>
       <div className="flex justify-end gap-2">
         <OpenOnWebsite word={detail} />
-        <WordShare word={detail} />
+        <WordShare word={detail} item={saved.item} />
       </div>
       <WordHeader
         headword={detail.headword}
@@ -77,6 +83,7 @@ export function WordDetailView({
         onUnsupported={notify}
         onOpenConjugations={() => setConjugationsOpen(true)}
         headwordSize="panel"
+        tag={<StateTag word={saved} />}
       />
       <WordSections
         word={shownWordSections(detail, settings['frequencyDictionaries.chosen'])}
@@ -103,7 +110,9 @@ export function WordDetailView({
         )}
         kanjiActions={noLearnerPrompt}
         kanjiLearnerPrompt={() => noLearnerPrompt}
-        learnerPrompt={noLearnerPrompt}
+        learnerPrompt={kind =>
+          kind === 'lists' ? <WordLists word={saved} /> : <WordNotes word={saved} />
+        }
         conjugations={null}
         examples={
           detail.exampleCount ? (

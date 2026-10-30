@@ -90,9 +90,14 @@ export type CopyView = {
 
 type WordList = { id: string; name: string; holds: boolean }
 
-export type WordView = { state: WordState; lists: WordList[]; notes: CopiedNote[] }
-
 export type SavingRefusal = 'signed-out' | 'subscription-required'
+
+export type WordView = {
+  state: WordState
+  lists: WordList[]
+  notes: CopiedNote[]
+  refusal: SavingRefusal | null
+}
 
 export type CopyAnswer =
   | { type: 'copy'; copy: CopyView }

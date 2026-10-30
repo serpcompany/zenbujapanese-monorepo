@@ -4,7 +4,8 @@ import type {
   CopyRequest,
   CopyView,
   KnownChanged,
-  SavingRefusal
+  SavingRefusal,
+  WordView
 } from '../../shared/account-copy'
 import { knownAtOnce } from '../../shared/account-copy'
 import { readSettings, type SettingsStore } from '../../shared/settings'
@@ -134,7 +135,11 @@ export function accountCopy(parts: CopyParts) {
     return { type: 'changed' }
   }
 
-  const word = (item: string) => copy.look(draft => wordViewOf(draft, item))
+  const word = async (item: string): Promise<WordView> => {
+    const user = await saver()
+    const view = await copy.look(draft => wordViewOf(draft, item))
+    return { ...view, refusal: typeof user === 'string' ? user : null }
+  }
 
   const known = (items: string[]) =>
     copy.look(draft =>

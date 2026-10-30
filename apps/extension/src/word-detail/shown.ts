@@ -20,7 +20,7 @@ import type { ShownKanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
 import type { ShownWordSections } from '@zenbu/ui/dictionary/word-sections'
 import { wordDetailLabels } from './labels'
 
-const leftOutSections = new Set(['conjugations', 'lists', 'notes'])
+const leftOutSections = new Set(['conjugations'])
 
 function conjugatedForm({ sharedSpellings, ...form }: ConjugationRow): ShownConjugationRow {
   return {
