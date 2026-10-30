@@ -97,7 +97,10 @@ disconnects the port; the panel disconnecting closes it.
   drop after `shown` is the card closing.
 - **One card at a time.** A newer request ends any not yet shown, and any shown on another tab.
   One shown on the same tab is left for the page to replace: the server lets the old port go when
-  the next panel card shows. Only the latest request's close or failure ends the rest. A page
+  the next panel card shows. Only the latest request's close or failure ends the rest. A request
+  ended by another, or by the latest's failure, hears `closed`, a microtask later so a row's card
+  closing and the next row's opening don't play the video between them; the owner's own close
+  tells it nothing. A page
   keeps one popup across its hosts (`Symbol.for('zenbujapanese.shown-word-popup')`), handed over
   without a close and open between, so the video doesn't play for a moment between two cards.
 - **A card replaced on the page isn't closed to the panel.** When a caption word's or a page

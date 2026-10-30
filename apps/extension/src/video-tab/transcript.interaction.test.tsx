@@ -5,7 +5,7 @@ import { captionLabels } from '../captions/labels'
 import { labels } from '../shared/labels'
 import { settingDefaults, writeSettings } from '../shared/settings'
 import { recheckMs } from '../shared/translation-model'
-import { portPair } from '../test/fake-port'
+import { type FakePort, fakePort, portPair } from '../test/fake-port'
 import { fakePopupHost, fakeRuntime } from '../test/page-frame'
 import { click, keyClick, pointerClick, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
@@ -65,6 +65,37 @@ async function pausedForAWord() {
   await shown.playsAt(12)
   await click(document.querySelector(walkWord('散歩')))
   await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+  return shown
+}
+
+function cardsOnActiveTab() {
+  const active = { tab: 5 }
+  const ports: FakePort[] = []
+  const pagePopup = popupOnActiveTab({
+    activeTab: async () => active.tab,
+    side: async () => 'right',
+    connect: () => {
+      const port = fakePort()
+      ports.push(port)
+      return port
+    },
+    lastError: () => undefined
+  })
+  const elsewhere = () =>
+    pagePopup(
+      { text: '要求', ids: ['youkyuu'], fromBottom: 0 },
+      { shown: () => {}, closed: () => {}, unavailable: () => {} }
+    )
+  return { active, ports, pagePopup, elsewhere }
+}
+
+async function aRowCardShown(cards: ReturnType<typeof cardsOnActiveTab>, playing = true) {
+  const shown = await transcript({ pagePopup: cards.pagePopup })
+  if (playing) await shown.playsAt(12)
+  await pointerClick(document.querySelector(walkWord('散歩')))
+  await vi.waitFor(() => expect(cards.ports).toHaveLength(1))
+  await act(async () => cards.ports[0]?.say({ target: 'word-popup', shown: true }))
+  await vi.waitFor(() => expect(shown.services.control).toHaveBeenCalledWith(5, { type: 'pause' }))
   return shown
 }
 
@@ -404,6 +435,52 @@ describe('the transcript’s words', () => {
     expect(shown.video.controls).toEqual([{ type: 'pause' }])
 
     await act(async () => captionCards.close())
+    await playsAgain(shown)
+  })
+
+  it('plays the video again when a card asked for on another tab takes a row’s card off the tab the learner left', async () => {
+    const cards = cardsOnActiveTab()
+    const shown = await aRowCardShown(cards)
+    cards.active.tab = 8
+    await act(async () => void cards.elsewhere())
+    await settle()
+    expect(cards.ports[0]?.disconnected).toBe(true)
+    await playsAgain(shown)
+  })
+
+  it('leaves a video paused before the card paused when another tab’s card takes the row’s card away', async () => {
+    const cards = cardsOnActiveTab()
+    const shown = await aRowCardShown(cards, false)
+    cards.active.tab = 8
+    await act(async () => void cards.elsewhere())
+    await settle()
+    expect(cards.ports[0]?.disconnected).toBe(true)
+    expect(shown.services.control).toHaveBeenCalledExactlyOnceWith(5, { type: 'pause' })
+  })
+
+  it('plays the video again when a card that can’t be shown on the page takes a row’s card off it', async () => {
+    const cards = cardsOnActiveTab()
+    const shown = await aRowCardShown(cards)
+    await act(async () => void cards.elsewhere())
+    await vi.waitFor(() => expect(cards.ports).toHaveLength(2))
+    await act(async () => cards.ports[1]?.drop())
+    await settle()
+    expect(cards.ports[0]?.disconnected).toBe(true)
+    await playsAgain(shown)
+  })
+
+  it('keeps the video paused when a word in another row is clicked before the page shows the first card', async () => {
+    const cards = cardsOnActiveTab()
+    const shown = await transcript({ pagePopup: cards.pagePopup })
+    await shown.playsAt(12)
+    await pointerClick(document.querySelector(walkWord('散歩')))
+    await pointerClick(document.querySelector(walkWord('天気')))
+    await vi.waitFor(() => expect(cards.ports).toHaveLength(2))
+    await settle()
+    expect(cards.ports[0]?.disconnected).toBe(true)
+    expect(shown.video.controls).toEqual([{ type: 'pause' }])
+    await act(async () => cards.ports[1]?.say({ target: 'word-popup', shown: true }))
+    await act(async () => cards.ports[1]?.drop())
     await playsAgain(shown)
   })
 })

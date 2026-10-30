@@ -70,13 +70,13 @@ const chromeBrowser: ActiveTabBrowser = {
   lastError: () => chrome.runtime.lastError
 }
 
-type Request = { shown: boolean; tabId: number | null; end(): void }
+type Request = { shown: boolean; tabId: number | null; end(): void; endedByAnother(): void }
 
 export function popupOnActiveTab(browser: ActiveTabBrowser = chromeBrowser): PagePopup {
   const live = new Set<Request>()
   let latest: Request | null = null
-  const endAll = () => {
-    for (const each of [...live]) each.end()
+  const endOthers = (by: Request, which: (each: Request) => boolean = () => true) => {
+    for (const each of [...live]) if (each !== by && which(each)) each.endedByAnother()
   }
   return (word, heard) => {
     let state: 'asking' | 'connected' | 'shown' | 'done' = 'asking'
@@ -94,21 +94,26 @@ export function popupOnActiveTab(browser: ActiveTabBrowser = chromeBrowser): Pag
         if (state === 'done') return
         finish()
         port?.disconnect()
+      },
+      endedByAnother() {
+        if (state === 'done') return
+        request.end()
+        queueMicrotask(() => heard.closed())
       }
     }
-    for (const each of [...live]) if (!each.shown) each.end()
     live.add(request)
     latest = request
+    endOthers(request, each => !each.shown)
     const unavailable = () => {
       if (state === 'done') return
       finish()
-      if (latest === request) endAll()
+      if (latest === request) endOthers(request)
       heard.unavailable()
     }
     const connect = (tabId: number, side: PanelSide) => {
       if (state !== 'asking') return
       request.tabId = tabId
-      for (const each of [...live]) if (each.tabId !== tabId) each.end()
+      endOthers(request, each => each.tabId !== tabId)
       const connected = browser.connect(tabId)
       port = connected
       state = 'connected'
@@ -131,7 +136,9 @@ export function popupOnActiveTab(browser: ActiveTabBrowser = chromeBrowser): Pag
       .then(([tabId, side]) => (tabId === null ? unavailable() : connect(tabId, side)))
       .catch(unavailable)
     return () => {
-      if (latest === request) endAll()
+      if (latest !== request) return
+      request.end()
+      endOthers(request)
     }
   }
 }

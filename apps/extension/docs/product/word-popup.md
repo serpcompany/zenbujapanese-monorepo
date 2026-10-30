@@ -134,7 +134,8 @@ A word's card from the side panel: `e2e/transcript-card-on-page.spec.ts`, "a wor
 transcript opens its card on the watch page, beside the panel and level with its row, with none
 in the panel", on the YouTube stand-in with the panel page following that tab;
 `src/word-popup/page-popup.test.ts` (the panel's side: the panel's edge, shown and closed, a tab
-that can't, one card replacing another, a card left on a tab the learner left) and
+that can't, one card replacing another, a card left on a tab the learner left, and a card ended
+by another or by the next's failure told it closed) and
 `src/word-popup/page-popup-server.test.ts` (the page's side: where it shows, what it refuses,
 closing either way, one answer with both content scripts in a frame, and a card replaced by
 another part's, by hand-over or across a press); `e2e/transcript-card-on-page.spec.ts`, "with
