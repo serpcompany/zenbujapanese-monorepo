@@ -29,7 +29,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and removes them ([`extension-error-reports.md`](extension-error-reports.md)). `Extension packages` runs it on the store package's build, only on `main` ([`ci-deploys.md`](ci-deploys.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
 | `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
-| `pnpm check-hosts <production\|staging>` | Fails unless the environment's `/account/extension/` answers 200 and its account service answers a made-up extension sign-in code 401 `invalid_code`, saying which and why. |
+| `pnpm check-hosts <production\|staging>` | Fails unless the environment's `/account/extension/` answers 200 (staging's request sends its public password, `stagingpassword`, as Basic auth; a 401 there says the password was refused) and its account service answers a made-up extension sign-in code 401 `invalid_code`, saying which and why. |
 
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
@@ -144,8 +144,7 @@ root, and draws inside it:
 - **Tailwind's `--tw-*` properties work.** Tailwind v4 registers them with `@property`, which a
   shadow root's stylesheet can't do, and guards its fallback with an `@supports` that Chrome
   fails. The build unwraps that `@supports` in the shadow root's stylesheet, so the fallback
-  always applies. A page whose own Tailwind registers the same properties with `@property` is
-  one of the test pages.
+  always applies. One test page's own Tailwind registers the same properties with `@property`.
 - **Geist is the page's font, under its own name.** A shadow root can't declare `@font-face`, so
   `addGeist` adds both subsets to `document.fonts` as `Zenbu Geist`, which a page's own Geist
   can't replace. The fonts are inlined in the bundle and added from their bytes, so no page

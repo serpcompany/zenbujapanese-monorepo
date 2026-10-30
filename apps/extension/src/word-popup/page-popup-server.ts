@@ -1,6 +1,6 @@
 import type { PageSettings, Settings } from '../shared/settings'
 import { type PagePopupPort, pagePopupPort, shownRequest } from './page-popup'
-import { shownWordPopup, wordPopupEvents } from './popup-events'
+import { type HandedOver, shownWordPopup, wordPopupEvents } from './popup-events'
 import type { CardGone, PopupHost } from './popup-host'
 
 type Connected = (port: PagePopupPort) => void
@@ -19,6 +19,10 @@ type Options = {
 }
 
 type Server = { preferred: boolean }
+
+type Place = { handOver(): HandedOver | null }
+
+type Held = { port: PagePopupPort; place: Place; before: HandedOver | null }
 
 const serversKey = Symbol.for('zenbujapanese.page-popup-servers')
 
@@ -50,6 +54,7 @@ export function servePagePopups({
   let known: Settings | null = null
   let showing: PagePopupPort | null = null
   let replaced: PagePopupPort | null = null
+  let held: Held | null = null
   const ready = settings.ask().then(
     read => {
       known ??= read
@@ -78,9 +83,37 @@ export function servePagePopups({
     view.setTimeout(settle, 0)
   }
 
+  const letGo = () => {
+    const was = held
+    held = null
+    if (was && page.current === was.place) page.current = null
+    return was
+  }
+
+  const closeHeld = () => {
+    if (letGo()?.before) events.dispatchEvent(new Event('close'))
+  }
+
+  const hold = (port: PagePopupPort) => {
+    const before = page.current?.handOver() ?? null
+    release()
+    const place: Place = {
+      handOver: () => {
+        letGo()
+        replaced = port
+        port.postMessage({ target: 'word-popup', replaced: true })
+        return before
+      }
+    }
+    held = { port, place, before }
+    page.current = place
+    port.postMessage({ target: 'word-popup', shown: true })
+  }
+
   const show = (port: PagePopupPort, message: unknown) => {
     const request = shownRequest(message)
     if (!request || !known || !on(known)) return port.disconnect()
+    if (request.inPanel) return hold(port)
     host.open({
       text: request.text,
       ids: request.ids,
@@ -108,6 +141,7 @@ export function servePagePopups({
     port.onDisconnect.addListener(() => {
       alive = false
       if (replaced === port) replaced = null
+      if (held?.port === port) return closeHeld()
       if (showing !== port) return
       showing = null
       host.close()
@@ -128,6 +162,8 @@ export function servePagePopups({
     runtime.onConnect.removeListener(onConnect)
     stopSettings()
     if (showing) host.close()
+    held?.port.disconnect()
+    closeHeld()
     release()
   }
 }

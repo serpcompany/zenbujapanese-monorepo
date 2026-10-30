@@ -58,8 +58,10 @@ A word opened from the keyboard, with Enter or Space, shows its card in the pane
 the word's line, with focus in the card, and opens none on the page; this is the one exception to
 the panel showing no cards, since focus can't move from the side panel into the page, so a card
 there is out of a keyboard user's reach (the owner's decision on #1124, 2026-10-30). Escape
-closes it and gives focus back to the word. A click on a word afterwards still opens its card on
-the page, and a key on a word closes a card the page shows for the panel.
+closes it and gives focus back to the word. Only one card shows (#1185): the key takes down a card
+the page shows, the panel's or a word's on the page, and a click on a word afterwards, in the panel
+or on the page, opens its card on the page and puts the panel's away. A video paused for a card
+stays paused until the last card closes.
 
 Where the tab can't show one, the card opens in the panel too, under the word's line, at
 this popup's size or the line's width where that is narrower: on a `chrome://` page, the Chrome
@@ -160,13 +162,19 @@ by another or by the next's failure told it closed) and
 closing either way, one answer with both content scripts in a frame, and a card replaced by
 another part's, by hand-over or across a press); `e2e/transcript-card-on-page.spec.ts`, "with
 Every Site given, one card answers a transcript word on YouTube, and Escape in the panel closes
-it", and "a transcript word opened with Enter or Space shows its card in the panel, with focus
-in it…"; in the panel,
+it", "a transcript word opened with Enter or Space shows its card in the panel, with focus
+in it…", and "a transcript word opened with Enter takes a caption word's card off the page, a
+caption word clicked takes the panel's card away…"; the page holding the place of a card the panel
+shows itself, in `page-popup.test.ts` ("asks the page to hold the place…") and
+`page-popup-server.test.ts` ("takes the page's card down for a card the panel shows itself…",
+"hands the panel's card's place to the next card on the page…", "passes a card's pause on…"); in
+the panel,
 `src/translate/source-words.interaction.test.tsx` ("opens a word's card on the page…", "lets go
 of the word when the page closes its card…", "shows the card under the line… when the page
 can't show one", "shows a word's card in the panel, with focus in it, when Enter opens it…", the
 same for Space, and "opens a word's card on the page from a click after a key opened one in the
-panel…"), the keyboard's card for the transcript and Translate in
+panel…", and "asks the page to take its card down for a card a key opens in the panel…"), the
+keyboard's card for the transcript and Translate in
 `src/video-tab/transcript.interaction.test.tsx` and
 `src/translate/translate-tab.interaction.test.tsx` ("…when a key opens it"), and `e2e/side-panel-popup.spec.ts`, "where the page can't show a word's card,
 its popup opens in the side panel and stays inside it at its narrowest width".

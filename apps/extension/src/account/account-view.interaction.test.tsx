@@ -3,6 +3,7 @@ import { accountPage } from '../shared/account'
 import {
   json,
   jwtWith,
+  keptSessionRoutes,
   refusal,
   returnedFrom,
   signedInAnswer,
@@ -57,9 +58,7 @@ const signInRoutes = (more: Routes = {}): Routes => ({
   'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-1'),
   'POST /v1/auth/sign-in/nonce': () => json(200, { nonce: 'nonce-1' }),
   'POST /v1/auth/sign-in/social': () => signedInAnswer('session-social'),
-  'GET /v1/auth/token': () => json(200, { token: jwtWith(Date.now() / 1000 + 3600) }),
-  'GET /v1/me/subscription': () => json(200, subscription),
-  'POST /v1/auth/sign-out': () => json(200, { success: true }),
+  ...keptSessionRoutes,
   ...more
 })
 

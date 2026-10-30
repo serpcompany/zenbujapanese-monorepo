@@ -3,7 +3,7 @@ import { type Settings, settingDefaults } from '../shared/settings'
 import type { FakePort } from '../test/fake-port'
 import { fakePopupHost, fakeRuntime } from '../test/page-frame'
 import { servePagePopups } from './page-popup-server'
-import { shownWordPopup } from './popup-events'
+import { shownWordPopup, wordPopupEvents } from './popup-events'
 
 const show = (fields: Record<string, unknown> = {}) => ({
   target: 'word-popup',
@@ -52,6 +52,21 @@ function aPage({
 }
 
 const settled = () => new Promise(done => setTimeout(done, 0))
+
+const captionWord = { text: '要る', ids: ['iru'], edge: { side: 'right' as const, top: 0 } }
+
+const shown = { target: 'word-popup', shown: true }
+
+function cardEvents() {
+  const events = wordPopupEvents()
+  const heard: string[] = []
+  const listener = (event: Event) => void heard.push(event.type)
+  for (const type of ['open', 'close']) events.addEventListener(type, listener)
+  stops.push(() => {
+    for (const type of ['open', 'close']) events.removeEventListener(type, listener)
+  })
+  return heard
+}
 
 const asked = async (port: FakePort, message: unknown = show()) => {
   port.say(message)
@@ -218,5 +233,55 @@ describe('the page’s side of a card the side panel asks for', () => {
     press('pointerup')
     await settled()
     expect(again.disconnected).toBe(true)
+  })
+
+  it('takes the page’s card down for a card the panel shows itself, and keeps its pause until the panel’s card closes', async () => {
+    const page = aPage()
+    const captions = fakePopupHost()
+    const events = cardEvents()
+    captions.open(captionWord)
+    const port = page.connect()
+    await asked(port, show({ inPanel: true }))
+    expect(captions.shown()).toBeNull()
+    expect(page.host.open).not.toHaveBeenCalled()
+    expect(port.posted).toEqual([shown])
+    expect(events).toEqual([])
+    port.drop()
+    expect(events).toEqual(['close'])
+    expect(shownWordPopup().current).toBeNull()
+
+    const alone = page.connect()
+    await asked(alone, show({ inPanel: true }))
+    alone.drop()
+    expect(events).toEqual(['close'])
+  })
+
+  it('hands the panel’s card’s place to the next card on the page, telling the panel, and lets go once the last card closes', async () => {
+    const page = aPage()
+    const captions = fakePopupHost()
+    const port = page.connect()
+    await asked(port, show({ inPanel: true }))
+    captions.open(captionWord)
+    expect(port.posted).toEqual([shown, { target: 'word-popup', replaced: true }])
+    expect(port.disconnected).toBe(false)
+    captions.close()
+    expect(port.disconnected).toBe(true)
+
+    const held = page.connect()
+    await asked(held, show({ inPanel: true }))
+    await askedInstead(page, held)
+    expect(page.host.shown()).not.toBeNull()
+  })
+
+  it('passes a card’s pause on to the card on the page after the panel’s, which pauses afresh only when the panel’s took no card’s place', async () => {
+    const page = aPage()
+    const alone = page.connect()
+    await asked(alone, show({ inPanel: true }))
+    expect(shownWordPopup().current?.handOver()).toBeNull()
+
+    fakePopupHost().open(captionWord)
+    const port = page.connect()
+    await asked(port, show({ inPanel: true }))
+    expect(shownWordPopup().current?.handOver()).not.toBeNull()
   })
 })
