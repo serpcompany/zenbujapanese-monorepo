@@ -2,7 +2,7 @@ import type { Mutation } from '@zenbu/account-rules/account-copy'
 import { listLimits, listName } from '@zenbu/account-rules/lists'
 import { noteText } from '@zenbu/account-rules/notes'
 import { keptWithin, plainText } from '@zenbu/account-rules/text'
-import type { CopyChange } from '../../shared/account-copy'
+import { type CopyChange, favoritesList, type WordState } from '../../shared/account-copy'
 import { fields } from '../../shared/messages'
 import { type Data, type Draft, type Entity, itemKey, keyOf, type Queued, queuedKey } from './kept'
 
@@ -69,13 +69,27 @@ function listChangeOf(raw: Data): CopyChange | null {
   }
 }
 
+function setOf(raw: Data): CopyChange | null {
+  const item = itemOf(raw.item)
+  if (item === null) return null
+  if (raw.state === 'unknown') return { change: 'set', item, state: 'unknown' }
+  if (raw.state !== 'learning' && raw.state !== 'known') return null
+  const word = wordOf(raw)
+  return word && { change: 'set', ...word, state: raw.state }
+}
+
+function addWordOf(raw: Data, list: string): CopyChange | null {
+  const word = wordOf(raw)
+  if (word === null) return null
+  if (raw.name === undefined) return { change: 'add-word', list, ...word }
+  const name = nameOf(raw.name)
+  return name === null ? null : { change: 'add-word', list, ...word, name }
+}
+
 function listWordOf(raw: Data): CopyChange | null {
   const list = uuidOf(raw.list)
   if (list === null) return null
-  if (raw.change === 'add-word') {
-    const word = wordOf(raw)
-    return word && { change: 'add-word', list, ...word }
-  }
+  if (raw.change === 'add-word') return addWordOf(raw, list)
   const item = itemOf(raw.item)
   return item === null ? null : { change: 'remove-word', list, item }
 }
@@ -105,6 +119,8 @@ export function changeOf(value: unknown): CopyChange | null {
       const item = itemOf(raw.item)
       return item === null ? null : { change: 'clear', item }
     }
+    case 'set':
+      return setOf(raw)
     case 'create-list':
     case 'update-list':
     case 'delete-list':
@@ -186,6 +202,39 @@ function clear(draft: Draft, { item }: Change<'clear'>, clock: Clock) {
   return true
 }
 
+export const stateOf = (data: Data | null | undefined): WordState =>
+  data?.state === 'learning' || data?.state === 'known' || data?.state === 'unknown'
+    ? data.state
+    : data?.known === true
+      ? 'known'
+      : 'unknown'
+
+function set(draft: Draft, change: Change<'set'>, clock: Clock) {
+  const word = shown(draft, 'knownWord', change.item)
+  if (stateOf(word) === change.state) return true
+  const stateChangedAt = clock.now()
+  const moved = { state: change.state, known: change.state === 'known', stateChangedAt }
+  const local =
+    change.state === 'unknown'
+      ? { data: { ...word, ...moved }, fields: { state: change.state, stateChangedAt } }
+      : {
+          data: {
+            itemId: change.item,
+            headword: change.headword,
+            reading: change.reading,
+            ...moved
+          },
+          fields: {
+            state: change.state,
+            headword: change.headword,
+            reading: change.reading,
+            stateChangedAt
+          }
+        }
+  queue(draft, { entity: 'knownWord', entityId: change.item, operation: 'set', ...local }, clock)
+  return true
+}
+
 function createList(draft: Draft, { list, name, position }: Change<'create-list'>, clock: Clock) {
   if (draft.get(keyOf('list', list))) return false
   const data = { id: list, name, position, createdAt: clock.now() }
@@ -229,12 +278,35 @@ function deleteList(draft: Draft, { list }: Change<'delete-list'>, clock: Clock)
   return true
 }
 
-function addWord(
-  draft: Draft,
-  { list, item, headword, reading }: Change<'add-word'>,
-  clock: Clock
-) {
-  if (!shown(draft, 'list', list)) return false
+export const favoritesName = 'Favorites'
+
+const nextPosition = (draft: Draft) =>
+  Math.min(
+    listLimits.position,
+    Math.max(
+      0,
+      ...draft
+        .all()
+        .filter(item => item.entity === 'list' && item.data !== null)
+        .map(item => (typeof item.data?.position === 'number' ? item.data.position : 0))
+    ) + 1
+  )
+
+function listFor(draft: Draft, { list, name }: Change<'add-word'>, clock: Clock): boolean {
+  const kept = draft.get(keyOf('list', list))
+  if (kept) return kept.data !== null
+  const made =
+    list === favoritesList
+      ? { name: favoritesName, position: 0 }
+      : name === undefined
+        ? null
+        : { name, position: nextPosition(draft) }
+  return made !== null && createList(draft, { change: 'create-list', list, ...made }, clock)
+}
+
+function addWord(draft: Draft, change: Change<'add-word'>, clock: Clock) {
+  const { list, item, headword, reading } = change
+  if (!listFor(draft, change, clock)) return false
   const data = { listId: list, itemId: item, headword, reading, addedAt: clock.now() }
   queue(
     draft,
@@ -285,6 +357,8 @@ export function applyChange(draft: Draft, change: CopyChange, clock: Clock): boo
       return mark(draft, change, clock)
     case 'clear':
       return clear(draft, change, clock)
+    case 'set':
+      return set(draft, change, clock)
     case 'create-list':
       return createList(draft, change, clock)
     case 'update-list':

@@ -1,7 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 import { json, user } from '../../test/account-stand-in'
 import { appliedTo, type Sync, syncAnswer } from '../../test/copy-stand-in'
-import { answeringSync, copyWorld, gated, otherWord, subscribed, word } from '../../test/copy-world'
+import {
+  answeringSync,
+  copyWorld,
+  gated,
+  heldCopy,
+  otherWord,
+  subscribed,
+  word
+} from '../../test/copy-world'
 
 const other = { id: 'user-2', email: 'other@example.com' }
 
@@ -15,10 +23,9 @@ const theirWord = {
 
 describe("the copy's owner", () => {
   it('keeps the copy and its changes through a sign-out, and sends them when the same account is back', async () => {
-    const world = copyWorld()
-    await world.signIn()
-    await world.signOut()
+    const world = await heldCopy()
     await world.change({ change: 'mark', ...word })
+    await world.signOut()
     await expect(world.read()).resolves.toMatchObject({
       owner: user.email,
       knownWords: [word],
@@ -33,11 +40,11 @@ describe("the copy's owner", () => {
 
   it("drops the copy when another account signs in, tells pages to ask again, and reads that account's in full", async () => {
     let theirs: (typeof theirWord)[] = []
-    const world = copyWorld(answeringSync(body => json(200, syncAnswer(appliedTo(body), theirs))))
-    await world.signIn()
-    await world.settled()
-    await world.signOut()
+    const world = await heldCopy(
+      answeringSync(body => json(200, syncAnswer(appliedTo(body), theirs)))
+    )
     await world.change({ change: 'mark', ...word })
+    await world.signOut()
     await world.signIn(other)
     expect(world.told.at(-1)).toEqual({ target: 'known', known: null })
     await expect(world.read()).resolves.toMatchObject({
@@ -59,11 +66,11 @@ describe("the copy's owner", () => {
     ],
     ['Sync Now', (world: ReturnType<typeof copyWorld>) => world.settled()]
   ])('takes the copy over for an account kept without its copy, on %s', async (_, first) => {
-    const world = copyWorld()
-    await world.signIn()
+    const world = await heldCopy()
     await world.settled()
-    await world.signOut()
     await world.change({ change: 'mark', ...word })
+    await world.signOut()
+    world.later(2_000)
     await world.store.keepSignIn('session-user-2', other)
     await world.store.keepSubscription('session-user-2', subscribed)
     const told = world.told.length
@@ -82,12 +89,10 @@ describe("the copy's owner", () => {
   })
 
   it("keeps the learner's words when the account is deleted, and forgets only that account's sync", async () => {
-    const world = copyWorld(
+    const world = await heldCopy(
       answeringSync(body => json(200, syncAnswer(appliedTo(body), [theirWord])))
     )
-    await world.signIn()
     await world.settled()
-    await world.signOut()
     await world.change({ change: 'mark', ...word })
     const told = world.told.length
     await world.copy.forget()
@@ -140,12 +145,9 @@ describe("the copy's owner", () => {
     })
 
     it('syncs on startup with changes waiting', async () => {
-      const world = copyWorld()
-      await world.signIn()
-      await world.settled()
-      await world.signOut()
+      const world = await heldCopy()
       await world.change({ change: 'mark', ...word })
-      await world.signIn()
+      world.later(2_000)
       world.copy.chance('startup')
       await vi.waitFor(() => expect(world.sent()).toHaveLength(1))
     })

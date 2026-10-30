@@ -24,6 +24,8 @@ export const otherWord = {
 
 export const favorites = '2177c773-9e88-410f-9348-6cefaebe0a93'
 
+export const noLists = [{ id: favorites, name: 'Favorites', position: 0, createdAt: '', words: [] }]
+
 export const subscribed = { ...subscription, active: true, cloudAccess: 'subscribed' as const }
 
 const start = Date.parse('2026-10-30T09:00:00Z')
@@ -131,3 +133,19 @@ export function copyWorld(
 }
 
 export type CopyWorld = ReturnType<typeof copyWorld>
+
+export async function heldCopy(sync: Route = answeringSync(), routes: Record<string, Route> = {}) {
+  let held = true
+  const world = copyWorld(
+    asked => {
+      if (!held) return sync(asked)
+      held = false
+      return json(503, {})
+    },
+    {},
+    routes
+  )
+  await world.signIn()
+  await world.settled()
+  return world
+}
