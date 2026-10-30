@@ -156,7 +156,9 @@ enum SubscriptionProblem: String, Codable, Equatable, Sendable {
   case serviceFailed
   case purchaseNotApplied
 
-  var readsAgain: Bool { [.unreachable, .serviceFailed, .storeUnavailable].contains(self) }
+  var readsAgain: Bool {
+    [.unreachable, .serviceFailed, .storeUnavailable, .notAvailableHere].contains(self)
+  }
 }
 
 struct AccountDeletion: Decodable, Sendable {
