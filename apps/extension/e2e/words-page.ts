@@ -24,7 +24,8 @@ export const noReadingAids: Partial<Settings> = {
   'readingAids.furigana': false,
   'readingAids.romaji': false,
   'readingAids.wordMeanings': false,
-  'sites.off': []
+  'sites.off': [],
+  'pages.pageText': true
 }
 
 export const defaultReadingAids: Partial<Settings> = {

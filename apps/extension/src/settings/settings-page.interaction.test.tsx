@@ -76,7 +76,7 @@ describe('Settings', () => {
     }
   })
 
-  it('keeps Reading Aids, Zenbu Captions, and Send Crash Reports on one page, each with a stock switch', async () => {
+  it('keeps Reading Aids, Page Text, Zenbu Captions, and Send Crash Reports on one page, each with a stock switch', async () => {
     startExtension()
     const settings = await openSettings('#reading-aids')
     for (const setting of [
@@ -85,11 +85,22 @@ describe('Settings', () => {
       'readingAids.wordMeanings',
       'readingAids.romaji',
       'readingAids.translations',
+      'pages.pageText',
       'videos.zenbuCaptions',
       'crashReports.send'
     ]) {
       expect(switchFor(settings, setting).getAttribute('data-slot')).toBe('switch')
     }
+    expect([...settings.querySelectorAll('main h3')].map(heading => heading.textContent)).toEqual([
+      'Pages',
+      'Videos',
+      'Crash Reports'
+    ])
+    const pageText = switchFor(settings, 'pages.pageText')
+    expect(isOn(pageText)).toBe(true)
+    expect(
+      find(settings, `#${CSS.escape(pageText.getAttribute('aria-describedby') ?? '')}`).textContent
+    ).toBe("On every site, underlines and reading aids on the page's Japanese text.")
     expect(settings.textContent).not.toContain('Translation source')
   })
 

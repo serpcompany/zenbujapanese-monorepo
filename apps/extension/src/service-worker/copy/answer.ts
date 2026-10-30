@@ -20,7 +20,7 @@ export type SyncAnswer = {
   hasMore: boolean
 }
 
-export type Batch = { cursor: string | null; mutations: Mutation[] }
+export type Batch = { cursor: string | null; mutations: Mutation[]; marked: Set<string> }
 
 export type Applied = {
   known: Map<string, boolean>
@@ -335,11 +335,11 @@ export function applyAnswer(
   resultsOf(run, batch, answer)
   changesOf(run, answer)
   pageEnd(run, answer)
-  const writes = browserWrites(
+  const pulled = browserWrites(
     run.toBrowser.filter(item => !run.queuedFor(itemKey(item))),
     browser
   )
-  reconcile(draft, { ...browser, ...writes }, clock.newId)
+  const writes = { ...pulled, ...reconcile(draft, { ...browser, ...pulled }, clock.newId) }
   const more = answer.hasMore || sendable(meta.queue).length > 0
   if (!more) meta.lastSyncedAt = clock.now()
   return { known: run.known, writes, more }

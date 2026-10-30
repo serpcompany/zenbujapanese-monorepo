@@ -12,8 +12,8 @@
   align-items: center;
 }
 
-[data-reading-aids][data-word-meanings="on"] :has(> [data-aid="meaning"]):not(:first-child) {
-  margin-inline-start: calc(var(--meaning-gap-rem) * 1rem);
+[data-reading-aids] [data-word-group]:has(+ [data-word-group]) {
+  margin-inline-end: calc(var(--meaning-gap-rem) * 1rem);
 }
 
 @layer components {

@@ -152,6 +152,14 @@ describe('Zenbu’s caption on a YouTube watch page', () => {
     expect(watched.youTube.timedTextRequests()).toBe(1)
   })
 
+  it('keeps the caption, and the site’s captions hidden, when Page Text turns off', async () => {
+    const watched = await opened()
+    act(() => watched.page.change({ 'pages.pageText': false }))
+    expect(watched.shows).toHaveLength(1)
+    expect(watched.shows[0].stopped).toBe(false)
+    expect(watched.clocks[0].siteCaptions).toEqual([false])
+  })
+
   it('takes the caption away when Zenbu turns off for the site, giving YouTube its captions back', async () => {
     const watched = await opened()
     act(() => watched.page.change({ 'sites.off': ['www.youtube.com'] }))

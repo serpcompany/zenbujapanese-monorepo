@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { stopPageLookup } from '../page-lookup/messages'
-import { languageDataOrigin } from '../shared/hosts'
+import { apiOrigin, languageDataOrigin } from '../shared/hosts'
 import { keepPageScriptRegistered, type PageScriptBrowser, pageOrigins } from './page-scripts'
 
 type Granted = { origins?: string[] }
@@ -88,9 +88,27 @@ const exampleTab: Tab = { id: 7, url: 'https://example.com/a', hostPattern: exam
 
 describe('page script registration', () => {
   it('leaves out the hosts the extension holds for itself', () => {
-    expect(pageOrigins([`${languageDataOrigin}/*`, 'https://www.youtube.com/*', example])).toEqual([
-      example
-    ])
+    expect(
+      pageOrigins([
+        `${languageDataOrigin}/*`,
+        'https://www.youtube.com/*',
+        'https://www.netflix.com/*',
+        'https://*.oca.nflxvideo.net/*',
+        example
+      ])
+    ).toEqual([example])
+  })
+
+  it('never counts the account service host as a site the learner gave', () => {
+    expect(pageOrigins([`${apiOrigin}/*`, example])).toEqual([example])
+  })
+
+  it("registers no page script while only the extension's own hosts are granted", async () => {
+    const fake = fakeBrowser({
+      granted: [`${languageDataOrigin}/*`, `${apiOrigin}/*`, 'https://www.youtube.com/*']
+    })
+    await keepPageScriptRegistered(fake.browser, () => undefined)
+    expect(fake.site.registered).toEqual([])
   })
 
   it('registers the page script for the granted sites when the service worker starts', async () => {

@@ -28,6 +28,13 @@ The site switch in the header turns Zenbu off for one site (`sites.off`): nothin
 the reading aids go, and a click does what the page does. Turning it on draws everything again,
 with no reload.
 
+Page Text, in the header's menu and in Settings, is one switch for every site (`pages.pageText`),
+on at first. Turned off, every open page loses its underlines and reading aids at once, Zenbu
+reads none of the text a page adds, and a click does what the page does; after a reload and a
+restart it stays off. Zenbu Captions keep showing on a YouTube video as they do with it on.
+Turned on, the open pages draw everything again with no reload. The site switch still turns all
+of Zenbu off for its site, whichever way Page Text is.
+
 ## Underlines
 
 Each word gets a 2-pixel underline in Zenbu's blue, drawn by Chrome's CSS Custom Highlight API,
@@ -82,8 +89,8 @@ summary's, or an ARIA control's words works the control, since Zenbu doesn't und
 The browser tests, on a light and a dark local page (`e2e/page-lookup.spec.ts`): "underlines the
 words segment links…", "leaves every element's box and colour as they are…", "underlines in the
 dark page's colour when the page's text is oklch(…)" and "…color(display-p3 …)", "shows furigana,
-romaji and word meanings…", "underlines nothing and opens no popup on a site turned off…",
-"underlines words added to the page later", "underlines words added to a long page before the
+romaji and word meanings…", "underlines nothing and opens no popup on a site turned off…", "takes the underlines and reading
+aids off every open page when Page Text turns off…", "underlines words added to the page later", "underlines words added to a long page before the
 rest of its first scan", and "starts on an open page when Chrome grants its site…"; in
 `e2e/extension-reload.spec.ts`, "an open page underlines new text and opens popups again after the
 extension reloads…"; in `e2e/word-popup.spec.ts`, "a click on the words of a checkbox label or a summary works
@@ -91,7 +98,10 @@ the control…" and "a click on the furigana over a word in a link…"; and
 `e2e/page-lookup-before-data.spec.ts` for the dictionary not yet in. Unit and DOM tests:
 `src/page-lookup/words.test.ts`, `src/page-lookup/scan.test.ts`,
 `src/page-lookup/page-text.interaction.test.tsx`, `src/page-lookup/page-lookup.interaction.test.tsx`
-for nothing drawn or watched once it stops, and `src/service-worker/page-scripts.test.ts` for
+for nothing drawn or watched once it stops or Page Text turns off, and everything back when Page
+Text turns on, `src/shared/settings.test.ts` for Page Text kept and apart from the site switch,
+`src/video/youtube-page-captions.interaction.test.tsx` ("keeps the caption… when Page Text turns
+off") for the caption, and `src/service-worker/page-scripts.test.ts` for
 registering the page script for each site Zenbu has, putting it back into open tabs on install
 and update, and stopping the tabs a site taken back leaves, such as YouTube's when Every Site
 goes; `src/page-lookup/hand-over.test.ts` for one running copy per page.

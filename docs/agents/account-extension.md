@@ -212,24 +212,27 @@ answers `apple-again`, Continue with Apple again.
   but kept on its own base after a conflict, as the app does (`AccountSync.swift`, `resolve`), so
   the account's value wins it too, a list word held until its list arrives, and a `410` read again
   from the start once: a `410` while reading from the start reports `account-sync-reread` and waits.
-  A `400` or `413` clears the batch's sent marks and sends half as many until the refused change
-  goes alone; that one is reported, stays queued and unsynced, and stays out of later requests until
-  it is changed again or the learner presses Sync Now, which tries each refused change once more. A
-  `403` or `404` for the whole request clears its sent marks, reports `account-sync` with its
-  status, and waits as a `5xx` does. It takes the access token through #961's `tokens.withAccess`,
-  so a `401` asks for a new token once; a `401` for the session signs out. A network failure or an
-  answer that isn't JSON waits 2 seconds, then twice as long each time, at most 5 minutes; a `429`
-  waits its `Retry-After`; one timer waits for the later of two waits. A `402` keeps the queue,
-  reads the subscription again, and stops until Sync Now or access comes back. While `cloudAccess`
-  is `subscription_required`, nothing is sent; Sync Now and a page's `opened` read the subscription
-  again first. It runs after a change, on `runtime.onStartup`, on a page's `opened` with changes
-  waiting or no sync for 15 minutes, and on Sync Now, never on `chrome.alarms`: a wait lost when
-  Chrome stops the service worker is made up by the next of those.
-- **Settings** (`synced-settings.ts`): the five reading aids and `frequencyDictionaries.chosen`
-  go up, the chosen packs joined by commas; `readingAids.translationLanguage` and
-  `translationSource` only come down. A first sign-in sends those changed from their defaults at
-  version 0. The account's values are written to `chrome.storage.local` before the copy records
-  them, so a failed write sends nothing stale. `frequency-order.ts` keeps in their places the pack
+  A `400` or `413` clears every sent mark in the request, those an earlier failure left too, and
+  sends half as many until the refused change goes alone; that one is reported, stays queued and
+  unsynced, and stays out of later requests until it is changed again or the learner presses Sync
+  Now, which tries each refused change once more. A `403` or `404` for the whole request clears
+  only the marks it set, not those an earlier failure left, reports `account-sync` with its status,
+  and waits as a `5xx` does. A change joins the newest unsent one for its entity. It takes the
+  access token through #961's `tokens.withAccess`, so a `401` asks for a new token once; a `401` for
+  the session signs out. A network failure or an answer that isn't JSON waits 2 seconds, then twice
+  as long each time, at most 5 minutes; a `429` waits its `Retry-After`; one timer waits for the
+  later of two waits. A `402` keeps the queue, reads the subscription again, and stops until Sync
+  Now or access comes back. While `cloudAccess` is `subscription_required`, nothing is sent; Sync
+  Now and a page's `opened` read the subscription again first. It runs after a change, on
+  `runtime.onStartup`, on a page's `opened` with changes waiting or no sync for 15 minutes, and on
+  Sync Now, never on `chrome.alarms`: a wait lost when Chrome stops the service worker is made up by
+  the next of those.
+- **Settings** (`synced-settings.ts`): the five reading aids and `frequencyDictionaries.chosen` go
+  up, the chosen packs joined by commas; `readingAids.translationLanguage` and `translationSource`
+  only come down. A first sign-in sends those changed from their defaults at version 0. The
+  account's values are written to `chrome.storage.local` before the copy records them, so a failed
+  write sends nothing stale. A pulled value that waited behind an unsent change is taken when that
+  change is dropped for matching the account. `frequency-order.ts` keeps in their places the pack
   IDs the extension doesn't have, such as the app's Jiten and Wikipedia, when the learner ticks or
   moves a pack.
 - **Whose copy:** a sign-in to the same user resumes it; another user's drops it, tells pages and

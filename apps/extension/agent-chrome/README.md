@@ -98,7 +98,8 @@ the video listener with `Page.addScriptToEvaluateOnNewDocument`.
   the same site (`e2e/youtube-stand-in.ts`). `POST /youtubei/v1/player` answers
   #984's player fixture (`src/captions/fixtures/player-japanese.json`) for the asked video, and
   `/api/timedtext` answers `stand-in-timedtext.xml`, four lines made of words in the fixture
-  dictionary (要求, 要る, 要領, 要所), so each line's words link in a test build. The last line,
+  dictionary (要求, 要る, 要領, 要所), so each line's words link in a test build. The third, from 10
+  seconds, starts with two neighbouring words, 要所要所, whose underlines a test keeps apart. The last line,
   from 15 seconds, is half as long as the others, so a test can change the caption's width by
   far more than any font can. Each answer is a
   `[site]` line. Nothing reaches YouTube. The page reads its player's id or class and the site's

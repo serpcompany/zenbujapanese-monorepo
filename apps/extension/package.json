@@ -10,6 +10,7 @@
     "upload-source-maps": "node build/upload-source-maps.ts",
     "package": "node build/package.ts",
     "check-package": "node build/check-package.ts",
+    "check-hosts": "node build/check-hosts.ts",
     "test-pages": "node ../../tools/checks/ports.mjs run site -- vite --config test-pages/vite.config.ts --port @port --strictPort",
     "format": "biome format --write",
     "lint": "biome check",

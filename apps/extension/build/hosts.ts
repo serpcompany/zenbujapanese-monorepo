@@ -45,6 +45,17 @@ export function hostsOf(variant: Variant, environment: Environment): Hosts {
   return variant === 'test' ? { ...own, languageData: testLanguageDataHost, api: testApiHost } : own
 }
 
+const videoSites = [
+  'https://www.youtube.com',
+  'https://www.netflix.com',
+  'https://*.oca.nflxvideo.net'
+]
+
+export function ownHostPatterns(variant: Variant, environment: Environment): string[] {
+  const { languageData, api } = hostsOf(variant, environment)
+  return [languageData, api, ...videoSites].map(origin => `${origin}/*`)
+}
+
 export function websitesOf(variant: Variant, environment: Environment): string[] {
   const own = hosts[environment].website
   return variant === 'test' ? [own, ...testWebsites] : [own]
@@ -71,6 +82,7 @@ export function hostDefines(environment: Environment, variant: Variant = 'releas
     __ZENBU_WEBSITE_ORIGIN__: JSON.stringify(website),
     __ZENBU_LANGUAGE_DATA_ORIGIN__: JSON.stringify(languageData),
     __ZENBU_API_ORIGIN__: JSON.stringify(api),
+    __ZENBU_OWN_HOSTS__: JSON.stringify(ownHostPatterns(variant, environment)),
     __ZENBU_SIGN_IN_WEBSITES__: JSON.stringify(websitesOf(variant, environment)),
     __ZENBU_GOOGLE_CLIENT_ID__: JSON.stringify(googleClientId),
     __ZENBU_APPLE_SERVICES_ID__: JSON.stringify(appleServicesId)
