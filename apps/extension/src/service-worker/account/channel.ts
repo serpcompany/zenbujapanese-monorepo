@@ -1,8 +1,8 @@
-import { type AccountAnswer, isAccountEnvelope } from '../../shared/account'
+import { type AccountAnswer, accountKey, isAccountEnvelope } from '../../shared/account'
 import { apiOrigin, appleServicesId, googleClientId, signInWebsites } from '../../shared/hosts'
 import { failure } from '../../shared/messages'
 import type { SettingsStore } from '../../shared/settings'
-import { answerCopy, tellKnown } from '../copy/copy-channel'
+import { answerCopy, type Sender, telling } from '../copy/copy-channel'
 import { accountCopy } from '../copy/copy-service'
 import type { CopyStorage } from '../copy/kept'
 import type { CopyFailure } from '../copy/sync'
@@ -22,13 +22,11 @@ import { answerWebsite } from './website-sign-in'
 
 type Events = { addListener(listener: () => void): void }
 
-type Sender = { origin?: string }
-
 type CopyParts = {
   storage: CopyStorage
   settings: SettingsStore
-  tabs: Parameters<typeof tellKnown>[0]
-  pages: Parameters<typeof tellKnown>[1]
+  tabs: Parameters<typeof telling>[0]
+  pages: Parameters<typeof telling>[1]
 }
 
 type Messages<Answer> = {
@@ -89,13 +87,14 @@ export function startAccount(parts: Parts): void {
   const api = accountApi(apiOrigin, parts.send)
   const store = accountStore(parts.storage)
   const tokens = accessTokens(api, store)
+  const tell = telling(parts.copy.tabs, parts.copy.pages)
   const copy = accountCopy({
     storage: parts.copy.storage,
     store,
     tokens,
     readSubscription: () => readSubscription(store, tokens),
     settings: parts.copy.settings,
-    tell: tellKnown(parts.copy.tabs, parts.copy.pages),
+    tell: tell.everyone,
     reportFailure: parts.reportFailure
   })
   const service = accountService({
@@ -112,8 +111,11 @@ export function startAccount(parts: Parts): void {
   })
   const pagesOrigin = `chrome-extension://${parts.extensionId}`
   parts.onMessage.addListener(answerAccount(service, parts.reportFailure, pagesOrigin))
-  parts.onMessage.addListener(answerCopy(copy, parts.reportFailure, pagesOrigin))
+  parts.onMessage.addListener(answerCopy(copy, parts.reportFailure, pagesOrigin, tell.sender))
   parts.copy.settings.onChanged.addListener(changes => {
+    if (accountKey in changes) {
+      void copy.saves().then(saves => saves && tell.everyone({ target: 'saving', refusal: null }))
+    }
     if (!Object.keys(changes).some(isSyncedSetting)) return
     void copy.settingsChanged().catch(() => parts.reportFailure('account-copy'))
   })

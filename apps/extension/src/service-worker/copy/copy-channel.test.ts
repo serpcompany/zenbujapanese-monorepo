@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { askAccount } from '../../shared/account'
-import { askCopy, askKnown, type CopyAnswer, onKnownChanged } from '../../shared/account-copy'
+import {
+  askCopy,
+  askKnown,
+  askWord,
+  type CopyAnswer,
+  changeWord,
+  onKnownChanged,
+  onSavingRefused
+} from '../../shared/account-copy'
 import {
   extensionId,
   json,
@@ -9,9 +17,9 @@ import {
   user
 } from '../../test/account-stand-in'
 import { appliedTo, type Sync, syncAnswer } from '../../test/copy-stand-in'
-import { subscribed, word } from '../../test/copy-world'
+import { favorites, otherWord, subscribed, word } from '../../test/copy-world'
 import { startExtension } from '../../test/extension'
-import { answerCopy, tellKnown } from './copy-channel'
+import { answerCopy, telling } from './copy-channel'
 import type { AccountCopy } from './copy-service'
 
 const pages = `chrome-extension://${extensionId}`
@@ -30,34 +38,81 @@ const signInByCode = (email: string) =>
 function answering(copy: Partial<AccountCopy> = {}) {
   const reportFailure = vi.fn()
   const answer = vi.fn(async (): Promise<CopyAnswer> => ({ type: 'opened' }))
-  const listener = answerCopy({ answer, ...copy } as AccountCopy, reportFailure, pages)
+  const tellSender = vi.fn()
+  const listener = answerCopy(
+    { answer, ...copy } as AccountCopy,
+    reportFailure,
+    pages,
+    sender => refusal => tellSender(sender, refusal)
+  )
   const ask = (message: unknown, origin?: string) =>
     new Promise<{ keeps: boolean; answer: unknown }>(resolve => {
       const keeps = listener(message, { origin }, given => resolve({ keeps, answer: given }))
       if (!keeps) resolve({ keeps, answer: undefined })
     })
-  return { ask, answer, reportFailure }
+  return { ask, answer, reportFailure, tellSender }
 }
 
 const asking = (copy: unknown) => ({ target: 'service-worker', copy })
 
 describe("the copy's messages", () => {
-  it("answers the extension's own pages, and only asks whether words are known from a website", async () => {
+  it("answers the extension's own pages, and only one word's part from a website", async () => {
     const { ask, answer } = answering()
     await expect(ask(asking({ copy: 'read' }), pages)).resolves.toMatchObject({ keeps: true })
-    for (const request of [{ copy: 'read' }, { copy: 'change', change: {} }, { copy: 'sync' }]) {
+    for (const request of [
+      { copy: 'read' },
+      { copy: 'change', change: {} },
+      { copy: 'sync' },
+      { copy: 'opened' }
+    ]) {
       await expect(ask(asking(request))).resolves.toEqual({ keeps: false, answer: undefined })
     }
-    await expect(ask(asking({ copy: 'known', items: [word.item] }))).resolves.toMatchObject({
-      keeps: true
-    })
-    await expect(ask(asking({ copy: 'known', items: [1] }))).resolves.toMatchObject({
-      keeps: false
-    })
+    for (const request of [
+      { copy: 'known', items: [word.item] },
+      { copy: 'word', item: word.item },
+      { copy: 'word-change', item: word.item, change: {} }
+    ]) {
+      await expect(ask(asking(request))).resolves.toMatchObject({ keeps: true })
+    }
+    for (const request of [
+      { copy: 'known', items: [1] },
+      { copy: 'word', item: 1 },
+      { copy: 'word-change', change: {} }
+    ]) {
+      await expect(ask(asking(request))).resolves.toMatchObject({ keeps: false })
+      await expect(ask(asking(request), pages)).resolves.toMatchObject({ keeps: false })
+    }
     await expect(ask({ target: 'service-worker', settings: 'read' }, pages)).resolves.toMatchObject(
       { keeps: false }
     )
-    expect(answer).toHaveBeenCalledTimes(2)
+    expect(answer).toHaveBeenCalledTimes(4)
+  })
+
+  it('tells only the tab or the page that made a change when saving it is refused later', async () => {
+    const sent: unknown[] = []
+    const { sender } = telling(
+      {
+        query: async () => [{ id: 1 }, { id: 2 }],
+        sendMessage: async (tabId, message) => void sent.push([tabId, message])
+      },
+      { sendMessage: async message => void sent.push(['pages', message]) }
+    )
+    const page = 'https://www.youtube.com/watch?v=x'
+    sender({ tab: { id: 2 }, url: page })('subscription-required')
+    sender({ origin: pages, url: `${pages}/side-panel.html` })('subscription-required')
+    await vi.waitFor(() =>
+      expect(sent).toEqual([
+        [2, { target: 'saving', refusal: 'subscription-required', page }],
+        [
+          'pages',
+          {
+            target: 'saving',
+            refusal: 'subscription-required',
+            page: `${pages}/side-panel.html`
+          }
+        ]
+      ])
+    )
   })
 
   it('reports a copy that failed by its code, and answers that it failed', async () => {
@@ -71,7 +126,7 @@ describe("the copy's messages", () => {
 
   it('tells the pages and every open tab when words change, whichever cannot hear it', async () => {
     const sent: unknown[] = []
-    const tell = tellKnown(
+    const tell = telling(
       {
         query: async () => [{ id: 1 }, {}, { id: 2 }],
         sendMessage: async (tabId, message) => {
@@ -80,7 +135,7 @@ describe("the copy's messages", () => {
         }
       },
       { sendMessage: () => Promise.reject(new Error('No page is open.')) }
-    )
+    ).everyone
     tell({ target: 'known', known: { [word.item]: true } })
     await vi.waitFor(() =>
       expect(sent).toEqual([[2, { target: 'known', known: { [word.item]: true } }]])
@@ -104,6 +159,33 @@ describe("the copy's messages", () => {
     await vi.waitFor(() => expect(heard).toContainEqual({ [word.item]: true }))
     await expect(askKnown([word.item], tab)).resolves.toEqual({ [word.item]: true })
     await expect(askCopy({ copy: 'read' }, tab)).resolves.toMatchObject({ type: 'failed' })
+  })
+
+  it('lets a content script read and change one word, refused while signed out, and tells it once saving works', async () => {
+    const fake = startExtension({ tabs: [{ id: 4, url: 'https://www.youtube.com/watch?v=x' }] })
+    startAccountOn(fake, {
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-1'),
+      ...syncing
+    })
+    const tab = fake.inTab(4)
+    const heard: unknown[] = []
+    onSavingRefused(told => heard.push(told), tab.onMessage)
+    const known = { change: 'set', ...word, state: 'known' } as const
+    await expect(changeWord(word.item, known, tab)).resolves.toEqual({
+      type: 'refused',
+      refusal: 'signed-out'
+    })
+    await signInByCode(user.email)
+    await vi.waitFor(() => expect(heard).toContainEqual({ target: 'saving', refusal: null }))
+    await expect(changeWord(word.item, known, tab)).resolves.toEqual({ type: 'changed' })
+    await expect(changeWord(word.item, { ...known, ...otherWord }, tab)).resolves.toMatchObject({
+      refusal: 'invalid'
+    })
+    await expect(askWord(word.item, tab)).resolves.toEqual({
+      state: 'known',
+      lists: [{ id: favorites, name: 'Favorites', holds: false }],
+      notes: []
+    })
   })
 
   it("hands the copy to the account the website signs in, as the extension's own sign-in does, and syncs it", async () => {

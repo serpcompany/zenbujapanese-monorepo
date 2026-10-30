@@ -170,7 +170,9 @@ export function accountCopy(parts: CopyParts) {
 
   const chance = (reason: Reason) => void sync.chance(reason)
 
-  return { answer, signedIn, settingsChanged, forget, chance }
+  const saves = async () => typeof (await saver()) !== 'string'
+
+  return { answer, signedIn, settingsChanged, forget, chance, saves }
 }
 
 export type AccountCopy = ReturnType<typeof accountCopy>
