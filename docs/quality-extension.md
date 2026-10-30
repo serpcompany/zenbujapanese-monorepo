@@ -15,7 +15,7 @@ to re-grade a row are in [`quality.md`](quality.md), with the other areas' grade
 - **Browser extension, A.** Before merge, the code that needs no browser is tested, both builds
   and both packages must pass, and the browser tests load the test build in Chromium: the pages,
   the offscreen document's return, the content script on a real page, and a fixture release's
-  install, offline. The `verify-extension` skill shows the same in branded Chrome with proof. Main gap,
+  install, offline. The `verify-extension` skill shows it in branded Chrome with proof. Main gap,
   both tracked in [`tech-debt.md`](tech-debt.md) (Browser extension): the test surface's menu and
   dialog are driven by hand (#1062), and branded Chrome, where Chrome's own Translator runs, runs
   only on an agent's Mac, not in CI (#1063). The header's site switch on a real tab, Settings, and a translation in Translate are checked by hand, with no browser test (the browser tests drive only the side panel's tab bar, the last tab, Back from Image Search, the account, and a transcript word's card on the page and, from the keyboard, in the panel), and so is the side panel's width at 320 and 380 px (#1112, two rows in [`tech-debt.md`](tech-debt.md): one for the pages, one for the width). The YouTube content script runs in the browser tests on the
