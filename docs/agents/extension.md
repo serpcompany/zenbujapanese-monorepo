@@ -143,8 +143,7 @@ root, and draws inside it:
 - **Tailwind's `--tw-*` properties work.** Tailwind v4 registers them with `@property`, which a
   shadow root's stylesheet can't do, and guards its fallback with an `@supports` that Chrome
   fails. The build unwraps that `@supports` in the shadow root's stylesheet, so the fallback
-  always applies. A page whose own Tailwind registers the same properties with `@property` is
-  one of the test pages.
+  always applies. One test page's own Tailwind registers the same properties with `@property`.
 - **Geist is the page's font, under its own name.** A shadow root can't declare `@font-face`, so
   `addGeist` adds both subsets to `document.fonts` as `Zenbu Geist`, which a page's own Geist
   can't replace. The fonts are inlined in the bundle and added from their bytes, so no page
