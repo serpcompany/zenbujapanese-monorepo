@@ -145,7 +145,7 @@ describe('the Translate tab', () => {
     const services = { ...servicesWith(), pagePopup }
     await sourceWordClicked(services, keyClick)
     const card = document.querySelector('[data-word-popup]')
-    expect(pagePopup).not.toHaveBeenCalled()
+    expect(pagePopup.mock.calls.map(([word]) => word.inPanel)).toEqual([true])
     expect(card?.closest('[data-reading-aids]')).not.toBeNull()
     expect(card?.contains(document.activeElement)).toBe(true)
   })
