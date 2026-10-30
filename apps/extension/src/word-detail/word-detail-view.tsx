@@ -18,7 +18,7 @@ import { notify } from './notice'
 import { ReadingAids } from './reading-aids'
 import { shownConjugations, shownWordSections } from './shown'
 import { useWordLinks } from './word-links'
-import { WordShare } from './word-share'
+import { OpenOnWebsite, WordShare } from './word-share'
 
 const examplesAnchor = 'examples'
 const noLearnerPrompt = () => null
@@ -60,7 +60,8 @@ export function WordDetailView({
   const exampleActions = { renderWordLink, onUnsupported: notify }
   return (
     <>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <OpenOnWebsite word={detail} />
         <WordShare word={detail} />
       </div>
       <WordHeader
