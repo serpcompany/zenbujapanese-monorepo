@@ -8,7 +8,11 @@ export type PanelRoute = { tab?: PanelTab; page?: PanelPage }
 
 export type MovePanel = { target: 'side-panel'; windowId: number; route: PanelRoute }
 
-export type PanelTabProps = { open(page: PanelPage): void; shown?: boolean }
+export type PanelTabProps = {
+  open(page: PanelPage): void
+  select?(tab: PanelTab): void
+  shown?: boolean
+}
 
 export type PanelPageProps<P extends PanelPage = PanelPage> = {
   page: P

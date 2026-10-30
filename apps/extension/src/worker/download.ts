@@ -1,6 +1,7 @@
 import { createSHA256, type IHasher } from 'hash-wasm'
+import { sha256Hex } from '../shared/sha256'
 import { type Fetch, languageDataUrl, type ReleaseFile } from './release'
-import { fileKey, sha256Hex } from './release-files'
+import { fileKey } from './release-files'
 import type { FileAccess, Storage } from './storage'
 
 export type Progress = (bytes: number) => void

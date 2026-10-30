@@ -1,5 +1,8 @@
+export const extensionId = 'kaalpflpefadijdemimciikalgpgjmok'
+
 type Respond = (answer: unknown) => void
-type MessageListener = (message: unknown, sender: unknown, respond: Respond) => boolean | undefined
+type Sender = { origin?: string; tab?: { id: number } }
+type MessageListener = (message: unknown, sender: Sender, respond: Respond) => boolean | undefined
 type Changes = Record<string, { oldValue?: unknown; newValue?: unknown }>
 type ChangeListener = (changes: Changes) => void
 type TabUpdated = (tabId: number, change: { status?: string }) => void
@@ -16,7 +19,7 @@ function chromeEvent<Listener>() {
   }
 }
 
-const deliver = (listeners: Set<MessageListener>, message: unknown, sender: unknown) =>
+const deliver = (listeners: Set<MessageListener>, message: unknown, sender: Sender) =>
   new Promise<unknown>((resolve, reject) => {
     let answering = false
     for (const listener of [...listeners]) {
@@ -29,6 +32,24 @@ const covers = (pattern: string, address: string) => {
   const [scheme, host] = pattern.split(/:\/\/|\//)
   const url = URL.parse(address)
   return url !== null && url.protocol === `${scheme}:` && (host === '*' || host === url.hostname)
+}
+
+function sessionArea() {
+  const items = new Map<string, unknown>()
+  return {
+    get: (keys: string[]) =>
+      Promise.resolve(
+        Object.fromEntries(keys.filter(key => items.has(key)).map(key => [key, items.get(key)]))
+      ),
+    set: (next: Record<string, unknown>) => {
+      for (const [key, value] of Object.entries(next)) items.set(key, structuredClone(value))
+      return Promise.resolve()
+    },
+    remove: (keys: string[]) => {
+      for (const key of keys) items.delete(key)
+      return Promise.resolve()
+    }
+  }
 }
 
 export const allSites = ['http://*/*', 'https://*/*']
@@ -76,14 +97,27 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
           })
           return Promise.resolve()
         },
+        remove: (keys: string[]) => {
+          const changes: Changes = {}
+          for (const key of keys.filter(key => key in items)) {
+            changes[key] = { oldValue: items[key] }
+            delete items[key]
+          }
+          queueMicrotask(() => {
+            for (const listener of [...changed.listeners]) listener(changes)
+          })
+          return Promise.resolve()
+        },
+        setAccessLevel: () => Promise.resolve(),
         onChanged: changed.event
-      }
+      },
+      session: sessionArea()
     },
     runtime: {
       onMessage: messages.event,
       sendMessage: (message: unknown) => {
         sent.push(message)
-        return deliver(messages.listeners, message, {})
+        return deliver(messages.listeners, message, { origin: `chrome-extension://${extensionId}` })
       },
       openOptionsPage: () => {
         opened.optionsPage += 1

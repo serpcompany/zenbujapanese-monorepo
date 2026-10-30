@@ -11,7 +11,7 @@ const types = {
   '.css': 'text/css; charset=utf-8'
 }
 
-function selfSignedCertificate(hosts, folder) {
+export function selfSignedCertificate(hosts, folder) {
   const key = join(folder, 'site-key.pem')
   const cert = join(folder, 'site-cert.pem')
   const names = hosts.map(host => `DNS:${host}`).join(',')

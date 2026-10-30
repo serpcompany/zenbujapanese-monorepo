@@ -55,7 +55,7 @@ function fakeBrowser(windowId = 7) {
       if (kept.length === 0) reject(new Error('Receiving end does not exist.'))
     })
   vi.stubGlobal('chrome', {
-    storage: { local, session },
+    storage: { local: { ...local, onChanged: noEvent }, session },
     runtime: {
       onMessage: {
         addListener: (listener: Listener) => listeners.add(listener),

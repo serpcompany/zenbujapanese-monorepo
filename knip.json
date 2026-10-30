@@ -29,9 +29,11 @@
         "test-pages/vite.config.ts",
         "e2e/*.spec.ts",
         "e2e/serve.ts",
+        "e2e/account-service-preload.mjs",
         "playwright.config.ts",
         "agent-chrome/ctl.mjs",
         "agent-chrome/daemon.mjs",
+        "agent-chrome/site.mjs",
         "agent-chrome/test-daemon.mjs",
         "agent-chrome/selftest-extension/*.js",
         "agent-chrome/site/*.js"

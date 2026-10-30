@@ -1,7 +1,13 @@
 import { fileURLToPath } from 'node:url'
 import { build, type Rolldown } from 'vite'
 import { describe, expect, it } from 'vitest'
-import { languageDataOrigin, websiteOrigin } from '../src/shared/hosts.ts'
+import {
+  apiOrigin,
+  appleServicesId,
+  googleClientId,
+  languageDataOrigin,
+  websiteOrigin
+} from '../src/shared/hosts.ts'
 import { extensionConfig } from './extension-config.ts'
 import {
   type Environment,
@@ -9,6 +15,10 @@ import {
   environments,
   hosts,
   hostsOf,
+  signInIds,
+  signInIdsOf,
+  testApiHost,
+  testGoogleClientId,
   testLanguageDataHost
 } from './hosts.ts'
 
@@ -32,19 +42,34 @@ describe('the build setting', () => {
     expect(() => environmentFrom('qa')).toThrow('ZENBU_ENVIRONMENT is qa')
   })
 
-  it("names staging's website host", () => {
+  it("names staging's website and API hosts", () => {
     expect(hosts.staging).toEqual({
       website: 'https://staging.zenbujapanese.com',
-      languageData: 'https://data.zenbujapanese.com'
+      languageData: 'https://data.zenbujapanese.com',
+      api: 'https://api-staging.zenbujapanese.com'
     })
   })
 
-  it('gives both environments the one language data host, and the test build the local one', () => {
+  it('gives both environments the one language data host, and the test build the local ones', () => {
     for (const environment of environments) {
       expect(hostsOf('release', environment).languageData).toBe('https://data.zenbujapanese.com')
       expect(hostsOf('test', environment)).toEqual({
         ...hosts[environment],
-        languageData: testLanguageDataHost
+        languageData: testLanguageDataHost,
+        api: testApiHost
+      })
+    }
+  })
+
+  it("signs in with Apple as the website's Services ID, and with Google only once a client ID is set, which the test build stands in for", () => {
+    for (const environment of environments) {
+      expect(signInIdsOf('release', environment)).toEqual({
+        googleClientId: null,
+        appleServicesId: 'com.zenbujapanese.website'
+      })
+      expect(signInIdsOf('test', environment)).toEqual({
+        ...signInIds[environment],
+        googleClientId: testGoogleClientId
       })
     }
   })
@@ -52,6 +77,9 @@ describe('the build setting', () => {
   it("gives the tests production's hosts", () => {
     expect(websiteOrigin).toBe('https://zenbujapanese.com')
     expect(languageDataOrigin).toBe('https://data.zenbujapanese.com')
+    expect(apiOrigin).toBe('https://api.zenbujapanese.com')
+    expect(googleClientId).toBeNull()
+    expect(appleServicesId).toBe('com.zenbujapanese.website')
   })
 
   it.each(environments)('builds %s with its own hosts, and no other', async environment => {

@@ -23,8 +23,9 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
 - **Player on the transcript** of the YouTube video in the tab the learner is on:
   [`video-tab.md`](video-tab.md). On a tab with no video, its empty state, with Recent under it;
   Recent shows only then.
-- **Account on the account,** signed out until the extension signs in (#960, #961), and the
-  profile's Words under it.
+- **Account on the account,** the same one Settings' Account page shows: signed out, the ways to
+  sign in, and signed in, the email and the subscription ([`account.md`](account.md)). The
+  profile's Words are under it.
 
 What shows until the issue that fills it (`panel.interaction.test.tsx`, "opens each tab on its own
 screen"; `e2e/side-panel-tabs.spec.ts`):
@@ -33,13 +34,12 @@ screen"; `e2e/side-panel-tabs.spec.ts`):
 | --- | --- |
 | Player, on a tab with no video | "No video on this tab", and that a video with Japanese captions shows its transcript here. |
 | Player's Recent | A "Recent" heading, then "No recent videos", that a Zenbu account keeps the videos watched on all devices, and "Sign up or sign in". |
-| Account | "Not signed in", that a Zenbu account keeps known words, lists and notes on all devices, and "Sign up or sign in". |
 | Account's Words | "No words yet", and that the words known and the lists kept show here. |
 | Image Search, over Translate | "Reading text in pictures is coming soon", with no button. |
 
-"Sign up or sign in" opens zenbujapanese.com's `/register/` page in a new tab, where a new email
-makes an account and a known one signs in (`panel.interaction.test.tsx`). The extension itself
-doesn't sign in yet (#961): Account is where it will show.
+Player's "Sign up or sign in" opens the Account tab, where the extension signs in itself, and
+Translate has no link (`panel.interaction.test.tsx`, "opens the Account tab's sign-in from
+Player's Sign up or sign in…").
 
 ## Pages over a tab
 

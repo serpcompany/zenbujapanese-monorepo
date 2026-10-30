@@ -3,8 +3,8 @@
 The Chrome extension ([`extension.md`](extension.md)) signs in to the Zenbu account as an app,
 `zenbu-extension`, with its own bearer session, never the website's cookie
 ([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md), #960). The
-[client guide](account-clients.md) holds for it; this is what a browser changes. The extension's
-side is #961.
+[client guide](account-clients.md) holds for it; this is what a browser changes. How the
+extension does it, #961's, is in In the extension, below.
 
 ## What the service lists
 
@@ -41,6 +41,19 @@ side is #961.
   `chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' })` at install and at
   each start. The 15-minute **access token** goes in `chrome.storage.session`, refreshed as the
   client guide's Access tokens says.
+- **Each answer is kept for the session that asked.** A token, a subscription, or a refused
+  session is kept, or forgets the account, only while the session token it was asked with is
+  still the one kept; one that comes back after a sign-out, or a sign-in to another account, is
+  dropped (`tokens.test.ts`, "an access token that comes back after the session it was asked
+  with ended"). A sign-in writes the session before it clears the access token, and a sign-out
+  removes the session before the access token, so a late answer finds the new one.
+- **The store writes one at a time.** Every write to the account's keys goes through the one
+  `accountStore` the service worker makes (`channel.ts`), which runs them in turn, so no write
+  reads the account and writes it back over another's (a sign-in, a subscription, Subscribe…, a
+  token, or a sign-out); each checks the session token that asked when its turn comes. The
+  access token is kept with its session token's SHA-256, never the session token, and is
+  answered only for that session (`store.test.ts`, a sign-in to another account landing in the
+  middle of a write).
 - Never send `Authorization` on a sign-in: a sign-in with a session adds a way in to that account,
   which needs `account`.
 - No token, code, or email goes in an error report.
@@ -95,6 +108,55 @@ As the client guide's Deleting the account says. The extension has no `account`,
 through the return route, and sends that sign-in's `code` as `appleAuthorizationCode`, never
 `appleRedirectUri`. The service exchanges the code as the website's Services ID, with the return
 route's URL as `redirect_uri`, since that's where Apple sent it (`src/auth/apple-revoke.ts`).
+An Apple sign-in that answers no `code` sends no delete: the extension ends that session and
+answers `apple-again`, Continue with Apple again.
+
+## In the extension
+
+- **The service worker makes every call** (`src/service-worker/account/`): `api.ts` sends each
+  with `credentials: 'omit'`, the client header on a sign-in, and a bearer token on the others;
+  `sign-in.ts` holds the three ways in and turns the service's refusals into the learner's
+  (`Refusal` in `src/shared/account.ts`); `identity.ts` opens Google's and Apple's windows;
+  `tokens.ts` keeps the access token and asks again once after a `401`; `store.ts` keeps them;
+  `account-service.ts` signs in, reads the subscription, signs out, and deletes; and `channel.ts`
+  closes `chrome.storage.local` to content scripts at each start, answers a page's ask, and reads
+  the subscription when the browser starts. Only the extension's own pages, by the sender's
+  origin, may sign in or out, delete, or send a code: a content script's ask is answered only
+  when it reads the account, so a page that took over its renderer can't sign the learner out,
+  and its read answers only `{ type: 'access', signedIn, cloudAccess }`, never the email or the
+  rest of the subscription.
+- **A page asks by message,** `askAccount()` in `src/shared/account.ts` (`{ target:
+  'service-worker', account }`), and reads the account the service worker keeps under `account` in
+  `chrome.storage.local`: the email and the subscription, never a token. `onAccountChanged` tells
+  it of a change, so the side panel and Settings show the same account. Each time a page opens
+  the account or comes back into view (`opened`), the service worker asks `GET /v1/auth/token`
+  once if no access token is kept that has more than a minute left, so a session ended
+  elsewhere shows signed out then. The subscription is read again when a page comes back into
+  view after Subscribe… or Manage Subscription, and again each time until a read is kept;
+  `cloudAccess` is kept with it, for saving (#962).
+- **Deleting** asks for a fresh sign-in to the same account, which keeps the subscription it
+  had. When the service needs Apple, Continue with Apple signs in with Apple again, so the delete
+  goes with that fresh session and its `code`, never an earlier session over 10 minutes old.
+  A delete whose answer is lost is never taken for done: the service names no code for an
+  account that no longer exists, and `401 unauthorized` from `GET /v1/auth/token` also means a
+  session that ended. It asks the learner to try again, forgets nothing, and asks nothing more.
+  A try again, the delete or its Send Code (`send-code` with `deleting`), first asks
+  `GET /v1/auth/token` for the kept session, whatever access token is kept: a `401` forgets it
+  and answers signed out, with no code emailed and no sign-in, since an emailed-code sign-in to
+  a deleted account would make a new one. A good session goes on to the fresh sign-in.
+- **The account component,** `src/account/`, is the one the side panel's Account tab and
+  Settings' Account page both draw ([product docs](../../apps/extension/docs/product/account.md)).
+  It shows each answer's problem inline, by the field or the button it belongs to, with no toast.
+- **The hosts and IDs** follow `ZENBU_ENVIRONMENT` (`build/hosts.ts`): the API host is
+  `https://api.zenbujapanese.com`, `https://api-staging.zenbujapanese.com` in staging, and
+  `http://account-api.localhost` in the test build, and is in `host_permissions`. Apple's ID is
+  the website's Services ID. The Google client ID is `null` until #987 makes the client, so a
+  release build draws no Continue with Google and asks Google nothing; the test build's is a
+  stand-in the browser tests' service takes.
+- **Its tests:** the modules' own, on a stand-in service and stand-in windows
+  (`src/test/account-stand-in.ts`); the component's, in happy-dom; and `e2e/account.spec.ts`,
+  against the account service from the checkout
+  ([`extension-browser-tests.md`](extension-browser-tests.md), The account service).
 
 ## Setting it up
 

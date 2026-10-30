@@ -1,7 +1,13 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative, sep } from 'node:path'
 import { builtPages } from './extension-config.ts'
-import { type Environment, environments, hosts, testLanguageDataHost } from './hosts.ts'
+import {
+  type Environment,
+  environments,
+  hosts,
+  testApiHost,
+  testLanguageDataHost
+} from './hosts.ts'
 import { extensionIdOf, storeExtensionId } from './key.ts'
 import {
   builtContentScripts,
@@ -147,7 +153,8 @@ function hostProblems(
     ...environments
       .filter(other => other !== environment)
       .flatMap(other => Object.values(hosts[other]).map(origin => ({ other, origin }))),
-    { other: 'the test build', origin: testLanguageDataHost }
+    { other: 'the test build', origin: testLanguageDataHost },
+    { other: 'the test build', origin: testApiHost }
   ].filter(({ origin }) => !own.includes(origin))
   return [
     ...(manifest.homepage_url === website

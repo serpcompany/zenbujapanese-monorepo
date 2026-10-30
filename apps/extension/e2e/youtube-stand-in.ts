@@ -21,7 +21,7 @@ type SiteModule = {
 export type YouTubeStandIn = {
   origin: string
   hostRule: string
-  certificate: string
+  spki: string
   asked: string[]
   close(): void
 }
@@ -44,7 +44,7 @@ export async function startYouTubeStandIn(): Promise<YouTubeStandIn> {
   return {
     origin: youTubeOrigin,
     hostRule: `MAP ${host} 127.0.0.1:${site.port}`,
-    certificate: `--ignore-certificate-errors-spki-list=${site.spki}`,
+    spki: site.spki,
     asked,
     close() {
       site.close()

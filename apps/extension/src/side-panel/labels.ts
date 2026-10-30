@@ -17,10 +17,6 @@ export const labels = {
       title: 'No recent videos',
       description: 'A Zenbu account keeps the videos you watch on all your devices.'
     },
-    account: {
-      title: 'Not signed in',
-      description: 'A Zenbu account keeps your known words, lists and notes on all your devices.'
-    },
     words: {
       title: 'No words yet',
       description: 'The words you know and the lists you keep show here.'

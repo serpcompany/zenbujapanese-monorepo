@@ -36,6 +36,14 @@ export async function click(element: Element | null | undefined): Promise<void> 
   await settle()
 }
 
+export function typeInto(field: HTMLElement, text: string): void {
+  if (!(field instanceof HTMLInputElement)) throw new Error('Nothing to type into.')
+  act(() => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(field, text)
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
+
 export async function pointerClick(element: Element | null | undefined): Promise<void> {
   if (!(element instanceof HTMLElement)) throw new Error('Nothing to click.')
   act(() => {

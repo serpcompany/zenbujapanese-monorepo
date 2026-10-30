@@ -57,7 +57,12 @@ player caption draws; the follower and the watch-page code report none yet (#107
   time). It reports `side-panel-behavior` when Chrome refuses, as the service worker starts, to
   open the side panel from the toolbar icon (`src/service-worker/side-panel.test.ts`), and
   `page-script` when registering or injecting the page script fails
-  (`src/service-worker/page-scripts.test.ts`). A translator that isn't available is an answer, not
+  (`src/service-worker/page-scripts.test.ts`). The account reports `account-storage` when Chrome
+  refuses, as the service worker starts, to close `chrome.storage.local` to content scripts, and
+  `account-answer` when an account ask fails rather than being refused, such as storage that
+  can't be read or written (`src/service-worker/account/channel.ts`). Neither holds a session
+  token, an access token, an emailed code, or an email
+  (`src/service-worker/account/failure-reports.test.ts`). A translator that isn't available is an answer, not
   a failure. Never the failure's text,
   the request, the selected text, or the translation. A code that fails again and again is
   reported once per service-worker life: `dedupeIntegration` drops an event that repeats the one

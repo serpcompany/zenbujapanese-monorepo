@@ -146,7 +146,8 @@ in [`account-api.md`](account-api.md), How a deploy works.
 
 `.github/workflows/extension-packages.yml` builds the browser extension's two packages
 ([`extension.md`](extension.md), Builds and packages) on a push to `main` that changes the
-extension, `packages/ui`, the core, or `assets/brand`, on a pull request that changes them, and
+extension, `packages/ui`, the core, `packages/account-rules`, which it bundles, or
+`assets/brand`, on a pull request that changes them, and
 by hand. One job,
 in `apps/extension`:
 

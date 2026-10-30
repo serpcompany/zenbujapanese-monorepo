@@ -14,7 +14,7 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   page fails. The side panel shows its header and Translate's Use Selection.
 - **The side panel's tabs:** the app's Translate, Player, and Account, Translate first and chosen
   on a first open; Translate's box and its Image row opening Image Search; Player's empty state
-  and Recent; Account's and its Words'; and a last tab kept from the five tabs before them opening
+  and Recent; Account's signed-out account and its Words'; and a last tab kept from the five tabs before them opening
   on the tab that took it over, and one kept as `lookUp` on Translate (`side-panel-tabs.spec.ts`).
 - **Content script:** on `hostile.html`, the test content script's surface shows `食べる` and
   "The dictionary is ready.", and answers again after `chrome.offscreen.closeDocument()`.
@@ -77,9 +77,31 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   that starts its element is not indented. Each meaning is not the underline's blue, and its
   contrast over the page's backgrounds is at least 4.5:1, with `e2e/contrast.ts`
   (`page-lookup.spec.ts`).
+- **The account,** with the `accountService` option (`account.spec.ts`): an emailed code on
+  Settings' Account page, shown on the side panel's Account tab too; Google and Apple, Apple's
+  through the service's return route, then signing out, which the service answers `200`; deleting
+  an email account, after which its session answers `401`; a session the service refuses showing
+  signed out; Subscribe… opening zenbujapanese.com's `/account/` page, with the subscription
+  answering `subscription_required`, since the real one can't offer it locally; the Account tab
+  at 360 pixels cutting none of its lines; and a content
+  script, in its isolated world over CDP, finding no token in local or session storage or the
+  page's IndexedDB. Each test starts signed out (`account-pages.ts`), since the browser lasts the
+  worker.
+- **The account service** (`account-service.ts`) is `apps/account-api` from the checkout, started
+  as a child process on PGlite over a socket, with the dev mailbox, on a free port, not
+  `verify-service`'s 8789, so it runs beside one. `account-api.localhost` maps to it. Its preload
+  (`account-service-preload.mjs`) answers Google's and Apple's key sets with the stand-ins' keys
+  and refuses any other fetch off the machine. The stand-ins (`sign-in-providers.ts`) are an HTTPS
+  server mapped as `accounts.google.com` and `appleid.apple.com`, with `agent-chrome/site.mjs`'s
+  certificate trusted by its SPKI hash, since Playwright can't route the window
+  `chrome.identity.launchWebAuthFlow` opens. They answer only the authorize URLs, and log each
+  with its `redirect_uri`; Chrome's own requests to Google get a `404`. The service allows five
+  codes in ten minutes from one address, so only the tests about the code send one; the others
+  sign in with the Google stand-in.
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1` and maps
   the test build's data host, `language-data.localhost`, to the local server, and, with
-  `youTubeStandIn`, `www.youtube.com` to the stand-in site; the `outsideRequests` fixture fails any
+  `youTubeStandIn`, `www.youtube.com` to the stand-in site, and with `accountService`, the account
+  service and the stand-ins; the `outsideRequests` fixture fails any
   test whose context asks anything but those and this extension. `outside-requests.spec.ts` asks `example.com` from the service worker, waits
   for the guard to record it, then clears it, so it passes only while the guard catches it. A
   page that logs an error, or throws, fails its test too.

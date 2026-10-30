@@ -6,10 +6,10 @@ import { playerCaptions } from '../player-captions/player-captions'
 import { lookUpPopupCard, segmentText } from '../shared/dictionary'
 import {
   askSettings,
+  askToWriteSettings,
   isZenbuOn,
   onSettingsChanged,
-  type Settings,
-  writeSettings
+  type Settings
 } from '../shared/settings'
 import { translate } from '../translation/messages'
 import { followYouTubePage } from '../video/youtube-page'
@@ -37,7 +37,7 @@ followYouTubePage(document, {
         popupCard,
         translate: request => translate(request),
         keepCaptionPlace: place =>
-          void writeSettings({ 'videos.captionPlace': place }).catch(report)
+          void askToWriteSettings({ 'videos.captionPlace': place }).catch(report)
       }
     })
   }

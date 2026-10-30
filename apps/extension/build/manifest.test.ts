@@ -70,7 +70,7 @@ describe('manifest', () => {
     expect(manifest('release').content_scripts[0].matches).toEqual(['https://www.youtube.com/*'])
   })
 
-  it('needs a Chrome with the Translator API, asks only for what the offline dictionary, scripting and YouTube need, and asks for other sites only when the learner allows one', () => {
+  it('needs a Chrome with the Translator API, asks only for what the offline dictionary, scripting, YouTube and signing in need, and asks for other sites only when the learner allows one', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)
     expect(release.minimum_chrome_version).toBe(minimumChromeVersion)
@@ -82,24 +82,28 @@ describe('manifest', () => {
       'unlimitedStorage',
       'alarms',
       'scripting',
-      'declarativeNetRequestWithHostAccess'
+      'declarativeNetRequestWithHostAccess',
+      'identity'
     ])
     expect(release.optional_host_permissions).toEqual(['http://*/*', 'https://*/*'])
     expect(release.background).toEqual({ service_worker: 'service-worker.js', type: 'module' })
   })
 
-  it('downloads the language data only from its one host, and runs SQLite as WebAssembly', () => {
+  it("downloads the language data only from its one host, calls only its own build's API host, and runs SQLite as WebAssembly", () => {
     const release = manifest('release')
     expect(release.host_permissions).toEqual([
       'https://data.zenbujapanese.com/*',
+      'https://api.zenbujapanese.com/*',
       'https://www.youtube.com/*'
     ])
     expect(manifest('release', 'staging').host_permissions).toEqual([
       'https://data.zenbujapanese.com/*',
+      'https://api-staging.zenbujapanese.com/*',
       'https://www.youtube.com/*'
     ])
     expect(manifest('test').host_permissions).toEqual([
       'http://language-data.localhost/*',
+      'http://account-api.localhost/*',
       'https://www.youtube.com/*',
       'http://allowed.localhost/*'
     ])

@@ -1,11 +1,11 @@
+import { sha256Hex } from '../shared/sha256'
 import {
   type Compressed,
   fileKey,
   type Listed,
   type ManifestFile,
   type Part,
-  packed,
-  sha256Hex
+  packed
 } from '../worker/release-files'
 
 interface PublishedFile {

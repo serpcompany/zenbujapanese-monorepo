@@ -1,4 +1,5 @@
 import { languageDataOrigin } from '../shared/hosts'
+import { sha256Hex } from '../shared/sha256'
 import {
   type Compressed,
   firstSet,
@@ -6,8 +7,7 @@ import {
   laterSet,
   type ManifestFile,
   type Part,
-  packed,
-  sha256Hex
+  packed
 } from './release-files'
 
 export interface ReleaseFile {

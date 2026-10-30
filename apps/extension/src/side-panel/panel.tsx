@@ -76,6 +76,7 @@ function TabStack({
   selected,
   stack,
   dictionary,
+  select,
   open,
   back
 }: {
@@ -83,7 +84,7 @@ function TabStack({
   selected: boolean
   stack: StackedPage[]
   dictionary: Dictionary
-} & Omit<Navigate, 'select'>) {
+} & Navigate) {
   const top = stack.at(-1)
   const { panel, backRow } = useFocusOnMove(top?.key)
   const waiting = isWaitingForData(dictionary.data) ? dictionary.data : null
@@ -92,7 +93,11 @@ function TabStack({
   return (
     <TabsContent ref={panel} value={tab.id} keepMounted className="min-h-0">
       <div hidden={top !== undefined} className="h-full overflow-y-auto">
-        {tabWaits ? wait : <tab.Content open={open} shown={selected && top === undefined} />}
+        {tabWaits ? (
+          wait
+        ) : (
+          <tab.Content open={open} select={select} shown={selected && top === undefined} />
+        )}
       </div>
       {stack.map(({ key, page }) => (
         <div key={key} hidden={key !== top?.key} className="flex h-full flex-col">
@@ -137,6 +142,7 @@ function PanelTabs({
           selected={tab.id === state.tab}
           stack={state.stacks[tab.id]}
           dictionary={dictionary}
+          select={select}
           open={open}
           back={back}
         />

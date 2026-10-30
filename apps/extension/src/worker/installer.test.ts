@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import type { DataState } from '../shared/data-state'
+import { sha256Hex } from '../shared/sha256'
 import {
   contentOf,
   LanguageDataServer,
@@ -8,7 +9,7 @@ import {
   releaseFiles
 } from '../test/fake-language-data'
 import { databaseName, type Installed, installedPath, installer, keptPath } from './installer'
-import { artifactFile, sha256Hex } from './release-files'
+import { artifactFile } from './release-files'
 
 const laterFiles = ['KanjiStrokeData.sqlite3', 'RankedLists.sqlite3']
 const firstFiles = releaseFiles.filter(name => !laterFiles.includes(name))

@@ -9,25 +9,13 @@ import {
 } from '@zenbu/ui/components/empty'
 import type { LucideIcon } from 'lucide-react'
 import type { ComponentType, ReactNode } from 'react'
-import { websiteOrigin } from '../shared/hosts'
 import { labels } from './labels'
 import type { PanelTabProps } from './route'
 
 type EmptyText = { title: string; description?: string }
 
-const signUpUrl = `${websiteOrigin}/register/`
-
-export function SignUpButton() {
-  return (
-    <Button
-      nativeButton={false}
-      render={
-        <a href={signUpUrl} target="_blank" rel="noreferrer">
-          {labels.signUp}
-        </a>
-      }
-    />
-  )
+export function SignUpButton({ select }: Pick<PanelTabProps, 'select'>) {
+  return <Button onClick={() => select?.('account')}>{labels.signUp}</Button>
 }
 
 export function EmptyState({
