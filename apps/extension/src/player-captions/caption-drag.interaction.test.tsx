@@ -52,6 +52,15 @@ async function drag(
   await pointer('pointerup', target, from.x + by.x, from.y + by.y)
 }
 
+async function onTheWord() {
+  const player = await opened()
+  await player.playFrom(10.5)
+  const caption = measured(player.caption(), captionRect)
+  const word = player.word('要求')
+  if (!word) throw new Error('The caption has no word.')
+  return { player, caption, word }
+}
+
 const leave = (target: Element) =>
   act(() => {
     target.dispatchEvent(
@@ -150,11 +159,7 @@ describe('dragging the caption', () => {
   })
 
   it('drags the caption from a word held for a quarter second, opening no popup for it, and the word opens its popup on the next click', async () => {
-    const player = await opened()
-    await player.playFrom(10.5)
-    const caption = measured(player.caption(), captionRect)
-    const word = player.word('要求')
-    if (!word) throw new Error('The caption has no word.')
+    const { player, caption, word } = await onTheWord()
     await drag(player, word, { x: 100, y: -150 })
     expect(player.services.keepCaptionPlaces).toHaveBeenCalledExactlyOnceWith({
       'videos.captionPlace': { x: 0.75, y: 150 / 340 }
@@ -171,11 +176,7 @@ describe('dragging the caption', () => {
   })
 
   it('opens the word’s popup for a press held past the quarter second that never moves the box, however long, and keeps no place', async () => {
-    const player = await opened()
-    await player.playFrom(10.5)
-    const caption = measured(player.caption(), captionRect)
-    const word = player.word('要求')
-    if (!word) throw new Error('The caption has no word.')
+    const { player, caption, word } = await onTheWord()
     await hold(player, word, { x: 260, y: 320 })
     expect(lifted(caption)).toBe(true)
     await player.wait(2000)
@@ -212,11 +213,7 @@ describe('dragging the caption', () => {
   })
 
   it('ends a drag where it got to when the browser cancels the pointer or the box loses its capture, but not when a word inside loses one', async () => {
-    const player = await opened()
-    await player.playFrom(10.5)
-    const caption = measured(player.caption(), captionRect)
-    const word = player.word('要求')
-    if (!word) throw new Error('The caption has no word.')
+    const { player, caption, word } = await onTheWord()
     await hold(player, caption)
     await pointer('pointermove', caption, 400, 180)
     await pointer('pointercancel', caption, 400, 180)
