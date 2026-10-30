@@ -30,6 +30,7 @@ describe('accountService', () => {
     expect(world.local.items.get(sessionTokenKey)).toBe('session-1')
     expect(world.asked[0]?.body).toEqual({ email: user.email, otp: '123456' })
     expect(world.asked[1]?.headers.get('authorization')).toBe('Bearer session-1')
+    expect(world.copyAsked).toEqual(['signed in user-1', 'access'])
   })
 
   it('ends the session on the service when the learner signs out, and forgets it here', async () => {
@@ -74,6 +75,7 @@ describe('accountService', () => {
     })
     await world.account.answer({ account: 'opened' })
     expect(world.routes()).toEqual(['GET /v1/auth/token', 'GET /v1/me/subscription'])
+    expect(world.copyAsked).toEqual(['access'])
   })
 
   it('keeps reading the subscription each time the account opens after Subscribe…, until the service answers', async () => {
@@ -137,6 +139,7 @@ describe('accountService', () => {
     ])
     expect(world.asked.at(-1)?.body).toEqual({ confirm: true })
     expect(await world.store.keptAccount()).toBeNull()
+    expect(world.copyAsked).toEqual(['forget'])
   })
 
   it('refuses to delete after a sign-in to another account, ending that session and keeping this one', async () => {

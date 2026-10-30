@@ -4,7 +4,8 @@ The Chrome extension ([`extension.md`](extension.md)) signs in to the Zenbu acco
 `zenbu-extension`, with its own bearer session, never the website's cookie
 ([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md), #960). The
 [client guide](account-clients.md) holds for it; this is what a browser changes. How the
-extension does it, #961's, is in In the extension, below.
+extension does it, #961's, is in In the extension, below, and how it keeps the account's words in
+step, #979's, in The copy.
 
 ## What the service lists
 
@@ -157,6 +158,44 @@ answers `apple-again`, Continue with Apple again.
   (`src/test/account-stand-in.ts`); the component's, in happy-dom; and `e2e/account.spec.ts`,
   against the account service from the checkout
   ([`extension-browser-tests.md`](extension-browser-tests.md), The account service).
+
+## The copy
+
+- **One copy, in the service worker** (`src/service-worker/copy/`): `kept.ts` holds it in memory
+  and saves each edit to IndexedDB, `zenbu-account-copy` on the extension's origin
+  (`indexed-storage.ts`), with its items, the changes not yet synced, the cursor, and the user it
+  belongs to. Each edit runs in `accountStore.inTurn`, after the account's own writes, so a
+  sign-in or sign-out and an edit never cross; nothing calls the network inside a turn.
+  `copy-changes.ts` makes each change one queued mutation per entity, folding a second change to
+  the same one into it while it waits. The format can change freely: no learner has one yet.
+- **Sync** (`sync.ts`, `answer.ts`) follows the client guide: up to 50 mutations a request, a sent
+  one sent again unchanged until answered, the account winning a conflict, a note changed in both
+  places kept twice, a list word held until its list arrives, and a `410` read again from the
+  start. It takes the access token through #961's `tokens.withAccess`, so a `401` asks for a new
+  token once; a `401` for the session signs out. A network failure or an answer that isn't JSON
+  waits 2 seconds, then twice as long each time, at most 5 minutes; a `429` waits its
+  `Retry-After`; a `402` keeps the queue, reads the subscription again, and stops until Sync Now
+  or access comes back. While `cloudAccess` is `subscription_required`, nothing is sent. It runs
+  after a change, on `runtime.onStartup`, on a page's `opened` with changes waiting or no sync for
+  15 minutes, and on Sync Now, never on `chrome.alarms`: a wait lost when Chrome stops the service
+  worker is made up by the next of those.
+- **Settings** (`synced-settings.ts`): the five reading aids and `frequencyDictionaries.chosen`
+  go up, the chosen packs joined by commas; `readingAids.translationLanguage` and
+  `translationSource` only come down. A first sign-in sends those changed from their defaults at
+  version 0, and the account's values are written to `chrome.storage.local`.
+- **Whose copy:** a sign-in to the same user resumes it; another user's drops it, tells pages and
+  tabs `{ target: 'known', known: null }`, and reads that account from the start. Sign-out keeps
+  it, and a deleted account's is dropped.
+- **Asking it** (`copy-channel.ts`, `src/shared/account-copy.ts`): a page sends `askCopy()`
+  (`{ target: 'service-worker', copy }`) to read it, change it, sync now, or say it opened. A
+  content script may only ask `known` for at most 1,000 items, and hears `{ target: 'known' }`
+  when that changes; it never opens IndexedDB, which is the page's own in a content script.
+- **Errors** report only `account-copy`, `account-sync`, and `account-sync-reread`
+  ([`extension-error-reports.md`](extension-error-reports.md)).
+- **Its tests** run the real copy on in-memory storage and a stand-in service
+  (`src/test/copy-world.ts`, `src/test/copy-stand-in.ts`), and `e2e/account-sync.spec.ts` syncs
+  two browser profiles with the account service from the checkout, signing in with the Google
+  stand-in, since that service emails at most 5 codes in 10 minutes.
 
 ## Setting it up
 

@@ -60,8 +60,12 @@ player caption draws; the follower and the watch-page code report none yet (#107
   (`src/service-worker/page-scripts.test.ts`). The account reports `account-storage` when Chrome
   refuses, as the service worker starts, to close `chrome.storage.local` to content scripts, and
   `account-answer` when an account ask fails rather than being refused, such as storage that
-  can't be read or written (`src/service-worker/account/channel.ts`). Neither holds a session
-  token, an access token, an emailed code, or an email
+  can't be read or written (`src/service-worker/account/channel.ts`). The account's copy
+  reports `account-copy` when IndexedDB can't be read or written, `account-sync` when the service
+  answers a sync with something it can't read or a refusal it doesn't expect, and
+  `account-sync-reread` when a read from the start is refused too
+  (`src/service-worker/copy/sync-failures.test.ts`, `copy-channel.test.ts`). None holds a session
+  token, an access token, an emailed code, an email, a word, or a note
   (`src/service-worker/account/failure-reports.test.ts`). A translator that isn't available is an answer, not
   a failure. Never the failure's text,
   the request, the selected text, or the translation. A code that fails again and again is

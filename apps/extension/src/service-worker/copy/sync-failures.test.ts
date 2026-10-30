@@ -1,0 +1,181 @@
+import { describe, expect, it, vi } from 'vitest'
+import { json, refusal, subscription } from '../../test/account-stand-in'
+import { appliedTo, syncAnswer } from '../../test/copy-stand-in'
+import {
+  answeringSync,
+  type CopyWorld,
+  copyWorld,
+  gated,
+  otherWord,
+  word
+} from '../../test/copy-world'
+
+const failingFirst = (times: number, failure: () => Response | Promise<Response>) => {
+  let calls = 0
+  return answeringSync(body => {
+    calls += 1
+    return calls <= times ? failure() : json(200, syncAnswer(appliedTo(body)))
+  })
+}
+
+async function markedIn(world: CopyWorld) {
+  await world.signIn()
+  await world.change({ change: 'mark', ...word })
+  await world.stopped()
+}
+
+async function sentOnlyOnSyncNow(world: CopyWorld, waited = 0) {
+  await world.change({ change: 'clear', item: word.item })
+  world.later(waited)
+  await world.ask({ copy: 'opened' })
+  expect(world.syncs()).toHaveLength(1)
+  await world.settled()
+  await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
+}
+
+describe("the copy's sync when the account service fails", () => {
+  it('waits twice as long after each failure, at most five minutes, then tries again', async () => {
+    const world = copyWorld(failingFirst(10, () => refusal(503, 'unavailable')))
+    await markedIn(world)
+    await expect(world.read()).resolves.toMatchObject({ sync: 'waiting', unsynced: 1 })
+    for (let tries = 1; tries < 10; tries += 1) {
+      const waited = world.waits.at(-1)?.wait ?? 0
+      world.later(waited)
+      world.waits.at(-1)?.run()
+      await vi.waitFor(() => expect(world.waits).toHaveLength(tries + 1))
+    }
+    expect(world.waits.map(each => each.wait)).toEqual([
+      2_000, 4_000, 8_000, 16_000, 32_000, 64_000, 128_000, 256_000, 300_000, 300_000
+    ])
+    world.later(300_000)
+    world.waits.at(-1)?.run()
+    await vi.waitFor(() => expect(world.syncs()).toHaveLength(11))
+    await vi.waitFor(async () => expect((await world.read()).sync).toBe('synced'))
+    await expect(world.read()).resolves.toMatchObject({ unsynced: 0 })
+  })
+
+  it('sends nothing during a wait, except when asked to sync now', async () => {
+    const world = copyWorld(failingFirst(1, () => refusal(503, 'unavailable')))
+    await markedIn(world)
+    await sentOnlyOnSyncNow(world)
+  })
+
+  it('waits for the retry, sending nothing more at once, after a change made while a failing sync was on its way', async () => {
+    const { gate, open } = gated()
+    const world = copyWorld(
+      answeringSync(async () => {
+        await gate
+        return refusal(503, 'unavailable')
+      })
+    )
+    await world.markedAndSending()
+    await world.change({ change: 'mark', ...otherWord })
+    open()
+    await world.stopped()
+    expect(world.syncs()).toHaveLength(1)
+    expect(world.waits).toHaveLength(1)
+    await expect(world.read()).resolves.toMatchObject({ sync: 'waiting', unsynced: 2 })
+  })
+
+  it.each([
+    ['cannot be reached', () => Promise.reject(new TypeError('Failed to fetch'))],
+    ['answers with a page that is not JSON', () => new Response('<html>', { status: 200 })]
+  ])('says it is offline, and keeps the changes, when the service %s', async (_, failure) => {
+    const world = copyWorld(failingFirst(1, failure))
+    await markedIn(world)
+    await expect(world.read()).resolves.toMatchObject({ sync: 'offline', unsynced: 1 })
+    expect(world.waits).toHaveLength(1)
+  })
+
+  it('waits as long as the service asks when it has had too many requests', async () => {
+    const world = copyWorld(
+      failingFirst(1, () => refusal(429, 'rate_limited', { 'retry-after': '30' }))
+    )
+    await markedIn(world)
+    expect(world.waits.map(each => each.wait)).toEqual([30_000])
+    await world.settled()
+    expect(world.syncs()).toHaveLength(1)
+    world.later(30_000)
+    await world.settled()
+    await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
+  })
+
+  it('keeps the changes and stops, reading the subscription again, when the account has no access', async () => {
+    const world = copyWorld(failingFirst(1, () => refusal(402, 'subscription_required')))
+    await markedIn(world)
+    expect(world.routes().at(-1)).toBe('GET /v1/me/subscription')
+    await expect(world.read()).resolves.toMatchObject({
+      sync: 'subscription-required',
+      unsynced: 1
+    })
+    await sentOnlyOnSyncNow(world, 3_600_000)
+  })
+
+  it('sends nothing while the account needs a subscription for cloud access', async () => {
+    const world = copyWorld()
+    await world.signIn()
+    await world.store.keepSubscription('session-user-1', subscription)
+    await world.change({ change: 'mark', ...word })
+    await world.settled()
+    expect(world.syncs()).toEqual([])
+    await expect(world.read()).resolves.toMatchObject({
+      sync: 'subscription-required',
+      unsynced: 1
+    })
+  })
+
+  it('asks for a new access token once when one is refused, and syncs with it', async () => {
+    const world = copyWorld(failingFirst(1, () => refusal(401, 'unauthorized')))
+    await markedIn(world)
+    expect(world.routes()).toEqual([
+      'GET /v1/auth/token',
+      'POST /v1/sync',
+      'GET /v1/auth/token',
+      'POST /v1/sync'
+    ])
+    await expect(world.read()).resolves.toMatchObject({ sync: 'synced', unsynced: 0 })
+  })
+
+  it('stops as signed out, keeping the copy and its changes, when the session has ended', async () => {
+    const world = copyWorld(
+      undefined,
+      {},
+      {
+        'GET /v1/auth/token': () => refusal(401, 'unauthorized')
+      }
+    )
+    await markedIn(world)
+    await expect(world.read()).resolves.toMatchObject({
+      sync: 'signed-out',
+      knownWords: [word],
+      unsynced: 1
+    })
+    expect(world.syncs()).toEqual([])
+  })
+
+  it.each([
+    ['an answer it cannot read', () => json(200, { results: 'none' }), 'waiting'],
+    ['a refusal it does not expect', () => refusal(400, 'invalid_request'), 'failed']
+  ])('reports %s by its code alone', async (_, failure, state) => {
+    const world = copyWorld(failingFirst(1, failure))
+    await markedIn(world)
+    expect(world.failures).toEqual(['account-sync'])
+    await expect(world.read()).resolves.toMatchObject({ sync: state, unsynced: 1 })
+  })
+
+  it('reports a second read of everything that the service will not start', async () => {
+    const world = copyWorld(failingFirst(1, () => refusal(410, 'cursor_expired')))
+    await markedIn(world)
+    expect(world.failures).toEqual(['account-sync-reread'])
+    await expect(world.read()).resolves.toMatchObject({ sync: 'waiting' })
+  })
+
+  it('keeps the copy it had when it cannot save a change', async () => {
+    const world = copyWorld()
+    await markedIn(world)
+    world.storage.failSaves()
+    await expect(world.change({ change: 'clear', item: word.item })).rejects.toThrow()
+    world.storage.failSaves(false)
+    await expect(world.read()).resolves.toMatchObject({ knownWords: [word], unsynced: 0 })
+  })
+})

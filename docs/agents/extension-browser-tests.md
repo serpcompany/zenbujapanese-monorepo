@@ -86,7 +86,17 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   at 360 pixels cutting none of its lines; and a content
   script, in its isolated world over CDP, finding no token in local or session storage or the
   page's IndexedDB. Each test starts signed out (`account-pages.ts`), since the browser lasts the
-  worker.
+  worker, and counts the stand-ins' log from where it was when the test began.
+- **Sync,** with the same service (`account-sync.spec.ts`, helpers in `account-copy.ts`): a word,
+  a kanji, Favorites with a word, a note, and each synced setting reaching the account and a
+  second profile signed in to it (`openProfile` in `fixtures.ts`), and a change made there coming
+  back; the translation language and source coming down and never in a request; the signed-out
+  Account's count of changes before another account replaces the copy; a change waiting while
+  `/v1/sync` is aborted, kept through signing out, and going when the same account signs in
+  again; a `402`, fulfilled by `context.route`, keeping the change and reading the subscription
+  again; and the test content script's known states (`test-pages/
+  known-states.tsx`) changing as a word is marked, with no `zenbu-account-copy` in the page's
+  `indexedDB.databases()`.
 - **The account service** (`account-service.ts`) is `apps/account-api` from the checkout, started
   as a child process on PGlite over a socket, with the dev mailbox, on a free port, not
   `verify-service`'s 8789, so it runs beside one. `account-api.localhost` maps to it. Its preload

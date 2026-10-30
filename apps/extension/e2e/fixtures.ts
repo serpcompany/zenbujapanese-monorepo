@@ -1,7 +1,14 @@
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { type BrowserContext, test as base, expect, type Page, type Worker } from '@playwright/test'
+import {
+  type BrowserContext,
+  test as base,
+  expect,
+  type Page,
+  type PlaywrightWorkerArgs,
+  type Worker
+} from '@playwright/test'
 import { type AccountService, startAccountService } from './account-service.ts'
 import { contentScriptHost } from './expected.ts'
 import { type LocalServer, startLocalServer } from './local-server.ts'
@@ -58,6 +65,42 @@ function onlyTheLocalServer(
   return `--host-resolver-rules=${rules}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1`
 }
 
+type Hosts = Pick<Extension, 'server' | 'youTube' | 'account'>
+
+export async function openProfile(
+  playwright: PlaywrightWorkerArgs['playwright'],
+  { server, youTube, account }: Hosts
+): Promise<Extension & { close(): Promise<void> }> {
+  const profile = mkdtempSync(join(tmpdir(), 'zenbu-extension-'))
+  const context = await playwright.chromium.launchPersistentContext(profile, {
+    channel: 'chromium',
+    args: [
+      `--disable-extensions-except=${extensionBuild}`,
+      `--load-extension=${extensionBuild}`,
+      '--disable-blink-features=WebShare',
+      onlyTheLocalServer(server, youTube, account),
+      ...trusting(youTube, account)
+    ]
+  })
+  const serviceWorker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
+  const id = new URL(serviceWorker.url()).host
+  const manifest = JSON.parse(readFileSync(join(extensionBuild, 'manifest.json'), 'utf8'))
+  return {
+    context,
+    id,
+    origin: `chrome-extension://${id}`,
+    serviceWorker,
+    server,
+    manifest,
+    youTube,
+    account,
+    async close() {
+      await context.close()
+      rmSync(profile, { recursive: true, force: true })
+    }
+  }
+}
+
 export const test = base.extend<
   { outsideRequests: string[] },
   {
@@ -77,28 +120,12 @@ export const test = base.extend<
       const server = await startLocalServer(0, languageDataHeld)
       const youTube = youTubeStandIn ? await startYouTubeStandIn() : null
       const account = accountService ? await startAccountService() : null
-      const profile = mkdtempSync(join(tmpdir(), 'zenbu-extension-'))
-      const context = await playwright.chromium.launchPersistentContext(profile, {
-        channel: 'chromium',
-        args: [
-          `--disable-extensions-except=${extensionBuild}`,
-          `--load-extension=${extensionBuild}`,
-          '--disable-blink-features=WebShare',
-          onlyTheLocalServer(server, youTube, account),
-          ...trusting(youTube, account)
-        ]
-      })
-      const serviceWorker =
-        context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
-      const id = new URL(serviceWorker.url()).host
-      const origin = `chrome-extension://${id}`
-      const manifest = JSON.parse(readFileSync(join(extensionBuild, 'manifest.json'), 'utf8'))
-      await use({ context, id, origin, serviceWorker, server, manifest, youTube, account })
-      await context.close()
+      const { close, ...extension } = await openProfile(playwright, { server, youTube, account })
+      await use(extension)
+      await close()
       await server.close()
       youTube?.close()
       await account?.close()
-      rmSync(profile, { recursive: true, force: true })
     },
     { scope: 'worker' }
   ],

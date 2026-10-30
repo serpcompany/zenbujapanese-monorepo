@@ -6,6 +6,8 @@ import {
   googleAuthorizeUrl
 } from '../src/service-worker/account/identity.ts'
 import {
+  account,
+  answered,
   keptSessionToken,
   newEmail,
   openAccountPage,
@@ -33,16 +35,6 @@ const subscriptionRequired = {
   canSubscribe: true,
   cloudAccess: 'subscription_required'
 }
-
-const account = (extension: Extension) => {
-  if (extension.account === null) throw new Error('These tests run with the account service.')
-  return extension.account
-}
-
-const answered = (extension: Extension, path: string) =>
-  extension.context.waitForEvent('response', {
-    predicate: (response: Response) => new URL(response.url()).pathname === path
-  })
 
 const subscriptionAt = (extension: Extension) => `${account(extension).origin}/v1/me/subscription`
 
@@ -99,7 +91,8 @@ test('the learner signs in with Google and with Apple through the stand-ins, App
   extension,
   page
 }) => {
-  const { learner } = account(extension).providers
+  const { learner, asked } = account(extension).providers
+  const askedBefore = asked.length
   learner.google = newEmail('google')
   learner.apple = newEmail('apple')
   const tab = await openAccountTab(page, extension)
@@ -111,7 +104,7 @@ test('the learner signs in with Google and with Apple through the stand-ins, App
   await expect(tab.getByText(signedOutTitle)).toBeVisible()
   await tab.getByRole('button', { name: accountLabels.apple }).click()
   await expect(signedInAs(tab)).toHaveText(learner.apple)
-  expect(account(extension).providers.asked).toEqual([
+  expect(asked.slice(askedBefore)).toEqual([
     `${googleAuthorizeUrl} -> https://${extension.id}.chromiumapp.org/google`,
     `${appleAuthorizeUrl} -> ${account(extension).origin}${appleReturnPath}`
   ])

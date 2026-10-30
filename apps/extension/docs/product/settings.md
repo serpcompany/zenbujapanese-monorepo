@@ -18,5 +18,6 @@ is in `src/settings/labels.ts`. Each check is in
 | Credits | The sources the extension uses, each linked with its licence, and how Zenbu converts them. | `credits every source the core lists for the extension, with its link` |
 
 Every switch is `@zenbu/ui`'s Switch. Settings are kept in the browser, one key per setting
-(`src/shared/settings.ts`); the reading aids and frequency dictionaries take the account's names so
-a later sync can carry them (#979). Signing in on the Account page signs the whole extension in.
+(`src/shared/settings.ts`), under the account's names; signed in, the reading aids and the chosen
+frequency dictionaries sync with the account ([`account.md`](account.md), In step with the
+account). Signing in on the Account page signs the whole extension in.

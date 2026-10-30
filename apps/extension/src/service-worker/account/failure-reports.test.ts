@@ -10,6 +10,7 @@ import {
   storageArea,
   user
 } from '../../test/account-stand-in'
+import { quietCopyParts } from '../../test/copy-stand-in'
 import { recordingSettings } from '../../test/recording-settings'
 import { settingStorage } from '../../test/setting-storage'
 import { startAccount } from './channel'
@@ -59,6 +60,7 @@ function startedWithReports() {
     onMessage: { addListener: listener => listeners.push(listener) },
     onStartup: { addListener: () => undefined },
     send: service.send,
+    copy: quietCopyParts(),
     reportFailure
   })
   const ask = (account: unknown) =>

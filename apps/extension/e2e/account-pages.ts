@@ -1,10 +1,20 @@
-import type { Locator, Page } from '@playwright/test'
+import type { Locator, Page, Response } from '@playwright/test'
 import { accountLabels } from '../src/account/labels.ts'
 import { sessionTokenKey } from '../src/service-worker/account/token-keys.ts'
 import type { AccountService } from './account-service.ts'
 import { type Extension, expect, extensionUrl } from './fixtures.ts'
 
 export const signedOutTitle = accountLabels.signedOut.title
+
+export const account = (extension: Extension) => {
+  if (extension.account === null) throw new Error('These tests run with the account service.')
+  return extension.account
+}
+
+export const answered = (extension: Extension, path: string) =>
+  extension.context.waitForEvent('response', {
+    predicate: (response: Response) => new URL(response.url()).pathname === path
+  })
 
 export async function openAccountPage(page: Page, extension: Extension): Promise<Locator> {
   await page.goto(extensionUrl(extension, 'pages/settings.html#account'))

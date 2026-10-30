@@ -9,6 +9,7 @@ import {
   subscription,
   user
 } from '../../test/account-stand-in'
+import { quietCopyParts } from '../../test/copy-stand-in'
 import { answerAccount, startAccount } from './channel'
 import { accountStore } from './store'
 
@@ -28,6 +29,7 @@ function started(routes: Parameters<typeof standInService>[0] = {}) {
     onMessage: { addListener: listener => listeners.push(listener) },
     onStartup: { addListener: listener => startups.push(listener) },
     send: service.send,
+    copy: quietCopyParts(),
     reportFailure
   })
   const ask = (message: unknown, sender = { origin: `chrome-extension://${extensionId}` }) =>
@@ -141,6 +143,7 @@ describe('startAccount', () => {
       extensionId,
       onMessage: { addListener: () => undefined },
       onStartup: { addListener: () => undefined },
+      copy: quietCopyParts(),
       reportFailure
     })
     await vi.waitFor(() => expect(reportFailure).toHaveBeenCalledWith('account-storage'))
