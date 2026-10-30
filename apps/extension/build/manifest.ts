@@ -80,10 +80,12 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
       'unlimitedStorage',
       'alarms',
       'scripting',
-      'declarativeNetRequestWithHostAccess'
+      'declarativeNetRequestWithHostAccess',
+      'identity'
     ],
     host_permissions: [
       `${hostsOf(variant, environment).languageData}/*`,
+      `${hostsOf(variant, environment).api}/*`,
       'https://www.youtube.com/*',
       ...(variant === 'test' ? [`${testAllowedSite}/*`] : [])
     ],

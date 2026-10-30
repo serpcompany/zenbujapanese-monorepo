@@ -24,6 +24,7 @@
     "@fontsource-variable/geist": "^5.3.0",
     "@sentry/browser": "11.7.0",
     "@sqlite.org/sqlite-wasm": "3.54.1-build1",
+    "@zenbu/account-rules": "workspace:*",
     "@zenbu/dictionary-core": "workspace:*",
     "@zenbu/ui": "workspace:*",
     "hash-wasm": "4.12.0",
@@ -34,6 +35,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
+    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-socket": "0.2.11",
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/chrome": "^0.3.6",

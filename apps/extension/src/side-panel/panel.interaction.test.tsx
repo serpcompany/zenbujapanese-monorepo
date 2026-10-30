@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { accountLabels } from '../account/labels'
 import type { DataState } from '../shared/data-state'
 import { labels as sharedLabels } from '../shared/labels'
 import { fakeChrome } from '../test/fake-chrome'
@@ -127,7 +128,7 @@ describe('SidePanel', () => {
     expect(emptyTitles()).toEqual([labels.empty.video.title, labels.empty.recent.title])
     expect(shown('[data-recent] h2').map(each => each.textContent)).toEqual([labels.recent])
     await click(tab('Account'))
-    expect(emptyTitles()).toEqual([labels.empty.account.title, labels.empty.words.title])
+    expect(emptyTitles()).toEqual([accountLabels.signedOut.title, labels.empty.words.title])
     expect(shown('[data-account="signed-out"], [data-profile="words"]')).toHaveLength(2)
   })
 
@@ -182,7 +183,7 @@ describe('SidePanel', () => {
     expect(testPageText()).toEqual(['猫'])
     await click(tab('Account'))
     await click(backButton() as HTMLElement)
-    expect(emptyTitles()).toEqual([labels.empty.account.title, labels.empty.words.title])
+    expect(emptyTitles()).toEqual([accountLabels.signedOut.title, labels.empty.words.title])
   })
 
   it('comes back on the last tab after it closes and opens again', async () => {
@@ -204,16 +205,17 @@ describe('SidePanel', () => {
     expect(host.kept.pending).toBeNull()
   })
 
-  it('offers sign-up on the website in a new tab from Player and Account, and no link from Translate', async () => {
+  it('offers sign-up on the website in a new tab from Player, signing in on Account, and no link from Translate', async () => {
     await draw(fakeHost())
     expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
-    for (const name of ['Player', 'Account']) {
-      await click(tab(name))
-      const links = shownPanel()?.querySelectorAll('a') ?? []
-      expect([...links].map(link => [link.textContent, link.href, link.target])).toEqual([
-        [labels.signUp, 'https://zenbujapanese.com/register/', '_blank']
-      ])
-    }
+    await click(tab('Player'))
+    const links = shownPanel()?.querySelectorAll('a') ?? []
+    expect([...links].map(link => [link.textContent, link.href, link.target])).toEqual([
+      [labels.signUp, 'https://zenbujapanese.com/register/', '_blank']
+    ])
+    await click(tab('Account'))
+    expect(shownPanel()?.querySelectorAll('a')).toHaveLength(0)
+    expect(shownPanel()?.querySelector('[data-sign-in="sign-in"]')).not.toBeNull()
   })
 
   it('moves focus to the Back row of a page it opens, and to what Back reveals', async () => {

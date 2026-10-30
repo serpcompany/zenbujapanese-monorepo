@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { accountLabels } from '../src/account/labels.ts'
 import { labels } from '../src/side-panel/labels.ts'
 import { translateLabels } from '../src/translate/labels.ts'
 import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
@@ -41,7 +42,7 @@ test('the side panel shows the app’s Translate, Player and Account tabs, opens
   await expect(page.getByText(labels.empty.recent.title)).toBeVisible()
 
   await page.getByRole('tab', { name: 'Account' }).click()
-  await expect(page.getByText(labels.empty.account.title)).toBeVisible()
+  await expect(page.getByText(accountLabels.signedOut.title)).toBeVisible()
   await expect(page.getByText(labels.empty.words.title)).toBeVisible()
   await expect.poll(() => keptTab(page)).toBe('account')
 })

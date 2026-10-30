@@ -5,6 +5,7 @@ export const settingsLabels = {
     frequencyDictionaries: 'Frequency Dictionaries',
     dictionaryData: 'Dictionary Data',
     sites: 'Sites',
+    account: 'Account',
     credits: 'Credits'
   },
   switches: {

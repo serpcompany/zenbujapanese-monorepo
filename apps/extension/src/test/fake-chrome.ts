@@ -31,6 +31,24 @@ const covers = (pattern: string, address: string) => {
   return url !== null && url.protocol === `${scheme}:` && (host === '*' || host === url.hostname)
 }
 
+function sessionArea() {
+  const items = new Map<string, unknown>()
+  return {
+    get: (keys: string[]) =>
+      Promise.resolve(
+        Object.fromEntries(keys.filter(key => items.has(key)).map(key => [key, items.get(key)]))
+      ),
+    set: (next: Record<string, unknown>) => {
+      for (const [key, value] of Object.entries(next)) items.set(key, structuredClone(value))
+      return Promise.resolve()
+    },
+    remove: (keys: string[]) => {
+      for (const key of keys) items.delete(key)
+      return Promise.resolve()
+    }
+  }
+}
+
 export const allSites = ['http://*/*', 'https://*/*']
 
 export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}) {
@@ -76,8 +94,21 @@ export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}
           })
           return Promise.resolve()
         },
+        remove: (keys: string[]) => {
+          const changes: Changes = {}
+          for (const key of keys.filter(key => key in items)) {
+            changes[key] = { oldValue: items[key] }
+            delete items[key]
+          }
+          queueMicrotask(() => {
+            for (const listener of [...changed.listeners]) listener(changes)
+          })
+          return Promise.resolve()
+        },
+        setAccessLevel: () => Promise.resolve(),
         onChanged: changed.event
-      }
+      },
+      session: sessionArea()
     },
     runtime: {
       onMessage: messages.event,

@@ -3,6 +3,7 @@ import { answerSettings, tellOpenTabs } from '../service-worker/settings'
 import { fakeChrome } from '../test/fake-chrome'
 import {
   askSettings,
+  askToWriteSettings,
   isZenbuOn,
   onSettingsChanged,
   readSettings,
@@ -111,6 +112,37 @@ describe('the settings channel', () => {
     const { chrome } = fakeChrome()
     chrome.runtime.onMessage.addListener(answerSettings(() => Promise.reject(new Error('gone'))))
     await expect(askSettings(chrome.runtime)).rejects.toThrow('without the settings')
+  })
+
+  it("keeps a content script's setting through the service worker, and only the settings that fit", async () => {
+    const { chrome } = fakeChrome()
+    const store = chrome.storage.local
+    chrome.runtime.onMessage.addListener(
+      answerSettings(
+        () => readSettings(store),
+        changes => writeSettings(changes, store)
+      )
+    )
+    await askToWriteSettings(
+      { 'videos.captionPlace': { x: 0.5, y: 0.8 }, 'readingAids.romaji': 'yes' } as never,
+      chrome.runtime
+    )
+    const settings = await readSettings(store)
+    expect(settings['videos.captionPlace']).toEqual({ x: 0.5, y: 0.8 })
+    expect(settings['readingAids.romaji']).toBe(false)
+  })
+
+  it('rejects a write the service worker could not keep', async () => {
+    const { chrome } = fakeChrome()
+    chrome.runtime.onMessage.addListener(
+      answerSettings(
+        () => Promise.resolve(settingDefaults),
+        () => Promise.reject(new Error('full'))
+      )
+    )
+    await expect(
+      askToWriteSettings({ 'readingAids.romaji': true }, chrome.runtime)
+    ).rejects.toThrow('kept no settings')
   })
 
   it('leaves every other message to the other listeners', () => {

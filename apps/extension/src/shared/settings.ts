@@ -42,9 +42,11 @@ export type SettingsStore = {
 
 type SettingsRequest = { target: 'service-worker'; settings: 'read' }
 
+type SettingsWrite = { target: 'service-worker'; settings: 'write'; changes: Partial<Settings> }
+
 type SettingsChanged = { target: 'settings'; settings: Settings }
 
-type Sender = { sendMessage(message: SettingsRequest): Promise<unknown> }
+type Sender = { sendMessage(message: SettingsRequest | SettingsWrite): Promise<unknown> }
 
 type MessageEvents = {
   addListener(listener: (message: unknown) => boolean): void
@@ -95,6 +97,11 @@ export function writeSettings(
   return store.set(changes)
 }
 
+export const fittingChanges = (changes: Stored): Partial<Settings> =>
+  Object.fromEntries(
+    Object.entries(changes).filter(([key, value]) => isSettingKey(key) && fits(key, value))
+  ) as Partial<Settings>
+
 export function watchSettings(
   listener: (settings: Settings) => void,
   store: SettingsStore = localStore()
@@ -121,6 +128,12 @@ export const isSettingsRequest = (message: unknown): message is SettingsRequest 
   message.target === settingsRequest.target &&
   message.settings === settingsRequest.settings
 
+export const isSettingsWrite = (message: unknown): message is SettingsWrite =>
+  isRecord(message) &&
+  message.target === settingsRequest.target &&
+  message.settings === 'write' &&
+  isRecord(message.changes)
+
 export const settingsChanged = (settings: Settings): SettingsChanged => ({
   target: 'settings',
   settings
@@ -137,6 +150,19 @@ export function askSettings(sender: Sender = chrome.runtime): Promise<Settings> 
         throw new Error('The service worker answered without the settings.')
       }
       return settingsFrom(answer)
+    })
+}
+
+export function askToWriteSettings(
+  changes: Partial<Settings>,
+  sender: Sender = chrome.runtime
+): Promise<void> {
+  return Promise.resolve()
+    .then(() => sender.sendMessage({ target: 'service-worker', settings: 'write', changes }))
+    .then(answer => {
+      if (!isRecord(answer) || answer.type !== 'written') {
+        throw new Error('The service worker kept no settings.')
+      }
     })
 }
 

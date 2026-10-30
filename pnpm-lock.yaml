@@ -153,6 +153,9 @@ importers:
       '@sqlite.org/sqlite-wasm':
         specifier: 3.54.1-build1
         version: 3.54.1-build1
+      '@zenbu/account-rules':
+        specifier: workspace:*
+        version: link:../../packages/account-rules
       '@zenbu/dictionary-core':
         specifier: workspace:*
         version: link:../../packages/dictionary-core
@@ -178,6 +181,12 @@ importers:
       '@biomejs/biome':
         specifier: 2.4.2
         version: 2.4.2
+      '@electric-sql/pglite':
+        specifier: ^0.5.8
+        version: 0.5.8
+      '@electric-sql/pglite-socket':
+        specifier: 0.2.11
+        version: 0.2.11(@electric-sql/pglite-age@0.0.9(@electric-sql/pglite@0.5.8))(@electric-sql/pglite-pg_hashids@0.0.9(@electric-sql/pglite@0.5.8))(@electric-sql/pglite-pg_ivm@0.0.9(@electric-sql/pglite@0.5.8))(@electric-sql/pglite-pg_textsearch@0.0.10(@electric-sql/pglite@0.5.8))(@electric-sql/pglite-pg_uuidv7@0.0.9(@electric-sql/pglite@0.5.8))(@electric-sql/pglite-pgtap@0.0.9(@electric-sql/pglite@0.5.8))(@electric-sql/pglite-pgvector@0.0.9(@electric-sql/pglite@0.5.8))(@electric-sql/pglite@0.5.8)
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
@@ -222,10 +231,10 @@ importers:
     dependencies:
       '@next/third-parties':
         specifier: ^16.3.6
-        version: 16.3.6(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
+        version: 16.3.6(next@16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@opennextjs/cloudflare':
         specifier: ^1.20.6
-        version: 1.20.6(patch_hash=117429928feb7478d07fba38e73b3554fba64fba56604d8f0feb071b1b32855b)(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.143.0(@types/node@22.20.4))
+        version: 1.20.6(patch_hash=117429928feb7478d07fba38e73b3554fba64fba56604d8f0feb071b1b32855b)(next@16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.143.0(@types/node@22.20.4))
       '@zenbu/account-rules':
         specifier: workspace:*
         version: link:../../packages/account-rules
@@ -243,7 +252,7 @@ importers:
         version: 1.48.0(react@19.2.8)
       next:
         specifier: 16.3.6
-        version: 16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -7604,9 +7613,9 @@ snapshots:
   '@next/swc-win32-x64-msvc@16.3.6':
     optional: true
 
-  '@next/third-parties@16.3.6(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)':
+  '@next/third-parties@16.3.6(next@16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)':
     dependencies:
-      next: 16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      next: 16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react: 19.2.8
       third-party-capital: 1.0.20
 
@@ -7674,7 +7683,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.3
 
-  '@opennextjs/aws@4.1.4(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))':
+  '@opennextjs/aws@4.1.4(next@16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))':
     dependencies:
       '@ast-grep/napi': 0.40.5
       '@aws-sdk/client-cloudfront': 3.984.0
@@ -7690,24 +7699,24 @@ snapshots:
       cookie: 1.1.1
       esbuild: 0.25.4
       express: 5.2.1
-      next: 16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      next: 16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       path-to-regexp: 6.3.0
       urlpattern-polyfill: 10.1.0
       yaml: 2.9.1
     transitivePeerDependencies:
       - supports-color
 
-  '@opennextjs/cloudflare@1.20.6(patch_hash=117429928feb7478d07fba38e73b3554fba64fba56604d8f0feb071b1b32855b)(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.143.0(@types/node@22.20.4))':
+  '@opennextjs/cloudflare@1.20.6(patch_hash=117429928feb7478d07fba38e73b3554fba64fba56604d8f0feb071b1b32855b)(next@16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.143.0(@types/node@22.20.4))':
     dependencies:
       '@ast-grep/napi': 0.40.5
       '@dotenvx/dotenvx': 1.31.0
-      '@opennextjs/aws': 4.1.4(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
+      '@opennextjs/aws': 4.1.4(next@16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
       ci-info: 4.4.0
       cloudflare: 4.5.0
       comment-json: 4.6.2
       enquirer: 2.4.1
       glob: 12.0.0
-      next: 16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      next: 16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       ts-tqdm: 0.8.6
       wrangler: 4.143.0(@types/node@22.20.4)
       yargs: 18.2.0
@@ -8594,7 +8603,7 @@ snapshots:
     optionalDependencies:
       drizzle-kit: 0.31.11
       drizzle-orm: 0.45.3(@electric-sql/pglite@0.5.8)(@types/pg@8.23.1)(kysely@0.29.6)(pg@8.23.1)
-      next: 16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      next: 16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       pg: 8.23.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -10005,7 +10014,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  next@16.3.6(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@next/env': 16.3.6
       '@swc/helpers': 0.5.23
@@ -10014,7 +10023,7 @@ snapshots:
       postcss: 8.5.23
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      styled-jsx: 5.1.6(@babel/core@7.29.7)(react@19.2.8)
+      styled-jsx: 5.1.6(react@19.2.8)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.3.6
       '@next/swc-darwin-x64': 16.3.6
@@ -10858,12 +10867,10 @@ snapshots:
     dependencies:
       boundary: 2.0.0
 
-  styled-jsx@5.1.6(@babel/core@7.29.7)(react@19.2.8):
+  styled-jsx@5.1.6(react@19.2.8):
     dependencies:
       client-only: 0.0.1
       react: 19.2.8
-    optionalDependencies:
-      '@babel/core': 7.29.7
 
   supports-color@10.2.2: {}
 

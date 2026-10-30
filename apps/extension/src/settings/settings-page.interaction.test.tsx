@@ -1,8 +1,28 @@
 import { creditsShownBy } from '@zenbu/dictionary-core/sources/credits'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { accountLabels } from '../account/labels'
+import { AccountTab } from '../side-panel/account-tab'
+import {
+  json,
+  jwtWith,
+  signedInAnswer,
+  startAccountOn,
+  subscription,
+  user
+} from '../test/account-stand-in'
 import { dictionary, resetDictionary } from '../test/dictionary'
 import { startExtension } from '../test/extension'
-import { byText, click, find, isOn, type Rendered, render, settle, switchFor } from '../test/render'
+import {
+  byText,
+  click,
+  find,
+  isOn,
+  type Rendered,
+  render,
+  settle,
+  switchFor,
+  typeInto
+} from '../test/render'
 import { SettingsPage } from './settings-page'
 
 vi.mock('../shared/dictionary', () => import('../test/dictionary'))
@@ -12,6 +32,8 @@ const jlpt = 'zenbu.jlpt.waller.levels'
 const youtube = 'zenbu.tubelex.youtube.ja.unidic-3.1'
 
 let opened: Rendered | undefined
+
+let panel: Rendered | undefined
 
 async function openSettings(page = ''): Promise<HTMLElement> {
   location.hash = page
@@ -26,12 +48,14 @@ const pageShown = (settings: HTMLElement) =>
 afterEach(() => {
   opened?.unmount()
   opened = undefined
+  panel?.unmount()
+  panel = undefined
   resetDictionary()
   location.hash = ''
 })
 
 describe('Settings', () => {
-  it('opens each of its five pages from the sidebar, one at a time', async () => {
+  it('opens each of its six pages from the sidebar, one at a time', async () => {
     startExtension()
     const settings = await openSettings()
     expect(pageShown(settings)).toBe('reading-aids')
@@ -39,6 +63,7 @@ describe('Settings', () => {
       ['Frequency Dictionaries', 'frequency-dictionaries'],
       ['Dictionary Data', 'dictionary-data'],
       ['Sites', 'sites'],
+      ['Account', 'account'],
       ['Credits', 'credits'],
       ['Reading Aids', 'reading-aids']
     ]
@@ -159,6 +184,37 @@ describe('Settings', () => {
     expect(settings.querySelectorAll('main li')).toHaveLength(shown.credits.length)
     for (const source of shown.credits) {
       expect(byText(settings, 'main li a', source.name).getAttribute('href')).toBe(source.url)
+    }
+  })
+
+  it("shows the same account as the side panel's Account tab, and signing in on either shows on both", async () => {
+    const fake = startExtension()
+    startAccountOn(fake, {
+      'POST /v1/auth/email-otp/send-verification-otp': () => json(200, { success: true }),
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-1'),
+      'GET /v1/auth/token': () => json(200, { token: jwtWith(Date.now() / 1000 + 3600) }),
+      'GET /v1/me/subscription': () => json(200, subscription),
+      'POST /v1/auth/sign-out': () => json(200, { success: true })
+    })
+    const settings = await openSettings('#account')
+    panel = render(<AccountTab />)
+    await settle()
+    const page = find(settings, 'main')
+    const tab = panel.container
+    const drawn = (scope: HTMLElement) =>
+      find(scope, '[data-account]').innerHTML.replaceAll(/ (id|for)="[^"]*"/g, '')
+    expect(find(page, '[data-account]').getAttribute('data-account')).toBe('signed-out')
+    expect(drawn(page)).toBe(drawn(tab))
+    typeInto(find(tab, 'input[type="email"]'), user.email)
+    await click(byText(tab, 'button', accountLabels.sendCode))
+    typeInto(find(tab, 'input[autocomplete="one-time-code"]'), '123456')
+    await click(byText(tab, 'button', accountLabels.signIn))
+    for (const scope of [page, tab]) {
+      expect(find(scope, '[data-account-email]').textContent).toBe(user.email)
+    }
+    await click(byText(page, 'button', accountLabels.signOut))
+    for (const scope of [page, tab]) {
+      expect(find(scope, '[data-account]').textContent).toContain(accountLabels.signedOut.title)
     }
   })
 })

@@ -3,7 +3,13 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { builtPages } from './extension-config.ts'
-import { type Environment, hosts, testLanguageDataHost, type Variant } from './hosts.ts'
+import {
+  type Environment,
+  hosts,
+  testApiHost,
+  testLanguageDataHost,
+  type Variant
+} from './hosts.ts'
 import { extensionIdOf, storeKey } from './key.ts'
 import {
   builtContentScripts,
@@ -103,7 +109,8 @@ describe('the check of a package', () => {
     const files = { ...built('staging', 'test'), 'test-content-script.js': '' }
     expect(problemsOf(files, 'unpacked', 'staging')).toEqual([
       "The package holds the test build's test-content-script.js.",
-      `the test build's ${testLanguageDataHost} is in manifest.json.`
+      `the test build's ${testLanguageDataHost} is in manifest.json.`,
+      `the test build's ${testApiHost} is in manifest.json.`
     ])
   })
 
@@ -135,7 +142,8 @@ describe('the check of a package', () => {
     ])
     expect(problemsOf(built('staging'), 'unpacked', 'production')).toEqual([
       "The manifest's homepage_url is https://staging.zenbujapanese.com, not https://zenbujapanese.com.",
-      "staging's https://staging.zenbujapanese.com is in manifest.json, assets/popup.js."
+      "staging's https://staging.zenbujapanese.com is in manifest.json, assets/popup.js.",
+      "staging's https://api-staging.zenbujapanese.com is in manifest.json."
     ])
   })
 

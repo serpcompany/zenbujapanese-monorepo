@@ -1,6 +1,7 @@
 import { buttonVariants } from '@zenbu/ui/components/button'
 import {
   ChartColumnIcon,
+  CircleUserRoundIcon,
   DatabaseIcon,
   GlobeIcon,
   type LucideIcon,
@@ -8,6 +9,7 @@ import {
   TypeIcon
 } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
+import { AccountView } from '../account/account-view'
 import type { Settings } from '../shared/settings'
 import { useSettings } from '../shared/use-settings'
 import { CreditsPage } from './credits-page'
@@ -48,6 +50,12 @@ const sections: SettingsSection[] = [
     title: settingsLabels.pages.sites,
     icon: GlobeIcon,
     render: settings => <SitesPage settings={settings} />
+  },
+  {
+    id: 'account',
+    title: settingsLabels.pages.account,
+    icon: CircleUserRoundIcon,
+    render: () => <AccountView />
   },
   {
     id: 'credits',

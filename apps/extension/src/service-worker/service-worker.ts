@@ -4,6 +4,7 @@ import {
   reportFailure,
   startSendingErrorReports
 } from '../error-reports/error-reports'
+import { startAccount } from './account/channel'
 import { keepLanguageDataCurrent } from './language-data-updates'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { keepPageScriptRegistered } from './page-scripts'
@@ -13,6 +14,15 @@ import { startSidePanel } from './side-panel'
 import { routeTranslation } from './translation'
 
 startSendingErrorReports(chrome.storage.local)
+
+startAccount({
+  storage: { local: chrome.storage.local, session: chrome.storage.session },
+  identity: chrome.identity,
+  extensionId: chrome.runtime.id,
+  onMessage: chrome.runtime.onMessage,
+  onStartup: chrome.runtime.onStartup,
+  reportFailure
+})
 
 const offscreenDocument = offscreenDocumentKeeper({
   getURL: path => chrome.runtime.getURL(path),

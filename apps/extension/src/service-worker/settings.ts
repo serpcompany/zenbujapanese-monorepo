@@ -1,10 +1,13 @@
 import { type Failure, failure } from '../shared/messages'
 import {
+  fittingChanges,
   isSettingsRequest,
+  isSettingsWrite,
   readSettings,
   type Settings,
   settingsChanged,
-  watchSettings
+  watchSettings,
+  writeSettings
 } from '../shared/settings'
 
 type Tabs = {
@@ -12,12 +15,26 @@ type Tabs = {
   sendMessage(tabId: number, message: ReturnType<typeof settingsChanged>): Promise<unknown>
 }
 
-export function answerSettings(read: () => Promise<Settings> = readSettings) {
+type Written = { type: 'written' }
+
+export function answerSettings(
+  read: () => Promise<Settings> = readSettings,
+  write: (changes: Partial<Settings>) => Promise<void> = writeSettings
+) {
   return (
     message: unknown,
     _sender: unknown,
-    sendResponse: (answer: Settings | Failure) => void
+    sendResponse: (answer: Settings | Written | Failure) => void
   ): boolean => {
+    if (isSettingsWrite(message)) {
+      Promise.resolve()
+        .then(() => write(fittingChanges(message.changes)))
+        .then(
+          () => sendResponse({ type: 'written' }),
+          (error: unknown) => sendResponse(failure(error))
+        )
+      return true
+    }
     if (!isSettingsRequest(message)) return false
     Promise.resolve()
       .then(() => read())
