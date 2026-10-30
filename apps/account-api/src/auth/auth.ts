@@ -7,12 +7,13 @@ import type { AuthConfig } from '../config'
 import type { Drizzle } from '../db/database'
 import { authSchema } from '../db/schema'
 import { takeVerification } from '../db/verifications'
-import { clients } from '../domain/clients'
+import { clients, extensionOrigins } from '../domain/clients'
 import type { Mailer } from '../email/mailer'
 import { codeMinutes, signInCodeMessage } from '../email/sign-in-code'
 import { failureFields } from '../failure'
 import { appleClientSecret } from './apple'
 import { sessionClientHooks, tokenClaims } from './clients'
+import { extensionCode } from './extension-code'
 import { codesPerEmailCounter, signInGuards } from './guards'
 import { identityHooks } from './identities'
 import { keepLanguageThroughProviders, languageFor, storedLanguage } from './languages'
@@ -54,12 +55,13 @@ async function socialProviders(config: AuthConfig) {
 
 export async function createAuth({ config, db, mailer }: AuthOptions) {
   const codes = codesPerEmailCounter()
+  const take = (identifier: string) => takeVerification(db, identifier)
   return betterAuth({
     appName: 'Zenbu Japanese',
     baseURL: config.publicUrl,
     basePath: authPath,
     secret: config.secret,
-    trustedOrigins: config.trustedOrigins,
+    trustedOrigins: [...config.trustedOrigins, ...extensionOrigins],
     database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
     user: {
       additionalFields: {
@@ -99,9 +101,8 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
       }),
       bearer({ requireSignature: true }),
       signInNonce(),
-      signInGuards(mailer, config.trustedOrigins, codes, identifier =>
-        takeVerification(db, identifier)
-      ),
+      signInGuards(mailer, config.trustedOrigins, codes, take),
+      extensionCode(config.trustedOrigins, take),
       keepLanguageThroughProviders()
     ],
     databaseHooks: { ...identityHooks(mailer), ...sessionClientHooks(config.trustedOrigins) },
@@ -114,7 +115,9 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
         [route.sendCode]: { window: 10 * 60, max: 5 },
         [route.signInWithCode]: { window: 10 * 60, max: 10 },
         [route.signInWithProvider]: { window: 60, max: 20 },
-        [route.nonce]: { window: 60, max: 30 }
+        [route.nonce]: { window: 60, max: 30 },
+        [route.extensionCode]: { window: 60, max: 20 },
+        [route.signInWithExtensionCode]: { window: 60, max: 20 }
       }
     },
     advanced: {

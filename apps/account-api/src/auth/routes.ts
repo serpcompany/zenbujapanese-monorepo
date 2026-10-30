@@ -8,6 +8,8 @@ export const route = {
   signInWithProvider: '/sign-in/social',
   providerCallback: '/callback/:id',
   nonce: '/sign-in/nonce',
+  extensionCode: '/extension-code',
+  signInWithExtensionCode: '/sign-in/extension-code',
   linkProvider: '/link-social',
   unlink: '/unlink-account',
   accessToken: '/token',

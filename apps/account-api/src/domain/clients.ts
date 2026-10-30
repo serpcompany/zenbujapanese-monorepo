@@ -30,6 +30,7 @@ export interface Client {
   name: string
   scopes: readonly Scope[]
   appleBundleIds: readonly string[]
+  extensionIds: readonly string[]
   signsInOnTheWeb: boolean
   requestsPerMinute: number
 }
@@ -77,6 +78,7 @@ export const clients: readonly Client[] = [
     name: 'Zenbu Japanese for iOS',
     scopes: [...studyData, ...appOnly, 'subscription'],
     appleBundleIds: ['com.zenbujapanese.dictionary'],
+    extensionIds: [],
     signsInOnTheWeb: false,
     requestsPerMinute: 30_000
   },
@@ -85,6 +87,7 @@ export const clients: readonly Client[] = [
     name: 'zenbujapanese.com',
     scopes: [...studyData, ...shownOnTheWebsite, 'subscription'],
     appleBundleIds: [],
+    extensionIds: [],
     signsInOnTheWeb: true,
     requestsPerMinute: 30_000
   },
@@ -93,6 +96,29 @@ export const clients: readonly Client[] = [
     name: 'Tomodachi',
     scopes: ['account:delete', 'lists:read', 'known:read', 'known:mark', 'dictionary:read'],
     appleBundleIds: ['com.zenbujapanese.tomodachi'],
+    extensionIds: [],
+    signsInOnTheWeb: false,
+    requestsPerMinute: 30_000
+  },
+  {
+    id: 'zenbu-extension',
+    name: 'Zenbu Japanese for Chrome',
+    scopes: [
+      'account:delete',
+      'known:read',
+      'known:write',
+      'lists:read',
+      'lists:write',
+      'notes:read',
+      'notes:write',
+      'watch:read',
+      'watch:write',
+      'settings:read',
+      'settings:write',
+      'subscription'
+    ],
+    appleBundleIds: [],
+    extensionIds: ['kaalpflpefadijdemimciikalgpgjmok'],
     signsInOnTheWeb: false,
     requestsPerMinute: 30_000
   }
@@ -104,6 +130,17 @@ export const clientById = (id: string | null | undefined) =>
   clients.find(client => client.id === id) ?? null
 
 export const webClient = clients.find(client => client.signsInOnTheWeb) ?? null
+
+export const appleReturnForExtensions = '/v1/auth/apple/extension'
+
+export const extensionScheme = 'chrome-extension://'
+
+const extensionOrigin = (extensionId: string) => `${extensionScheme}${extensionId}`
+
+export const clientOfExtension = (extensionId: string) =>
+  clients.find(client => client.extensionIds.includes(extensionId)) ?? null
+
+export const extensionOrigins = clients.flatMap(client => client.extensionIds.map(extensionOrigin))
 
 export interface Principal {
   userId: string

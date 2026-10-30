@@ -236,6 +236,10 @@ export function accountApi(
         done('status')
       ),
     signOut: () => call('/v1/auth/sign-out', { method: 'POST', body: {} }, done('success')),
+    extensionCode: () =>
+      call('/v1/auth/extension-code', { method: 'POST', body: {} }, (value, status) =>
+        checked(textAnswer(value, 'code'), status)
+      ),
     profile: (accessToken: string) =>
       call('/v1/me', { accessToken }, (value, status) =>
         checked<Profile>(profileOf(value), status)

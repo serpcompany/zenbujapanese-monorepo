@@ -13,19 +13,19 @@ where anyone else gets the get-the-app prompt ([Dictionary](dictionary.md#word-p
 
 Abbreviations: paths are under `apps/web/`. **Ways tests** are
 `src/components/account/sign-in-ways.interaction.test.tsx`. **Account spec** is
-`e2e/account.spec.ts`, the
-browser tests at a desktop and a phone width, with a stand-in for the account service in the
-browser. **Account service spec** is `e2e/account-service.spec.ts`, which drives a learner
-through the pages against a real account service on its dev mailbox (`ZENBU_ACCOUNT_API=1`).
-**Sign-in form tests** and **account page tests** are
+`e2e/account.spec.ts`, the browser tests at a desktop and a phone width, with a stand-in for the
+account service in the browser. **Account service spec** is `e2e/account-service.spec.ts`, which
+drives a learner through the pages against a real account service on its dev mailbox
+(`ZENBU_ACCOUNT_API=1`). **Sign-in form tests** and **account page tests** are
 `src/components/account/sign-in-form.interaction.test.tsx` and
-`src/components/account/account-view.interaction.test.tsx`, which click through the components
-in a DOM with a stand-in for the service.
+`src/components/account/account-view.interaction.test.tsx`, which click through the components in a
+DOM with a stand-in for the service.
 
 ## Pages
 
-**Four pages.** `/login/` (Sign in), `/register/` (Create your account), `/forgot-password/` (No
-password needed), and `/account/` (Your account), each with the site's header and footer. Each is
+**Five pages.** `/login/` (Sign in), `/register/` (Create your account), `/forgot-password/` (No
+password needed), `/account/` (Your account), and `/account/extension/` ([The Chrome
+extension](extension-sign-in.md)), each with the site's header and footer. Each is
 `noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
 Their descriptions don't name Apple or Google, which a site offers only once they're set up.
 Without an account service (an empty `ACCOUNT_API_URL`, or one that isn't an origin), each says

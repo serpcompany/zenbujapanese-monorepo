@@ -61,8 +61,8 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 
 ## Routes
 
-Every answer is JSON, but for the web sign-in's redirects. An error is
-`{ "error": { "code": "...", "message": "..." } }`; a `500` never says what went wrong inside,
+Every answer is JSON, but for the web sign-in's redirects and the extension's Apple return. An error
+is `{ "error": { "code": "...", "message": "..." } }`; a `500` never says what went wrong inside,
 which only the log records.
 
 | Route | What it answers |
@@ -79,6 +79,8 @@ which only the log records.
 | `POST /v1/auth/sign-in/email-otp` | Signs in with a code: `{ "email": "...", "otp": "123456" }`. |
 | `POST /v1/auth/sign-in/nonce` | A nonce for one Apple or Google sign-in: `{ "nonce": "...", "expiresIn": 600 }`. |
 | `POST /v1/auth/sign-in/social` | Signs in with an ID token from Sign in with Apple or Google on a device, with the nonce: `{ "provider": "apple", "idToken": { "token": "...", "nonce": "..." } }`. Without an ID token, it starts the web sign-in, which comes back to `/v1/auth/callback/<provider>`. |
+| `POST /v1/auth/extension-code`, `/sign-in/extension-code` | A code that signs the extension in. |
+| `POST /v1/auth/apple/extension` | Not Better Auth's: Apple's form post for the extension's Sign in with Apple, sent on to it with a `303` ([`account-extension.md`](account-extension.md)). |
 | `POST /v1/auth/link-social` | Signed in in the last 10 minutes, adds a way in, the same way. |
 | `GET /v1/auth/list-accounts`, `POST /v1/auth/unlink-account` | Signed in, the ways the learner signs in, and removing one by its `id` from the list: `{ "accountId": "..." }`, within 10 minutes of signing in, never the last, and the account's email is told. |
 | `GET /v1/auth/token` | Signed in, a 15-minute access token for the other services. |
@@ -222,11 +224,10 @@ profile's). `PATCH /v1/me` and a sync mutation change the profile through the sa
   and lowercasing (`Kana_Fan` is `kana_fan`), unique across accounts, or `null`.
 - **The email** doesn't change here: changing it needs proof that the learner owns the new
   address, which nothing builds yet.
-- **Versions.** A profile starts at version 1, and each change adds one. On a restored copy it
-  jumps to the time, in milliseconds (Back up and restore). A change names the
-  version it was made to (`baseVersion`); if the profile has moved on, nothing changes, and the
-  answer is the profile as it is now. Nothing is last-write-wins. Sending the current values
-  again changes nothing.
+- **Versions.** A profile starts at version 1, and each change adds one. On a restored copy it jumps
+  to the time, in milliseconds (Back up and restore). A change names the version it was made to
+  (`baseVersion`); if the profile has moved on, nothing changes, and the answer is the profile as it
+  is now. Nothing is last-write-wins. Sending the current values again changes nothing.
 - **The journal**, `sync_changes`, holds each entity's latest change: a change replaces the
   entity's row, and a new account gets one from a trigger on `users`, so an account Better Auth
   makes is in it too. A sync answers each entity as it is now, so the older rows were never
@@ -273,15 +274,15 @@ has `account:delete`, Tomodachi too. `DELETE /v1/me` needs the learner to confir
 else, and deletes only after a fresh sign-in.
 
 - **Apple.** An account that signs in with Apple sends the authorization code from that fresh Sign
-  in with Apple. Before deleting anything, the service exchanges it at Apple for a refresh token,
-  as the app's bundle ID, or as the website's Services ID with the return URL the code was made
-  for, checks that Apple's answer names one of the account's Apple IDs, and revokes the token, as
-  App Review requires; it keeps no Apple token otherwise. The website's Sign in with Apple popup
-  names a return URL on the website, `<site>/account/`, and the website sends it as
-  `appleRedirectUri`, which must be on one of `ACCOUNT_API_TRUSTED_ORIGINS` (`400 bad_request`);
-  without it, the website's code is taken as one Apple sent to `/v1/auth/callback/apple`. So the
-  service needs Apple's key wherever Apple sign-in is set up: it refuses to start without one, but
-  at `localhost`, where it skips Apple. The answers:
+  in with Apple. Before deleting anything, the service exchanges it at Apple for a refresh token, as
+  the app's bundle ID, or as the website's Services ID with the return URL the code was made for,
+  checks that Apple's answer names one of the account's Apple IDs, and revokes the token, as App
+  Review requires; it keeps no Apple token otherwise. The website's Sign in with Apple popup names a
+  return URL on the website, `<site>/account/`, and the website sends it as `appleRedirectUri`,
+  which must be on one of `ACCOUNT_API_TRUSTED_ORIGINS` (`400 bad_request`); without it, the
+  website's code is taken as one Apple sent to `/v1/auth/callback/apple`, and the extension's always
+  as one sent to `/v1/auth/apple/extension`. So the service needs Apple's key wherever Apple sign-in
+  is set up: it refuses to start without one, but at `localhost`, where it skips Apple. The answers:
   - no code: `400 apple_authorization_needed`;
   - a code Apple has used or expired: `400 apple_authorization_invalid`;
   - a code from another Apple ID: `400 apple_account_mismatch`, after revoking what it made,
@@ -358,7 +359,7 @@ are in `src/db/schema.ts`:
   or none, and the profile's version);
 - `user_identities`: each way an account signs in;
 - `sessions`: what an app or the website holds, and which app (`client_id`);
-- `verifications`: the codes, encrypted, and the sign-in nonces;
+- `verifications`: the codes, encrypted, the sign-in nonces, and the extension's codes, hashed;
 - `signing_keys`: the access tokens' keys, encrypted with `ACCOUNT_API_SECRET`;
 - `rate_limits`;
 - `known_words`, `word_lists`, and `list_words`: the synced known words, lists, and their words,
@@ -395,11 +396,11 @@ pnpm check
 ```
 
 It runs Biome, the typecheck, drizzle-kit's check that the migrations and their snapshots agree
-(`pnpm db:check`), the tests, and the bundle. The tests need no database server: they
-run Postgres in the test process with PGlite, both directly and through its socket server, which
-the service's own `pg` driver connects to. The sign-in tests (`src/auth/`) run the whole service with the dev mailbox, and stand in for
-Apple's and Google's signing keys at their own URLs, so Better Auth's checks of a real token run.
-They sign new and existing learners in each way, and refuse:
+(`pnpm db:check`), the tests, and the bundle. The tests need no database server: they run Postgres
+in the test process with PGlite, both directly and through its socket server, which the service's
+own `pg` driver connects to. The sign-in tests (`src/auth/`) run the whole service with the dev
+mailbox, and stand in for Apple's and Google's signing keys at their own URLs, so Better Auth's
+checks of a real token run. They sign new and existing learners in each way, and refuse:
 
 - an expired token, one older than an hour, one for another app or from another issuer, a forged
   one, a malformed one, one for another nonce, one with no nonce, and one sent again;
@@ -417,9 +418,8 @@ They sign new and existing learners in each way, and refuse:
 The profile and sync tests (`src/http/me.test.ts` and `sync.test.ts`) sign learners in the same
 way and call the routes with their access tokens. They show:
 
-- **Access:** the session token, a token signed with another key, a forged one, a malformed one,
-  an expired one, and one for a deleted account are all refused alike, and `X-User-Id` lets no one
-  in.
+- **Access:** the session token, a token signed with another key, a forged one, a malformed one, an
+  expired one, and one for a deleted account are all refused alike, and `X-User-Id` lets no one in.
 - **Profiles:** a change's normalized fields, its version and `updatedAt` moving on, an unchanged
   write, a stale version's conflict with the current profile, three changes from one version at
   once (one goes through), a username taken whatever its case, and each refused field.
@@ -447,9 +447,9 @@ fields. `word-notes.test.ts`, `photos.test.ts`, `photo-files.test.ts`, `photo-bo
 and files to their rules ([`account-photos.md`](account-photos.md), Check it). Both run two or
 three `SyncClient`s (`src/test/sync-client.ts`, the iOS app's client in TypeScript) through
 offline changes on each until they hold the same state as a new device. `src/http/clients.test.ts`
-holds each app to its scopes: only `zenbu-ios` changes watch history, bookmarks, and photos; the
-website reads them, and reads and changes notes, settings, and searches. `kind-reads.test.ts`
-reads one kind, and `website-copy.test.ts` has the website's copy and a `SyncClient` converge.
+holds each app to its scopes: `zenbu-ios` and `zenbu-extension` change watch history, only
+`zenbu-ios` bookmarks and photos; the website reads them and changes notes, settings, and searches.
+`kind-reads.test.ts` reads one kind; `website-copy.test.ts` syncs the website and a `SyncClient`.
 
 The domain's tests replay the account rules' name and username cases and cover the cursor.
 `src/db/database.test.ts` covers the journal's trigger
@@ -594,7 +594,7 @@ this order; each step says how to check it worked.
    APPLE_TEAM_ID=847HR8U8D9
    APPLE_KEY_ID=<the Sign in with Apple key's ID>
    APPLE_PRIVATE_KEY=<the .p8 file on one line, each line break written as \n>
-   GOOGLE_CLIENT_IDS=<web client ID>,<iOS app's client ID>,<Tomodachi's client ID>
+   GOOGLE_CLIENT_IDS=<web client ID>,<iOS app's client ID>,<Tomodachi's client ID>,<extension's>
    GOOGLE_CLIENT_SECRET=<the web client's secret>
    ACCOUNT_API_EMAIL=usesend
    USESEND_API_KEY=<the useSend API key>
@@ -678,18 +678,18 @@ this order; each step says how to check it worked.
           the old Services ID, which the service no longer takes.
      - **For the website: a Services ID.** Identifiers → + → Services IDs → Continue, with a
        description such as "Zenbu Japanese website" and an identifier such as
-       `com.zenbujapanese.website` → Register. Open it, turn on Sign in with Apple → Configure,
-       with `com.zenbujapanese.dictionary` as its primary App ID. Its domains are the website's and the API
-       host's: `zenbujapanese.com`, `staging.zenbujapanese.com`, `api.zenbujapanese.com`, and
+       `com.zenbujapanese.website` → Register. Open it, turn on Sign in with Apple → Configure, with
+       `com.zenbujapanese.dictionary` as its primary App ID. Its domains are the website's and the
+       API host's: `zenbujapanese.com`, `staging.zenbujapanese.com`, `api.zenbujapanese.com`, and
        `api-staging.zenbujapanese.com`. Its return URLs are the account page each site signs in
-       from, `https://zenbujapanese.com/account/` and
-       `https://staging.zenbujapanese.com/account/`, since Apple answers the website's popup only
-       on the return URL's origin, and `<ACCOUNT_API_URL>/v1/auth/callback/apple` for each
-       environment, for a redirect sign-in. Apple takes no `localhost` return URL. Save, then
-       Continue and Save on the Services ID. The same key serves it. Set `APPLE_SERVICES_IDS` to
-       its identifier, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`, the `.p8` file's
-       text with its newlines written as `\n`, and the website's `ACCOUNT_APPLE_SERVICES_ID`
-       ([`web.md`](web.md), Account pages).
+       from, `https://zenbujapanese.com/account/` and `https://staging.zenbujapanese.com/account/`,
+       since Apple answers the website's popup only on the return URL's origin, and
+       `<ACCOUNT_API_URL>/v1/auth/callback/apple` and `<ACCOUNT_API_URL>/v1/auth/apple/extension`
+       for each environment, for a redirect sign-in and for the browser extension. Apple
+       takes no `localhost` return URL. Save, then Continue and Save on the Services ID. The same
+       key serves it. Set `APPLE_SERVICES_IDS` to its identifier, `APPLE_TEAM_ID`, `APPLE_KEY_ID`,
+       and `APPLE_PRIVATE_KEY`, the `.p8` file's text with its newlines written as `\n`, and the
+       website's `ACCOUNT_APPLE_SERVICES_ID` ([`web.md`](web.md), Account pages).
    - **Google** (Google Cloud console, the project that holds Zenbu's OAuth clients):
      1. **The consent screen** (Google Auth Platform → Branding): the app name "Zenbu Japanese", the
         support email `support@zenbujapanese.com`, the home page `https://zenbujapanese.com`, the
@@ -705,8 +705,10 @@ this order; each step says how to check it worked.
         - an iOS client, for the app's bundle ID (`com.zenbujapanese.dictionary`), and one for
           Tomodachi's. The app's was made for `com.zenbujapanese.app`; changing its bundle ID
           keeps its client ID.
+        - a web client for the browser extension, whose one redirect URI is
+          `https://kaalpflpefadijdemimciikalgpgjmok.chromiumapp.org/google`.
 
-     Then set `GOOGLE_CLIENT_IDS` (the web client's, then the iOS clients') and
+     Then set `GOOGLE_CLIENT_IDS` (the web client's, the iOS clients', then the extension's) and
      `GOOGLE_CLIENT_SECRET` (the web client's), the iOS client's ID in the app's
      `ZENBU_GOOGLE_IOS_CLIENT_ID` build setting ([`ios.md`](ios.md), Account and sync), and the
      website's `ACCOUNT_GOOGLE_SIGN_IN=on` ([`web.md`](web.md), Account pages).
@@ -747,8 +749,8 @@ this order; each step says how to check it worked.
    It worked when `docker network inspect zenbujapanese-account-api --format '{{.Internal}}'` says
    `false` and `docker inspect nginx --format '{{json .NetworkSettings.Networks}}'` names it.
 5. **Cloudflare**: proxied DNS records for `api.zenbujapanese.com` and
-   `api-staging.zenbujapanese.com`, and Authenticated Origin Pulls ([`api-servers.md`](api-servers.md),
-   Set up the server, step 5).
+   `api-staging.zenbujapanese.com`, and Authenticated Origin Pulls
+   ([`api-servers.md`](api-servers.md), Set up the server, step 5).
 6. **Backups.**
    - The AWS CLI v2, from AWS's installer:
      ```sh
