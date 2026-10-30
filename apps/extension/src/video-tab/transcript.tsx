@@ -7,8 +7,9 @@ import { ControlBar } from './control-bar'
 import { videoTabLabels } from './labels'
 import { currentCard, usePanelLines } from './panel-line-controls'
 import type { VideoTabServices } from './services'
+import { type OpenedWord, useWordSheet } from './use-word-sheet'
 import { captionGlosses, useKnownWords } from './word-marks'
-import { type OpenedWord, useWordSheet, WordSheet } from './word-sheet'
+import { WordSheet } from './word-sheet'
 
 const sheetGap = 16
 
@@ -79,7 +80,7 @@ export function Transcript({
   const latest = useRef({ playback, ready: false })
   latest.current = { playback, ready: view.ready && !view.ad }
   const playing = useCallback(() => latest.current.playback?.playing === true, [])
-  const sheet = useWordSheet(video, playing)
+  const sheet = useWordSheet(video, playing, services.pagePopup)
   const glosses = useMemo(() => captionGlosses(services), [services])
   const known = useKnownWords(services)
   const at = currentCard(lines, playback, view)

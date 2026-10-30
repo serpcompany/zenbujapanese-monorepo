@@ -4,7 +4,7 @@ import { labels } from '../src/side-panel/labels.ts'
 import { videoTabLabels } from '../src/video-tab/labels.ts'
 import { textContrast } from './contrast.ts'
 import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
-import { expectWordsApartWithMeaningsOffAndOn } from './word-underlines.ts'
+import { ownUnderlines, setWordMeanings } from './word-underlines.ts'
 import { changeSettings, tones } from './words-page.ts'
 
 const videoId = 'zenbuJa0624'
@@ -39,14 +39,22 @@ const lines = [
   }
 ]
 
-const meanings: Record<string, string> = {
-  fuku: 'to wipe, to mop, to dry',
-  yuka: 'floor',
-  no: 'indicates possessive',
-  gomi: 'rubbish, trash, garbage',
-  wo: 'indicates direct object of action',
-  toru: 'to take, to pick up'
+const sense = (meaning: string, part: string) => ({ meaning, partsOfSpeech: [part] })
+
+const meanings: Record<string, { meaning: string; partsOfSpeech: string[] }> = {
+  fuku: sense('to wipe, to mop, to dry', 'godanVerb'),
+  yuka: sense('floor', 'noun'),
+  no: sense('indicates possessive', 'particle'),
+  gomi: sense('rubbish, trash, garbage', 'noun'),
+  wo: sense('indicates direct object of action', 'particle'),
+  toru: sense('to pick up and take away, to remove', 'godanVerb')
 }
+
+const cutMeaning = meanings.toru.meaning
+
+const wordCount = lines.flatMap(line => line.tokens).length
+
+const particles = ['の', 'を']
 
 const narrowestPanel = 360
 
@@ -90,7 +98,7 @@ function standInVideo(page: Page) {
         }
         if (request?.type === 'popup') {
           const meaning = meanings[request.languageReferenceID ?? '']
-          return { type: 'popup', card: { card: { meanings: [{ meaning }] }, romaji: null } }
+          return { type: 'popup', card: { card: { meanings: [meaning] }, romaji: null } }
         }
         return null
       }
@@ -127,8 +135,11 @@ async function openTranscript(
   await page.goto(extensionUrl(extension, 'pages/side-panel.html'))
   await page.getByRole('tab', { name: labels.tabs.player }).click()
   const transcript = page.getByRole('list', { name: videoTabLabels.transcript })
-  const shown = wordMeanings ? '[data-aid="meaning"]' : '[data-word]'
-  await expect(transcript.locator(shown)).toHaveCount(9)
+  await expect(transcript.locator('[data-word]')).toHaveCount(wordCount)
+  if (wordMeanings)
+    await expect(transcript.locator('[data-aid="meaning"]')).toHaveCount(
+      wordCount - particles.length
+    )
   await expect(transcript.locator('[data-line="1"][data-current]')).toBeVisible()
   return transcript
 }
@@ -207,19 +218,35 @@ test('gives a cut word meaning its full text as a tooltip and to a screen reader
   page
 }) => {
   const transcript = await openTranscript(page, extension, narrowestPanel)
-  const object = transcript.locator('[data-line="1"] [data-aid="meaning"]').nth(3)
-  await expect(object).toHaveAttribute('title', 'indicates direct object of action')
-  expect(await object.evaluate(meaning => meaning.scrollWidth > meaning.clientWidth)).toBe(true)
-  expect(await transcript.locator('[data-line="1"]').ariaSnapshot()).toContain(
-    'indicates direct object of action'
-  )
+  const cut = transcript.locator('[data-line="1"] [data-word="取って"] [data-aid="meaning"]')
+  await expect(cut).toHaveAttribute('title', cutMeaning)
+  expect(await cut.evaluate(meaning => meaning.scrollWidth > meaning.clientWidth)).toBe(true)
+  expect(await transcript.locator('[data-line="1"]').ariaSnapshot()).toContain(cutMeaning)
 })
 
-test('gives each word in the transcript its own underline, apart from the next, with Word Meanings off and on', async ({
+test('gives each word in the transcript its own underline, apart from the next, with Word Meanings off and on, and no meaning under a particle', async ({
   extension,
   page
 }) => {
   const transcript = await openTranscript(page, extension, narrowestPanel, false)
   const eachWord = lines.map(line => line.tokens.map(token => token.text))
-  await expectWordsApartWithMeaningsOffAndOn(extension, transcript, eachWord)
+  for (const on of [false, true]) {
+    await setWordMeanings(extension, transcript, on)
+    if (on)
+      await expect(transcript.locator('[data-aid="meaning"]')).toHaveCount(
+        wordCount - particles.length
+      )
+    const underlines = await Promise.all(
+      (await transcript.locator('[data-source]').all()).map(ownUnderlines)
+    )
+    expect(underlines.map(line => line.words)).toEqual(eachWord)
+    for (const line of underlines) expect(line.narrowestGap).toBeGreaterThanOrEqual(3.5)
+    for (const particle of particles)
+      await expect(
+        transcript.locator(`[data-word="${particle}"] [data-aid="meaning"]`)
+      ).toHaveCount(0)
+    await transcript.screenshot({
+      path: test.info().outputPath(`word-meanings-${on ? 'on' : 'off'}.png`)
+    })
+  }
 })

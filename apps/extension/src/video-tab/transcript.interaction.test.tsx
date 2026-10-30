@@ -9,6 +9,7 @@ import { click, keyClick, settle } from '../test/render'
 import { lineEnglish, lineText, watching } from '../test/video-tab-harness'
 import { openFullEntryButton, popupAnswer } from '../test/word-cards'
 import { translateLabels } from '../translate/labels'
+import type { PagePopup, PagePopupHeard } from '../word-popup/page-popup'
 import { videoTabLabels } from './labels'
 
 let tab: ReturnType<typeof watching> | undefined
@@ -67,6 +68,31 @@ function particleAnswer() {
   if (!answer.card) throw new Error('The stand-in has no card.')
   const meanings = [{ meaning: 'at, in', notes: [], partsOfSpeech: ['particle'] }]
   return { ...answer, card: { ...answer.card, card: { ...answer.card.card, meanings } } }
+}
+
+type PageAsk = { word: Parameters<PagePopup>[0]; heard: PagePopupHeard; ended: boolean }
+
+function pageHolds() {
+  const asked: PageAsk[] = []
+  const pagePopup = vi.fn<PagePopup>((word, heard) => {
+    const ask = { word, heard, ended: false }
+    asked.push(ask)
+    return () => {
+      ask.ended = true
+    }
+  })
+  return { asked, pagePopup }
+}
+
+async function sheetHoldingThePage() {
+  const page = pageHolds()
+  const shown = await transcript({ pagePopup: page.pagePopup })
+  await shown.playsAt(12)
+  await click(word('散歩'))
+  await vi.waitFor(() => expect(shown.video.controls).toEqual([{ type: 'pause' }]))
+  const heard = (at: number, what: keyof PagePopupHeard) =>
+    act(async () => page.asked[at]?.heard[what]())
+  return { shown, asked: page.asked, heard }
 }
 
 const meaningsIn = (row: Element | undefined) =>
@@ -398,5 +424,58 @@ describe('a word’s sheet', () => {
     expect(sheet()?.contains(popup())).toBe(true)
     expect(popup()?.hasAttribute('data-expanded')).toBe(true)
     expect(shown.open).not.toHaveBeenCalled()
+  })
+})
+
+describe('a word’s sheet and the page', () => {
+  it('asks the page to take any word card down and hold its place, once while the sheet shows any word, until it closes', async () => {
+    const { shown, asked } = await sheetHoldingThePage()
+    await click(word('天気'))
+    expect(asked.map(ask => ask.word)).toEqual([
+      expect.objectContaining({ text: '散歩', fromBottom: 0, inPanel: true })
+    ])
+    expect(asked[0]?.ended).toBe(false)
+    await pressEscape()
+    expect(asked[0]?.ended).toBe(true)
+    await playsAgain(shown)
+  })
+
+  it('goes away when a word card on the page takes its place, and plays the video again only once the page’s last card closes', async () => {
+    const { shown, heard } = await sheetHoldingThePage()
+    await heard(0, 'replaced')
+    expect(sheet()).toBeNull()
+    expect(word('散歩')?.hasAttribute('data-selected')).toBe(false)
+    expect(shown.video.controls).toEqual([{ type: 'pause' }])
+    await heard(0, 'closed')
+    await playsAgain(shown)
+  })
+
+  it('takes the place back from the page’s card when a word opens again, keeping the video paused until the sheet closes', async () => {
+    const { shown, asked, heard } = await sheetHoldingThePage()
+    await heard(0, 'replaced')
+    await click(word('天気'))
+    expect(sheet()?.contains(popup())).toBe(true)
+    expect(asked.map(ask => ask.word.text)).toEqual(['散歩', '天気'])
+    await heard(0, 'closed')
+    expect(sheet()).not.toBeNull()
+    expect(shown.video.controls).toEqual([{ type: 'pause' }])
+    await pressEscape()
+    expect(asked[1]?.ended).toBe(true)
+    await playsAgain(shown)
+  })
+
+  it('closes, and plays the video again, when a card asked for on another tab ends its hold', async () => {
+    const { shown, heard } = await sheetHoldingThePage()
+    await heard(0, 'closed')
+    expect(sheet()).toBeNull()
+    await playsAgain(shown)
+  })
+
+  it('stays open on a tab whose page can’t hold a card', async () => {
+    const { shown, heard } = await sheetHoldingThePage()
+    await heard(0, 'unavailable')
+    expect(sheet()?.contains(popup())).toBe(true)
+    await pressEscape()
+    await playsAgain(shown)
   })
 })

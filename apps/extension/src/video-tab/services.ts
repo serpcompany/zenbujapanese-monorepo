@@ -14,7 +14,7 @@ export type ActiveTab = { id: number; url?: string; title?: string }
 
 export type VideoTabServices = Pick<
   TranslateServices,
-  'segment' | 'wait' | 'popupCard' | 'translate' | 'availability' | 'download'
+  'segment' | 'wait' | 'popupCard' | 'pagePopup' | 'translate' | 'availability' | 'download'
 > & {
   knownWords(items: string[]): Promise<Record<string, boolean>>
   watchKnown(heard: (known: Record<string, boolean> | null) => void): () => void
@@ -71,12 +71,13 @@ function reload(tabId: number): void {
     .catch(ignore)
 }
 
-const { segment, wait, popupCard, translate, availability, download } = onDeviceServices
+const { segment, wait, popupCard, pagePopup, translate, availability, download } = onDeviceServices
 
 export const onDeviceVideoServices: VideoTabServices = {
   segment,
   wait,
   popupCard,
+  pagePopup,
   knownWords: items => askKnown(items),
   watchKnown: heard => onKnownChanged(heard),
   translate,

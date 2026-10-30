@@ -1,78 +1,11 @@
-import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { Button } from '@zenbu/ui/components/button'
 import { XIcon } from 'lucide-react'
-import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { PageToken } from '../page-lookup/words'
+import { type RefObject, useCallback } from 'react'
 import type { Settings } from '../shared/settings'
-import type { VideoFollower } from '../video/follower'
-import { hasOpenLayer } from '../word-popup/open-layer'
 import { WordPopup } from '../word-popup/word-popup'
 import { videoTabLabels } from './labels'
 import type { VideoTabServices } from './services'
-
-export type OpenedWord = { line: Caption; token: PageToken; full: boolean }
-
-export type WordSheetState = {
-  opened: OpenedWord | null
-  open(line: Caption, token: PageToken, from: HTMLElement): void
-  dismiss(): void
-  closeQuietly(): void
-  toggleFull(): void
-}
-
-type Player = Pick<VideoFollower, 'play' | 'pause'>
-
-export function useWordSheet(video: Player, playing: () => boolean): WordSheetState {
-  const [opened, setOpened] = useState<OpenedWord | null>(null)
-  const isOpen = useRef(false)
-  const resume = useRef(false)
-  const opener = useRef<HTMLElement | null>(null)
-  const actions = useMemo(() => {
-    const close = (play: boolean) => {
-      if (!isOpen.current) return
-      isOpen.current = false
-      setOpened(null)
-      if (play && resume.current) video.play()
-      resume.current = false
-    }
-    return {
-      open(line: Caption, token: PageToken, from: HTMLElement) {
-        if (!isOpen.current) {
-          resume.current = playing()
-          video.pause()
-        }
-        isOpen.current = true
-        opener.current = from
-        setOpened(previous => ({ line, token, full: previous?.full ?? false }))
-      },
-      dismiss() {
-        const from = opener.current
-        close(true)
-        from?.focus({ preventScroll: true })
-      },
-      closeQuietly: () => close(false),
-      toggleFull: () => setOpened(previous => previous && { ...previous, full: !previous.full })
-    }
-  }, [video, playing])
-  useEffect(
-    () => () => {
-      if (isOpen.current && resume.current) video.play()
-    },
-    [video]
-  )
-  const showing = opened !== null
-  const { dismiss } = actions
-  useEffect(() => {
-    if (!showing) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || event.defaultPrevented || hasOpenLayer(document)) return
-      dismiss()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [showing, dismiss])
-  return { opened, ...actions }
-}
+import type { OpenedWord } from './use-word-sheet'
 
 const sheetClass =
   'absolute inset-x-0 bottom-0 z-10 flex h-[56%] flex-col rounded-t-xl border-t bg-popover text-popover-foreground shadow-[0_-10px_28px_rgb(0_0_0/0.14)] transition-[height] duration-200 motion-reduce:transition-none data-full:h-full data-full:rounded-none'

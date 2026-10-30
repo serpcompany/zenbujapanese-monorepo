@@ -8,6 +8,7 @@ import type { TranslatorState } from '../translation/messages'
 import { type Following, openVideoTab } from '../video/video-tab-port'
 import type { ActiveTab, VideoTabServices } from '../video-tab/services'
 import { VideoTab } from '../video-tab/video-tab'
+import type { PagePopup } from '../word-popup/page-popup'
 import { startExtension } from './extension'
 import { followerStandIn } from './follower-stand-in'
 import { settle } from './render'
@@ -93,6 +94,7 @@ type Options = {
   url?: string
   title?: string
   contentScript?: boolean
+  pagePopup?: PagePopup
 }
 
 export function watching({
@@ -101,7 +103,8 @@ export function watching({
   translation,
   url = watchURL(),
   title = '(2) 散歩の日 - YouTube',
-  contentScript = true
+  contentScript = true,
+  pagePopup
 }: Options = {}) {
   startExtension()
   happyDOM.setURL(url)
@@ -121,6 +124,7 @@ export function watching({
     })),
     wait: vi.fn<VideoTabServices['wait']>(() => new Promise(() => {})),
     popupCard: vi.fn<VideoTabServices['popupCard']>(async id => popupAnswer(id)),
+    ...(pagePopup ? { pagePopup } : {}),
     knownWords: vi.fn<VideoTabServices['knownWords']>(async () => ({})),
     watchKnown: (heard: (known: Record<string, boolean> | null) => void) => {
       knownWatchers.add(heard)
