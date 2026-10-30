@@ -95,16 +95,20 @@ export function accountSync(parts: SyncParts) {
     return 'stopped'
   }
 
-  async function refusedBatch(status: number, batch: Batch): Promise<Step> {
+  async function unsent(batch: Batch, refusedWith?: number) {
     const ids = new Set(batch.mutations.map(mutation => mutation.id))
-    const alone = batch.mutations.length === 1
     await copy.edit(draft => {
       for (const queued of draft.meta?.queue ?? []) {
         if (!ids.has(queued.mutation.id)) continue
         queued.sent = false
-        if (alone) queued.refusedWith = status
+        if (refusedWith !== undefined) queued.refusedWith = refusedWith
       }
     })
+  }
+
+  async function refusedBatch(status: number, batch: Batch): Promise<Step> {
+    const alone = batch.mutations.length === 1
+    await unsent(batch, alone ? status : undefined)
     if (alone) parts.reportFailure('account-sync', status)
     else atMost = Math.ceil(batch.mutations.length / 2)
     return 'more'
@@ -146,6 +150,11 @@ export function accountSync(parts: SyncParts) {
       return 'stopped'
     }
     if (answer.status === 0 || answer.status >= 500) return backOff(answer.status === 0)
+    if (answer.status === 403 || answer.status === 404) {
+      await unsent(batch)
+      parts.reportFailure('account-sync', answer.status)
+      return backOff(false)
+    }
     if ((answer.status === 400 || answer.status === 413) && batch.mutations.length > 0) {
       return refusedBatch(answer.status, batch)
     }

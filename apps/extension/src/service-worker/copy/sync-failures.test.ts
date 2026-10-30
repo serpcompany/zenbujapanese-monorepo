@@ -200,12 +200,51 @@ describe("the copy's sync when the account service fails", () => {
 
   it.each([
     ['an answer it cannot read', () => json(200, { results: 'none' }), 'waiting'],
-    ['a refusal it does not expect', () => refusal(403, 'not_allowed'), 'failed']
+    ['a refusal it does not expect', () => refusal(422, 'unprocessable'), 'failed']
   ])('reports %s by its code alone', async (_, failure, state) => {
     const world = copyWorld(failingFirst(1, failure))
     await markedIn(world)
     expect(world.failures).toEqual(['account-sync'])
     await expect(world.read()).resolves.toMatchObject({ sync: state, unsynced: 1 })
+  })
+
+  it.each([
+    403, 404
+  ])('reports a %i with its status once, and waits before trying again', async status => {
+    const world = copyWorld(failingFirst(1, () => refusal(status, 'refused')))
+    await markedIn(world)
+    expect(world.failures).toEqual([`account-sync ${status}`])
+    expect(world.waits.map(each => each.wait)).toEqual([2_000])
+    await expect(world.read()).resolves.toMatchObject({ sync: 'waiting', unsynced: 1 })
+    await world.change({ change: 'mark', ...otherWord })
+    await world.stopped()
+    expect(world.syncs()).toHaveLength(1)
+    expect(world.failures).toHaveLength(1)
+  })
+
+  it('builds the request after the wait that a 403 starts from the queue in order, with the changes made since', async () => {
+    const world = copyWorld(failingFirst(1, () => refusal(403, 'forbidden')))
+    await markedIn(world)
+    await world.change({ change: 'clear', item: word.item })
+    await world.change({ change: 'mark', ...otherWord })
+    await world.stopped()
+    expect(world.syncs()).toHaveLength(1)
+    world.later(2_000)
+    world.waits[0]?.run()
+    await vi.waitFor(() => expect(world.syncs()).toHaveLength(2))
+    await world.stopped()
+    expect(world.syncs()).toHaveLength(2)
+    expect(
+      world
+        .sent()
+        .slice(1)
+        .map(mutation => `${mutation.operation} ${mutation.entityId}`)
+    ).toEqual([`clear ${word.item}`, `mark ${otherWord.item}`])
+    await expect(world.read()).resolves.toMatchObject({
+      sync: 'synced',
+      knownWords: [otherWord],
+      unsynced: 0
+    })
   })
 
   it('reports a second read of everything that the service will not start', async () => {
