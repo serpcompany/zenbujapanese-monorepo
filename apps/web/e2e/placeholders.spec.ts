@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test'
 import { sitePaths } from '../src/lib/pages'
 import { placeholderHref, placeholderLinks } from '../src/lib/site'
 import { converterPath, toolsPath } from '../src/lib/tools/paths'
+import { pressToExpand } from './page-types'
 import {
   accountButton,
   accountMenu,
@@ -43,8 +44,7 @@ async function placeholdersInPhoneMenu(page: Page) {
   await expect(groups.first()).toBeVisible()
   const links: string[] = []
   for (const group of await groups.all()) {
-    if ((await group.getAttribute('aria-expanded')) !== 'true') await group.click()
-    await expect(group).toHaveAttribute('aria-expanded', 'true')
+    await pressToExpand(group)
     links.push(...(await placeholdersOn(page)))
   }
   return links

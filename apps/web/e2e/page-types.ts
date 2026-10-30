@@ -44,7 +44,7 @@ async function settle(page: Page) {
 const clickBeforeHydrationIsLost = { timeout: 1_000 }
 const untilItTakes = { timeout: 15_000 }
 
-async function pressToExpand(button: Locator) {
+export async function pressToExpand(button: Locator) {
   await expect(async () => {
     if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
     await expect(button).toHaveAttribute('aria-expanded', 'true', clickBeforeHydrationIsLost)
