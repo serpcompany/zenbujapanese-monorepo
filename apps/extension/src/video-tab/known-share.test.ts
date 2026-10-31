@@ -209,12 +209,10 @@ describe('the share of a video’s words known', () => {
     expect(video.shares.slice(2)).toEqual(['incomplete', { known: 3, total: 4 }])
   })
 
-  it('reads Counting known words while the captions hold no word to count', async () => {
+  it('shows no share once the captions are counted and hold no word', async () => {
     const video = watched(captions)
     video.start()
-    await settle()
-    await settle()
-    expect(video.share()).toBe('counting')
+    await vi.waitFor(() => expect(video.shares).toEqual(['counting', 'hidden']))
     expect(video.stand.services.countWords).toHaveBeenCalledOnce()
   })
 })

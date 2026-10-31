@@ -89,7 +89,7 @@ player shows the same share ([`player-captions.md`](player-captions.md)).
 
 | Behavior | Check |
 | --- | --- |
-| "Counting known words…" until the count is ready, then the share, its percentage red under 25%, orange to 50%, yellow to 75%, and green from 75%. Captions with no word to count stay at "Counting known words…", as on the iPhone. | Share: "reads Counting known words first…", "…while the captions hold no word to count"; Known words: "reads Counting known words by the title…" |
+| "Counting known words…" until the count is ready, then the share, its percentage red under 25%, orange to 50%, yellow to 75%, and green from 75%. Captions with no word to count show no share. | Share: "reads Counting known words first…", "shows no share once the captions are counted and hold no word"; Known words: "reads Counting known words by the title…" |
 | The share is the core's count of the caption lines, asked of the dictionary on this computer 20 lines at a time, with no other request. Leaving the video stops a count still running. | Share: "…the share of the core's counted words known", "counts twenty lines at a time…" |
 | A word marked Known, or not, from the caption's popup, a word's sheet, or Word Detail changes it at once, with no new count and no reload. | Share: "rises when one of its words is marked Known…"; Known words; `e2e/known-share.spec.ts` |
 | Signed out, or with saving refused, nothing shows and nothing is counted; signing in shows it. | Share: "is hidden signed out…"; Known words: "shows nothing signed out…"; `e2e/transcript-word-sheet.spec.ts`: "…signed out Known says to sign in…" |

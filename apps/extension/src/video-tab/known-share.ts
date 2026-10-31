@@ -76,9 +76,9 @@ export function knownShare(
 
   const update = () => {
     const next: Share =
-      !allowed || ids === null
+      !allowed || ids === null || ids?.length === 0
         ? 'hidden'
-        : ids === undefined || ids.length === 0
+        : ids === undefined
           ? 'counting'
           : ids.some(id => known.unanswered(id))
             ? 'incomplete'
