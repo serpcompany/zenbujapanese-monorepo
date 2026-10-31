@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react'
 import type { CopyView } from '../shared/account-copy'
 import { PageRow } from '../side-panel/page-row'
 import type { PanelTabProps } from '../side-panel/route'
+import { CopyUnread } from './copy-unread'
 import { savedWordsLabels as labels } from './labels'
 import { type SavedCopy, syncedAgo, useCopy } from './use-copy'
 
@@ -31,7 +32,11 @@ function lastSynced(copy: CopyView, syncing: boolean, now: number): string {
   return copy.lastSyncedAt === null ? labels.sync.notYet : syncedAgo(copy.lastSyncedAt, now)
 }
 
-function SyncItem({ copy, syncing, syncNow }: SavedCopy & { copy: CopyView }) {
+function SyncItem({
+  copy,
+  syncing,
+  syncNow
+}: Pick<SavedCopy, 'syncing' | 'syncNow'> & { copy: CopyView }) {
   const now = useMinute()
   const note = labels.sync.notes[copy.sync]
   return (
@@ -65,7 +70,13 @@ function SyncItem({ copy, syncing, syncNow }: SavedCopy & { copy: CopyView }) {
 export function SavedWords({ open }: Pick<PanelTabProps, 'open'>) {
   const saved = useCopy()
   const { copy } = saved
-  if (!copy) return null
+  if (!copy) {
+    return saved.unread ? (
+      <section data-profile="words" className="flex flex-col gap-4 border-t p-4">
+        <CopyUnread readAgain={saved.readAgain} />
+      </section>
+    ) : null
+  }
   return (
     <section data-profile="words" className="flex flex-col gap-4 border-t p-4">
       <div className="flex flex-col gap-2">

@@ -35,6 +35,8 @@ export const savedWordsLabels = {
     syncing: 'Syncing…',
     waiting: 'Waiting to Sync',
     syncNow: 'Sync Now',
+    tryAgain: 'Try Again',
+    unread: "Couldn't read your saved words. Try again.",
     notes: {
       'subscription-required': 'Syncing needs the subscription.',
       offline: "Couldn't reach Zenbu. Check your connection and try again.",

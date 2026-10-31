@@ -4,8 +4,9 @@ import type { CopiedWord, CopyView } from '../shared/account-copy'
 import { EmptyState } from '../side-panel/empty-tab'
 import { PageRow } from '../side-panel/page-row'
 import type { PanelPage, PanelPageProps } from '../side-panel/route'
+import { CopyUnread } from './copy-unread'
 import { savedWordsLabels as labels } from './labels'
-import { statesIn, useCopy } from './use-copy'
+import { type SavedCopy, statesIn, useCopy } from './use-copy'
 import { type SavedRow, type SavedWordServices, WordRows } from './word-rows'
 
 type PageProps<Kind extends PanelPage['page']> = PanelPageProps<
@@ -31,18 +32,24 @@ function SavedPage({
   )
 }
 
+function Unread({ read }: { read: Pick<SavedCopy, 'unread' | 'readAgain'> }) {
+  return read.unread ? <CopyUnread readAgain={read.readAgain} /> : null
+}
+
 function RowsOr({
   rows,
+  read,
   icon,
   empty,
   services
 }: {
   rows: SavedRow[] | null
+  read: Pick<SavedCopy, 'unread' | 'readAgain'>
   icon: LucideIcon
   empty: EmptyText
   services?: SavedWordServices
 }) {
-  if (rows === null) return null
+  if (rows === null) return <Unread read={read} />
   if (rows.length === 0) return <EmptyState icon={icon} text={empty} className="p-0 py-6" />
   return <WordRows rows={rows} services={services} />
 }
@@ -51,8 +58,9 @@ const rowsOf = (words: CopiedWord[], state: (item: string) => SavedRow['state'])
   words.map(word => ({ ...word, key: word.item, state: state(word.item) }))
 
 function useRows(rowsFrom: (copy: CopyView) => SavedRow[]) {
-  const { copy } = useCopy()
-  return { copy, rows: useMemo(() => (copy ? rowsFrom(copy) : null), [copy, rowsFrom]) }
+  const read = useCopy()
+  const { copy } = read
+  return { read, rows: useMemo(() => (copy ? rowsFrom(copy) : null), [copy, rowsFrom]) }
 }
 
 const knownRows = (copy: CopyView) => rowsOf(copy.knownWords, () => 'known')
@@ -72,38 +80,58 @@ const noteRows = (copy: CopyView): SavedRow[] => {
 }
 
 export function KnownWordsPage({ services }: PageProps<'known-words'>) {
-  const { rows } = useRows(knownRows)
+  const { read, rows } = useRows(knownRows)
   return (
     <SavedPage kind="known-words" title={labels.knownWords}>
-      <RowsOr rows={rows} icon={CircleCheck} empty={labels.empty.knownWords} services={services} />
+      <RowsOr
+        rows={rows}
+        read={read}
+        icon={CircleCheck}
+        empty={labels.empty.knownWords}
+        services={services}
+      />
     </SavedPage>
   )
 }
 
 export function LearningPage({ services }: PageProps<'learning'>) {
-  const { rows } = useRows(learningRows)
+  const { read, rows } = useRows(learningRows)
   return (
     <SavedPage kind="learning" title={labels.learning}>
-      <RowsOr rows={rows} icon={Contrast} empty={labels.empty.learning} services={services} />
+      <RowsOr
+        rows={rows}
+        read={read}
+        icon={Contrast}
+        empty={labels.empty.learning}
+        services={services}
+      />
     </SavedPage>
   )
 }
 
 export function NotesPage({ services }: PageProps<'notes'>) {
-  const { rows } = useRows(noteRows)
+  const { read, rows } = useRows(noteRows)
   return (
     <SavedPage kind="notes" title={labels.notes}>
-      <RowsOr rows={rows} icon={NotebookPen} empty={labels.empty.notes} services={services} />
+      <RowsOr
+        rows={rows}
+        read={read}
+        icon={NotebookPen}
+        empty={labels.empty.notes}
+        services={services}
+      />
     </SavedPage>
   )
 }
 
 export function ListsPage({ open }: PageProps<'lists'>) {
-  const { copy } = useCopy()
-  if (!copy) return null
+  const read = useCopy()
+  const { copy } = read
   return (
     <SavedPage kind="lists" title={labels.lists}>
-      {copy.lists.length === 0 ? (
+      {!copy ? (
+        <Unread read={read} />
+      ) : copy.lists.length === 0 ? (
         <EmptyState icon={List} text={labels.empty.lists} className="p-0 py-6" />
       ) : (
         <div className="flex flex-col gap-2">
@@ -126,17 +154,18 @@ const newestAdded = (first: { addedAt: string }, second: { addedAt: string }) =>
   second.addedAt.localeCompare(first.addedAt)
 
 export function ListPage({ page, services }: PageProps<'list'>) {
-  const { copy } = useCopy()
+  const read = useCopy()
+  const { copy } = read
   const list = copy?.lists.find(each => each.id === page.list)
   const rows = useMemo(
     () => (copy && list ? rowsOf([...list.words].sort(newestAdded), statesIn(copy)) : null),
     [copy, list]
   )
-  if (!copy) return null
+  if (!copy) return <Unread read={read} />
   if (!list) return <EmptyState icon={List} text={labels.empty.listGone} className="h-full" />
   return (
     <SavedPage kind="list" title={list.name}>
-      <RowsOr rows={rows} icon={List} empty={labels.empty.list} services={services} />
+      <RowsOr rows={rows} read={read} icon={List} empty={labels.empty.list} services={services} />
     </SavedPage>
   )
 }

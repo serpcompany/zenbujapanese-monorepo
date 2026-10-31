@@ -64,6 +64,7 @@ and each check is in `src/saved-words/saved-words.interaction.test.tsx` unless i
 | A word marked Known, Learning, or Unknown in this browser, from any card, shows in or leaves the tab and its pages at once, with no reload and no Sync Now; words from another device show after a sync. | `lists a word marked Known in this browser in Known Words at once…`; `copy-channel.test.ts`, "tells the extension's pages, and no tab…"; `e2e/account-words.spec.ts` |
 | A click on a word opens its card on the page beside the panel, as any side panel word's ([`side-panel.md`](side-panel.md), Pages over a tab). Enter or Space opens it under its row, with focus in it, and so does a click where the page can't show one. Escape closes it and gives focus back to the row. Open Full Entry expands it. | `opens a word's card on the page with a click…` |
 | Last Synced: Not Yet, Syncing…, or how long ago, with Waiting to Sync and how many changes wait, and a line when syncing needs the subscription, the service can't be reached, it waits to try again, or the last sync didn't finish. Sync Now syncs at once, even while it waits. | `syncs on Sync Now…`; `src/saved-words/use-copy.test.ts`; `e2e/account-words.spec.ts`, Sync Now |
+| When the copy can't be read, say while the service worker restarts, the tab and its pages show a note that it couldn't be read, with Try Again, which reads it again; the section is never blank. | `shows a note with Try Again when the first read of the copy fails…` |
 
 ## Kept from the page
 

@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { askAccount } from '../shared/account'
 import { askCopy, type CopyChange, changeWord } from '../shared/account-copy'
 import type { PanelPage } from '../side-panel/route'
-import { json, signedInAnswer, startAccountOn, user } from '../test/account-stand-in'
+import { json, refusal, signedInAnswer, startAccountOn, user } from '../test/account-stand-in'
 import { appliedTo, type Sync, syncAnswer } from '../test/copy-stand-in'
-import { otherWord, subscribed, word } from '../test/copy-world'
+import { gated, otherWord, subscribed, word } from '../test/copy-world'
 import { startExtension } from '../test/extension'
 import { find, keyClick, pointerClick, type Rendered, render, settle } from '../test/render'
 import { openFullEntryButton, youkyuu } from '../test/word-cards'
@@ -19,7 +19,7 @@ const list = '5a3f2c1e-8b7d-4e6f-9a0b-1c2d3e4f5a6b'
 
 const note = '7c9e6679-7425-40de-944b-e07fc1f90ae7'
 
-type SyncRoute = (body: Sync) => Response
+type SyncRoute = (body: Sync) => Response | Promise<Response>
 
 const applied: SyncRoute = body => json(200, syncAnswer(appliedTo(body)))
 
@@ -290,5 +290,77 @@ describe("the Account tab's saved words", () => {
     await settle()
     expect(state()).toEqual({ sync: 'synced', last: 'now', waiting: null, note: null })
     expect(counts(tab)[labels.knownWords]).toBe('2')
+  })
+
+  it.each<[string, SyncRoute, string | undefined]>([
+    [
+      'subscription-required',
+      () => refusal(402, 'subscription_required'),
+      labels.sync.notes['subscription-required']
+    ],
+    ['offline', () => Promise.reject(new TypeError('Failed to fetch')), labels.sync.notes.offline],
+    ['failed', () => refusal(422, 'unprocessable'), labels.sync.notes.failed]
+  ])('says why Sync Now did not sync when it is %s', async (sync, refusing, note) => {
+    const route = { sync: applied }
+    await signedIn(route)
+    const tab = show(<SavedWords open={vi.fn()} />)
+    let asked = 0
+    route.sync = body => {
+      asked += 1
+      return refusing(body)
+    }
+    await changed(known)
+    const before = asked
+    await act(async () => find(tab, '[data-sync] button').click())
+    await settle()
+    expect(asked).toBeGreaterThan(before)
+    expect(find(tab, '[data-sync]').getAttribute('data-sync')).toBe(sync)
+    expect(find(tab, '[data-sync-note]').textContent).toBe(note)
+    expect(find(tab, '[data-waiting]').textContent).toBe(`${labels.sync.waiting}: 1`)
+    expect((find(tab, '[data-sync] button') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('says Syncing… and holds Sync Now until the sync answers', async () => {
+    const route = { sync: applied }
+    await signedIn(route)
+    const tab = show(<SavedWords open={vi.fn()} />)
+    await changed(known)
+    const answering = gated()
+    route.sync = async body => {
+      await answering.gate
+      return applied(body)
+    }
+    await act(async () => find(tab, '[data-sync] button').click())
+    expect(find(tab, '[data-last-synced]').textContent).toBe(labels.sync.syncing)
+    expect((find(tab, '[data-sync] button') as HTMLButtonElement).disabled).toBe(true)
+    answering.open()
+    await settle()
+    expect(find(tab, '[data-last-synced]').textContent).toBe('now')
+    expect((find(tab, '[data-sync] button') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('shows a note with Try Again when the first read of the copy fails, and the section when it is read again', async () => {
+    await signedIn()
+    const reach = chrome.runtime.sendMessage
+    let reachable = false
+    chrome.runtime.sendMessage = ((message: unknown) =>
+      reachable
+        ? reach(message)
+        : Promise.reject(new Error('The service worker is restarting.'))) as typeof reach
+    const tab = show(<SavedWords open={vi.fn()} />)
+    const page = show(<KnownWordsPage {...opens({ page: 'known-words' })} />)
+    await settle()
+    expect(find(tab, '[data-sync-note]').textContent).toBe(labels.sync.unread)
+    expect(find(page, '[data-sync-note]').textContent).toBe(labels.sync.unread)
+    expect(tab.querySelector('button[data-slot="item"]')).toBeNull()
+    reachable = true
+    await act(async () => find(tab, '[data-sync] button').click())
+    await settle()
+    expect(tab.querySelector('[data-sync-note]')).toBeNull()
+    expect(counts(tab)[labels.knownWords]).toBe('0')
+    expect(find(tab, '[data-sync]').getAttribute('data-sync')).not.toBe('unread')
+    await act(async () => find(page, '[data-sync] button').click())
+    await settle()
+    expect(emptyTitle(page)).toBe(labels.empty.knownWords.title)
   })
 })

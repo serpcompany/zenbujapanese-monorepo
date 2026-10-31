@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { askCopy, type CopyView, onCopyChanged, type WordState } from '../shared/account-copy'
 
-export type SavedCopy = { copy: CopyView | null; syncing: boolean; syncNow(): void }
+export type SavedCopy = {
+  copy: CopyView | null
+  unread: boolean
+  syncing: boolean
+  syncNow(): void
+  readAgain(): void
+}
 
 export function useCopy(): SavedCopy {
   const [copy, setCopy] = useState<CopyView | null>(null)
+  const [unread, setUnread] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const read = useRef<() => void>(() => undefined)
   useEffect(() => {
@@ -13,7 +20,9 @@ export function useCopy(): SavedCopy {
     read.current = () => {
       const id = ++asked
       void askCopy({ copy: 'read' }).then(answer => {
-        if (live && id === asked && answer.type === 'copy') setCopy(answer.copy)
+        if (!live || id !== asked) return
+        if (answer.type === 'copy') setCopy(answer.copy)
+        setUnread(answer.type !== 'copy')
       })
     }
     read.current()
@@ -30,7 +39,8 @@ export function useCopy(): SavedCopy {
       read.current()
     })
   }, [])
-  return { copy, syncing, syncNow }
+  const readAgain = useCallback(() => read.current(), [])
+  return { copy, unread, syncing, syncNow, readAgain }
 }
 
 export function statesIn(copy: CopyView): (item: string) => WordState {
