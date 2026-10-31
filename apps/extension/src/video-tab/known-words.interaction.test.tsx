@@ -70,6 +70,16 @@ describe('the transcript’s known words', () => {
   })
 })
 
+const twoLines = [{ text: '散歩' }, { text: '天気' }]
+
+async function twoWordsOneKnown() {
+  const stand = shareStandIn({ 散歩: ['sanpo'], 天気: ['tenki'] }, null)
+  const services: ShareServices = { ...stand.services, wait: async () => undefined }
+  const known = knownWords(services)
+  await stand.knows({ sanpo: true })
+  return { stand, services, known }
+}
+
 describe('the share of the video’s words known', () => {
   it('reads Counting known words by the title, then the share, which rises when a word is marked Known', async () => {
     tab = watching({ saving: null })
@@ -109,19 +119,10 @@ describe('the share of the video’s words known', () => {
   })
 
   it('stays at Counting known words while a Known lookup has failed, and shows the share once it answers', async () => {
-    const stand = shareStandIn({ 散歩: ['sanpo'], 天気: ['tenki'] }, null)
-    const services: ShareServices = { ...stand.services, wait: async () => undefined }
-    const known = knownWords(services)
-    await stand.knows({ sanpo: true })
+    const { stand, services, known } = await twoWordsOneKnown()
     stand.services.knownWords.mockRejectedValueOnce(new Error('No answer'))
     stand.services.knownWords.mockRejectedValueOnce(new Error('No answer'))
-    const line = render(
-      <KnownShareLine
-        lines={[{ text: '散歩' }, { text: '天気' }]}
-        services={services}
-        known={known}
-      />
-    )
+    const line = render(<KnownShareLine lines={twoLines} services={services} known={known} />)
     await vi.waitFor(() => expect(stand.services.knownWords).toHaveBeenCalledTimes(2))
     await settle()
     expect(shareLine()?.textContent).toBe('Counting known words…')
@@ -132,14 +133,10 @@ describe('the share of the video’s words known', () => {
   })
 
   it('counts under StrictMode, which the side panel renders in and which runs effects twice', async () => {
-    const stand = shareStandIn({ 散歩: ['sanpo'], 天気: ['tenki'] }, null)
-    const services: ShareServices = { ...stand.services, wait: async () => undefined }
-    const known = knownWords(services)
-    await stand.knows({ sanpo: true })
-    const lines = [{ text: '散歩' }, { text: '天気' }]
+    const { stand, services, known } = await twoWordsOneKnown()
     const line = render(
       <StrictMode>
-        <KnownShareLine lines={lines} services={services} known={known} />
+        <KnownShareLine lines={twoLines} services={services} known={known} />
       </StrictMode>
     )
     await vi.waitFor(() => expect(shareLine()?.textContent).toBe('50% 1 of 2 words known'))
