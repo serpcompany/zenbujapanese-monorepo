@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 import { backoff, type Wait } from '../page-lookup/scan'
 import {
   askKnown,
@@ -132,9 +132,14 @@ export function useKnownShare(
   services: ShareServices,
   known: KnownWords
 ): Share {
-  const store = useMemo(() => knownShare(lines, services, known), [lines, services, known])
-  useEffect(() => () => store.stop(), [store])
-  return useSyncExternalStore(store.subscribe, store.share)
+  const [share, setShare] = useState<Share>('hidden')
+  useEffect(() => {
+    const store = knownShare(lines, services, known)
+    setShare(store.share())
+    store.subscribe(() => setShare(store.share()))
+    return store.stop
+  }, [lines, services, known])
+  return share
 }
 
 export const shareFraction = ({ known, total }: { known: number; total: number }) => known / total

@@ -1,10 +1,14 @@
-import { act } from 'react'
+import { act, StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CountedWordsAnswer } from '../shared/dictionary'
 import { writeSettings } from '../shared/settings'
-import { settle } from '../test/render'
+import { render, settle } from '../test/render'
+import { shareStandIn } from '../test/share-stand-in'
 import { watching } from '../test/video-tab-harness'
 import { popupAnswer } from '../test/word-cards'
+import type { ShareServices } from './known-share'
+import { KnownShareLine } from './known-share-line'
+import { knownWords } from './word-marks'
 
 let tab: ReturnType<typeof watching> | undefined
 
@@ -102,5 +106,23 @@ describe('the share of the video’s words known', () => {
     await vi.waitFor(() => expect(shareLine()?.textContent).toBe('0% 0 of 4 words known'))
     await shown.refuse('subscription-required')
     expect(shareLine()).toBeNull()
+  })
+
+  it('counts under StrictMode, which the side panel renders in and which runs effects twice', async () => {
+    const stand = shareStandIn({ 散歩: ['sanpo'], 天気: ['tenki'] }, null)
+    const services: ShareServices = { ...stand.services, wait: async () => undefined }
+    const known = knownWords(services)
+    await stand.knows({ sanpo: true })
+    const lines = [{ text: '散歩' }, { text: '天気' }]
+    const line = render(
+      <StrictMode>
+        <KnownShareLine lines={lines} services={services} known={known} />
+      </StrictMode>
+    )
+    await vi.waitFor(() => expect(shareLine()?.textContent).toBe('50% 1 of 2 words known'))
+    await stand.knows({ tenki: true })
+    expect(shareLine()?.textContent).toBe('100% 2 of 2 words known')
+    line.unmount()
+    known.stop()
   })
 })
