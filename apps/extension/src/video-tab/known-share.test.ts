@@ -59,6 +59,15 @@ const countingWithCore = (video: ReturnType<typeof watched>) => {
 
 const settle = () => new Promise(done => setTimeout(done))
 
+const sharingOneKnown = async () => {
+  const video = watched(captions)
+  countingWithCore(video)
+  await video.stand.knows({ k1: true })
+  video.start()
+  await vi.waitFor(() => expect(video.share()).toEqual({ known: 1, total: 4 }))
+  return video
+}
+
 describe('the share of a video’s words known', () => {
   it('reads Counting known words first, then the share of the core’s counted words known', async () => {
     const video = watched(captions)
@@ -175,6 +184,29 @@ describe('the share of a video’s words known', () => {
     expect(failed.shares.filter(share => typeof share === 'object')).toEqual([
       { known: 2, total: 4 }
     ])
+  })
+
+  it('shows the share again once the account copy resets mid-video and its answers come back unchanged', async () => {
+    const video = await sharingOneKnown()
+    await video.stand.knows(null)
+    await vi.waitFor(() => expect(typeof video.share()).toBe('object'))
+    expect(video.shares).toEqual([
+      'counting',
+      { known: 1, total: 4 },
+      'incomplete',
+      { known: 1, total: 4 }
+    ])
+  })
+
+  it('shows the new share once the account copy resets mid-video and some answers changed', async () => {
+    const video = await sharingOneKnown()
+    video.stand.services.knownWords.mockImplementation(async items =>
+      Object.fromEntries(items.map(item => [item, item === 'k1' || item === 'a1']))
+    )
+    await video.stand.knows(null)
+    await vi.waitFor(() => expect(typeof video.share()).toBe('object'))
+    expect(video.share()).toEqual({ known: 3, total: 4 })
+    expect(video.shares.slice(2)).toEqual(['incomplete', { known: 3, total: 4 }])
   })
 
   it('reads Counting known words while the captions hold no word to count', async () => {

@@ -95,6 +95,7 @@ player shows the same share ([`player-captions.md`](player-captions.md)).
 | Signed out, or with saving refused, nothing shows and nothing is counted; signing in shows it. | Share: "is hidden signed out…"; Known words: "shows nothing signed out…"; `e2e/transcript-word-sheet.spec.ts`: "…signed out Known says to sign in…" |
 | While the dictionary isn't ready it asks again after 2 seconds, then longer each time, up to 10. A count that fails shows nothing. | Share: "waits and asks again while the dictionary is not ready…" |
 | A Known lookup that fails is asked for once more. While any of the counted words is still unanswered the share shows no number: the Player tab stays at "Counting known words…" and the player's pill hides. It asks again when the Known words next change, or on the next video. | Share: "shows no share while a Known lookup has failed…"; Known words: "stays at Counting known words while a Known lookup has failed…"; Controls: "hides the pill while a Known lookup has failed…" |
+| When the account's copy resets or re-syncs mid-video, every word is asked for again and the share shows no number until the answers come back, then shows again, changed or not. | Share: "shows the share again once the account copy resets mid-video…", "shows the new share once the account copy resets mid-video…" |
 
 ## A word's sheet
 

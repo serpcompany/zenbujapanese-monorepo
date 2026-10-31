@@ -50,13 +50,15 @@ export function knownWords({ knownWords: ask, watchKnown }: KnownSource): KnownW
     for (const listener of [...listeners]) listener()
   }
 
-  const heard = (answer: Record<string, boolean>) => {
+  const heard = (answer: Record<string, boolean>, settled = false) => {
     const changed = Object.entries(answer).filter(
       ([id, now]) => known.has(id) && known.get(id) !== now
     )
     for (const [id, now] of changed) known.set(id, now)
-    if (changed.length > 0) tell()
+    if (changed.length > 0 || settled) tell()
   }
+
+  const settle = (ids: readonly string[]) => ids.filter(id => unanswered.delete(id)).length > 0
 
   const flush = () => {
     const asked = pending
@@ -66,15 +68,15 @@ export function knownWords({ knownWords: ask, watchKnown }: KnownSource): KnownW
       const some = asked.slice(at, at + knownAtOnce)
       asking.push(
         ask(some).then(
-          answer => {
-            heard(answer)
-            for (const id of some) unanswered.delete(id)
-          },
+          answer => heard(answer, settle(some)),
           () => {
-            for (const id of some) {
-              if (known.get(id) === false && known.delete(id)) missed.add(id)
-              else unanswered.delete(id)
-            }
+            const settled = some.filter(id => {
+              if (known.get(id) !== false) return true
+              known.delete(id)
+              missed.add(id)
+              return false
+            })
+            if (settle(settled)) tell()
           }
         )
       )
@@ -102,8 +104,7 @@ export function knownWords({ knownWords: ask, watchKnown }: KnownSource): KnownW
   const stop = watchKnown(change => {
     if (change) {
       heard(change)
-      const retrying = missed.size > 0
-      void fetch([]).then(() => retrying && tell())
+      void fetch([])
       return
     }
     const asked = [...known.keys()]
