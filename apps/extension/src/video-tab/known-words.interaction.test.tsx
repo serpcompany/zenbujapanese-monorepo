@@ -108,6 +108,29 @@ describe('the share of the video’s words known', () => {
     expect(shareLine()).toBeNull()
   })
 
+  it('stays at Counting known words while a Known lookup has failed, and shows the share once it answers', async () => {
+    const stand = shareStandIn({ 散歩: ['sanpo'], 天気: ['tenki'] }, null)
+    const services: ShareServices = { ...stand.services, wait: async () => undefined }
+    const known = knownWords(services)
+    await stand.knows({ sanpo: true })
+    stand.services.knownWords.mockRejectedValueOnce(new Error('No answer'))
+    stand.services.knownWords.mockRejectedValueOnce(new Error('No answer'))
+    const line = render(
+      <KnownShareLine
+        lines={[{ text: '散歩' }, { text: '天気' }]}
+        services={services}
+        known={known}
+      />
+    )
+    await vi.waitFor(() => expect(stand.services.knownWords).toHaveBeenCalledTimes(2))
+    await settle()
+    expect(shareLine()?.textContent).toBe('Counting known words…')
+    await stand.knows({ tenki: true })
+    await vi.waitFor(() => expect(shareLine()?.textContent).toBe('100% 2 of 2 words known'))
+    line.unmount()
+    known.stop()
+  })
+
   it('counts under StrictMode, which the side panel renders in and which runs effects twice', async () => {
     const stand = shareStandIn({ 散歩: ['sanpo'], 天気: ['tenki'] }, null)
     const services: ShareServices = { ...stand.services, wait: async () => undefined }

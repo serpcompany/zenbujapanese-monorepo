@@ -25,7 +25,7 @@ export const onDeviceShareServices: Omit<ShareServices, 'wait'> = {
   watchSaving: heard => onSavingRefused(told => heard(told.refusal))
 }
 
-export type Share = 'hidden' | 'counting' | { known: number; total: number }
+export type Share = 'hidden' | 'counting' | 'incomplete' | { known: number; total: number }
 
 export type KnownShare = {
   share(): Share
@@ -80,7 +80,9 @@ export function knownShare(
         ? 'hidden'
         : ids === undefined || ids.length === 0
           ? 'counting'
-          : { known: ids.filter(id => known.has(id)).length, total: ids.length }
+          : ids.some(id => known.unanswered(id))
+            ? 'incomplete'
+            : { known: ids.filter(id => known.has(id)).length, total: ids.length }
     if (sameShare(next, shown)) return
     shown = next
     for (const listener of [...listeners]) listener()
@@ -90,7 +92,10 @@ export function knownShare(
     if (counting) return
     counting = true
     void counted(texts, services, () => live).then(async found => {
-      if (found) await known.fetch(found)
+      if (found) {
+        const missed = await known.fetch(found)
+        if (missed.length > 0) await known.fetch(missed)
+      }
       if (!live) return
       ids = found
       update()

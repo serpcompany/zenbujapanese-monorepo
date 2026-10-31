@@ -29,7 +29,8 @@ export type KnownSource = {
 
 export type KnownWords = {
   has(id: string): boolean
-  fetch(ids: readonly string[]): Promise<void>
+  unanswered(id: string): boolean
+  fetch(ids: readonly string[]): Promise<string[]>
   version(): number
   subscribe(listener: () => void): () => void
   stop(): void
@@ -38,6 +39,7 @@ export type KnownWords = {
 export function knownWords({ knownWords: ask, watchKnown }: KnownSource): KnownWords {
   const known = new Map<string, boolean>()
   const missed = new Set<string>()
+  const unanswered = new Set<string>()
   const listeners = new Set<() => void>()
   let pending: string[] = []
   let answered: Promise<unknown> = Promise.resolve()
@@ -63,9 +65,18 @@ export function knownWords({ knownWords: ask, watchKnown }: KnownSource): KnownW
     for (let at = 0; at < asked.length; at += knownAtOnce) {
       const some = asked.slice(at, at + knownAtOnce)
       asking.push(
-        ask(some).then(heard, () => {
-          for (const id of some) if (known.get(id) === false && known.delete(id)) missed.add(id)
-        })
+        ask(some).then(
+          answer => {
+            heard(answer)
+            for (const id of some) unanswered.delete(id)
+          },
+          () => {
+            for (const id of some) {
+              if (known.get(id) === false && known.delete(id)) missed.add(id)
+              else unanswered.delete(id)
+            }
+          }
+        )
       )
     }
     return Promise.all(asking)
@@ -75,30 +86,35 @@ export function knownWords({ knownWords: ask, watchKnown }: KnownSource): KnownW
     const fresh = [...new Set([...ids, ...missed])].filter(id => !known.has(id))
     missed.clear()
     if (fresh.length > 0) {
-      for (const id of fresh) known.set(id, false)
+      for (const id of fresh) {
+        known.set(id, false)
+        unanswered.add(id)
+      }
       if (pending.length === 0) {
         const flushed = new Promise(done => queueMicrotask(() => done(flush())))
         answered = Promise.all([answered, flushed])
       }
       pending.push(...fresh)
     }
-    return answered.then(() => undefined)
+    return answered.then(() => ids.filter(id => missed.has(id)))
   }
 
   const stop = watchKnown(change => {
     if (change) {
       heard(change)
-      void fetch([])
+      const retrying = missed.size > 0
+      void fetch([]).then(() => retrying && tell())
       return
     }
     const asked = [...known.keys()]
     known.clear()
-    tell()
     void fetch(asked)
+    tell()
   })
 
   return {
     has: id => known.get(id) === true,
+    unanswered: id => unanswered.has(id) || missed.has(id),
     fetch,
     version: () => version,
     subscribe(listener) {

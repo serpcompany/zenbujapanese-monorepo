@@ -9,7 +9,7 @@ const pillClass =
 
 export function KnownPill({ share: store, shown }: { share: KnownShare; shown: boolean }) {
   const share = useSyncExternalStore(store.subscribe, store.share)
-  if (share === 'hidden') return null
+  if (share === 'hidden' || share === 'incomplete') return null
   const fraction = share === 'counting' ? null : shareFraction(share)
   return (
     <p data-known-pill data-hidden={shown ? undefined : ''} className={pillClass}>

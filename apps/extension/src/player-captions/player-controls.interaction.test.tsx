@@ -1,5 +1,5 @@
 import { act } from 'react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import '../test/act-environment'
 import { type PlayerOn, playerEachTest, wordPopup } from '../test/player-on'
 import { playerCaptionLabels as labels } from './labels'
@@ -189,5 +189,20 @@ describe('the share of the video’s words known', () => {
     expect(player.services.countWords).toHaveBeenCalledOnce()
     await player.share.refuse('signed-out')
     expect(player.pill()).toBeNull()
+  })
+
+  it('hides the pill while a Known lookup has failed, and shows the share again once the Known words next change', async () => {
+    const player = await opened()
+    await player.playFrom(1.2)
+    await send(player.player, pointerEvent('pointermove'))
+    await player.share.knows({ youkyuu: true, iru: true })
+    expect(player.pill()?.textContent).toBe('You know 33%')
+    player.services.knownWords.mockRejectedValue(new Error('No answer'))
+    await player.share.knows(null)
+    expect(player.pill()).toBeNull()
+    player.services.knownWords.mockReset()
+    player.services.knownWords.mockResolvedValue({ youkyuu: true, iru: true })
+    await player.share.knows({ iru: true })
+    await vi.waitFor(() => expect(player.pill()?.textContent).toBe('You know 33%'))
   })
 })

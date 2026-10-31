@@ -147,6 +147,36 @@ describe('the share of a video’s words known', () => {
     await vi.waitFor(() => expect(failing.shares).toEqual(['counting', 'hidden']))
   })
 
+  it('shows no share while a Known lookup has failed, and the right one once a retry answers', async () => {
+    const retried = watched(captions)
+    countingWithCore(retried)
+    await retried.stand.knows({ k1: true })
+    retried.stand.services.knownWords.mockRejectedValueOnce(new Error('No answer'))
+    retried.start()
+    await vi.waitFor(() => expect(typeof retried.share()).toBe('object'))
+    expect(retried.shares).toEqual(['counting', { known: 1, total: 4 }])
+    expect(retried.stand.services.knownWords).toHaveBeenCalledTimes(2)
+
+    const failed = watched(captions)
+    countingWithCore(failed)
+    await failed.stand.knows({ k1: true })
+    failed.stand.services.knownWords.mockRejectedValue(new Error('No answer'))
+    failed.start()
+    await vi.waitFor(() => expect(failed.share()).toBe('incomplete'))
+    await settle()
+    expect(failed.shares).toEqual(['counting', 'incomplete'])
+    expect(failed.stand.services.knownWords).toHaveBeenCalledTimes(2)
+    failed.stand.services.knownWords.mockImplementation(async items =>
+      Object.fromEntries(items.map(item => [item, item === 'k1' || item === 'v1']))
+    )
+    await failed.stand.knows({ v1: true })
+    await vi.waitFor(() => expect(typeof failed.share()).toBe('object'))
+    expect(failed.share()).toEqual({ known: 2, total: 4 })
+    expect(failed.shares.filter(share => typeof share === 'object')).toEqual([
+      { known: 2, total: 4 }
+    ])
+  })
+
   it('reads Counting known words while the captions hold no word to count', async () => {
     const video = watched(captions)
     video.start()

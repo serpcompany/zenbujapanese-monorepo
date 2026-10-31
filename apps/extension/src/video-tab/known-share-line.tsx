@@ -23,7 +23,7 @@ function Line({ children }: { children: ReactNode }) {
 export function KnownShareLine({ lines, services, known }: Props) {
   const share = useKnownShare(lines, services, known)
   if (share === 'hidden') return null
-  if (share === 'counting') return <Line>{labels.countingKnown}</Line>
+  if (share === 'counting' || share === 'incomplete') return <Line>{labels.countingKnown}</Line>
   const fraction = shareFraction(share)
   return (
     <Line>
