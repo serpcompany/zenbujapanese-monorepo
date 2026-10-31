@@ -8,7 +8,7 @@ import { videoTabLabels } from './labels'
 import { currentCard, usePanelLines } from './panel-line-controls'
 import type { VideoTabServices } from './services'
 import { type OpenedWord, useWordSheet } from './use-word-sheet'
-import { captionGlosses, useKnownWords } from './word-marks'
+import { captionGlosses, type KnownWords } from './word-marks'
 import { WordSheet } from './word-sheet'
 
 const sheetGap = 16
@@ -62,6 +62,7 @@ type TranscriptProps = {
   shown: boolean
   settings: Settings | null
   services: VideoTabServices
+  known: KnownWords
   notices: ReactNode
 }
 
@@ -75,6 +76,7 @@ export function Transcript({
   shown,
   settings,
   services,
+  known,
   notices
 }: TranscriptProps) {
   const { tabId, videoId } = watched
@@ -84,7 +86,6 @@ export function Transcript({
   const playing = useCallback(() => latest.current.playback?.playing === true, [])
   const sheet = useWordSheet(video, playing, shown, services.pagePopup)
   const glosses = useMemo(() => captionGlosses(services), [services])
-  const known = useKnownWords(services)
   const at = currentCard(lines, playback, view)
   const current = at === null ? null : lines[at].id
   const { box, list, sheet: sheetRef } = useFollow(current, shown, sheet.opened)

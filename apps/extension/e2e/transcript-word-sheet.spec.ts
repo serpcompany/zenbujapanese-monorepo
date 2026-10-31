@@ -1,49 +1,22 @@
-import type { Locator, Page } from '@playwright/test'
-import { fill } from '@zenbu/dictionary-core/detail/template'
+import type { Page } from '@playwright/test'
 import { playerCaptionLabels } from '../src/player-captions/labels.ts'
-import { labels } from '../src/side-panel/labels.ts'
 import { videoTabLabels } from '../src/video-tab/labels.ts'
-import { wordPopupLabels } from '../src/word-popup/labels.ts'
 import { savingLabels } from '../src/word-saving/labels.ts'
-import { type Extension, expect, extensionUrl, test } from './fixtures.ts'
+import { expect, test } from './fixtures.ts'
+import {
+  openStatus,
+  panelBeside,
+  sheetCard,
+  sheetOf,
+  transcriptWord,
+  watchTab
+} from './panel-beside.ts'
 import { caption, openAt, overlay, videoState } from './watch-page.ts'
 import { wordPopup } from './words-page.ts'
 
 test.use({ youTubeStandIn: true })
 
-const watchTab = (extension: Extension) =>
-  extension.serviceWorker.evaluate(async () => {
-    const [tab] = await chrome.tabs.query({ url: 'https://www.youtube.com/watch*' })
-    return tab?.id ?? -1
-  })
-
-async function panelBeside(extension: Extension, tabId: number) {
-  const panel = await extension.context.newPage()
-  await panel.setViewportSize({ width: 380, height: 720 })
-  await panel.addInitScript(id => {
-    Object.assign(globalThis, { Translator: { availability: async () => 'downloadable' } })
-    const query = chrome.tabs.query.bind(chrome.tabs)
-    Object.assign(chrome.tabs, {
-      query: async (info: chrome.tabs.QueryInfo) =>
-        info.active ? [await chrome.tabs.get(id)] : query(info)
-    })
-  }, tabId)
-  await panel.goto(extensionUrl(extension, 'pages/side-panel.html'))
-  await panel.getByRole('tab', { name: labels.tabs.player }).click()
-  const transcript = panel.getByRole('list', { name: videoTabLabels.transcript })
-  await expect(transcript.locator('[data-line]')).toHaveCount(4)
-  return { panel, transcript }
-}
-
-const transcriptWord = (transcript: Locator) =>
-  transcript.locator('[data-line] [data-source] [data-word="要求"]').last()
-
 const englishNotice = (panel: Page) => panel.locator('[data-translation-model]')
-
-const sheetOf = (panel: Page) => panel.locator('[data-word-sheet]')
-
-const sheetCard = (panel: Page) =>
-  sheetOf(panel).getByRole('dialog', { name: fill(wordPopupLabels.word, { name: '要求' }) })
 
 const paused = async (page: Page) => (await videoState(page)).paused
 
@@ -146,11 +119,9 @@ test('a transcript word’s sheet offers the ••• menu’s Status, and sign
 }) => {
   await openAt(page, 1)
   const { panel, transcript } = await panelBeside(extension, await watchTab(extension))
-  await transcriptWord(transcript).click()
-  await sheetCard(panel)
-    .getByRole('button', { name: fill(wordPopupLabels.share.moreActions, { name: '要求' }) })
-    .click()
-  await expect(panel.getByRole('menuitemradio')).toHaveText(['Unknown', 'Learning', 'Known'])
+  await expect(panel.locator('[data-known-share]')).toHaveCount(0)
+  await expect(overlay(page).locator('[data-known-pill]')).toHaveCount(0)
+  await openStatus(panel, transcript)
   await expect(panel.getByRole('menuitemradio', { name: 'Unknown' })).toBeChecked()
   await panel.getByRole('menuitemradio', { name: 'Known', exact: true }).click()
   await expect(sheetOf(panel).locator('[data-saving-toast="signed-out"]')).toContainText(

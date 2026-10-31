@@ -45,6 +45,7 @@ export type CopyRequest =
   | { copy: 'known'; items: string[] }
   | { copy: 'word'; item: string }
   | { copy: 'word-change'; item: string; change: CopyChange }
+  | { copy: 'saving' }
 
 export type SyncState =
   | 'not-synced'
@@ -105,6 +106,7 @@ export type CopyAnswer =
   | { type: 'opened' }
   | { type: 'known'; known: Record<string, boolean> }
   | { type: 'word'; word: WordView }
+  | { type: 'saving'; refusal: SavingRefusal | null }
   | { type: 'refused'; refusal: 'invalid' | SavingRefusal }
   | Failure
 
@@ -144,6 +146,11 @@ export async function askKnown(items: string[], sender?: Sender): Promise<Record
 export async function askWord(item: string, sender?: Sender): Promise<WordView | null> {
   const answer = await askCopy({ copy: 'word', item }, sender)
   return answer.type === 'word' ? answer.word : null
+}
+
+export async function askSaving(sender?: Sender): Promise<SavingRefusal | null> {
+  const answer = await askCopy({ copy: 'saving' }, sender)
+  return answer.type === 'saving' ? answer.refusal : 'signed-out'
 }
 
 export const changeWord = (item: string, change: CopyChange, sender?: Sender) =>

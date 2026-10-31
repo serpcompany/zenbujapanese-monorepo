@@ -72,7 +72,8 @@ _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is n
 
 **Word popup**:
 What the browser extension shows for the word a learner clicks, over a page, or for a word in
-Translate, on the page beside the panel (in the panel where the page can't show it): the
+Translate or in the Account tab's saved words, on the page beside the panel (in the panel where
+the page can't show it): the
 surface, which draws that word's Word card and its romaji, and expands in place into its full
 entry. A word in the Transcript opens in the Word sheet instead.
 _Avoid_: word card (the Word card is the entry the popup draws, not the popup), tooltip

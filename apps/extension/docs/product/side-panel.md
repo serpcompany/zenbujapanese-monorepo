@@ -56,10 +56,10 @@ in…").
   was (`panel.interaction.test.tsx`).
 - **Image Search,** over Translate ([`translate.md`](translate.md)), and Known Words, Learning,
   Lists, a list, and Notes over Account ([`account.md`](account.md)). A word's card and its full
-  entry don't open as pages: a word clicked in Translate opens its card on the page, one opened
-  with Enter or Space shows its card under its line, and so does a saved word on Account under its row, a word in the Player tab opens its card in a
-  sheet over the tab ([`video-tab.md`](video-tab.md)), and Open Full Entry expands the card in
-  place ([`word-popup.md`](word-popup.md)).
+  entry don't open as pages. A word clicked in Translate or on Account opens its card on the
+  page; one opened with Enter or Space shows its card under its line or row; a word in the Player
+  tab opens its card in a sheet over the tab ([`video-tab.md`](video-tab.md)); and Open Full
+  Entry expands the card in place ([`word-popup.md`](word-popup.md)).
 - **The test page,** in the test build only, shows its text and opens another page over itself.
   The release build refuses a route to it (`route.test.ts`).
 

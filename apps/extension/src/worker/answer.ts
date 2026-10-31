@@ -21,6 +21,7 @@ const unknownRequest: Failure = {
 }
 
 const lookups: ReadonlySet<string> = new Set<Lookup['type']>([
+  'counted-words',
   'segment',
   'popup',
   'word',
@@ -30,11 +31,13 @@ const lookups: ReadonlySet<string> = new Set<Lookup['type']>([
   'resolve'
 ])
 
-function lookUp(
+async function lookUp(
   request: Lookup,
-  { dictionary, attached }: OpenDictionary
-): DictionaryAnswer | Failure {
+  { dictionary, attached, countedWords }: OpenDictionary
+): Promise<DictionaryAnswer | Failure> {
   switch (request.type) {
+    case 'counted-words':
+      return { type: 'counted-words', ids: await countedWords(request.lines) }
     case 'segment':
       return { type: 'segment', ...dictionary.segmentation(request.text, { writtenAlike: true }) }
     case 'popup':
@@ -64,7 +67,10 @@ function lookUp(
   }
 }
 
-export function answer(request: DictionaryRequest, worker: WorkerData): DictionaryAnswer | Failure {
+export async function answer(
+  request: DictionaryRequest,
+  worker: WorkerData
+): Promise<DictionaryAnswer | Failure> {
   switch (request.type) {
     case 'ping':
       return { type: 'pong', from: 'dictionary-worker' }
@@ -78,7 +84,7 @@ export function answer(request: DictionaryRequest, worker: WorkerData): Dictiona
   const open = worker.open()
   if (!open) return { type: 'not-ready', data: worker.state() }
   try {
-    return lookUp(request, open)
+    return await lookUp(request, open)
   } catch (error) {
     return failure(error)
   }

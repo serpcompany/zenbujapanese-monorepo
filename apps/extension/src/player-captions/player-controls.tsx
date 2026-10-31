@@ -14,44 +14,28 @@ import {
   SkipBackIcon,
   SkipForwardIcon
 } from 'lucide-react'
-import { useState } from 'react'
 import { playerCaptionLabels as labels } from './labels'
 import { type LineControls, type LineView, speeds } from './line-controls'
-import { controlsShown, useFocusWithin } from './presence'
+import type { ControlsPresence } from './presence'
 
 type Props = {
   controls: LineControls
   view: LineView
-  pointer: boolean
-  popupOpen: boolean
+  presence: ControlsPresence
 }
 
 const barClass =
   'flex items-center gap-0.5 rounded-xl bg-black/70 p-1 text-white shadow-md transition-opacity duration-200 motion-reduce:transition-none data-hidden:pointer-events-none data-hidden:opacity-0'
 
-export function PlayerControls({ controls, view, pointer, popupOpen }: Props) {
-  const [overControls, setOverControls] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const { focused, onFocus, onBlur } = useFocusWithin()
-  const shown = controlsShown({
-    pointer,
-    overControls,
-    focused,
-    paused: !view.playing,
-    menuOpen,
-    popupOpen
-  })
+export function PlayerControls({ controls, view, presence }: Props) {
   return (
     <div
       role="toolbar"
       aria-label={labels.controls}
       data-player-controls
-      data-hidden={shown ? undefined : ''}
+      data-hidden={presence.shown ? undefined : ''}
       className={`pointer-events-auto ${barClass}`}
-      onPointerEnter={() => setOverControls(true)}
-      onPointerLeave={() => setOverControls(false)}
-      onFocus={onFocus}
-      onBlur={onBlur}
+      {...presence.held}
     >
       <Button
         variant="ghost"
@@ -81,7 +65,7 @@ export function PlayerControls({ controls, view, pointer, popupOpen }: Props) {
       >
         <Repeat1Icon />
       </Button>
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenu open={presence.menuOpen} onOpenChange={presence.setMenuOpen}>
         <DropdownMenuTrigger
           render={<Button variant="ghost" aria-label={labels.speedMenu(view.rate)} />}
         >

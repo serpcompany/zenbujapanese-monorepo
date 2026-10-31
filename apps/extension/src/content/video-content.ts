@@ -13,6 +13,7 @@ import {
 } from '../shared/settings'
 import { translate } from '../translation/messages'
 import { followVideoPage, type VideoSitePage } from '../video/video-page'
+import { onDeviceShareServices } from '../video-tab/known-share'
 import { servePagePopups } from '../word-popup/page-popup-server'
 import { wordPopupHost } from '../word-popup/popup-host'
 import { popupSettings } from '../word-popup/popup-settings'
@@ -37,6 +38,7 @@ export function startVideoContent(site: VideoSitePage): void {
           wait: afterTimeout,
           popupCard,
           saving: chromeSaving,
+          ...onDeviceShareServices,
           translate: request => translate(request),
           keepCaptionPlaces: places => void askToWriteSettings(places).catch(report)
         }

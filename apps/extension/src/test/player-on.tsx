@@ -11,6 +11,7 @@ import { type Settings, settingDefaults } from '../shared/settings'
 import type { TranslatorState } from '../translation/messages'
 import { clockFollower, clockVideo } from './clock-follower'
 import { savingStandIn } from './saving-stand-in'
+import { shareStandIn } from './share-stand-in'
 import { lineText } from './video-tab-harness'
 import { popupAnswer } from './word-cards'
 
@@ -33,9 +34,17 @@ const clockWords: Record<string, { tokens: SegmentedToken[]; romaji: string }> =
   }
 }
 
+const clockCounted: Record<string, string[]> = {
+  今日はいい天気ですね: ['kyou', 'tenki'],
+  散歩に行きましょう: ['sanpo', 'iku'],
+  '要求が要る。': ['youkyuu', 'iru']
+}
+
 export function captionServices(translator: TranslatorState = 'available') {
   const state = { translator }
+  const share = shareStandIn(clockCounted, null)
   const services = {
+    ...share.services,
     segment: vi.fn<CaptionServices['segment']>(async text => ({
       type: 'segment',
       tokens: clockWords[text]?.tokens ?? [{ text }],
@@ -52,13 +61,14 @@ export function captionServices(translator: TranslatorState = 'available') {
       return { type: 'translated', texts: request.texts.map(text => clockEnglish[text] ?? '') }
     })
   } satisfies CaptionServices
-  return { services, state }
+  return { services, state, share }
 }
 
 type Options = {
   settings?: Partial<Settings>
   translator?: TranslatorState
   duration?: number
+  dictionaryReady?: boolean
 }
 
 export const wordPopup = () => document.querySelector('[data-zenbu-word-popup]')
@@ -75,12 +85,23 @@ export function standInFonts() {
   })
 }
 
-async function playerOn({ settings = {}, translator, duration }: Options = {}) {
+async function playerOn({
+  settings = {},
+  translator,
+  duration,
+  dictionaryReady = true
+}: Options = {}) {
   standInFonts()
   const player = document.body.appendChild(document.createElement('div'))
   player.id = 'movie_player'
   const clock = clockFollower({ host: player, duration })
-  const { services, state } = captionServices(translator)
+  const { services, state, share } = captionServices(translator)
+  if (!dictionaryReady) {
+    services.countWords.mockResolvedValue({
+      type: 'not-ready',
+      data: { state: 'downloading', done: 0, total: 1 }
+    })
+  }
   let current: Settings = { ...settingDefaults, ...settings }
   const show = playerCaptions({ services })
   let shown: ShownCaptions | undefined
@@ -100,6 +121,7 @@ async function playerOn({ settings = {}, translator, duration }: Options = {}) {
     player,
     clock,
     services,
+    share,
     translator: state,
     root,
     toolbar,
@@ -114,6 +136,7 @@ async function playerOn({ settings = {}, translator, duration }: Options = {}) {
     line: () => lineText(caption()),
     english: () => translation()?.textContent ?? null,
     status: () => root()?.querySelector('output')?.textContent ?? '',
+    pill: () => root()?.querySelector<HTMLElement>('[data-known-pill]') ?? null,
     controlsShown: () => toolbar() !== null && !toolbar()?.hasAttribute('data-hidden'),
     async playFrom(time: number) {
       clock.learnerSeeks(time)

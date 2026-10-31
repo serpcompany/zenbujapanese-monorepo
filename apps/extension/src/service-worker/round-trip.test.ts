@@ -23,7 +23,7 @@ class FakeWorker extends EventTarget {
   terminate() {}
 
   postMessage(request: DictionaryRequest, [port]: Transferable[]) {
-    ;(port as MessagePort).postMessage(answer(request, installing))
+    void answer(request, installing).then(answered => (port as MessagePort).postMessage(answered))
   }
 }
 
@@ -139,8 +139,8 @@ describe('a page asks the dictionary worker', () => {
     })
   })
 
-  it('answers a request the worker does not know with a failure', () => {
-    expect(answer({ type: 'lookup' } as unknown as DictionaryRequest, installing)).toEqual({
+  it('answers a request the worker does not know with a failure', async () => {
+    expect(await answer({ type: 'lookup' } as unknown as DictionaryRequest, installing)).toEqual({
       type: 'failed',
       reason: 'The dictionary worker does not know this request.'
     })

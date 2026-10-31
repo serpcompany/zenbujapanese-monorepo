@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, vi } from 'vitest'
 import { japaneseVideo } from '../captions/fixtures/youtube-stand-in'
+import type { SavingRefusal } from '../shared/account-copy'
 import type { PanelPage } from '../side-panel/route'
 import type { TranslatorState } from '../translation/messages'
 import type { VideoSitePage } from '../video/video-page'
@@ -13,6 +14,7 @@ import type { PagePopup } from '../word-popup/page-popup'
 import { startExtension } from './extension'
 import { followerStandIn } from './follower-stand-in'
 import { settle } from './render'
+import { shareStandIn } from './share-stand-in'
 import { watchedTab } from './watched-tab'
 import { popupAnswer } from './word-cards'
 
@@ -51,6 +53,11 @@ export function lineText(row: Element | null | undefined): string | undefined {
   if (!(source instanceof HTMLElement)) return undefined
   for (const reading of source.querySelectorAll('rt, rp, [data-aid="meaning"]')) reading.remove()
   return source.textContent ?? undefined
+}
+
+const lineCounted: Record<string, string[]> = {
+  散歩に行きましょう: ['sanpo', 'iku'],
+  '今日は"いい天気"ですね': ['kyou', 'tenki']
 }
 
 const happyDOM = (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM
@@ -97,6 +104,7 @@ type Options = {
   contentScript?: boolean
   pagePopup?: PagePopup
   site?: VideoSitePage
+  saving?: SavingRefusal | null
 }
 
 export function watching({
@@ -107,7 +115,8 @@ export function watching({
   title = '(2) 散歩の日 - YouTube',
   contentScript = true,
   pagePopup,
-  site: videoSite
+  site: videoSite,
+  saving = 'signed-out'
 }: Options = {}) {
   const extension = startExtension()
   happyDOM.setURL(url)
@@ -123,9 +132,10 @@ export function watching({
   const english = translation ? translatingWith(translation) : translatorStandIn(translator)
   const tabWatchers = new Set<() => void>()
   const site: { tab: ActiveTab | null } = { tab: { id: tabId, url, title } }
-  const knownWatchers = new Set<(known: Record<string, boolean> | null) => void>()
+  const share = shareStandIn(lineCounted, saving)
   const services = {
     ...english.services,
+    ...share.services,
     segment: vi.fn<VideoTabServices['segment']>(async text => ({
       type: 'segment',
       tokens: lineWords[text]?.tokens ?? [{ text }],
@@ -134,11 +144,6 @@ export function watching({
     wait: vi.fn<VideoTabServices['wait']>(() => new Promise(() => {})),
     popupCard: vi.fn<VideoTabServices['popupCard']>(async id => popupAnswer(id)),
     ...(pagePopup ? { pagePopup } : {}),
-    knownWords: vi.fn<VideoTabServices['knownWords']>(async () => ({})),
-    watchKnown: (heard: (known: Record<string, boolean> | null) => void) => {
-      knownWatchers.add(heard)
-      return () => void knownWatchers.delete(heard)
-    },
     activeTab: vi.fn(async () => site.tab),
     watchActiveTab: (changed: () => void) => {
       tabWatchers.add(changed)
@@ -195,9 +200,11 @@ export function watching({
     },
     move,
     async knows(known: Record<string, boolean> | null) {
-      await act(async () => {
-        for (const watcher of [...knownWatchers]) watcher(known)
-      })
+      await share.knows(known)
+      await settle()
+    },
+    async refuse(refusal: SavingRefusal | null) {
+      await share.refuse(refusal)
       await settle()
     },
     async navigate(videoId: string) {

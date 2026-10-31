@@ -9,6 +9,7 @@ import {
 } from './messages'
 
 export type {
+  CountedWordsAnswer,
   FormExamplesAnswer,
   KanjiAnswer,
   NotReady,
@@ -90,3 +91,6 @@ export const lookUpFormExamples = (form: string, from: number, ask: Ask = askDic
 
 export const resolveWord = (headword: string, reading: string, ask: Ask = askDictionary) =>
   lookUp('resolve', { type: 'resolve', headword, reading }, ask)
+
+export const countWords = (lines: string[], ask: Ask = askDictionary) =>
+  lookUp('counted-words', { type: 'counted-words', lines }, ask)

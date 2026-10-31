@@ -90,7 +90,8 @@ set in Sentry.
   lines and Netflix's own English, and following the video through Netflix's player.
 - [The caption on the player](player-captions.md): on a YouTube or Netflix watch page, the line being heard
   on the player in place of the site's captions, its words, English, and popup, and the line
-  controls: previous, play or pause, next, Repeat line, and the speed.
+  controls: previous, play or pause, next, Repeat line, and the speed, and the share of the
+  video's words known.
 
 ## Not built yet
 

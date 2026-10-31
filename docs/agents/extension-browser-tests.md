@@ -37,7 +37,8 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   lower 56% of the tab with the word's line above it, its handle, its X and Escape, a card's
   click playing from its line, and one card between the sheet and a caption word's, also with
   `page-lookup.js` run in the watch tab as Every Site would, with the video playing once when the
-  last closes (`transcript-word-sheet.spec.ts`). The
+  last closes (`transcript-word-sheet.spec.ts`), with the panel, sheet, and Status menu helpers
+  in `e2e/panel-beside.ts`. The
   `languageDataHeld` option holds the fixture release back until a test lets it go
   (`page-lookup-before-data.spec.ts`). Chromium starts with `--disable-blink-features=WebShare`,
   so Share falls back to copying as it does where there is no share sheet.
@@ -120,6 +121,10 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
 - **Saved words,** with the service and the YouTube stand-in (`account-words.spec.ts`): 要る
   marked Known from a caption's popup showing in the Account tab's Known Words with no reload,
   and Sync Now bringing in 要求, put on the account through the service.
+- **The share of words known,** with the service and the YouTube stand-in, in the panel opened
+  beside the watch page with `e2e/panel-beside.ts` (`known-share.spec.ts`): "0% 0 of 8 words
+  known" in the Player tab and "You know 0%" on the player, both rising to 38% when 要求 is
+  marked Known from its sheet and falling back when marked Unknown.
 - **The account service** (`account-service.ts`) is `apps/account-api` from the checkout, started
   as a child process on PGlite over a socket, with the dev mailbox, on a free port, not
   `verify-service`'s 8789, so it runs beside one. `account-api.localhost` maps to it, and it takes

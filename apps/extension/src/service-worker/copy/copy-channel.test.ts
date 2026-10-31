@@ -3,6 +3,7 @@ import { askAccount } from '../../shared/account'
 import {
   askCopy,
   askKnown,
+  askSaving,
   askWord,
   type CopyAnswer,
   changeWord,
@@ -71,7 +72,8 @@ describe("the copy's messages", () => {
     for (const request of [
       { copy: 'known', items: [word.item] },
       { copy: 'word', item: word.item },
-      { copy: 'word-change', item: word.item, change: {} }
+      { copy: 'word-change', item: word.item, change: {} },
+      { copy: 'saving' }
     ]) {
       await expect(ask(asking(request))).resolves.toMatchObject({ keeps: true })
     }
@@ -86,7 +88,7 @@ describe("the copy's messages", () => {
     await expect(ask({ target: 'service-worker', settings: 'read' }, pages)).resolves.toMatchObject(
       { keeps: false }
     )
-    expect(answer).toHaveBeenCalledTimes(4)
+    expect(answer).toHaveBeenCalledTimes(5)
   })
 
   it('tells only the tab or the page that made a change when saving it is refused later', async () => {
@@ -202,12 +204,14 @@ describe("the copy's messages", () => {
     onSavingRefused(told => heard.push(told), tab.onMessage)
     const known = { change: 'set', ...word, state: 'known' } as const
     await expect(askWord(word.item, tab)).resolves.toMatchObject({ refusal: 'signed-out' })
+    await expect(askSaving(tab)).resolves.toBe('signed-out')
     await expect(changeWord(word.item, known, tab)).resolves.toEqual({
       type: 'refused',
       refusal: 'signed-out'
     })
     await signInByCode(user.email)
     await vi.waitFor(() => expect(heard).toContainEqual({ target: 'saving', refusal: null }))
+    await expect(askSaving(tab)).resolves.toBeNull()
     await expect(changeWord(word.item, known, tab)).resolves.toEqual({ type: 'changed' })
     await expect(changeWord(word.item, { ...known, ...otherWord }, tab)).resolves.toMatchObject({
       refusal: 'invalid'

@@ -9,5 +9,6 @@ export const playerCaptionLabels = {
   repeatLine: 'Repeat line',
   speed,
   speedMenu: (rate: number) => `Speed, ${speed(rate)}`,
-  pausedForPopup: 'Paused while the popup is open'
+  pausedForPopup: 'Paused while the popup is open',
+  youKnow: 'You know'
 }
