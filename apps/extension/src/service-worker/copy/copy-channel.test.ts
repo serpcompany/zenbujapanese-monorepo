@@ -7,6 +7,7 @@ import {
   askWord,
   type CopyAnswer,
   changeWord,
+  onCopyChanged,
   onKnownChanged,
   onSavingRefused
 } from '../../shared/account-copy'
@@ -161,6 +162,34 @@ describe("the copy's messages", () => {
     await vi.waitFor(() => expect(heard).toContainEqual({ [word.item]: true }))
     await expect(askKnown([word.item], tab)).resolves.toEqual({ [word.item]: true })
     await expect(askCopy({ copy: 'read' }, tab)).resolves.toMatchObject({ type: 'failed' })
+  })
+
+  it("tells the extension's pages, and no tab, whenever the copy changes or a sync ends", async () => {
+    const fake = startExtension({ tabs: [{ id: 4, url: 'https://www.youtube.com/watch?v=x' }] })
+    startAccountOn(fake, {
+      'POST /v1/auth/sign-in/email-otp': () => signedInAnswer('session-1'),
+      ...syncing
+    })
+    let heard = 0
+    onCopyChanged(() => {
+      heard += 1
+    })
+    const tab: unknown[] = []
+    fake.inTab(4).onMessage.addListener(message => {
+      tab.push(message)
+      return false
+    })
+    await signInByCode(user.email)
+    await vi.waitFor(() => expect(heard).toBeGreaterThan(0))
+    const before = heard
+    const learning = { change: 'set', ...word, state: 'learning' } as const
+    await expect(askCopy({ copy: 'change', change: learning })).resolves.toEqual({
+      type: 'changed'
+    })
+    expect(heard).toBeGreaterThan(before)
+    await askCopy({ copy: 'sync' })
+    await vi.waitFor(() => expect(heard).toBeGreaterThan(before + 1))
+    expect(tab).not.toContainEqual({ target: 'copy' })
   })
 
   it('lets a content script read and change one word, refused while signed out, and tells it whether saving works', async () => {

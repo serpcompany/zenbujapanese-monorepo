@@ -139,10 +139,8 @@ function DeletedNotice({ deleted }: { deleted: Deleted }) {
   )
 }
 
-export function AccountView({ className }: { className?: string }) {
-  const account = useAccount()
+export function AccountShown({ account, className }: { account: Account; className?: string }) {
   const [deleted, setDeleted] = useState<Deleted | null>(null)
-  if (account === null) return null
   if (account.signedIn) {
     return <SignedInAccount account={account} className={className} onDeleted={setDeleted} />
   }
@@ -155,4 +153,9 @@ export function AccountView({ className }: { className?: string }) {
       </EmptyState>
     </section>
   )
+}
+
+export function AccountView({ className }: { className?: string }) {
+  const account = useAccount()
+  return account && <AccountShown account={account} className={className} />
 }

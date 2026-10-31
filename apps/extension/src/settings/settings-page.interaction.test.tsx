@@ -205,7 +205,7 @@ describe('Settings', () => {
       ...keptSessionRoutes
     })
     const settings = await openSettings('#account')
-    panel = render(<AccountTab />)
+    panel = render(<AccountTab open={() => undefined} />)
     await settle()
     const page = find(settings, 'main')
     const tab = panel.container

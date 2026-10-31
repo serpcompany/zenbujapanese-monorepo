@@ -15,6 +15,10 @@ describe('isPanelRoute', () => {
     expect(isPanelRoute({ tab: 'account', page: { page: 'image-search' } })).toBe(true)
     expect(isPanelRoute({ page: { page: 'test', text: '猫' } })).toBe(true)
     expect(isPanelRoute({ tab: 'translate', page: { page: 'image-search' } })).toBe(true)
+    for (const page of ['known-words', 'learning', 'lists', 'notes']) {
+      expect(isPanelRoute({ tab: 'account', page: { page } })).toBe(true)
+    }
+    expect(isPanelRoute({ tab: 'account', page: { page: 'list', list: 'N5' } })).toBe(true)
   })
 
   it('refuses a tab or page the panel does not have, or a page with the wrong fields', () => {
@@ -25,6 +29,7 @@ describe('isPanelRoute', () => {
     expect(isPanelRoute({ page: { page: 'settings' } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'toString' } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'test', text: 7 } })).toBe(false)
+    expect(isPanelRoute({ page: { page: 'list' } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'word', entSeq: 1358280 } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'kanji', character: '猫' } })).toBe(false)
     expect(isPanelRoute({ page: { page: 'form', form: '食べた' } })).toBe(false)

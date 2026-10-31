@@ -24,6 +24,7 @@ export type CopyParts = {
   readSubscription(): Promise<boolean>
   settings: SettingsStore
   tell(changed: KnownChanged): void
+  changed(): void
   reportFailure(code: CopyFailure, status?: number): void
   later?: (run: () => void, wait: number) => void
   now?: () => number
@@ -52,6 +53,7 @@ export function accountCopy(parts: CopyParts) {
     readSubscription: parts.readSubscription,
     settings: parts.settings,
     tell: known => parts.tell({ target: 'known', known }),
+    changed: parts.changed,
     reportFailure: parts.reportFailure,
     later: parts.later ?? ((run, wait) => void setTimeout(run, wait)),
     now,
@@ -82,7 +84,9 @@ export function accountCopy(parts: CopyParts) {
   }
 
   async function signedIn(user: User): Promise<void> {
-    if (await copy.edit(draft => ownedBy(draft, user))) parts.tell({ target: 'known', known: null })
+    if (!(await copy.edit(draft => ownedBy(draft, user)))) return
+    parts.tell({ target: 'known', known: null })
+    parts.changed()
   }
 
   async function settingsChanged(): Promise<void> {
@@ -137,6 +141,7 @@ export function accountCopy(parts: CopyParts) {
     })
     if (typeof outcome === 'string') return { type: 'refused', refusal: outcome }
     if (outcome) parts.tell({ target: 'known', known: outcome })
+    parts.changed()
     syncAfter(tellSender)
     return { type: 'changed' }
   }
@@ -179,6 +184,7 @@ export function accountCopy(parts: CopyParts) {
     await copy.edit(draft => {
       if (draft.meta) draft.meta = freshMeta({ id: draft.meta.userId, email: draft.meta.email })
     })
+    parts.changed()
   }
 
   const chance = (reason: Reason) => void sync.chance(reason)

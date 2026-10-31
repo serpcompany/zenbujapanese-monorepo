@@ -248,8 +248,12 @@ answers `apple-again`, Continue with Apple again.
 - **Asking it** (`copy-channel.ts`, `src/shared/account-copy.ts`): a page sends `askCopy()`
   (`{ target: 'service-worker', copy }`) to read it, change it, sync now, or say it opened. A
   content script may only ask `known` for at most 1,000 items, `word` and `word-change` for
-  one word's state, lists, and notes, and `saving` for the current refusal, or none, and hears `{ target: 'known' }` when that changes and
-  `{ target: 'saving' }` with the current refusal, or none, when the account changes; it never opens IndexedDB, which is the page's own in a content script.
+  one word's state, lists, and notes, and `saving` for the current refusal, or none. It hears
+  `{ target: 'known' }` when that changes and `{ target: 'saving' }` with the current refusal, or
+  none, when the account changes. The extension's own pages, and no tab, also hear
+  `{ target: 'copy' }` after each change, sign-in or owner change, forget, applied sync step, and
+  the end of every sync (`CopyChanged`); the side panel's `useCopy` reads the copy again on it.
+  A content script never opens IndexedDB, which is the page's own there.
 - **Errors** report only `account-copy`, `account-sync`, and `account-sync-reread`
   ([`extension-error-reports.md`](extension-error-reports.md)).
 - **Its tests** run the real copy on in-memory storage and a stand-in service
