@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DataState } from './data-state'
 import {
   type Ask,
+  type CountedWordsAnswer,
   checkForUpdates,
+  countWords,
   type FormExamplesAnswer,
   type KanjiAnswer,
   lookUpFormExamples,
@@ -33,6 +35,7 @@ const kanji: KanjiAnswer = { type: 'kanji', rows: null, strokes: 'downloading' }
 const wordExamples: WordExamplesAnswer = { type: 'word-examples', rows: [] }
 const formExamples: FormExamplesAnswer = { type: 'form-examples', rows: [], listed: 0 }
 const resolved: ResolveAnswer = { type: 'resolve', entSeq: 1296400 }
+const counted: CountedWordsAnswer = { type: 'counted-words', ids: ['abc'] }
 const notReady: NotReady = { type: 'not-ready', data: downloading }
 
 function answering(answer: DictionaryAnswer) {
@@ -81,6 +84,12 @@ describe('the dictionary helpers', () => {
       ask => resolveWord('有る', 'ある', ask),
       { type: 'resolve', headword: '有る', reading: 'ある' },
       resolved
+    ],
+    [
+      'countWords',
+      ask => countWords(['食べます'], ask),
+      { type: 'counted-words', lines: ['食べます'] },
+      counted
     ]
   ])('%s asks for its request and answers what the worker answers', async (_, helper, request, expected) => {
     const { ask, asked } = answering(expected)
