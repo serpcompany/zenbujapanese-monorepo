@@ -18,8 +18,8 @@ app's Player design (#1172). The app's Look Up
 has no tab: the extension has no dictionary search. Translate's `Content` is `TranslateTab` (`src/translate/translate-tab.tsx`,
 [`translate.md`](../../apps/extension/docs/product/translate.md)), whose Image row opens
 `{ page: 'image-search' }` (`src/translate/image-search-page.tsx`). Account's is `AccountTab`
-(`src/side-panel/account-tab.tsx`): the shared account component, `AccountView`
-(`src/account/`, [`account-extension.md`](account-extension.md), In the extension), over
+(`src/side-panel/account-tab.tsx`): `useAccount`, then the shared account component's
+`AccountShown` (`src/account/`, [`account-extension.md`](account-extension.md), In the extension), over
 `SavedWords` (`src/saved-words/`), whose rows open Known Words, Learning, Lists, a list, and
 Notes as pages. `useCopy` reads `{copy:'read'}` again on each `{target:'copy'}` the service worker
 sends the extension's pages when the copy changes or a sync ends. Player's is
