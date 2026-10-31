@@ -50,6 +50,21 @@ account service from the checkout.
 | Signing out keeps the copy and its waiting changes, and signing in to the same account sends them, even one made while the service was out of reach. Signed out with changes waiting, the Account says how many aren't synced to the account that made them, and that signing in to another account removes them. Another account's sign-in replaces the copy with that account's, whether it signs in here or from the website. Deleting the account keeps the copy's words, lists and notes in this browser, and drops only that account's waiting changes and where its sync had got to. | `copy-owner.test.ts`; `copy-channel.test.ts`, "hands the copy to the account the website signs in…"; `src/account/unsynced-warning.interaction.test.tsx`; `e2e/account-sync.spec.ts`, another account, and a change queued while the service is out of reach |
 | When the service can't be reached, or answers with something that isn't JSON, the changes wait and it tries again after 2 seconds, twice as long each time after, at most 5 minutes. Too many requests waits as long as the service says. Without cloud access nothing is sent and the changes wait; a sync refused for it reads the subscription again and waits for Sync Now. A refused access token is asked for once more; a session the service has ended signs out, keeping the copy. A change the service refuses stays here, unsynced, and goes again on Sync Now or when it's changed again; the other changes still go. | `sync-failures.test.ts`; `e2e/account-sync.spec.ts`, a change queued while the service is out of reach, and no cloud access |
 
+## Saved words on the Account tab
+
+Signed in, the side panel's Account tab shows the copy (below) under the account, as the iPhone
+app's Account does. Signed out, it keeps "No words yet". The text is in `src/saved-words/labels.ts`,
+and each check is in `src/saved-words/saved-words.interaction.test.tsx` unless it names another;
+`e2e/account-words.spec.ts` signs in against the account service from the checkout.
+
+| What a learner sees | Check |
+| --- | --- |
+| Known Words, Learning, Lists, and Notes, each with its count, and each opening a page over the tab, with Back. | `counts each row…`; `src/side-panel/route.test.ts` |
+| Known Words and Learning: words and kanji, newest first. Lists: Favorites first, then each list with its count, opening its words, the last added first. Notes: each note with its word. A row shows the word with its reading, its meaning or its note, and its Known or Learning tag. A kanji's row opens nothing yet (#1189). A list deleted while open says it's gone. Known Words, Learning, and Notes, with nothing in them, say how to save there. | `lists Learning and a kanji newest first…` |
+| A word marked Known, Learning, or Unknown in this browser, from any card, shows in or leaves the tab and its pages at once, with no reload and no Sync Now; words from another device show after a sync. | `lists a word marked Known in this browser in Known Words at once…`; `copy-channel.test.ts`, "tells the extension's pages, and no tab…"; `e2e/account-words.spec.ts` |
+| A click on a word opens its card on the page beside the panel, as any side panel word's ([`side-panel.md`](side-panel.md), Pages over a tab). Enter or Space opens it under its row, with focus in it, and so does a click where the page can't show one. Escape closes it and gives focus back to the row. Open Full Entry expands it. | `opens a word's card on the page with a click…` |
+| Last Synced: Not Yet, Syncing…, or how long ago, with Waiting to Sync and how many changes wait, and a line when syncing needs the subscription, the service can't be reached, it waits to try again, or the last sync didn't finish. Sync Now syncs at once, even while it waits. | `syncs on Sync Now…`; `src/saved-words/use-copy.test.ts`; `e2e/account-words.spec.ts`, Sync Now |
+
 ## Kept from the page
 
 Every call to the account service goes through the extension's service worker, and the tokens
@@ -72,8 +87,9 @@ How the extension signs in is in
 
 ## Not built yet
 
-The Account tab's view of the copy and Sync Now are #1188, pages that follow Known words #1187,
-saving kanji #1189, and the saving's browser tests and screenshots #1190. Watched videos
+Pages that follow Known words are #1187, saving kanji and a kanji's card #1189, and the saving's
+browser tests and screenshots #1190. When the account's Favorites comes down deleted, the
+browser's Favorites and its words are dropped, not kept as a new list (#1188). Watched videos
 sync with #965. Google and Apple are checked against stand-ins: a real sign-in with each is #987.
 The website's handover is checked locally, with the website and the account service from the
 checkout; on staging it waits on #960.

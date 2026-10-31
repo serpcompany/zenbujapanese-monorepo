@@ -64,6 +64,7 @@ export function copyWorld(
   const storage = copyStorage()
   const settings = settingsStore(browser)
   const told: KnownChanged[] = []
+  let changes = 0
   const failures: string[] = []
   const copy = accountCopy({
     storage: storage.storage,
@@ -72,6 +73,9 @@ export function copyWorld(
     readSubscription: () => readSubscription(world.store, world.tokens),
     settings: settings.store,
     tell: changed => told.push(changed),
+    changed: () => {
+      changes += 1
+    },
     reportFailure: (code, status) =>
       failures.push(status === undefined ? code : `${code} ${status}`),
     later: (run, wait) => waits.push({ run, wait }),
@@ -114,6 +118,7 @@ export function copyWorld(
     storage,
     settings,
     told,
+    changes: () => changes,
     failures,
     waits,
     read,

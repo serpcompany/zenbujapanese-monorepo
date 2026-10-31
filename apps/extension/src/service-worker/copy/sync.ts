@@ -20,6 +20,7 @@ export type SyncParts = {
   readSubscription(): Promise<boolean>
   settings: SettingsStore
   tell(known: Record<string, boolean> | null): void
+  changed(): void
   reportFailure(code: CopyFailure, status?: number): void
   later(run: () => void, wait: number): void
   now(): number
@@ -215,6 +216,7 @@ export function accountSync(parts: SyncParts) {
     failures = 0
     atMost = Math.min(atMost * 2, mutationsAtOnce)
     if (applied.known.size > 0) parts.tell(Object.fromEntries(applied.known))
+    parts.changed()
     return applied.more ? 'more' : 'done'
   }
 
@@ -249,6 +251,7 @@ export function accountSync(parts: SyncParts) {
       })
       .finally(() => {
         running = null
+        parts.changed()
       })
     return running
   }

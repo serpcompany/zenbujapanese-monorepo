@@ -112,6 +112,8 @@ export type CopyEnvelope = { target: 'service-worker'; copy: CopyRequest }
 
 export type KnownChanged = { target: 'known'; known: Record<string, boolean> | null }
 
+export type CopyChanged = { target: 'copy' }
+
 export type SavingRefused = { target: 'saving'; refusal: SavingRefusal | null; page?: string }
 
 export const knownAtOnce = 1000
@@ -159,6 +161,9 @@ const isKnownChanged = (message: unknown): message is KnownChanged => {
   )
 }
 
+const isCopyChanged = (message: unknown): message is CopyChanged =>
+  fields(message)?.target === 'copy'
+
 const savingRefusals: readonly unknown[] = [null, 'signed-out', 'subscription-required']
 
 const isSavingRefused = (message: unknown): message is SavingRefused => {
@@ -183,6 +188,11 @@ export const onKnownChanged = (
   listener: (known: Record<string, boolean> | null) => void,
   events: MessageEvents = chrome.runtime.onMessage
 ) => listen(isKnownChanged, changed => listener(changed.known), events)
+
+export const onCopyChanged = (
+  listener: () => void,
+  events: MessageEvents = chrome.runtime.onMessage
+) => listen(isCopyChanged, () => listener(), events)
 
 export const onSavingRefused = (
   listener: (told: SavingRefused) => void,

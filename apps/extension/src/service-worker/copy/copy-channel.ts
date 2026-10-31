@@ -1,5 +1,6 @@
 import {
   type CopyAnswer,
+  type CopyChanged,
   type CopyRequest,
   isCopyEnvelope,
   type KnownChanged,
@@ -12,7 +13,7 @@ import type { CopyFailure } from './sync'
 
 export type Sender = { origin?: string; url?: string; tab?: { id?: number } }
 
-type Told = KnownChanged | SavingRefused
+type Told = KnownChanged | SavingRefused | CopyChanged
 
 type Tabs = {
   query(filter: Record<string, never>): Promise<{ id?: number }[]>
@@ -70,5 +71,5 @@ export function telling(tabs: Tabs, pages: Pages) {
       if (tab?.id === undefined) toPages(told)
       else void toTab(tab.id, told)
     }
-  return { everyone, sender }
+  return { everyone, sender, pages: toPages }
 }

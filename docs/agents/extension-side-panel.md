@@ -19,8 +19,10 @@ has no tab: the extension has no dictionary search. Translate's `Content` is `Tr
 [`translate.md`](../../apps/extension/docs/product/translate.md)), whose Image row opens
 `{ page: 'image-search' }` (`src/translate/image-search-page.tsx`). Account's is `AccountTab`
 (`src/side-panel/account-tab.tsx`): the shared account component, `AccountView`
-(`src/account/`, [`account-extension.md`](account-extension.md), In the extension), over the
-profile's Words. Player's is
+(`src/account/`, [`account-extension.md`](account-extension.md), In the extension), over
+`SavedWords` (`src/saved-words/`), whose rows open Known Words, Learning, Lists, a list, and
+Notes as pages. `useCopy` reads `{copy:'read'}` again on each `{target:'copy'}` the service worker
+sends the extension's pages when the copy changes or a sync ends. Player's is
 `VideoTab` (`src/video-tab/video-tab.tsx`,
 [`video-tab.md`](../../apps/extension/docs/product/video-tab.md)), with Recent under its empty
 state only, when no video is open; the code keeps the Video tab's names. It reads the active tab

@@ -95,6 +95,7 @@ export function startAccount(parts: Parts): void {
     readSubscription: () => readSubscription(store, tokens),
     settings: parts.copy.settings,
     tell: tell.everyone,
+    changed: () => tell.pages({ target: 'copy' }),
     reportFailure: parts.reportFailure
   })
   const service = accountService({
