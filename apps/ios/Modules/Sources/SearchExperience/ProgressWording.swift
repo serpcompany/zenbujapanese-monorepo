@@ -1,0 +1,164 @@
+import Foundation
+
+enum ProgressWording {
+  static let goalMet = "Goal met"
+  static let goalMetInLine = "goal met"
+
+  static func newWords(_ count: Int) -> String {
+    String(AttributedString(localized: "^[\(count) new word](inflect: true)").characters)
+  }
+
+  static func words(_ count: Int) -> String {
+    String(AttributedString(localized: "^[\(count) word](inflect: true)").characters)
+  }
+
+  static func days(_ count: Int) -> String {
+    String(AttributedString(localized: "^[\(count) day](inflect: true)").characters)
+  }
+
+  static func ofGoal(_ added: Int, _ goal: Int) -> String {
+    "\(added) of \(newWords(goal))"
+  }
+
+  static func streak(_ days: Int) -> String {
+    "\(days)-day streak"
+  }
+
+  static func moreToGo(_ count: Int) -> String {
+    "\(count) more to go"
+  }
+
+  static func ofToday(_ goal: Int) -> String {
+    "of \(goal) today"
+  }
+
+  static func inLastWeek(_ count: Int) -> String {
+    "+\(count.formatted()) in 7 days"
+  }
+
+  static func lastDays(_ count: Int) -> String {
+    "last \(days(count))"
+  }
+
+  static func average(_ average: Double) -> String {
+    average.formatted(.number.precision(.fractionLength(0...1)))
+  }
+
+  static func perMonth(_ goal: Int) -> Int {
+    goal * 30
+  }
+
+  static func paceDate(
+    _ pace: JLPTCoverage.Pace?, today: Date = .now, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    guard let pace else { return "Done" }
+    return shortDate(pace.date, today: today, timeZone: timeZone)
+  }
+
+  static func shortDate(
+    _ name: String, today: Date = .now, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    let calendar = ProgressWeek.gregorian(in: timeZone)
+    guard let date = ProgressWeek.date(of: name, in: calendar) else { return name }
+    let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: today)
+    let format = Date.FormatStyle(timeZone: timeZone).month(.abbreviated).day()
+    return date.formatted(sameYear ? format : format.year())
+  }
+
+  static func streakDays(
+    _ streak: ProgressStats.Streak, today: Date = .now, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    let first = shortDate(streak.first, today: today, timeZone: timeZone)
+    guard streak.first != streak.last else { return first }
+    return "\(first) – \(shortDate(streak.last, today: today, timeZone: timeZone))"
+  }
+
+  static func dayLine(_ day: ProgressStats.Day, timeZone: TimeZone = .autoupdatingCurrent) -> String {
+    [weekdayDate(day.day, timeZone: timeZone), words(day.added), day.met ? goalMetInLine : "goal \(day.goal)"]
+      .joined(separator: " · ")
+  }
+
+  private static func weekdayDate(_ name: String, timeZone: TimeZone) -> String {
+    let date = ProgressWeek.date(of: name, in: ProgressWeek.gregorian(in: timeZone))
+    return date.map {
+      $0.formatted(Date.FormatStyle(timeZone: timeZone).weekday(.abbreviated).month(.abbreviated).day())
+    } ?? name
+  }
+
+  static func markedKnown(_ count: Int) -> String {
+    "\(count.formatted()) marked Known"
+  }
+
+  static func versusWeekBefore(_ change: Int) -> String {
+    "\(change < 0 ? "\u{2212}" : "+")\(abs(change).formatted()) vs the week before"
+  }
+
+  static func knownDayLine(_ day: KnownByDate.Day, timeZone: TimeZone = .autoupdatingCurrent) -> String {
+    "\(weekdayDate(day.day, timeZone: timeZone)) · \(markedKnown(day.count))"
+  }
+
+  static func knownDaySection(
+    _ name: String, today: String, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    if name == today { return "Today" }
+    if name == DailyListDays.day(today, movedBy: -1) { return "Yesterday" }
+    let calendar = ProgressWeek.gregorian(in: timeZone)
+    guard let date = ProgressWeek.date(of: name, in: calendar) else { return name }
+    let format = Date.FormatStyle(timeZone: timeZone).weekday(.wide).month(.abbreviated).day()
+    return date.formatted(name.prefix(4) == today.prefix(4) ? format : format.year())
+  }
+
+  static func knownWeek(
+    _ days: [KnownByDate.Day], today: String, timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    guard let first = days.first?.day, let last = days.last?.day else { return "" }
+    let now = ProgressWeek.date(of: today, in: ProgressWeek.gregorian(in: timeZone)) ?? .now
+    let end = last == today ? "Today" : shortDate(last, today: now, timeZone: timeZone)
+    return "\(shortDate(first, today: now, timeZone: timeZone)) – \(end)"
+  }
+
+  static func datesStart(_ first: String, timeZone: TimeZone = .autoupdatingCurrent) -> String {
+    let date = ProgressWeek.date(of: first, in: ProgressWeek.gregorian(in: timeZone))
+    let named = date?.formatted(Date.FormatStyle(timeZone: timeZone).month(.abbreviated).day().year())
+    return "Dates start \(named ?? first), when Zenbu began keeping them."
+  }
+
+  static func goalMetDays(_ goalMet: ProgressStats.GoalMet, words added: Int) -> String {
+    guard goalMet.days > 0 else { return "\(words(added)) so far" }
+    return "Goal met \(goalMet.met) of \(days(goalMet.days)) · \(words(added))"
+  }
+
+  static func percent(_ level: JLPTCoverage.Level) -> String {
+    level.percentKnown == 0 && level.known > 0 ? "<1%" : "\(level.percentKnown)%"
+  }
+
+  static func percentKnown(_ level: JLPTCoverage.Level) -> String {
+    "\(percent(level)) known"
+  }
+
+  static func pace(
+    _ level: JLPTCoverage.Level, goal: Int, today: Date = .now,
+    timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    guard let pace = level.pace else { return "Every \(level.name) word is in Learning or Known." }
+    let date = shortDate(pace.date, today: today, timeZone: timeZone)
+    return
+      "At \(newWords(goal)) a day, every \(level.name) word would be in Learning by \(date) (\(days(pace.days)))."
+  }
+
+  static func addToLearning(_ count: Int, level name: String) -> String {
+    "Add \(count) \(name) \(count == 1 ? "word" : "words") to Learning"
+  }
+
+  static func levelCounts(_ level: JLPTCoverage.Level) -> String {
+    "\(percentKnown(level)) · \(level.known.formatted()) / \(level.words.formatted())"
+  }
+
+  static func knownOnDay(
+    _ point: ProgressStats.KnownOnDay, isToday: Bool, today: Date = .now,
+    timeZone: TimeZone = .autoupdatingCurrent
+  ) -> String {
+    let day = isToday ? "Today" : shortDate(point.day, today: today, timeZone: timeZone)
+    return "\(day) · \(point.known.formatted())"
+  }
+}

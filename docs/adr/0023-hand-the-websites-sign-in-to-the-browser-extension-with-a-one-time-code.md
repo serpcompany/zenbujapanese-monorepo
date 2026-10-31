@@ -16,9 +16,9 @@ sign-in carries over in one click, as one more way in, kept beside the others.
 ## What happens
 
 - **The website's `/account/extension/` page asks the account service for a code,** with its
-  session cookie: `POST /v1/auth/extension-code`. Only a website session gets one. The code is
-  random, works once, only for `zenbu-extension`, and for 5 minutes, and the service keeps only its
-  SHA-256, in `verifications`.
+  session cookie: `POST /v1/auth/extension-code`. Only a website session, from one of the
+  website's origins, gets one. The code is random, works once, only for `zenbu-extension`, and for
+  5 minutes, and the service keeps only its SHA-256, in `verifications`.
 - **The page hands the code to the extension by message,** through `externally_connectable`, which
   names only the build's own website (staging's in a staging build). The extension takes the
   message only from that origin, by the sender Chrome reports, never by anything in the message.

@@ -74,14 +74,15 @@ On a page scrolled down to a section, that sweep reflows everything above it and
 section's text under the bars, where the audit loses it and can't name the element. So the sections
 that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's readings, the
 Account page's about part (Help & Support, Report a Problem, the crash reports switch, and the links
-under them), and at the largest size the Account page's rows below the profile, in three launches
-(`library`, Media Library to Learning, `collections`, Lists to Notes Without a Word, and `settings`,
+under them), and at the largest size the Account page's sections below the profile, in four
+launches (`progress`, the Today card and Daily Goal, `library`, Media Library to Learning, `collections`, Lists to Notes Without a Word, and `settings`,
 Reading Aids and Frequency Dictionaries), get those two audits on their own. `ZENBU_ONLY_SECTION`, a
 Debug-only harness (`LaunchHarness.onlySections`), opens the page with only the sections it names
 (Word Detail's examples under its meanings are one, `meaning-example`, named with `meaning`, the
 section that holds them, and audited on 日本's page), at the page's top, and the walk audits them
 there (`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
-(`AuditPart.allButTextSizes`). On the iPhone the walk also opens a caption's word sheet at full
+(`AuditPart.allButTextSizes`). Known Words by Date's end keeps only those too: its day sections are
+the rows and headers its top shows, which get the two audits there. On the iPhone the walk also opens a caption's word sheet at full
 height, so the Player page isn't showing behind it.
 
 Account's rows show why (#912). Scrolled to Translations at the largest size, the sweep reported
@@ -93,6 +94,15 @@ default size to 63 at the largest, and show whole at each, the titles wrapping u
 the page's other rows do; so the clipped titles are allowed as text that scales. Known Words and
 Learning are two rows written out, not a `ForEach`: built by a `ForEach`, iOS 27's audit reported
 their clipped titles with no element, in every pass, and a finding with no element can't be allowed.
+The Today card's week strip stays one row of seven days at every size for the same reason: wrapped
+to four columns at the accessibility sizes, the sweep lost the three days that moved to a second
+row, three findings with no element, and reported the Daily Goal row under the card (#1085).
+On the whole page, under the profile, the sweep still reports the card's text and the Daily Goal
+row as not following the text size, and Daily Goal as clipped, in each of four runs; alone at the
+page's top at the largest size it reports none, and every line is a text style, so they are allowed
+as text that scales.
+Report a Problem's sheet is presented from the Account list, not from its row: with the card
+above it, the row left the list during the sweep, and the sheet closed with it (#1085).
 With Learning added (#1037), the five rows alone put Translations under the tab bar at the largest
 size, where the sweep reported a clipped title with no element; so the rows are audited in three
 launches, `library`, `collections`, and `settings`, each short enough to sit clear of the bar.

@@ -141,6 +141,14 @@ final class LocalFileWriteQueue {
     lastTask = Task { await load() }
   }
 
+  func queue(_ step: @escaping @MainActor () async -> Void) {
+    let previous = lastTask
+    lastTask = Task {
+      await previous?.value
+      await step()
+    }
+  }
+
   func save(_ write: @escaping @MainActor () async -> Bool) {
     guard !writeQueued else { return }
     writeQueued = true

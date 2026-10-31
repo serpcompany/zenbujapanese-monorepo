@@ -34,6 +34,24 @@ final class SubscriptionUITests: ZenbuUITestCase {
     waitUntil(row, "NOT (label CONTAINS 'Syncing needs a subscription')")
   }
 
+  func testTryAgainAsksTheAppStoreAgainWhenItListsNoPlans() {
+    let app = launch(
+      Self.standIns([
+        "ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1",
+        "ZENBU_APP_STORE_STAND_IN_LISTS_NOTHING_FIRST": "1",
+      ]))
+    signInWithApple(in: app)
+    tap(find("account.zenbu-account", in: app))
+    tap(find("subscription.subscribe", in: app))
+
+    waitUntil(find("paywall.problem", in: app), mentions: "The App Store didn't list the plans.")
+    tap(find("paywall.try-again", in: app))
+
+    waitUntil(find(Self.monthly, in: app), mentions: "$4.99 a month")
+    waitUntilGone(find("paywall.problem", in: app))
+    waitUntilGone(find("paywall.try-again", in: app))
+  }
+
   func testAPhotoSavedWithoutASubscriptionStaysOnTheDeviceWhileSyncingWaitsForOne() throws {
     let app = try openFixtureImage(Self.standIns(["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1"]))
     saveThePhotoOnAWord(in: app)

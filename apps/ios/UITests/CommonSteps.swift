@@ -430,8 +430,7 @@ extension ZenbuUITestCase {
 
   func turnRomajiOn(in app: XCUIApplication) {
     open(.account, in: app)
-    tap(reveal(find("account.reading-aids", in: app), in: app))
-    let romaji = waitFor(find("reading-aids.show-romaji", in: app))
+    let romaji = openReadingAids(showing: "show-romaji", in: app)
     flip(romaji)
     waitUntil(romaji, Self.switchedOn)
   }

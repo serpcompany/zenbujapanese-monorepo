@@ -143,15 +143,15 @@ Zenbu Dev's under `com.zenbujapanese.dictionary.dev`.
 ### Tests on every platform
 
 Every suite runs on the iPhone Simulator, an iPad Simulator, and the Mac, as the `iOS` workflow's
-`swift` job does ([`ci-ios.md`](ci-ios.md)). The Simulators are this checkout's own, an iPhone Pro
-Max and an iPad Pro 13-inch: `python3 apps/ios/Tools/simulator.py` prints the iPhone's UDID, and
-with `--device ipad` the iPad's ([`verification.md`](verification.md)).
+`swift` job does ([`ci-ios.md`](ci-ios.md)), on this checkout's own Simulators, whose UDIDs
+`python3 apps/ios/Tools/simulator.py` prints ([`verification.md`](verification.md)).
 
 **The package's tests**, `SearchExperienceTests` and `TranslatorCoreTests`, from `apps/ios/Modules`:
 
 ```sh
 TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES test
+  -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES \
+  -collect-test-diagnostics never test
 xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
 ```
 
@@ -169,7 +169,7 @@ or Mac, and its saved data is the only data they erase. From the repository root
 ```sh
 xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
   -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
-  ZENBU_BUNDLE_ID_SUFFIX=.uitests test
+  ZENBU_BUNDLE_ID_SUFFIX=.uitests -collect-test-diagnostics never test
 xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
   -destination 'platform=macOS,arch=arm64' ZENBU_BUNDLE_ID_SUFFIX=.uitests \
   CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= test
@@ -210,6 +210,9 @@ don't contain them), so they need no network, account, camera, or microphone:
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
   (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
+- `ZENBU_PROGRESS_STREAK=<days>` seeds that many met days, `ZENBU_DAILY_GOAL=<n>` sets the goal
+  (`AccountUITests`), and `ZENBU_PROGRESS_SEED=<path>` a log and Known Words (`ProgressUITests`,
+  `JLPTProgressUITests`, which also reads `Fixtures/Progress/n4-known.json`).
 - `ZENBU_HOLD_LINKING=1` holds back the answers linking a page of examples', a caption's, or a
   line's words until the test posts `HeldAnswers.letGoNotice`, to see rows arrive linked;
   `ZENBU_FAIL_LINKING=<count>` fails that many, to see a screen read again (`ExampleRowsUITests`);
@@ -422,7 +425,7 @@ Simulator. Run it from `apps/ios/Modules` with:
 
 ```sh
 TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<simulator-udid>' \
+  -destination 'platform=iOS Simulator,id=<simulator-udid>' -collect-test-diagnostics never \
   ONLY_ACTIVE_ARCH=YES test
 ```
 
@@ -486,8 +489,7 @@ file pins the SHA-256 of every bundled artifact it was recorded against. After a
 either screen or its data, record them again with the same `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`
 prefix and `-only-testing:SearchExperienceTests/WordDetailConformanceTests` or
 `-only-testing:SearchExperienceTests/KanjiDetailConformanceTests`, and review the diff. Recording
-keeps each case's `id` or `character` and its `covers` note, so add a case by adding those two
-fields and recording.
+keeps each case's `id` or `character` and its `covers` note: to add a case, add both and record.
 
 `KanjiElementConformanceTests` checks the kanji element page against `kanji-element.json`: for
 each glyph, its meanings, what it contributes, its linked on-readings, its alternatives, the
@@ -783,8 +785,7 @@ but the profile, in TypeScript, and the service's tests prove that model against
   set up: a service without Apple answers its sign-in `404 provider_not_found`.
   `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`;
   when it isn't empty, the sign-in sheet shows a note in place of the Apple button, and deleting an
-  Apple account says to use the App Store or TestFlight app. Google and emailed codes work in Zenbu
-  Dev.
+  Apple account points to the App Store or TestFlight. Google and emailed codes work in Zenbu Dev.
 - **Google** needs no SDK: `ASWebAuthenticationSession` opens Google's OAuth for iOS with PKCE, the
   nonce, and the reversed client ID as the redirect, which the session catches itself, so no URL
   type is registered. The app exchanges the code at Google's token endpoint for the ID token. The
@@ -1091,8 +1092,7 @@ failed writes, and backups. When changing known words, also check in the Simulat
   both screens, and the mark survives a relaunch.
 - **Account → Known Words** shows the count, lists the word, swipes it back to unknown, and
   opens it in Look Up.
-- Known words live in `Application Support/Zenbu Japanese/word-knowledge.json` in the app's
-  data container.
+- Known words are in the app container's `Application Support/Zenbu Japanese/word-knowledge.json`.
 
 ## Word lists manual checks
 

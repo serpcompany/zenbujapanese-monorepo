@@ -286,6 +286,8 @@ final class AccountSync: LocalFileStore {
   }
 
   private func pull(in session: Int) async throws {
+    wordKnowledge.holdSyncedProgress()
+    defer { wordKnowledge.reportSyncedProgress() }
     var hasMore = true
     while hasMore || state.queue.contains(where: isSendable) {
       try Task.checkCancellation()

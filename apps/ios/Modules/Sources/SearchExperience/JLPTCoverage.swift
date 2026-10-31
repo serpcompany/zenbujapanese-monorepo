@@ -27,6 +27,14 @@ struct JLPTCoverage: Decodable, Equatable, Sendable {
   init(from decoder: Decoder) throws {
     levels = try decoder.singleValueContainer().decode([Level].self)
   }
+
+  var startingLevel: Int {
+    levels.sorted { $0.level > $1.level }.first { $0.percentKnown < 100 }?.level ?? 5
+  }
+
+  func level(_ number: Int) -> Level? {
+    levels.first { $0.level == number }
+  }
 }
 
 struct JLPTCoverageRequest: Encodable, Hashable, Sendable {
@@ -34,25 +42,23 @@ struct JLPTCoverageRequest: Encodable, Hashable, Sendable {
   let learning: [String]
   let goal: Int
   let today: String
+  let upNext: Int?
 
-  init(known: [String], learning: [String], goal: Int, today: String) {
+  init(known: [String], learning: [String], goal: Int, today: String, upNext: Int? = nil) {
     self.known = known
     self.learning = learning
     self.goal = goal
     self.today = today
+    self.upNext = upNext
   }
 
   @MainActor
-  init(knowledge: WordKnowledge, goal: Int, on day: Date, in calendar: Calendar) {
+  init(knowledge: WordKnowledge, goal: Int, today: String, upNext: Int? = nil) {
     let words = { (status: WordKnowledgeStatus) in
       knowledge.marked(status).filter { $0.kanji == nil }.map(\.entryID).sorted()
     }
-    var gregorian = Calendar(identifier: .gregorian)
-    gregorian.timeZone = calendar.timeZone
-    let parts = gregorian.dateComponents([.year, .month, .day], from: day)
     self.init(
-      known: words(.known), learning: words(.learning), goal: goal,
-      today: String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0))
+      known: words(.known), learning: words(.learning), goal: goal, today: today, upNext: upNext)
   }
 }
 
@@ -77,43 +83,32 @@ final class JLPTCoverageModel {
 
   var goal: Int
   private(set) var coverage: JLPTCoverage?
+  @ObservationIgnored private let upNext: Int?
   @ObservationIgnored private let knowledge: WordKnowledge
   @ObservationIgnored private let ask: Ask
-  @ObservationIgnored private let calendar: Calendar
-  @ObservationIgnored private let today: @MainActor () -> Date
-  @ObservationIgnored private let center: NotificationCenter
+  @ObservationIgnored private let today: @MainActor () -> String
   @ObservationIgnored private var answered: JLPTCoverageRequest?
-  private var daysTurned = 0
 
   init(
     knowledge: WordKnowledge,
     goal: Int,
+    upNext: Int? = nil,
     ask: @escaping Ask = JLPTCoverageModel.live,
-    calendar: Calendar = .current,
-    today: @escaping @MainActor () -> Date = { Date() },
-    center: NotificationCenter = .default
+    today: @escaping @MainActor () -> String
   ) {
     self.knowledge = knowledge
     self.goal = goal
+    self.upNext = upNext
     self.ask = ask
-    self.calendar = calendar
     self.today = today
-    self.center = center
   }
 
   func follow() async {
-    let days = Task { [weak self, center] in
-      for await _ in center.notifications(named: .NSCalendarDayChanged).map({ _ in }) {
-        self?.daysTurned += 1
-      }
-    }
-    defer { days.cancel() }
     while !Task.isCancelled {
       let (changed, change) = AsyncStream.makeStream(
         of: Void.self, bufferingPolicy: .bufferingNewest(1))
       let request = withObservationTracking {
-        _ = daysTurned
-        return JLPTCoverageRequest(knowledge: knowledge, goal: goal, on: today(), in: calendar)
+        JLPTCoverageRequest(knowledge: knowledge, goal: goal, today: today(), upNext: upNext)
       } onChange: {
         change.yield()
         change.finish()

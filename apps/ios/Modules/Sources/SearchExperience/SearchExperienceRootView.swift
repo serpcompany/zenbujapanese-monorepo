@@ -325,6 +325,7 @@ struct SearchExperienceRootView: View {
         dictionaryDestination($0, in: .account)
       }
     }
+    .environment(\.openAccountRoute) { accountPath.append($0) }
     .modifier(wordSheetHost(wordSheets.account, in: .account))
   }
 

@@ -11,6 +11,7 @@ public struct ZenbuJapaneseScenes: Scene {
     LaunchHarness.prepare()
     AppLifecycle.applySharedChangesWhenPosted()
     ProgressLog.shared.listen(to: .shared)
+    DailyListKeeper.shared.start()
     _readingAids = State(initialValue: ReadingAidPreferences())
     _profile = State(initialValue: UserProfile.shared)
     _translate = State(initialValue: TranslateExperience.live())

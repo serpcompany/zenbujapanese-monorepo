@@ -12,7 +12,13 @@ import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import { rankedEnglish } from './english'
 import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
 import { latinSpellings } from './latin-text'
-import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
+import {
+  isOneWordPhrase,
+  lookedUpWords,
+  lookupForm,
+  type Morpheme,
+  type MorphologyAnalyzer
+} from './morphology'
 import {
   isJapaneseOnly,
   isMixedScript,
@@ -37,6 +43,21 @@ export interface SearchCapabilities {
 
 export interface SearchFeatures {
   sentenceSearch: boolean
+}
+
+interface AnalyzedItems {
+  items: SearchResultItem[]
+  oneWordPhrase: boolean
+}
+
+function namedItem(items: SearchResultItem[], word: Morpheme): SearchResultItem | undefined {
+  const form = lookupForm(word)
+  const named = (item: SearchResultItem) => item.entry.headword === word.normalizedForm
+  return (
+    items.find(item => named(item) && item.entry.reading === form) ??
+    items.find(item => item.entry.headword === form) ??
+    items.find(named)
+  )
 }
 
 function searchFeatures(capabilities: SearchCapabilities): SearchFeatures {
@@ -134,8 +155,8 @@ export class DictionarySearch {
     }
     if (directResults.items.length > 0) return directResults
 
-    const analyzed = await this.analyzedItems(query)
-    if (analyzed.length > 1 || (isMixedScript(query) && analyzed.length > 0)) {
+    const { items: analyzed, oneWordPhrase } = await this.analyzedItems(query)
+    if (analyzed.length > 1 || ((oneWordPhrase || isMixedScript(query)) && analyzed.length > 0)) {
       return {
         ...composing(
           analyzed.map(item => [item]),
@@ -200,21 +221,23 @@ export class DictionarySearch {
     return hasFormContaining(this.db, query)
   }
 
-  private async analyzedItems(query: string): Promise<SearchResultItem[]> {
+  private async analyzedItems(query: string): Promise<AnalyzedItems> {
     const morphology = this.capabilities.morphology
-    if (!morphology || query === '') return []
-    let words: readonly MorphologyWord[]
+    const none = { items: [], oneWordPhrase: false }
+    if (!morphology || query === '') return none
+    let words: readonly Morpheme[]
     try {
       words = (await morphology.analyze(query)).words
     } catch {
-      return []
+      return none
     }
-    const segments = lookupSegments(words)
-    const results = await Promise.all(segments.map(segment => this.searchOnce(segment)))
-    return results.flatMap(({ items }, index) => {
-      const item = items.find(candidate => candidate.entry.headword === segments[index]) ?? items[0]
+    const lookedUp = lookedUpWords(words)
+    const results = await Promise.all(lookedUp.map(word => this.searchOnce(lookupForm(word))))
+    const items = results.flatMap(({ items }, index) => {
+      const item = namedItem(items, lookedUp[index]) ?? items[0]
       return item ? [item] : []
     })
+    return { items, oneWordPhrase: isOneWordPhrase(words) }
   }
 
   private async japaneseDeinflectedSources(query: string): Promise<SearchResultItem[][]> {
