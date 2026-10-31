@@ -89,21 +89,25 @@ A learner signed in on zenbujapanese.com signs the extension in with one click, 
 `/account/extension/` page, which Continue with zenbujapanese.com opens (#1130). The extension
 gets a session of its own, `zenbu-extension`'s, never the website's cookie. The service's side is
 a Better Auth plugin, `apps/account-api/src/auth/extension-code.ts`, declared for the contract in
-`src/http/extension-code-contract.ts`; each route takes twenty requests a minute. Why it is a code
-handed by message is [ADR 0023](../adr/0023-hand-the-websites-sign-in-to-the-browser-extension-with-a-one-time-code.md).
+`src/http/extension-code-contract.ts`; each route takes twenty requests a minute. The website's is
+`apps/web/src/lib/account/extension.ts`
+([product docs](../../apps/web/docs/product/extension-sign-in.md)). Why it is a code handed by
+message is [ADR 0023](../adr/0023-hand-the-websites-sign-in-to-the-browser-extension-with-a-one-time-code.md).
 
 - **The website asks for a code,** `POST /v1/auth/extension-code`, with its session cookie and
   `credentials: 'include'`, as its other account pages call. Only a website session gets one: an
   app's bearer session is refused `403 website_only`, no session `401 unauthorized`, and a cookie
-  from an origin the service doesn't trust `403 invalid_origin`. The code is 32 random bytes,
-  kept only as its SHA-256 in `verifications`, for 5 minutes, naming `zenbu-extension`.
+  from any origin but the website's, the extension's included, `403 invalid_origin`. The code is
+  32 random bytes, kept only as its SHA-256 in `verifications`, for 5 minutes, naming
+  `zenbu-extension`.
 - **It hands the code over by message,** `chrome.runtime.sendMessage('<id>', { type: 'sign-in',
   code })`, which `externally_connectable` lets only the build's website send:
   `https://zenbujapanese.com/*`, staging's alone in a staging build, and the test build adds
   `http://localhost/*` and `http://127.0.0.1/*` on any port (`build/hosts.ts`, `websitesOf`).
   The service worker's `onMessageExternal` listener (`website-sign-in.ts`) checks the sender's
   origin against that list again, never anything in the message, and leaves every other message
-  unanswered. A page without the extension finds no `chrome.runtime`, or no receiving end.
+  unanswered. The website checks for `chrome.runtime` first, so a browser without the extension
+  asks for no code; one whose extension isn't listening finds no receiving end.
 - **The extension redeems it,** `POST /v1/auth/sign-in/extension-code` with `{ code }` and
   `X-Zenbu-Client: zenbu-extension`, and keeps the session as every other way in does
   (`keepSignIn`), handing the copy to its account and syncing it as they do (`keep` in
@@ -115,8 +119,9 @@ handed by message is [ADR 0023](../adr/0023-hand-the-websites-sign-in-to-the-bro
 - **The website hears only whether it worked:** `{ signedIn: true }` once the session is kept,
   even when the subscription read after it fails (reported as `account-answer`), or
   `{ signedIn: false, refusal }`, `signed-in-already` (a browser signed in already keeps its
-  account and redeems nothing), `wait`, or `try-again`. Never the email or a token.
-- **The code goes nowhere else:** it isn't logged, reported, put in a URL, or kept by the
+  account and redeems nothing), `wait`, or `try-again`; it takes any other answer as
+  `try-again`. Never the email or a token.
+- **The code goes nowhere else:** it isn't shown, logged, reported, put in a URL, or kept by the
   website, and the extension's error reports carry only `account-answer`.
 - **Signing out of either leaves the other signed in:** they are two sessions.
 
@@ -261,4 +266,5 @@ the extension's Google client.
 
 The tests are `src/http/extension-client.test.ts`, which sends each request as
 `Origin: chrome-extension://kaalpflpefadijdemimciikalgpgjmok` with `Sec-Fetch-Site: none`, as
-Chrome does.
+Chrome does, and `src/auth/extension-code.test.ts`, the website's code for the extension. The
+website's are in its [product docs](../../apps/web/docs/product/extension-sign-in.md).

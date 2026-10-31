@@ -25,6 +25,9 @@ enum LaunchHarness {
   static let shareCardInAppKey = "ZENBU_SHARE_CARD_IN_APP"
   static let onlySectionKey = "ZENBU_ONLY_SECTION"
   static let problemReportStandInKey = "ZENBU_PROBLEM_REPORT_STAND_IN"
+  static let progressStreakKey = "ZENBU_PROGRESS_STREAK"
+  static let dailyGoalKey = "ZENBU_DAILY_GOAL"
+  static let progressSeedKey = "ZENBU_PROGRESS_SEED"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -358,6 +361,18 @@ enum LaunchHarness {
       if let earlierNotes = environment[earlierNotesKey] {
         UserDefaults.standard.set(
           Data(earlierNotes.utf8), forKey: WordNoteStorage.earlierStorageKey)
+      }
+      if let goal = environment[dailyGoalKey].flatMap(Int.init) {
+        DailyGoal.write(goal, to: .standard)
+      }
+      if let streak = environment[progressStreakKey].flatMap(Int.init) {
+        seedProgress(metDays: streak)
+      }
+      if let seed = environment[progressSeedKey] {
+        seedProgress(from: URL(filePath: seed))
+      }
+      if let days = environment[dailyListsKey].flatMap(Int.init) {
+        seedDailyLists(days: days)
       }
     #endif
   }()

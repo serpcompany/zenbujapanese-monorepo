@@ -261,12 +261,14 @@ enum StubSync {
   }
 
   static func knownWord(
-    _ itemID: String, known: Bool, version: Int, headword: String = "食べる", state: String? = nil
+    _ itemID: String, known: Bool, version: Int, headword: String = "食べる",
+    reading: String = "たべる", state: String? = nil, stateChangedAt: String? = nil
   ) -> [String: Any] {
     var word: [String: Any] = [
-      "itemId": itemID, "headword": headword, "reading": "たべる", "known": known,
+      "itemId": itemID, "headword": headword, "reading": reading, "known": known,
     ]
     word["state"] = state
+    word["stateChangedAt"] = stateChangedAt
     return put("knownWord", itemID, version, word)
   }
 

@@ -77,3 +77,17 @@ Check: core `results/results.test.ts` (the meanings, the entry's meaning, and "K
 `embedded/presentation.test.ts` (the meanings the app's kanji files hold); the recorded
 `search-results.json` suite; UI `SearchResultsUITests.testAOneKanjiSearchLeadsWithTheKanjisOwnMeanings`
 and `SavedWordsUITests.testKnownWordsShowsAWordWithItsMeaningAndAKanjiAsLookUpDoes`.
+
+## Discovered Words
+
+A Japanese phrase or sentence the dictionary doesn't hold lists its Discovered Words: each word
+Sudachi finds in it that a learner looks up, in order, including adverbs, pre-noun words such as
+この, and conjunctions, but not its particles, endings, or punctuation. すこしおくれるかも lists
+少し and 遅れる, and a phrase of one such word and its particles, such as 遅れるかも, lists that
+word. A word takes the entry Sudachi names when one reads as the word: ちょっとまって lists 待つ,
+not 松, and 休みをとった lists 取る, not the helper とる.
+
+Check: core `search/search.test.ts` ("phrases") and `search/morphology.test.ts` (which words a
+phrase lists, from a hand-built analysis); the recorded `SentenceSearchConformanceTests` and
+`SentenceResultsConformanceTests`, which run Sudachi on each phrase named here (休みをとった as
+彼は一週間休みをとった。); UI `SearchResultsUITests.testAShortPhraseListsItsAdverbAndItsVerb`.

@@ -170,11 +170,19 @@ struct AccountSubscriptionTests {
     #expect(fixture.server.requests(to: "POST /v1/me/subscription/apple").isEmpty)
   }
 
-  @Test func saysWhenTheAppStoreDoesntSellTheSubscriptionHere() async throws {
+  @Test func saysWhenTheAppStoreListsNoPlansAndAsksAgainOnTryAgain() async throws {
     let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
+    let subscription = fixture.account.subscription
     fixture.store.sellsOnly([])
-    await fixture.account.subscription.loadOffers()
-    #expect(fixture.account.subscription.problem == .notAvailableHere)
+    await subscription.loadOffers()
+    #expect(subscription.offers.isEmpty)
+    #expect(subscription.problem == .notAvailableHere)
+    #expect(subscription.problem?.readsAgain == true)
+
+    fixture.store.sellsOnly([Answers.monthly])
+    await subscription.loadOffers()
+    #expect(subscription.problem == nil)
+    #expect(subscription.offers.map(\.id) == [Answers.monthly])
   }
 
   @Test func waitsForAskToBuyAndSendsTheApprovedPurchaseWhenStoreKitHandsItOver() async throws {

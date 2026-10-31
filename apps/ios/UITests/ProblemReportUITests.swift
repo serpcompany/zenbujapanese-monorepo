@@ -6,8 +6,8 @@ extension ZenbuUITestCase {
   @discardableResult
   func openTheReport(in app: XCUIApplication) -> XCUIElement {
     open(.account, in: app)
-    tap(reveal(find("account.report-a-problem", in: app), in: app))
-    return waitFor(app.buttons["problem-report.send"].firstMatch)
+    let send = app.buttons["problem-report.send"].firstMatch
+    return tapClearOfTheBars(find("account.report-a-problem", in: app), toShow: send, in: app)
   }
 
   func typeAtTheEnd(_ text: String, of field: XCUIElement, in app: XCUIApplication) {
