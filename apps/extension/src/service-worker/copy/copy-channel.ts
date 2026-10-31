@@ -24,12 +24,17 @@ type Pages = { sendMessage(message: Told): Promise<unknown> }
 const isItemList = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(item => typeof item === 'string')
 
-const aboutWords = (request: CopyRequest) =>
-  request.copy === 'known' || request.copy === 'word' || request.copy === 'word-change'
+const fromContentScripts: ReadonlySet<string> = new Set<CopyRequest['copy']>([
+  'known',
+  'word',
+  'word-change',
+  'saving'
+])
 
 const wellFormed = (request: CopyRequest) => {
   if (request.copy === 'known') return isItemList(request.items)
-  return !aboutWords(request) || typeof (request as { item?: unknown }).item === 'string'
+  if (request.copy !== 'word' && request.copy !== 'word-change') return true
+  return typeof (request as { item?: unknown }).item === 'string'
 }
 
 export function answerCopy(
@@ -42,7 +47,7 @@ export function answerCopy(
     if (!isCopyEnvelope(message)) return false
     const request = message.copy
     if (!wellFormed(request)) return false
-    if (sender.origin !== pagesOrigin && !aboutWords(request)) return false
+    if (sender.origin !== pagesOrigin && !fromContentScripts.has(request.copy)) return false
     copy.answer(request, tellSender(sender)).then(respond, (error: unknown) => {
       reportFailure('account-copy')
       respond(failure(error))

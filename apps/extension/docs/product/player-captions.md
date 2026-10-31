@@ -85,10 +85,16 @@ while the pointer moves over the player and for 3 seconds after it rests, while 
 controls, while a control has focus from the keyboard, while the speed menu is open, and while a
 word's popup is open; otherwise they fade out (Controls: "when the controls show", each).
 
+## The share of words known
+
+Signed in with saving allowed, "You know 38%" shows at the player's top left, its percentage
+coloured as in the Player tab, and shows and hides with the controls. It is the Player tab's share
+of the video's words known, and changes as it does ([`video-tab.md`](video-tab.md), The share of
+words known) (Controls: "reads You know N% on the player…"; `e2e/known-share.spec.ts`).
+
 ## Not built yet
 
 Neither box has a keyboard move, and moved to the top right one can cover the line controls
 until it is dragged away. Touch drags are built as pointer events but checked only with a mouse. After the extension updates or reloads, a watch page that was already open shows no caption until
-the learner reloads it (#1114). Live Captions for a video with no Japanese captions are #968's, and the share of the video's words
-the learner knows is #965's. The fullscreen screenshots and a counted
+the learner reloads it (#1114). Live Captions for a video with no Japanese captions are #968's. The fullscreen screenshots and a counted
 Repeat run in branded Chrome are the agent Chrome harness's, by hand.

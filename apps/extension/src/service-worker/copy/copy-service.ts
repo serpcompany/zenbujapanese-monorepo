@@ -170,6 +170,8 @@ export function accountCopy(parts: CopyParts) {
         return { type: 'opened' }
       case 'known':
         return { type: 'known', known: await known(request.items) }
+      case 'saving':
+        return { type: 'saving', refusal: await refusal() }
     }
   }
 

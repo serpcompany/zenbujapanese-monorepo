@@ -5,27 +5,26 @@ import {
   type CaptionsRequest,
   isCaptionsChange
 } from '../captions/messages'
-import { askKnown, onKnownChanged } from '../shared/account-copy'
 import { onDeviceServices, type TranslateServices } from '../translate/services'
 import type { VideoControl, VideoControlMessage } from '../video/controls'
 import { type Following, openVideoTab } from '../video/video-tab-port'
+import { onDeviceShareServices, type ShareServices } from './known-share'
 
 export type ActiveTab = { id: number; url?: string; title?: string }
 
 export type VideoTabServices = Pick<
   TranslateServices,
   'segment' | 'wait' | 'popupCard' | 'pagePopup' | 'translate' | 'availability' | 'download'
-> & {
-  knownWords(items: string[]): Promise<Record<string, boolean>>
-  watchKnown(heard: (known: Record<string, boolean> | null) => void): () => void
-  activeTab(): Promise<ActiveTab | null>
-  watchActiveTab(changed: () => void): () => void
-  askCaptions(request: CaptionsRequest): Promise<CaptionsAnswer>
-  watchCaptions(heard: (change: CaptionsChange) => void): () => void
-  followPlayback(tabId: number, following: Following): () => void
-  control(tabId: number, control: VideoControl): void
-  reload(tabId: number): void
-}
+> &
+  ShareServices & {
+    activeTab(): Promise<ActiveTab | null>
+    watchActiveTab(changed: () => void): () => void
+    askCaptions(request: CaptionsRequest): Promise<CaptionsAnswer>
+    watchCaptions(heard: (change: CaptionsChange) => void): () => void
+    followPlayback(tabId: number, following: Following): () => void
+    control(tabId: number, control: VideoControl): void
+    reload(tabId: number): void
+  }
 
 type TabChange = { status?: string; url?: string; title?: string }
 
@@ -78,8 +77,7 @@ export const onDeviceVideoServices: VideoTabServices = {
   wait,
   popupCard,
   pagePopup,
-  knownWords: items => askKnown(items),
-  watchKnown: heard => onKnownChanged(heard),
+  ...onDeviceShareServices,
   translate,
   availability,
   download,

@@ -35,7 +35,7 @@ startErrorReports('worker', message => self.postMessage(message))
 
 self.addEventListener('message', (event: MessageEvent<DictionaryRequest>) => {
   const [port] = event.ports
-  port?.postMessage(answer(event.data, worker))
+  void answer(event.data, worker).then(answered => port?.postMessage(answered))
 })
 
 self.postMessage('started')

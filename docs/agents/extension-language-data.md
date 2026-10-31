@@ -104,6 +104,7 @@ until the first set is in, never an empty result.
 | `word`, `kanji` | Word Detail's rows from `word()`, and the kanji details' from `kanji()`, with `strokes` saying whether the stroke data is in. An unknown entry or character answers `rows: null`. |
 | `word-examples`, `form-examples` | A page of a word's examples from `from`, and of a form's, with how many the form has (`listed`). A form's examples are found by scanning the sentences, not by full-text search. |
 | `resolve` | The entry written and read as a related word with no target is, through the `forms` index (core `resolveEntSeq`), or `null` |
+| `counted-words` | The counted entry ID of each word in caption lines, in order, through the core's `EmbeddedText.countedWords` over the same database and tokenizer; the share of a video's words known asks 20 lines at a time |
 
 ## Checks
 

@@ -13,13 +13,17 @@ import { labels as panelLabels } from '../side-panel/labels'
 import type { PanelTabProps } from '../side-panel/route'
 import { translateLabels } from '../translate/labels'
 import { useActiveTab, type WatchedVideo, watchedIn } from './active-tab'
+import { KnownShareLine } from './known-share-line'
 import { videoTabLabels } from './labels'
 import { onDeviceVideoServices, type VideoTabServices } from './services'
 import { Transcript } from './transcript'
 import { useEnglish } from './use-english'
 import { useCaptions, usePlayback } from './use-video'
+import { type KnownWords, useKnownWords } from './word-marks'
 
 type Shared = { services: VideoTabServices; open: PanelTabProps['open'] }
+
+type Watched = Shared & { known: KnownWords; video: WatchedVideo; shown: boolean }
 
 function NoRecent({ select }: Pick<PanelTabProps, 'select'>) {
   const account = useAccount()
@@ -109,8 +113,9 @@ function Lines({
   video,
   shown,
   settings,
+  known,
   ...shared
-}: Shared & { lines: Caption[]; video: WatchedVideo; shown: boolean; settings: Settings | null }) {
+}: Watched & { lines: Caption[]; settings: Settings | null }) {
   const translations = settings?.['readingAids.translations'] === true
   const { translating, english, failed, translator, download, retry } = useEnglish(
     lines,
@@ -135,6 +140,7 @@ function Lines({
       shown={shown}
       settings={settings}
       services={shared.services}
+      known={known}
       notices={notices}
     />
   )
@@ -161,11 +167,9 @@ function CaptionsView({
   answer,
   tryAgain,
   ...lines
-}: Shared & {
+}: Watched & {
   answer: CaptionsAnswer | null
   tryAgain(): void
-  video: WatchedVideo
-  shown: boolean
   settings: Settings | null
 }) {
   if (answer && 'state' in answer && answer.state === 'lines')
@@ -185,6 +189,8 @@ function VideoCaptions({
 }: Shared & Pick<PanelTabProps, 'select'> & { video: WatchedVideo; shown: boolean }) {
   const { answer, tryAgain } = useCaptions(shared.services, video)
   const settings = useSettings()
+  const known = useKnownWords(shared.services)
+  const lines = answer && 'state' in answer && answer.state === 'lines' ? answer.lines : null
   if (answer && 'state' in answer && answer.state === 'no-video') return <NoVideo select={select} />
   if (answer && 'state' in answer && answer.state === 'no-japanese-captions')
     return <NoJapaneseCaptions open={shared.open} />
@@ -195,12 +201,14 @@ function VideoCaptions({
           {video.title}
         </h2>
       )}
+      {lines && <KnownShareLine lines={lines} services={shared.services} known={known} />}
       <CaptionsView
         answer={answer}
         tryAgain={tryAgain}
         video={video}
         shown={shown}
         settings={settings}
+        known={known}
         {...shared}
       />
     </section>

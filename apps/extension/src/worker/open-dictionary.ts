@@ -15,6 +15,7 @@ import {
   retiredEntries,
   retiredEntriesFile
 } from '@zenbu/dictionary-core/artifact/retired'
+import { type AnalyzeText, EmbeddedText } from '@zenbu/dictionary-core/embedded/text'
 import {
   type IpadicFile,
   ipadicFiles,
@@ -36,8 +37,12 @@ type ReadOnlyDatabase = new (filename: string, flags: 'r') => Database
 export interface OpenDictionary {
   dictionary: Dictionary
   attached: readonly AttachmentName[]
+  countedWords(lines: readonly string[]): Promise<string[]>
   close(): void
 }
+
+const tokenizedOnly: AnalyzeText = () =>
+  Promise.reject(new Error('The worker counts words with its own tokenizer.'))
 
 async function unpacked(bytes: Uint8Array): Promise<ArrayBuffer> {
   const stream = new Blob([bytes as Uint8Array<ArrayBuffer>])
@@ -95,9 +100,14 @@ export async function openDictionary(
       if (!buffer) throw new Error(`The installed language data has no ${kuromojiFile(file)}.`)
       return buffer
     })
+    const text = new EmbeddedText({
+      all: (sql, parameters) => ({ rows: db.all(sql, JSON.parse(parameters)) }),
+      tokenize
+    })
     return {
       dictionary: new Dictionary({ db, kanji, retired, attached, capabilities: { tokenize } }),
       attached,
+      countedWords: lines => text.countedWords(lines, tokenizedOnly),
       close: () => db.close()
     }
   } catch (error) {

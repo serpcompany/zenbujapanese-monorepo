@@ -172,3 +172,22 @@ describe('when the controls show', () => {
     expect(player.controlsShown()).toBe(false)
   })
 })
+
+describe('the share of the video’s words known', () => {
+  it('reads You know N% on the player, shows and hides with the controls, and rises when a word is marked Known', async () => {
+    const player = await opened()
+    await player.playFrom(1.2)
+    await send(player.player, pointerEvent('pointermove'))
+    expect(player.pill()?.textContent).toBe('You know 0%')
+    expect(player.pill()?.hasAttribute('data-hidden')).toBe(false)
+    await player.wait(pointerIdle + 100)
+    expect(player.controlsShown()).toBe(false)
+    expect(player.pill()?.hasAttribute('data-hidden')).toBe(true)
+    await player.share.knows({ youkyuu: true, iru: true })
+    expect(player.pill()?.textContent).toBe('You know 33%')
+    expect(player.pill()?.querySelector('.text-orange-700')?.textContent).toBe('33%')
+    expect(player.services.countWords).toHaveBeenCalledOnce()
+    await player.share.refuse('signed-out')
+    expect(player.pill()).toBeNull()
+  })
+})

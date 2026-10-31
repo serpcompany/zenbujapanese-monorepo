@@ -2,7 +2,7 @@ import { type FocusEvent, useEffect, useRef, useState } from 'react'
 
 export const pointerIdle = 3000
 
-export type Presence = {
+type Presence = {
   pointer: boolean
   overControls: boolean
   focused: boolean
@@ -11,7 +11,7 @@ export type Presence = {
   popupOpen: boolean
 }
 
-export const controlsShown = (presence: Presence): boolean => Object.values(presence).some(Boolean)
+const controlsShown = (presence: Presence): boolean => Object.values(presence).some(Boolean)
 
 export function usePointerOver(player: HTMLElement | null, idle = pointerIdle): boolean {
   const [over, setOver] = useState(false)
@@ -39,7 +39,7 @@ export function usePointerOver(player: HTMLElement | null, idle = pointerIdle): 
   return over
 }
 
-export function useFocusWithin(doc: Document = document) {
+function useFocusWithin(doc: Document = document) {
   const [focused, setFocused] = useState(false)
   const keyboard = useRef(false)
   useEffect(() => {
@@ -65,3 +65,22 @@ export function useFocusWithin(doc: Document = document) {
     }
   }
 }
+
+export function useControlsPresence(pointer: boolean, paused: boolean, popupOpen: boolean) {
+  const [overControls, setOverControls] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const { focused, onFocus, onBlur } = useFocusWithin()
+  return {
+    shown: controlsShown({ pointer, overControls, focused, paused, menuOpen, popupOpen }),
+    menuOpen,
+    setMenuOpen,
+    held: {
+      onPointerEnter: () => setOverControls(true),
+      onPointerLeave: () => setOverControls(false),
+      onFocus,
+      onBlur
+    }
+  }
+}
+
+export type ControlsPresence = ReturnType<typeof useControlsPresence>

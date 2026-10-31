@@ -21,3 +21,4 @@ export type KanjiAnswer = {
 export type WordExamplesAnswer = { type: 'word-examples'; rows: WordExampleRows[] }
 export type FormExamplesAnswer = { type: 'form-examples'; rows: FormExampleRows[]; listed: number }
 export type ResolveAnswer = { type: 'resolve'; entSeq: number | null }
+export type CountedWordsAnswer = { type: 'counted-words'; ids: string[] }

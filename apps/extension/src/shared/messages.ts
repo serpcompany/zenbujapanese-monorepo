@@ -1,4 +1,5 @@
 import type {
+  CountedWordsAnswer,
   FormExamplesAnswer,
   KanjiAnswer,
   NotReady,
@@ -21,6 +22,7 @@ export type DictionaryRequest =
   | { type: 'word-examples'; entSeq: number; from: number }
   | { type: 'form-examples'; form: string; from: number }
   | { type: 'resolve'; headword: string; reading: string }
+  | { type: 'counted-words'; lines: string[] }
 
 export type DictionaryAnswer =
   | { type: 'pong'; from: 'dictionary-worker' }
@@ -33,6 +35,7 @@ export type DictionaryAnswer =
   | WordExamplesAnswer
   | FormExamplesAnswer
   | ResolveAnswer
+  | CountedWordsAnswer
 
 export type Failure = { type: 'failed'; reason: string }
 

@@ -3,6 +3,8 @@ import type { PageToken } from '../page-lookup/words'
 import type { CaptionPlaceKey, CaptionPlaces, Settings } from '../shared/settings'
 import type { SourceServices } from '../translate/source-words'
 import type { VideoFollower } from '../video/follower'
+import { knownShare, type ShareServices } from '../video-tab/known-share'
+import { knownWords } from '../video-tab/word-marks'
 import { wordPopupEvents } from '../word-popup/popup-events'
 import { wordPopupHost } from '../word-popup/popup-host'
 import { type PopupBrowser, popupSettings } from '../word-popup/popup-settings'
@@ -16,7 +18,8 @@ import { holdForPopups } from './popup-hold'
 export const playerCaptionsAttribute = 'data-zenbu-player-captions'
 
 export type CaptionServices = SourceServices &
-  PopupBrowser & {
+  PopupBrowser &
+  ShareServices & {
     translate: Translate
     keepCaptionPlaces(places: CaptionPlaces): void
   }
@@ -66,6 +69,8 @@ export function playerCaptions({
     const controls = lineControls(follower, video)
     const hold = holdForPopups(follower, events, view)
     const english = lineEnglish(services.translate)
+    const known = knownWords(services)
+    const share = knownShare(video.lines, services, known)
     const popup = wordPopupHost({
       doc,
       view,
@@ -112,6 +117,7 @@ export function playerCaptions({
             settings={source}
             pick={pick}
             keepPlace={keepPlace}
+            share={share}
           />,
           { document: doc, report }
         )
@@ -136,6 +142,8 @@ export function playerCaptions({
         popup.close()
         hold.stop()
         controls.stop()
+        share.stop()
+        known.stop()
         heard.clear()
         mounted?.unmount()
         mounted = null

@@ -90,12 +90,14 @@ set in Sentry.
   lines and Netflix's own English, and following the video through Netflix's player.
 - [The caption on the player](player-captions.md): on a YouTube or Netflix watch page, the line being heard
   on the player in place of the site's captions, its words, English, and popup, and the line
-  controls: previous, play or pause, next, Repeat line, and the speed.
+  controls: previous, play or pause, next, Repeat line, and the speed, and the share of the
+  video's words known.
 
 ## Not built yet
 
 Words save from the word popup and Word Detail, and Word Detail shows the word's tag, lists, and
-notes, but nothing else shows them yet: the Account tab's Known Words, Learning, Lists, Notes,
+notes, and the Player tab's transcript and share of words known follow Known, but nothing else
+shows them yet: the Account tab's Known Words, Learning, Lists, Notes,
 and Sync Now are #1188; the side panel's Words, Player's Recent, and Translate's Image Search
 show only their empty states; and a Known word keeps its underline, meaning, and furigana on
 pages and captions, and Hide Furigana on Known Words is stored but changes nothing yet (#1187). Sentence Translations shows English only in the Player tab and under the

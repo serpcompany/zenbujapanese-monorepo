@@ -13,7 +13,8 @@ are in `src/video-tab/` unless a path says otherwise: `video-tab.interaction.tes
 `control-bar.interaction.test.tsx` (Control bar), `transcript.interaction.test.tsx` (Transcript),
 `known-words.interaction.test.tsx` (Known words) and `netflix.interaction.test.tsx` (Netflix), in
 happy-dom, with a stand-in YouTube or Netflix, the real captions service and watch page, a
-stand-in for the site's video, and a stand-in Translator; and the browser tests in `e2e/`.
+stand-in for the site's video, and a stand-in Translator; `known-share.test.ts` (Share), on the
+core's text engine and its fixture words; and the browser tests in `e2e/`.
 
 ## What a learner sees
 
@@ -77,6 +78,23 @@ video only once it is shown").
 | A meaning never touches its neighbour's, at 380 pixels and at 360. It is blue, at least 4.5:1 against the card in light and dark. One wider than 8em is cut with an ellipsis, and its sense's full text is its tooltip and what a screen reader reads. | `e2e/transcript-meanings.spec.ts`: "spaces long neighbouring word meanings apart…", "gives a cut word meaning its full text…" |
 | A word's short meaning is looked up once for the whole transcript, however many cards it is in. | Transcript: "looks up a word's meaning once for the whole transcript" |
 
+## The share of words known
+
+Signed in with saving allowed, a line under the video's title says how much of it the learner
+knows, as the iPhone app's Player writes it ([`player.md`](../../../ios/docs/product/player.md)):
+"**73%** 38 of 52 words known". Each word the core's `countedWords` counts in the captions counts
+each time it is said ([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md)); a word
+is known when the account has it Known, the set the transcript's marks use. The caption on the
+player shows the same share ([`player-captions.md`](player-captions.md)).
+
+| Behavior | Check |
+| --- | --- |
+| "Counting known words…" until the count is ready, then the share, its percentage red under 25%, orange to 50%, yellow to 75%, and green from 75%. Captions with no word to count stay at "Counting known words…", as on the iPhone. | Share: "reads Counting known words first…", "…while the captions hold no word to count"; Known words: "reads Counting known words by the title…" |
+| The share is the core's count of the caption lines, asked of the dictionary on this computer 20 lines at a time, with no other request. Leaving the video stops a count still running. | Share: "…the share of the core's counted words known", "counts twenty lines at a time…" |
+| A word marked Known, or not, from the caption's popup, a word's sheet, or Word Detail changes it at once, with no new count and no reload. | Share: "rises when one of its words is marked Known…"; Known words; `e2e/known-share.spec.ts` |
+| Signed out, or with saving refused, nothing shows and nothing is counted; signing in shows it. | Share: "is hidden signed out…"; Known words: "shows nothing signed out…"; `e2e/transcript-word-sheet.spec.ts`: "…signed out Known says to sign in…" |
+| While the dictionary isn't ready it asks again after 2 seconds, then longer each time, up to 10. A count that fails shows nothing. | Share: "waits and asks again while the dictionary is not ready…" |
+
 ## A word's sheet
 
 | Behavior | Check |
@@ -132,8 +150,7 @@ tab: "in a tab with no content script, says to reload it…"). How it's built is
 
 ## Not built yet
 
-The share of the video's words the learner knows, beside the title, is #965's, and No Japanese
-Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing on the caption on
+No Japanese Captions' Live Captions is #968's. Hide Furigana on Known Words draws nothing on the caption on
 the player: the ••• menu marks a word Known, and the transcript follows it, but the caption doesn't
 yet (#1187). Where the Player tab differs from the canvas:
 
@@ -144,7 +161,8 @@ yet (#1187). Where the Player tab differs from the canvas:
 - A press outside the sheet, other than on a word or a card, doesn't close it (#1205).
 
 The browser tests open the Player tab on the stand-in watch page for the sheet
-(`e2e/transcript-word-sheet.spec.ts`), and on a stand-in transcript for meanings and long lines
+(`e2e/transcript-word-sheet.spec.ts`) and, signed in to the local account service, the share
+known (`e2e/known-share.spec.ts`), and on a stand-in transcript for meanings and long lines
 (`e2e/transcript-meanings.spec.ts`, `e2e/transcript-long-lines.spec.ts`). The agent Chrome
 harness's stand-in watch page is where the rest is checked in Chrome
 ([`tech-debt.md`](../../../../docs/tech-debt.md)).

@@ -1,3 +1,5 @@
+const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 0 })
+
 const twoDigits = (value: number) => String(value).padStart(2, '0')
 
 function clock(seconds: number): string {
@@ -23,5 +25,8 @@ export const videoTabLabels = {
   noAnswer: "Zenbu didn't answer. Try again.",
   reloadToFollow: 'Reload this tab to follow the video.',
   reload: 'Reload',
-  englishFailed: "Translate didn't answer."
+  englishFailed: "Translate didn't answer.",
+  countingKnown: 'Counting known words…',
+  knownPercent: (fraction: number) => percent.format(fraction),
+  wordsKnown: (known: number, total: number) => `${known} of ${total} words known`
 }

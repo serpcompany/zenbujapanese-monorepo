@@ -168,6 +168,11 @@ until it answers, asked again on the next video if it failed, then `onSettingsCh
 - **When the controls show** (`presence.ts`): the pointer moving over the player, with a 3-second
   rest, the pointer over the controls, focus from the keyboard (a key down before it, so a click
   doesn't pin them open), a pause, the open menu, and the open popup.
+- **The share of words known** (`src/video-tab/known-share.ts`) is one store per video: it asks
+  `askSaving()` and hears `{ target: 'saving' }`, counts the lines through the worker's
+  `counted-words` 20 at a time, and reads Known from `word-marks.ts`'s `knownWords`, the set the
+  transcript's marks use. The Player tab draws it under the title, and the caption on the player
+  as a pill at the top left that shows and hides with the controls (`known-pill.tsx`).
 - **No CSS import in a content script.** Vite builds each content script as one IIFE, which adds
   an imported stylesheet to the page's `<head>`. So the reading aids' rules
   (`src/word-detail/reading-aids.css`) come in through `src/styles/shadow.css` and `pages.css`,

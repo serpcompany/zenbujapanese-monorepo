@@ -3,11 +3,11 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { type GlossCache, glossCache } from '../page-lookup/glosses'
 import { type Found, wordIds } from '../page-lookup/rendering'
 import { knownAtOnce } from '../shared/account-copy'
-import type { VideoTabServices } from './services'
+import type { TranslateServices } from '../translate/services'
 
 export type CaptionGlosses = GlossCache & { functionWords: ReadonlySet<string> }
 
-export function captionGlosses(services: Pick<VideoTabServices, 'popupCard'>): CaptionGlosses {
+export function captionGlosses(services: Pick<TranslateServices, 'popupCard'>): CaptionGlosses {
   const functionWords = new Set<string>()
   const cache = glossCache(id =>
     services.popupCard(id, []).then(answer => {
@@ -22,22 +22,25 @@ export function captionGlosses(services: Pick<VideoTabServices, 'popupCard'>): C
   return { ...cache, functionWords }
 }
 
+export type KnownSource = {
+  knownWords(items: string[]): Promise<Record<string, boolean>>
+  watchKnown(heard: (known: Record<string, boolean> | null) => void): () => void
+}
+
 export type KnownWords = {
   has(id: string): boolean
-  fetch(ids: readonly string[]): void
+  fetch(ids: readonly string[]): Promise<void>
   version(): number
   subscribe(listener: () => void): () => void
   stop(): void
 }
 
-function knownWords({
-  knownWords: ask,
-  watchKnown
-}: Pick<VideoTabServices, 'knownWords' | 'watchKnown'>): KnownWords {
+export function knownWords({ knownWords: ask, watchKnown }: KnownSource): KnownWords {
   const known = new Map<string, boolean>()
   const missed = new Set<string>()
   const listeners = new Set<() => void>()
   let pending: string[] = []
+  let answered: Promise<unknown> = Promise.resolve()
   let version = 0
 
   const tell = () => {
@@ -56,32 +59,42 @@ function knownWords({
   const flush = () => {
     const asked = pending
     pending = []
+    const asking: Promise<void>[] = []
     for (let at = 0; at < asked.length; at += knownAtOnce) {
       const some = asked.slice(at, at + knownAtOnce)
-      ask(some).then(heard, () => {
-        for (const id of some) if (known.get(id) === false && known.delete(id)) missed.add(id)
-      })
+      asking.push(
+        ask(some).then(heard, () => {
+          for (const id of some) if (known.get(id) === false && known.delete(id)) missed.add(id)
+        })
+      )
     }
+    return Promise.all(asking)
   }
 
   const fetch = (ids: readonly string[]) => {
     const fresh = [...new Set([...ids, ...missed])].filter(id => !known.has(id))
     missed.clear()
-    if (fresh.length === 0) return
-    for (const id of fresh) known.set(id, false)
-    if (pending.length === 0) queueMicrotask(flush)
-    pending.push(...fresh)
+    if (fresh.length > 0) {
+      for (const id of fresh) known.set(id, false)
+      if (pending.length === 0) {
+        const flushed = new Promise(done => queueMicrotask(() => done(flush())))
+        answered = Promise.all([answered, flushed])
+      }
+      pending.push(...fresh)
+    }
+    return answered.then(() => undefined)
   }
 
   const stop = watchKnown(change => {
     if (change) {
       heard(change)
-      return fetch([])
+      void fetch([])
+      return
     }
     const asked = [...known.keys()]
     known.clear()
     tell()
-    fetch(asked)
+    void fetch(asked)
   })
 
   return {
@@ -99,7 +112,7 @@ function knownWords({
   }
 }
 
-export function useKnownWords(services: VideoTabServices): KnownWords {
+export function useKnownWords(services: KnownSource): KnownWords {
   const known = useMemo(() => knownWords(services), [services])
   useEffect(() => () => known.stop(), [known])
   return known
@@ -108,7 +121,7 @@ export function useKnownWords(services: VideoTabServices): KnownWords {
 export function useKnown(found: Found | null, known: KnownWords): (id: string | null) => boolean {
   useSyncExternalStore(known.subscribe, known.version)
   useEffect(() => {
-    if (found) known.fetch(wordIds(found.tokens))
+    if (found) void known.fetch(wordIds(found.tokens))
   }, [found, known])
   return id => id !== null && known.has(id)
 }

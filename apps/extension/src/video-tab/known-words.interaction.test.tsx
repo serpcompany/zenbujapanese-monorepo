@@ -1,5 +1,6 @@
 import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { CountedWordsAnswer } from '../shared/dictionary'
 import { writeSettings } from '../shared/settings'
 import { settle } from '../test/render'
 import { watching } from '../test/video-tab-harness'
@@ -16,6 +17,8 @@ afterEach(() => {
 
 const word = (text: string) =>
   document.querySelector<HTMLElement>(`[data-line] [data-source] [data-word="${text}"]`)
+
+const shareLine = () => document.querySelector('[data-known-share]')
 
 const meaningsIn = (row: Element | undefined) =>
   [...(row?.querySelectorAll('[data-aid="meaning"] [aria-hidden="true"]') ?? [])].map(
@@ -60,5 +63,44 @@ describe('the transcript’s known words', () => {
     expect(word('散歩')?.hasAttribute('data-known')).toBe(false)
     await shown.knows({ taberu: true })
     await vi.waitFor(() => expect(word('散歩')?.hasAttribute('data-known')).toBe(true))
+  })
+})
+
+describe('the share of the video’s words known', () => {
+  it('reads Counting known words by the title, then the share, which rises when a word is marked Known', async () => {
+    tab = watching({ saving: null })
+    const shown = tab
+    let count: (answer: CountedWordsAnswer) => void = () => {}
+    shown.services.countWords.mockImplementationOnce(() => new Promise(done => (count = done)))
+    await shown.show(true)
+    await shown.lines()
+    expect(document.querySelector('[data-video-title]')?.nextElementSibling).toBe(shareLine())
+    expect(shareLine()?.textContent).toBe('Counting known words…')
+    expect(shown.services.countWords).toHaveBeenCalledWith(
+      expect.arrayContaining(['散歩に行きましょう'])
+    )
+    await act(async () => count({ type: 'counted-words', ids: ['sanpo', 'iku', 'kyou', 'tenki'] }))
+    await vi.waitFor(() => expect(shareLine()?.textContent).toBe('0% 0 of 4 words known'))
+    expect(shareLine()?.querySelector('.text-red-600')?.textContent).toBe('0%')
+    await shown.knows({ sanpo: true })
+    expect(shareLine()?.textContent).toBe('25% 1 of 4 words known')
+    expect(shareLine()?.querySelector('.text-orange-700')?.textContent).toBe('25%')
+    expect(word('散歩')?.hasAttribute('data-known')).toBe(true)
+    await shown.knows({ iku: true, kyou: true })
+    expect(shareLine()?.querySelector('.text-green-700')?.textContent).toBe('75%')
+    expect(shown.services.countWords).toHaveBeenCalledOnce()
+  })
+
+  it('shows nothing signed out, and the share once signed in with saving allowed', async () => {
+    tab = watching()
+    const shown = tab
+    await shown.show(true)
+    await shown.lines()
+    expect(shareLine()).toBeNull()
+    expect(shown.services.countWords).not.toHaveBeenCalled()
+    await shown.refuse(null)
+    await vi.waitFor(() => expect(shareLine()?.textContent).toBe('0% 0 of 4 words known'))
+    await shown.refuse('subscription-required')
+    expect(shareLine()).toBeNull()
   })
 })
