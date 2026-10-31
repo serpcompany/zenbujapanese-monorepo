@@ -73,8 +73,8 @@ once tests can load it.
 Amended (issue 956): a client without Search replays the suites for what it does. The browser
 extension has no dictionary search, and the official sqlite-wasm build it runs has no FTS4, so it
 never calls `search()` and is held to `tokenizer.json`, `romaji.json`, `word-detail.json`, and
-`kanji-detail.json` in [`language-data/conformance/`](../../language-data/conformance/), replayed
-on that WebAssembly build, rather than to `search-retrieval.json`. Like every client, it reads
+`kanji-detail.json` in [`language-data/conformance/`](../../language-data/conformance/), to be
+replayed on that WebAssembly build (#1071), rather than to `search-retrieval.json`. Like every client, it reads
 only the releases whose artifact schemas it declares it can read.
 
 The discussion and reviewer answers are in

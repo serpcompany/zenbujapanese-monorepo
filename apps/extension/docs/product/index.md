@@ -97,7 +97,7 @@ set in Sentry.
 
 Words save from the word popup and Word Detail, and show in the Account tab's Known Words,
 Learning, Lists, and Notes. A kept Favorites coming down deleted is dropped (#1188). Signed out,
-the Account tab's Words, Player's Recent, and Translate's Image Search show only their empty
-states. A Known word keeps its underline, meaning, and furigana on pages and captions, and Hide
+the Account tab's Words and Translate's Image Search show only their empty states. Player's
+Recent shows only its empty state, signed in or out, until watched videos are recorded (#1193). A Known word keeps its underline, meaning, and furigana on pages and captions, and Hide
 Furigana on Known Words is stored but changes nothing yet (#1187). Sentence Translations shows
 English only in the Player tab and under the caption on the player, not on other pages.

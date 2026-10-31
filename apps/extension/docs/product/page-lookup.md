@@ -7,7 +7,8 @@ is built is in [`extension-page-lookup.md`](../../../../docs/agents/extension-pa
 
 ## Where it runs
 
-Zenbu asks Chrome for no site at install. It runs on a site the learner gave it:
+At install, Zenbu asks Chrome only for the language-data host and `www.youtube.com`. It runs on
+any other site once the learner gives it that site:
 
 - **Allow on This Site,** in the side panel header's menu
   ([`side-panel-header.md`](side-panel-header.md)).

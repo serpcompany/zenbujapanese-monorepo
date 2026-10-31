@@ -45,11 +45,11 @@ second page's `create` from its own click joins it, with the same progress, and 
 together. All measured in Chrome 156.0.8078.48, in the headful agent Chrome, on a fresh profile,
 from a real click handler (2026-10-28, #1131).
 
-So the welcome tab's Download makes the `ja` to `en` Translator, the one the Video tab and the
+So the welcome tab's Download makes the `ja` to `en` Translator, the one the Player tab and the
 caption on the player need, and that downloads the pack. `chromeModel`
 (`src/shared/translation-model.tsx`) is that direction's `translatorAvailability` and
-`downloadTranslator`; the Video tab asks the same direction through its services. After it,
-neither the Video tab nor Translate asks; Translate's first English to Japanese makes its
+`downloadTranslator`; the Player tab asks the same direction through its services. After it,
+neither the Player tab nor Translate asks; Translate's first English to Japanese makes its
 Translator from its own Translate click, from the pack. Translate shows the download line only
 once a progress event reports `0 < loaded < 1`, so that `[0, 1]` stays "Translating…". The
 stand-in Translator (`src/test/translator-stand-in.ts`) holds one pack the same way. A page

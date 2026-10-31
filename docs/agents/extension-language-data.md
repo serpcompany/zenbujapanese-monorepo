@@ -18,7 +18,7 @@ The worker reads, in order (`src/worker/release.ts`, `download.ts`):
 1. `releases.json`, with `cache: 'no-cache'`, newest `published_at` first.
 2. Each release's `manifest.json`, checked against `releases.json`'s `manifest_sha256`. It takes
    the newest release that has every file it needs with the artifact schema it reads (the two
-   sets in `release.ts`).
+   sets in `release-files.ts`).
 3. `compressed.json`, whose `manifest_sha256` must be the manifest's. A release without one (a
    404, as a new release has for a minute or so) is passed over for the newest listed release
    that has one, as [`publishing.md`](../../language-data/publishing.md) (Gzipped copies) asks;
