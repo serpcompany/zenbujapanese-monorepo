@@ -62,6 +62,8 @@ export interface WordSectionsProps<E> extends Pick<KanjiDetailsProps, 'learnerPr
   text: WordSectionsText
   renderWordLink: RenderWordLink
   renderMeaningExample: (example: E, meaning: number) => ReactNode
+  renderMeaning?: (sense: ShownSense<E>, meaning: ReactNode) => ReactNode
+  linksKanjiWithoutDetails?: boolean
   kanjiActions: (kanji: ShownKanjiDetails) => ReactNode
   kanjiLearnerPrompt: (kanji: ShownKanjiDetails) => KanjiDetailsProps['learnerPrompt']
   conjugations: ReactNode
@@ -80,6 +82,8 @@ function Notes({ notes, lang }: { notes: ShownNote[]; lang?: string }) {
   ))
 }
 
+const kanjiRowClass = 'flex items-center gap-3 px-2 py-2'
+
 function KanjiItems<E>({ kanji, ...props }: Shared<E> & { kanji: ShownWordKanji[] }) {
   return (
     <ul className="-mx-2 flex flex-col">
@@ -94,15 +98,25 @@ function KanjiItems<E>({ kanji, ...props }: Shared<E> & { kanji: ShownWordKanji[
             </span>
           </>
         )
+        const label = fill(props.text.word.kanjiRowLabel, {
+          character: item.character,
+          meaning: String(item.meaning)
+        })
+        const link =
+          item.details || !props.linksKanjiWithoutDetails
+            ? null
+            : props.renderWordLink({
+                target: { kanji: item.character },
+                className: `${kanjiRowClass} flex-1 rounded-md hover:bg-muted`,
+                'aria-label': label,
+                children: summary
+              })
         return (
           <li key={item.character}>
             {item.details ? (
               <Disclosure
                 data-kanji-row={item.character}
-                label={fill(props.text.word.kanjiRowLabel, {
-                  character: item.character,
-                  meaning: String(item.meaning)
-                })}
+                label={label}
                 buttonClassName="px-2 py-2"
                 summary={summary}
               >
@@ -118,8 +132,8 @@ function KanjiItems<E>({ kanji, ...props }: Shared<E> & { kanji: ShownWordKanji[
                 </div>
               </Disclosure>
             ) : (
-              <div className="flex items-center gap-3 px-2 py-2" data-kanji-row={item.character}>
-                {summary}
+              <div className={link ? 'flex' : kanjiRowClass} data-kanji-row={item.character}>
+                {link ?? summary}
               </div>
             )}
           </li>
@@ -172,14 +186,14 @@ function RelatedWords<E>({ related, ...props }: Shared<E> & { related: RelatedWo
     <ul className="flex flex-col divide-y">
       {related.map(word => {
         const ruby = <RubyText segments={word.ruby} className="text-lg font-medium" />
-        const link =
-          word.entSeq === null
-            ? null
-            : props.renderWordLink({
-                target: { entSeq: word.entSeq },
-                className: 'underline-offset-4 hover:underline',
-                children: ruby
-              })
+        const link = props.renderWordLink({
+          target:
+            word.entSeq === null
+              ? { headword: word.headword, reading: word.reading }
+              : { entSeq: word.entSeq },
+          className: 'underline-offset-4 hover:underline',
+          children: ruby
+        })
         return (
           <li
             key={`${word.headword}|${word.reading}|${word.entSeq}|${word.relation}`}
@@ -199,6 +213,15 @@ function RelatedWords<E>({ related, ...props }: Shared<E> & { related: RelatedWo
   )
 }
 
+function Meaning<E>({ sense, ...props }: Shared<E> & { sense: ShownSense<E> }) {
+  const meaning = (
+    <p className="font-medium" lang={props.lang}>
+      {sense.meaning}
+    </p>
+  )
+  return props.renderMeaning ? props.renderMeaning(sense, meaning) : meaning
+}
+
 function WordSectionContent<E>({
   section,
   word,
@@ -214,9 +237,7 @@ function WordSectionContent<E>({
               <li key={sense.number} className="flex gap-2">
                 <span className="font-medium tabular-nums">{sense.number}.</span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium" lang={props.lang}>
-                    {sense.meaning}
-                  </p>
+                  <Meaning sense={sense} {...props} />
                   {sense.notes.length > 0 ? (
                     <p className="text-muted-foreground">
                       <Notes notes={sense.notes} lang={props.lang} />

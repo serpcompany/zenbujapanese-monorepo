@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Japanese words</title>
+    <link rel="stylesheet" href="./words.css" />
+    <script>
+      const dark = new URLSearchParams(location.search).get('dark')
+      if (dark !== null) document.documentElement.classList.add('dark')
+      if (dark) document.documentElement.style.color = dark
+    </script>
+  </head>
+  <body>
+    <nav><a href="#nav">要求が要る。</a></nav>
+    <div class="bar" id="fixed-bar">要所</div>
+    <header><div class="sticky" id="sticky-bar">要領</div></header>
+    <main>
+      <p id="sentence">要求が要る。</p>
+      <p id="choice">要は要所と要領と要項。</p>
+      <p id="in-link"><a id="word-link" href="#followed">要領</a></p>
+      <p id="english">There is no Japanese in this sentence.</p>
+      <form>
+        <input id="field" value="要求" />
+        <textarea id="area">要所</textarea>
+        <button type="button" id="page-button">要領</button>
+      </form>
+      <div id="editable" contenteditable="true">要項</div>
+      <label id="agree"><input id="agree-box" type="checkbox" />要求に同意する</label>
+      <details id="more"><summary id="more-summary">要領を見る</summary><p id="more-inside">Inside.</p></details>
+      <div class="edges">
+        <span class="edge" id="top-left">要求</span>
+        <span class="edge" id="top-right">要求</span>
+        <span class="edge" id="bottom-left">要求</span>
+        <span class="edge" id="bottom-right">要求</span>
+      </div>
+      <p id="outside">Somewhere to click outside a word.</p>
+      <div id="later"></div>
+    </main>
+  </body>
+</html>

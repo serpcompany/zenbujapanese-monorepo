@@ -1,6 +1,6 @@
 import type { KuromojiToken, Tokenize } from './morphology'
 
-const ipadicFiles = [
+export const ipadicFiles = [
   'base',
   'check',
   'tid',

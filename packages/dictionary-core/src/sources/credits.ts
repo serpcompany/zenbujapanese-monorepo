@@ -1,4 +1,4 @@
-const creditClients = ['app', 'website'] as const
+const creditClients = ['app', 'website', 'extension'] as const
 
 type CreditClient = (typeof creditClients)[number]
 
@@ -23,6 +23,7 @@ interface CreditsShown {
 }
 
 const everyClient: readonly CreditClient[] = creditClients
+const appAndWebsite: readonly CreditClient[] = ['app', 'website']
 const ccBySa4 = { name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/' }
 const bsd3 = { name: 'BSD-3-Clause', url: 'https://opensource.org/license/bsd-3-clause' }
 const edrdgLicence = {
@@ -132,7 +133,7 @@ export const sourceCredits = {
     url: 'https://github.com/WorksApplications/SudachiDict',
     credit: 'Japanese word analysis by Sudachi.rs and SudachiDict.',
     license: { name: 'Apache-2.0 · BSD-3-Clause · MIT' },
-    clients: everyClient
+    clients: appAndWebsite
   },
   kuromoji: {
     id: 'kuromoji',

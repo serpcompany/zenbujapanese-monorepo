@@ -1,0 +1,103 @@
+# The caption on the player
+
+On a YouTube watch page, with Zenbu Captions on, Zenbu draws the line being heard on YouTube's
+player, in place of YouTube's own captions, with the line controls at the player's top right. The
+lines come from the watch page, once per video ([`youtube-captions.md`](youtube-captions.md)); the
+words, their popup, and the English are the same as the Player tab's and Translate's
+([`video-tab.md`](video-tab.md), [`word-popup.md`](word-popup.md)). YouTube's layout doesn't
+change. The text is in `src/player-captions/labels.ts`. How it's built is in
+[`extension-captions.md`](../../../../docs/agents/extension-captions.md), The caption on the player.
+
+The tests named here are in `src/player-captions/` unless a path says otherwise:
+`line-controls.test.ts` (Lines), `caption-place.test.ts` (Place),
+`player-captions.interaction.test.tsx` (Caption), `caption-drag.interaction.test.tsx` (Drag), and
+`player-controls.interaction.test.tsx` (Controls), in happy-dom with a stand-in clock for the
+video, a stand-in Translator, and the fixture words; `src/video/youtube-page-captions.interaction.test.tsx`
+(Watch page), on the real captions service and watch page with a stand-in YouTube; and
+`e2e/player-captions.spec.ts` (Browser) and `e2e/caption-drag.spec.ts` (Browser drag), in Playwright's Chromium with the test build on the agent
+Chrome harness's stand-in watch page under `www.youtube.com`, which asks YouTube nothing.
+
+On a Netflix watch page it is the same caption and controls on Netflix's player: Netflix's own
+subtitles are hidden while it shows and back with Zenbu Captions off, and every control seeks,
+plays, and sets the speed through Netflix's player ([`netflix.md`](netflix.md)).
+
+## The caption
+
+| Behavior | Check |
+| --- | --- |
+| The line being heard sits at the bottom of the player, or where the learner moved it, white on a dark band, sized to the player, and nothing shows between lines. Its English is a box of its own, under it by default ([Moving the caption](#moving-the-caption)). It is drawn in its own shadow root inside the player, so YouTube's styles don't reach it and nothing is added to the page's own styles. | Caption: "sits in the follower's caption host…"; Browser: "draws the line being heard inside the player…" |
+| YouTube's own captions are hidden while it shows. With Zenbu Captions off in Settings, or Zenbu off for www.youtube.com (the side panel header's site switch), it shows nothing and leaves YouTube's captions; turning either off takes it away and shows YouTube's again at once, and turning it on brings it back with no new request to YouTube. | Watch page: "shows the video's lines in place of the site's captions…", "with Zenbu Captions off…", "takes the caption away when Zenbu Captions turns off…", "takes the caption away when Zenbu turns off for the site…", "shows none on a watch page of a site Zenbu is off for"; Browser: "draws the line being heard…" |
+| A video without Japanese captions shows nothing. Opening another video shows that video's lines. While the player holds a video other than the lines' video, before the page says it navigated, it draws nothing and the controls and Repeat leave the video alone (with a follower that reports the new video; YouTube's reports the one it was started for). | Watch page: "shows nothing for a video without Japanese captions", "moves to the next video's lines…", "draws nothing over the next video before the page says it opened…"; Caption: "draws nothing over it"; Lines: "another video in the element" |
+| Each word is underlined, with the reading aids turned on in Settings: furigana, a romaji line, and each word's short meaning. Turning one on or off changes the caption with no reload. | Caption: "underlines the line's words…", "follows the reading aids…"; Watch page: "passes each settings change to the caption"; Browser: "draws the line being heard…" |
+| Each word has its own underline, half a rem from the word before it, so two neighbouring words' underlines never join, with Word Meanings off or on; turning Word Meanings on or off doesn't change where one word ends and the next begins. | Browser: "gives each word on the caption its own underline…" |
+| A meaning is white at 70%, at least 4.5:1 against the band over the brightest frame, whatever the page's theme. | Browser: "draws word meanings on the caption at least 4.5:1…" |
+| The line's English is in its own box, smaller, under the caption's box and centred on it, from Chrome's Translator on this computer, asked for this line and the next only. With Translations off, only the English's box goes, and nothing is asked; turning it on brings the box back. | Caption: "shows the line's English in its own box under the caption…", "takes away only the English's box when Translations turns off…", "shows no English and asks for none while Translations is off"; Browser drag: "shows the English in its own box under the caption…" |
+| Until Japanese to English is downloaded, the caption shows the Japanese and its romaji line, as the reading aids say, and no English; it never starts the download, which the Player tab offers. Once it is downloaded, the English shows. | Caption: "shows Japanese and romaji until the model is downloaded…" |
+| While an ad plays, no caption and no controls show, and YouTube's own captions come back; after it, the caption and controls come back and YouTube's are hidden again. | Caption: "during an ad…" |
+| Clicks on the caption and the controls don't reach YouTube's player, so they don't pause the video. Of the keys, only Space and Enter on a focused control, the speed menu's own keys while it is open, a popup's menu's or sheet's while it is open, and, while a caption word's card is expanded into its full entry, the arrows, Home, End, Page Up, and Page Down, which scroll the entry, are kept from YouTube; every other key, such as f or an arrow after a click on Next, works YouTube's shortcuts, and Escape always reaches the page. | Caption: "keeps clicks, and the keys a control acts on, from the player…", "lets YouTube's own shortcuts reach the page after a mouse click…", "keeps the speed menu's own keys inside…"; `src/player-captions/kept-inside.interaction.test.tsx`: "keeps a menu's own keys inside only while the menu is open…", "keeps the keys that scroll inside while the card is expanded into its full entry" |
+
+## Moving the caption
+
+The caption and its English are two boxes, and each moves on its own: a press held about a quarter
+second (280 ms) on a box lifts it, with a white ring and a shadow, and the learner then drags it
+anywhere inside the player. Until it lifts, a press is a click, so a word still opens its popup.
+Since a press on the line can drag it, the caption's text can't be selected; to copy a line, or
+take it into Translate's **Use Selection**, the learner selects it in the side panel's
+[Video tab](video-tab.md) transcript.
+
+| Behavior | Check |
+| --- | --- |
+| Over a box the pointer is a grab hand and a small grabber shows at its top; while dragging it is a closed hand; over a word it is the word's pointer. | Browser drag: "shows a grab hand over the caption, lifts it after a hold…" |
+| A press shows a ring at once; held 280 ms without moving more than 6 pixels, the box lifts. A quick press, a press that moves first, and a press with another button move nothing. A hold on a word drags the caption too and opens no popup; the word's next click opens it. A press on a word held any time but let go without moving the box more than 6 pixels is a click, and opens the popup. Before the box lifts, the pointer leaving it lets the press go; once it lifts, the box follows the pointer out of itself. | Drag: "lifts the box after a quarter-second hold…", "moves nothing for a quick press, a press that moves before the hold…", "drags the caption from a word held for a quarter second…", "opens the word's popup for a press held past the quarter second that never moves the box…", "lets a press go when the pointer leaves the box before the hold…", "lifts nothing when the line ends during the hold"; Browser drag: "shows a grab hand over the caption, lifts it after a hold…" |
+| A lifted box follows the pointer and stops at the player's edges, so it stays wholly inside, 16 pixels from the sides. When one line runs straight into the next mid-drag, the new line stays where the pointer holds it, whatever its size. | Drag: "keeps the box under the pointer when one line runs straight into the next mid-drag", "keeps the box wholly inside the player at every edge"; Place: "moves by the pointer's movement until the box meets an edge…", "keeps the pointer where it held a box whose size changes…"; Browser drag: "keeps the caption under the pointer when the line changes mid-drag", "keeps the caption wholly inside the player at every edge" |
+| The English drags on its own and the caption stays where it was, and the other way round. A box that hasn't moved stays at the bottom: the caption above the English while neither has moved, each alone at the bottom once the other has. | Drag: "drags the English on its own, leaving the caption where it was…"; Browser drag: "shows the English in its own box under the caption, drags each box on its own…" |
+| A drag doesn't reach YouTube's player, so the video neither pauses nor seeks, and the controls show as they do while the pointer moves over the player. After a drag a word still opens its popup. | Drag: "lifts the box after a quarter-second hold, then moves it…, with the video playing on"; Browser drag: "shows a grab hand over the caption, lifts it after a hold…" |
+| Each box's place is kept as a share of the room the player leaves around it, across and down, so it holds when the player resizes, in theatre and fullscreen, for the next line, the next video, and the next visit. If the line ends mid-drag, the place it got to is kept. Both places are kept on this computer only, with the settings, and are not synced. | Place: "is the box's offset as a share of the room…", "draws a place inside the room at any size…"; Drag: "keeps the place across lines and settings changes…"; `src/shared/settings.test.ts`: "keeps the caption's place and its English's…"; Browser drag: "keeps the caption's place when the player resizes, in fullscreen, and for the next video…" |
+| A double-click on a box's background puts that box back; one on a word doesn't. **Reset Caption Position**, under Videos in the side panel header's menu, puts both back, the English under the caption, and is greyed out while neither has moved ([`side-panel-header.md`](side-panel-header.md)). | Drag: "puts a box back on a double-click on its background…", "puts both boxes back at the bottom, the English under the caption…"; Browser drag: "…and a double-click puts it back", "…and Reset Caption Position in the side panel puts both back" |
+
+## A word's popup
+
+| Behavior | Check |
+| --- | --- |
+| A click on a word opens its word popup over the player, also in fullscreen, and the video pauses, with "Paused while the popup is open" at the top right. | Caption: "underlines the line's words, and a word opens the word popup", "pauses, says so…"; `src/word-popup/popup-host.interaction.test.tsx`: "mounts inside the page's fullscreen element…"; Browser: "pauses the video while a word's popup is open…" |
+| Closing it, with Escape or a click outside, plays the video again only if it was playing when the popup opened; so does the caption going away with the popup open. | Caption: "pauses, says so, and plays again when the popup closes", "stays paused after the popup closes…", "stopping takes the caption away and closes the popup, playing again…", "stopping leaves a video paused…"; Browser: "pauses the video while a word's popup is open…" |
+| In the fullscreen player, a click or Space on the popup's buttons doesn't reach YouTube's player, so the video stays paused. | Caption: "keeps a click and Space on its buttons from the player…" |
+| Moving from one word to another keeps the video paused. | Caption: "keeps the video paused while the learner moves from one word to another" |
+
+## The line controls
+
+Previous line, Play or Pause, Next line, Repeat line, and the speed, as the app's Player has them
+([`player.md`](../../../ios/docs/product/player.md), Line-by-line skipping and Repeat line). None
+asks YouTube for anything (Browser: "draws the line being heard…").
+
+| Behavior | Check |
+| --- | --- |
+| While the video plays, Next and Previous go to the start of that line and keep playing. | Lines: "while playing, jump to that line and keep playing"; Controls: "move to the next and previous line…" |
+| Next and Previous seek to the line's start exactly. While it is paused, they play just that line and pause again at its end, also when the seek lands a little early or late, and on a last line that ends after the video, where the video ends. Before the first line, either goes to the first. | Lines: "while paused, play just that line…", "from before the first line…", "pause where the learner paused…", "a seek that lands off its target", "the last line of a video that ends before it" |
+| Repeat line plays the line again from its start each time it ends, once per end and never twice within 700 ms, at every speed and when a seek lands 200 ms early or late, until it is turned off. A last line that ends after the video repeats from where the video ends. Next, Previous, and a seek move it to that line. Turned on while paused, it goes to the line's start without playing. | Lines: "Repeat line" (each, with "seeks once per line end at…" and "loops a last line that ends after the video does…"); Controls: "move to the next and previous line, repeat a line…"; Browser: "draws the line being heard…" |
+| The speed menu offers 0.5×, 0.75×, 1×, 1.25×, and 1.5×, opens inside the player, also in fullscreen, and closes on a choice. The speed chosen stays across a line change, Repeat, and an ad. | Lines: "chosen while repeating, stays across a line change and an ad"; Controls: "choose a speed…"; Browser: "opens the speed menu inside the player…" |
+| A seek from the Player tab moves Repeat with it. | Watch page: "sends the Video tab's seeks through the caption…" |
+
+## When the controls show
+
+The caption always shows while a line is heard. The controls show while the video is paused,
+while the pointer moves over the player and for 3 seconds after it rests, while it is over the
+controls, while a control has focus from the keyboard, while the speed menu is open, and while a
+word's popup is open; otherwise they fade out (Controls: "when the controls show", each).
+
+## The share of words known
+
+Signed in with saving allowed, "You know 38%" shows at the player's top left, its percentage
+coloured as in the Player tab, and shows and hides with the controls. It is the Player tab's share
+of the video's words known, and changes as it does ([`video-tab.md`](video-tab.md), The share of
+words known) (Controls: "reads You know N% on the player…"; `e2e/known-share.spec.ts`). Until the
+count is ready it reads "Counting known words…", as the Player tab does (Controls: "reads Counting
+known words… on the player…"). The pill hides while a Known lookup has failed, and returns with the share (Controls: "hides the pill while
+a Known lookup has failed…").
+
+## Not built yet
+
+Neither box has a keyboard move, and moved to the top right one can cover the line controls
+until it is dragged away. Touch drags are built as pointer events but checked only with a mouse. After the extension updates or reloads, a watch page that was already open shows no caption until
+the learner reloads it (#1114). Live Captions for a video with no Japanese captions are #968's. The fullscreen screenshots and a counted
+Repeat run in branded Chrome are the agent Chrome harness's, by hand.

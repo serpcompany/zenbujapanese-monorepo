@@ -4,7 +4,7 @@
 client runs (ADR 0008, ADR 0009). The website runs it through the dictionary service
 ([`dictionary-api.md`](dictionary-api.md)), and the app runs it in JavaScriptCore, offline
 ([Embedded](#embedded)): search, the results screen, examples and linked words, and the word,
-kanji, and kanji element pages. The browser extension will run it offline too. A client keeps its
+kanji, and kanji element pages. The browser extension runs it offline too. A client keeps its
 screens and reads the files; what a screen lists, orders, labels, and says is the core's, apart from
 the exceptions under [Rules](#rules). It is TypeScript source: each client compiles it (the website
 through Next.js's `transpilePackages`, the service through tsx and esbuild, the app from a bundle
@@ -28,7 +28,7 @@ The app asks `embedded/` for each of these; [The app's side](#the-apps-side) say
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`), with `segmentationFurigana`. `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
 | `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them; the school lists Grade filters (`school-kanji.ts`). | `SchoolKanjiClient` |
 | `sources/` | The source credits every client shows (`docs/data-sources.md`). | `CreditsView` |
-| `captions/` | Caption rules on timed lines from any source (sound tags, line ends, a translation's sentences, pairing); YouTube's answers, read without a DOM. | `YouTubeCaptionClient` |
+| `captions/` | Caption rules on timed lines from any source (sound tags, line ends, a translation's sentences, pairing); YouTube's and Netflix's tracks. | `YouTubeCaptionClient` |
 | `fixtures/` | The app's rows for twelve words and their forms (50 examples each), the kanji 要, kanji sharing a radical with 要, and searches' leading words, for development and tests only. | — |
 
 ## Rules
@@ -150,7 +150,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
   | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
   | `phraseNote` | A phrase, its meanings and parts of speech | Its first three meanings, or null |
-  | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
+  | `sourceCredits` | `app`, `website`, or `extension` | That client's source credits and conversion notice |
   | `progressStats`, `progressDays` | The log's days, goal, today, changes | Stats; days filled |
   | `knownByDate` | The log's days, today, a week back | A week's Known IDs by day, total, change |
   | `youTubeVideo`, `youTubeCaptions`, `youTubeTranslatedCaptions` | A player response; timed text; captions, translated timed text | Its track and playability; captions; them paired; or null |
@@ -230,8 +230,7 @@ The app runs the core in JavaScriptCore's interpreter (an app's JavaScriptCore h
 what is cheap differs from Node and a browser. Measure there before and after a change to anything
 a list row or a linked sentence runs:
 `/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc --useJIT=false`
-runs the app's bundle on a Mac, and `startSamplingProfiler()` with `samplingProfilerStackTraces()`
-says where the time goes.
+runs the bundle on a Mac; `startSamplingProfiler()` and `samplingProfilerStackTraces()` time it.
 
 - **A loop the engine runs natively beats the same loop written out.** A regular expression test
   over a string (`everyUnitIsAGrapheme`, `isASCII`, `isJapaneseOnly`), `split`, `indexOf`,
@@ -358,8 +357,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   both through the importer's `scripts/romaji-search-forms.mjs`: kind 2 in `forms` is the ASCII
   spelling earlier releases stored; kinds 3 and 4 in `shown_romaji_forms`, `romaji`'s and it without
   macrons, rank after all of kind 2 (4 after 3), so they are read only while a search lists under 60
-  words, and never corroborate or stop a deinflection. `romajiQuery` sends ASCII and macron vowels
-  to romaji search.
+  words, and never corroborate or stop a deinflection. `romajiQuery` sends ASCII and macrons here.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail
@@ -394,8 +392,8 @@ The core answers as the Swift it replaced did, which the suites pin.
   "Verb", "Noun", or "Adverb" beside a phrase that already says it.
 - `shortGloss` is a meaning's first part, without a note in brackets or a leading "to", cut to
   seventeen characters and an ellipsis: what the app shows under a linked word.
-- `wordSlug` (`detail/slug.ts`) and the website's other URL rules (`detail/links.ts`, ADR 0007)
-  are the core's, so the service, the website, and the app's Share build the same URLs.
+- `wordSlug` (`detail/slug.ts`) and the website's other URL rules (`links.ts`, `word-path.ts`,
+  ADR 0007) are the core's, so the service, the website, and the app's Share build the same URLs.
 
 ## Examples
 
@@ -433,6 +431,8 @@ The core answers as the Swift it replaced did, which the suites pin.
 ([`dictionary-api.md`](dictionary-api.md), Routes). Its responses are plain JSON, with maps as
 records keyed by JMdict entry number. `retired()` answers the release's `RetiredEntries.json`.
 
+- For the extension: `segmentation`, `resolve` (an entry number or null), `countedWords`, and
+  the popup's `popupCard` (`artifact/popup-card.ts`). Without `strokes` in `attached`, no strokes.
 - `attachments` names each bundled database opened with the artifact, its file in the app's
   Resources, and the `artifact_schema` (and `pack_id`) its `metadata` table must record. The packs
   map entries by Language Reference ID, so each is built for one `LanguageReferenceData.sqlite3`
@@ -505,8 +505,7 @@ ready and a page's first request prepares nothing:
 - A `WordExampleRow`'s `highlights` are the page word's tokens (the suite's `pageWord`); its
   `tokens` are set only where the page splits the sentence differently, when a joined word the
   page's entry is written as stays whole. A `FormExampleRow` is keyed by the form's spelling alone
-  and has no page entry, so its words link as no word page sees them. Each row's `romaji` is its
-  words' `sentenceRomaji`.
+  and has no page entry, so its words link as no word page sees them; `romaji` is `sentenceRomaji`.
 - An `ExampleCountRow`'s `listed` is at most 100 plus a word's checked examples, its `count` exact
   up to 50 (51 means more), and `truncated` says more matched; a page shows 25 at a time.
 - Each sentence of a Tatoeba pair has its own ID, contributor (null if none is named), and license.

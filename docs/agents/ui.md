@@ -13,7 +13,7 @@ Run every command below from `packages/ui`, after `pnpm install` at the reposito
 | Folder | What it holds |
 | --- | --- |
 | `src/components/` | The stock shadcn primitives (style `base-nova`, base colour neutral), as the CLI wrote them but for one edit (below). Add one with `pnpm dlx shadcn@latest add <name>` here; `components.json` points the CLI at this package. |
-| `src/dictionary/` | The word components: the word header, the word page's sections (`WordSections`), kanji details, example lists and their paging, conjugations, frequency, source credits, and the pieces they share, such as furigana, pitch, and the pronounce button. |
+| `src/dictionary/` | The word components: the word header, with a tag under the reading the client may give, the word page's sections (`WordSections`), kanji details, example lists and their paging, conjugations, frequency, source credits, Share and the ••• menu (`SavedItemActions`, whose groups of actions may follow a Status choice and open a page of choices with Back, as the extension's Add to List… does), and the pieces they share, such as furigana, pitch, and the pronounce button, which speaks in the voice `voice.ts` chooses (below). |
 | `src/styles/theme.css` | The theme: the shadcn tokens on `:root`, `.dark` redefining them, and the utilities `muted-surface`, `meaning-clamp`, and `furigana`. |
 | `src/lib/`, `src/hooks/` | `Fill`, which puts components into a template's slots; `PortalContainer`, which sends menus and dialogs into a shadow root; and `useMediaQuery`. |
 
@@ -33,10 +33,18 @@ The package runs in a Next.js server component, in the browser, and in an extens
 root, so a check refuses anything only one of them has:
 
 - **No client and no framework.** Biome (`packages/ui/biome.json`, `noRestrictedImports`)
-  refuses `next`, `next/*`, `@opennextjs/*`, `server-only`, `next-themes`, `sonner`, and the
-  website's `@/` paths; `pnpm verify` refuses an import of `apps/` or `tools/`
-  (`ui-imports-no-client`) and anything that reaches Next.js, the theme switcher, or the toasts,
-  however indirectly (`ui-needs-no-next`, `verify.json`).
+  refuses `next`, `next/*`, `@opennextjs/*`, `server-only`, `next-themes`, and the website's `@/`
+  paths, in every file; `pnpm verify` refuses an import of `apps/` or `tools/`
+  (`ui-imports-no-client`) and anything that reaches Next.js or the theme switcher, however
+  indirectly (`ui-needs-no-next`, `verify.json`).
+- **One Toaster.** shadcn's Sonner, `components/sonner.tsx`, is the one file that imports
+  `sonner`. It takes the theme as a prop, so each client passes its own: the website its
+  `next-themes` theme. The extension mounts none: Word Detail's notices show in the word popup
+  that holds it (#1124). Nothing else in the package
+  reaches it, however indirectly (`ui-toasts-only-in-toaster`, `verify.json`), so Biome doesn't
+  list `sonner` and lifts nothing for that file: a component takes a notice as a callback, and the
+  client shows the toast. Sonner adds its styles to the page's head, so a shadow root mounts no
+  Toaster.
 - **Only the core's answers.** Of `@zenbu/dictionary-core`, only `detail/` and `sources/`: a
   component takes what a lookup returns as a prop (Biome, and `ui-takes-only-detail-from-core`).
 - **No data, storage, or logs.** Outside tests, Biome's `noRestrictedGlobals` refuses `fetch`,
@@ -63,6 +71,33 @@ And the other way: neither service imports the package (`service-draws-no-ui`,
   `LoadedPage` (`items`, `stale`, or `failed`), and `loadFormExamples(surface)` for a conjugated
   form. Slots take what the client draws itself: the actions menu of a kanji, the prompt to get
   the app, and the word page's conjugations and examples.
+
+## Speaking
+
+`speak` in `pronounce-button.tsx`, which every speaker and the pitch capsule call, speaks as the
+app's `SpeechSynthesisClient.swift` does: at 0.82 of the default rate, in the voice `bestLocalVoice`
+(`src/dictionary/voice.ts`) picks from `speechSynthesis.getVoices()`. It takes only a voice on the
+computer itself, never a network one (`localService` false), of the language asked for: one of the
+region asked for (`ja-JP`, or `en-US` for a meaning) before one of another, then a premium voice, an
+enhanced one (by its name or voice URI, in English or Japanese), any other, and Apple's Eloquence
+voices last, with the browser's order between equals. With none, `voiceToSpeak` applies the rule
+the surface passes through `PronounceWithoutLocalVoice`: the website keeps the default,
+`browser-voice`, so the utterance names only its `lang` and the browser speaks in its own voice,
+which may be an online one; the extension's roots (`mountPage` and `mountInShadowRoot`) pass
+`unsupported`, so it calls `onUnsupported` and speaks nothing (#1122's D4 is the extension's). An
+empty list after the wait gets the `lang`-only utterance on the website, and `unsupported` in the
+extension. `onUnsupported` also gets a `clearWhen`, which runs the clear it is given once a
+`voiceschanged` lists a local voice of the language, so the popup's notice, on its card or in its
+full entry, goes and the next click speaks. `useWithoutLocalVoice` asks for
+`getVoices()` when a speaker mounts, so a click usually speaks inside its handler and keeps the user
+gesture. A click before the voices load waits for a `voiceschanged` that lists a local voice of the
+language, up to a second, and a later click drops that wait. Each click cancels what is being
+spoken first. The extension's Translate tab takes its voice from `bestLocalVoice` too, for
+`ja-JP` or `en-US` ([`extension.md`](extension.md)). The order is the owner's choice (#1122's D4,
+#1125): the app gets the system's Japanese voice (Kyoko, on a Mac with no better one), and a Mac
+also has Apple's older Eloquence voices (Eddy, Flo, Grandma, Grandpa, Reed, Rocko, Sandy, and
+Shelley; Chrome names them as "Eddy (Japanese (Japan))"), which come last. The Web Speech rate's
+default is 1, so 0.82 is the app's `AVSpeechUtteranceDefaultSpeechRate * 0.82`.
 
 ## How the website uses it
 

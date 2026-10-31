@@ -1,0 +1,181 @@
+import { writeFileSync } from 'node:fs'
+import type { Page } from '@playwright/test'
+import { textContrast } from './contrast.ts'
+import { type Extension, expect, test } from './fixtures.ts'
+import { openStandInTranscript, sense, word } from './transcript-stand-in.ts'
+import { ownUnderlines, setWordMeanings } from './word-underlines.ts'
+import { tones } from './words-page.ts'
+
+const videoId = 'zenbuJa0624'
+
+const lines = [
+  {
+    start: 380,
+    text: '拭き拭き拭き拭きます',
+    tokens: [
+      word('拭き', 'フキ', 'fuku'),
+      word('拭き', 'フキ', 'fuku'),
+      word('拭き', 'フキ', 'fuku'),
+      word('拭きます', 'フキマス', 'fuku')
+    ]
+  },
+  {
+    start: 384,
+    text: '床のゴミを取って',
+    tokens: [
+      word('床', 'ユカ', 'yuka'),
+      word('の', 'ノ', 'no'),
+      word('ゴミ', 'ゴミ', 'gomi'),
+      word('を', 'ヲ', 'wo'),
+      word('取って', 'トッテ', 'toru')
+    ]
+  }
+]
+
+const meanings = {
+  fuku: sense('to wipe, to mop, to dry', 'godanVerb'),
+  yuka: sense('floor', 'noun'),
+  no: sense('indicates possessive', 'particle'),
+  gomi: sense('rubbish, trash, garbage', 'noun'),
+  wo: sense('indicates direct object of action', 'particle'),
+  toru: sense('to pick up and take away, to remove', 'godanVerb')
+}
+
+const cutMeaning = meanings.toru.meaning
+
+const wordCount = lines.flatMap(line => line.tokens).length
+
+const particles = ['の', 'を']
+
+const narrowestPanel = 360
+
+const panelWidths = [380, narrowestPanel]
+
+async function openTranscript(
+  page: Page,
+  extension: Extension,
+  width: number,
+  wordMeanings = true
+) {
+  await page.setViewportSize({ width, height: 720 })
+  const transcript = await openStandInTranscript(page, extension, {
+    videoId,
+    time: 385,
+    lines,
+    meanings,
+    wordMeanings
+  })
+  if (wordMeanings)
+    await expect(transcript.locator('[data-aid="meaning"]')).toHaveCount(
+      wordCount - particles.length
+    )
+  await expect(transcript.locator('[data-line="1"][data-current]')).toBeVisible()
+  return transcript
+}
+
+function meaningLayout(page: Page) {
+  return page.evaluate(() => {
+    const rows = [...document.querySelectorAll('[data-line]')].map(row => {
+      const shown = [...row.querySelectorAll<HTMLElement>('[data-aid="meaning"]')]
+      const boxes = shown.map(meaning => meaning.getBoundingClientRect())
+      const touching = boxes.flatMap((box, index) =>
+        boxes.slice(index + 1).flatMap((other, offset) => {
+          const apart = Math.max(
+            other.left - box.right,
+            box.left - other.right,
+            other.top - box.bottom,
+            box.top - other.bottom
+          )
+          return apart > 0 ? [] : [`${shown[index].title} / ${shown[index + offset + 1].title}`]
+        })
+      )
+      const outsideColumn = shown.flatMap((meaning, index) => {
+        const column = meaning.parentElement?.getBoundingClientRect()
+        const box = boxes[index]
+        const inside = column && box.left >= column.left - 0.5 && box.right <= column.right + 0.5
+        return inside ? [] : [meaning.title]
+      })
+      const source = row.querySelector('[data-source]')?.getBoundingClientRect()
+      const first = shown[0].parentElement?.getBoundingClientRect()
+      const firstIndent = source && first ? Math.round(first.left - source.left) : null
+      return { touching, outsideColumn, firstIndent }
+    })
+    const pageScrollsSideways = document.documentElement.scrollWidth > window.innerWidth
+    return { rows, pageScrollsSideways }
+  })
+}
+
+async function meaningContrast(page: Page) {
+  const rows = await page.locator('[data-line]').all()
+  return Promise.all(
+    rows.map(async row => ({
+      current: await row.evaluate(element => element.hasAttribute('data-current')),
+      ratio: await textContrast(row.locator('[data-aid="meaning"]').first())
+    }))
+  )
+}
+
+for (const width of panelWidths) {
+  test(`spaces long neighbouring word meanings apart in the transcript at ${width} pixels, readable in light and dark`, async ({
+    extension,
+    page
+  }) => {
+    const transcript = await openTranscript(page, extension, width)
+    const measured: Record<string, unknown> = {}
+    for (const tone of tones) {
+      await page.emulateMedia({ colorScheme: tone })
+      await expect(page.locator('html')).toHaveClass(tone === 'dark' ? /dark/ : /^(?!.*dark)/)
+      await page.waitForFunction(() => document.getAnimations().length === 0)
+      expect(await meaningLayout(page)).toEqual({
+        rows: [
+          { touching: [], outsideColumn: [], firstIndent: 0 },
+          { touching: [], outsideColumn: [], firstIndent: 0 }
+        ],
+        pageScrollsSideways: false
+      })
+      const contrast = await meaningContrast(page)
+      measured[tone] = contrast
+      for (const { ratio } of contrast) expect(ratio).toBeGreaterThanOrEqual(4.5)
+      await transcript.screenshot({ path: test.info().outputPath(`transcript-${tone}.png`) })
+    }
+    writeFileSync(test.info().outputPath('contrast.json'), JSON.stringify(measured))
+  })
+}
+
+test('gives a cut word meaning its full text as a tooltip and to a screen reader', async ({
+  extension,
+  page
+}) => {
+  const transcript = await openTranscript(page, extension, narrowestPanel)
+  const cut = transcript.locator('[data-line="1"] [data-word="取って"] [data-aid="meaning"]')
+  await expect(cut).toHaveAttribute('title', cutMeaning)
+  expect(await cut.evaluate(meaning => meaning.scrollWidth > meaning.clientWidth)).toBe(true)
+  expect(await transcript.locator('[data-line="1"]').ariaSnapshot()).toContain(cutMeaning)
+})
+
+test('gives each word in the transcript its own underline, apart from the next, with Word Meanings off and on, and no meaning under a particle', async ({
+  extension,
+  page
+}) => {
+  const transcript = await openTranscript(page, extension, narrowestPanel, false)
+  const eachWord = lines.map(line => line.tokens.map(token => token.text))
+  for (const on of [false, true]) {
+    await setWordMeanings(extension, transcript, on)
+    if (on)
+      await expect(transcript.locator('[data-aid="meaning"]')).toHaveCount(
+        wordCount - particles.length
+      )
+    const underlines = await Promise.all(
+      (await transcript.locator('[data-source]').all()).map(ownUnderlines)
+    )
+    expect(underlines.map(line => line.words)).toEqual(eachWord)
+    for (const line of underlines) expect(line.narrowestGap).toBeGreaterThanOrEqual(3.5)
+    for (const particle of particles)
+      await expect(
+        transcript.locator(`[data-word="${particle}"] [data-aid="meaning"]`)
+      ).toHaveCount(0)
+    await transcript.screenshot({
+      path: test.info().outputPath(`word-meanings-${on ? 'on' : 'off'}.png`)
+    })
+  }
+})

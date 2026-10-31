@@ -2,8 +2,8 @@
 
 `/account/extension/` (The Chrome extension) signs Zenbu Japanese for Chrome in to the Zenbu
 account the learner is signed in to on the website, in one click (#1130). The extension opens it
-from its own sign-in, which reaches `main` with the extension itself (#1070); the service's side
-and the message are in
+from its own sign-in ([the extension's Account](../../../extension/docs/product/account.md)); the
+service's side and the message are in
 [`account-extension.md`](../../../../docs/agents/account-extension.md), From the website, and the
 decision in [ADR 0023](../../../../docs/adr/0023-hand-the-websites-sign-in-to-the-browser-extension-with-a-one-time-code.md).
 

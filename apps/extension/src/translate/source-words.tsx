@@ -1,0 +1,210 @@
+import { RomajiLine } from '@zenbu/ui/dictionary/reading-aid-lines'
+import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { type Gloss, type Glosses, glossOf } from '../page-lookup/annotate'
+import { type GlossCache, type GlossLookUp, glossCache } from '../page-lookup/glosses'
+import { type Found, wordIds } from '../page-lookup/rendering'
+import { backoff, readText, type Segment, type Wait } from '../page-lookup/scan'
+import { type PageToken, wordGroups } from '../page-lookup/words'
+import type { Settings } from '../shared/settings'
+import { useSettings } from '../shared/use-settings'
+import { ReadingAids } from '../word-detail/reading-aids'
+import { InlineCard } from '../word-popup/inline-card'
+import { wordPopupLabels } from '../word-popup/labels'
+import type { PagePopup } from '../word-popup/page-popup'
+import { fromKeys, keepPress, usePickedWord } from '../word-popup/panel-word'
+
+export type SourceServices = {
+  segment: Segment
+  wait: Wait
+  popupCard(languageReferenceID: string, frequency: readonly string[]): ReturnType<GlossLookUp>
+  pagePopup?: PagePopup
+}
+
+const sourceClass = 'whitespace-pre-wrap text-muted-foreground'
+
+const wordClass =
+  'cursor-pointer rounded-sm underline decoration-blue-600 decoration-2 underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:decoration-blue-400'
+
+export function useFound(source: string, { segment, wait }: SourceServices): Found | null {
+  const [found, setFound] = useState<Found | null>(null)
+  useEffect(() => {
+    let live = true
+    const delay = backoff(wait)
+    setFound(null)
+    const read = () =>
+      readText(source, segment).then(
+        answer => {
+          if (!live) return
+          if (answer.type === 'found') setFound(answer.found)
+          else if (answer.type === 'not-ready') delay.wait().then(retry)
+        },
+        () => undefined
+      )
+    const retry = () => {
+      if (live) read()
+    }
+    read()
+    return () => {
+      live = false
+    }
+  }, [source, segment, wait])
+  return found
+}
+
+const lineGlosses = (services: SourceServices): GlossCache =>
+  glossCache(id => services.popupCard(id, []))
+
+export function useFetchedGlosses(ids: readonly string[] | null, cache: GlossCache): Glosses {
+  const [, redraw] = useReducer((count: number) => count + 1, 0)
+  useEffect(() => {
+    if (!ids) return
+    let live = true
+    cache.fetch(ids).then(() => {
+      if (live) redraw()
+    })
+    return () => {
+      live = false
+    }
+  }, [ids, cache])
+  return cache.known
+}
+
+export function useGlosses(
+  found: Found | null,
+  on: boolean,
+  services: SourceServices,
+  shared: GlossCache | undefined
+): Glosses {
+  const cache = useMemo(() => shared ?? lineGlosses(services), [shared, services])
+  const ids = useMemo(() => (found && on ? [...new Set(wordIds(found.tokens))] : null), [found, on])
+  return useFetchedGlosses(ids, cache)
+}
+
+function Words({
+  group,
+  gloss,
+  pick
+}: {
+  group: readonly PageToken[]
+  gloss: Gloss | null
+  pick: PickWord
+}) {
+  const words = group.map(token =>
+    token.ids.length === 0 ? (
+      <RubyText key={token.start} segments={token.ruby} />
+    ) : (
+      <button
+        key={token.start}
+        type="button"
+        data-word={token.text}
+        data-start={token.start}
+        className={wordClass}
+        onPointerDown={keepPress}
+        onClick={event => pick(token, event.currentTarget, fromKeys(event))}
+      >
+        <RubyText segments={token.ruby} />
+      </button>
+    )
+  )
+  if (group.every(token => token.ids.length === 0)) return words
+  return (
+    <span data-word-group className="whitespace-nowrap">
+      {gloss ? (
+        <>
+          <span>{words}</span>
+          <span data-aid="meaning" lang={wordPopupLabels.lang} title={gloss.full}>
+            <span aria-hidden="true">{gloss.short}</span>
+            <span className="sr-only">{gloss.full}</span>
+          </span>
+        </>
+      ) : (
+        words
+      )}
+    </span>
+  )
+}
+
+type PickWord = (token: PageToken, word: HTMLElement, keys: boolean) => void
+
+type LineProps = {
+  settings: Settings
+  services: SourceServices
+  onPopup?(open: boolean, dismiss: () => void): void
+  glosses?: GlossCache
+  pick?: PickWord
+}
+
+function useReportPopup(popupOpen: boolean, onPopup: LineProps['onPopup'], drop: () => void) {
+  useEffect(() => {
+    if (!popupOpen || !onPopup) return
+    onPopup(true, drop)
+    return () => onPopup(false, drop)
+  }, [popupOpen, onPopup, drop])
+}
+
+function Linked({
+  found,
+  settings,
+  services,
+  onPopup,
+  glosses: shared,
+  pick
+}: LineProps & { found: Found }) {
+  const glosses = useGlosses(found, settings['readingAids.wordMeanings'], services, shared)
+  const source = useRef<HTMLParagraphElement>(null)
+  const focusBack = useCallback(
+    (token: PageToken) =>
+      source.current
+        ?.querySelector<HTMLElement>(`[data-start="${token.start}"]`)
+        ?.focus({ preventScroll: true }),
+    []
+  )
+  const { picked, pick: pickHere, drop } = usePickedWord(focusBack, services.pagePopup)
+  useReportPopup(picked !== null, onPopup, drop)
+  return (
+    <ReadingAids settings={settings} className="flex flex-col gap-1">
+      <p ref={source} lang="ja" data-source className={`${sourceClass} leading-loose`}>
+        {wordGroups(found.tokens).map(group => (
+          <Words
+            key={group[0].start}
+            group={group}
+            gloss={glossOf(group, glosses)}
+            pick={pick ?? pickHere}
+          />
+        ))}
+      </p>
+      <RomajiLine romaji={found.romaji} className="text-sm" />
+      {picked?.at === 'inline' ? (
+        <InlineCard
+          key={picked.id}
+          word={picked.word}
+          settings={settings}
+          popupCard={services.popupCard}
+          className="pt-2"
+        />
+      ) : null}
+    </ReadingAids>
+  )
+}
+
+export function SourceLine({
+  source,
+  settings,
+  ...line
+}: Omit<LineProps, 'settings'> & { source: string; settings: Settings | null }) {
+  const found = useFound(source, line.services)
+  if (!found || !settings) {
+    return (
+      <p lang="ja" data-source className={sourceClass}>
+        {source}
+      </p>
+    )
+  }
+  return <Linked found={found} settings={settings} {...line} />
+}
+
+export function SourceWords({ source, services }: { source: string; services: SourceServices }) {
+  const settings = useSettings()
+  return <SourceLine source={source} settings={settings} services={services} />
+}

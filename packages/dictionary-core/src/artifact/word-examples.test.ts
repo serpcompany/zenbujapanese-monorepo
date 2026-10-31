@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { accentedPositions, type ExamplesEntry } from './word-examples'
+import type { LinkEntry } from '../examples/linking'
+import type { KuromojiToken } from '../examples/morphology'
+import { accentedPositions, type ExamplesEntry, segmentText } from './word-examples'
 
 const see: ExamplesEntry = {
   id: 'v1',
@@ -61,5 +63,54 @@ describe('the words a sentence accents for a page’s entry', () => {
     expect(
       accentedPositions('見たから見る', linked, { entry: null, query: '見る', accent: 'entry' })
     ).toEqual([])
+  })
+})
+
+describe('the words a page’s text is split into', () => {
+  const noRows = { all: () => [] }
+  const word = (surface: string, pos: string, reading: string): KuromojiToken => ({
+    word_type: 'KNOWN',
+    word_position: 1,
+    surface_form: surface,
+    pos,
+    pos_detail_1: '*',
+    pos_detail_2: '*',
+    pos_detail_3: '*',
+    basic_form: surface,
+    reading
+  })
+  const entry = (id: string, reading: string): LinkEntry => ({
+    id,
+    reading,
+    partsOfSpeech: ['pronoun']
+  })
+  const families: Record<string, LinkEntry[]> = {
+    何: [entry('nani', 'なに'), entry('nan', 'なん')],
+    これ: [entry('kore', 'これ'), entry('kore-other', 'これ')]
+  }
+  const capabilities = (said: KuromojiToken) => ({
+    tokenize: () => [said],
+    lookup: (form: string) => families[form] ?? []
+  })
+
+  test('links 何 to the entry its reading picks, and names the others written 何 when asked', () => {
+    const split = segmentText(noRows, '何', capabilities(word('何', '名詞', 'ナニ')), {
+      writtenAlike: true
+    })
+    expect(split.tokens).toEqual([
+      { text: '何', reading: 'なに', languageReferenceID: 'nani', writtenAlike: ['nan'] }
+    ])
+  })
+
+  test('names no others unless asked, as the dictionary service answers', () => {
+    const split = segmentText(noRows, '何', capabilities(word('何', '名詞', 'ナニ')))
+    expect(split.tokens).toEqual([{ text: '何', reading: 'なに', languageReferenceID: 'nani' }])
+  })
+
+  test('names no others for a word written in kana alone', () => {
+    const split = segmentText(noRows, 'これ', capabilities(word('これ', '名詞', 'コレ')), {
+      writtenAlike: true
+    })
+    expect(split.tokens.map(token => token.writtenAlike)).toEqual([undefined])
   })
 })

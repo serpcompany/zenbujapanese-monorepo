@@ -5,7 +5,7 @@ import { ChevronDownIcon } from 'lucide-react'
 import { type ReactNode, useEffect, useId, useState } from 'react'
 import { Card, CardContent } from '../components/card'
 
-const buttonClass =
+export const disclosureButtonClass =
   'flex w-full cursor-pointer items-center gap-3 rounded-md text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none'
 
 type Content = ReactNode | ((opened: boolean) => ReactNode)
@@ -69,7 +69,7 @@ export function Disclosure({
         aria-expanded={open}
         aria-controls={panel}
         aria-label={label}
-        className={cn(buttonClass, buttonClassName)}
+        className={cn(disclosureButtonClass, buttonClassName)}
         onClick={toggle}
       >
         {summary}
@@ -101,7 +101,7 @@ export function DisclosureSection({
             type="button"
             aria-expanded={open}
             aria-controls={panel}
-            className={cn(buttonClass, '-mx-2 w-[calc(100%+1rem)] px-2 py-1')}
+            className={cn(disclosureButtonClass, '-mx-2 w-[calc(100%+1rem)] px-2 py-1')}
             onClick={toggle}
           >
             {title}

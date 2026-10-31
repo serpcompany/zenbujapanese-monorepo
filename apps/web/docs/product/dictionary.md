@@ -441,20 +441,20 @@ Copy Link copies the URL and shows "Link copied". Breadcrumbs replace a back but
   the page it is on"; the prompt: `src/components/dictionary/learner-dialog.interaction.test.tsx`
   ("the get-the-app prompt") and `apps/web/e2e/learner-data.spec.ts`.
 
-**Header card.** The card shows the headword with furigana, the page's one `h1`. The heading's text
-is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
-(`::before`), so the readings look the same but aren't in the text search engines read. The `h1`
-keeps an `aria-label` of the headword, since the kanji toggles' labels ("要, よう") would otherwise
-enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside it
-is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has
-no pitch. Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names
-one word class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class
-has a name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
-with a conjugation table the row links to the page's Conjugations section (see Conjugations).
+**Header card.** The card shows the headword with furigana, the page's one `h1`. Its text is the
+headword alone: each furigana reading is a `data-reading` attribute drawn with CSS, so the readings
+look the same but aren't in the text search engines read. The `h1` keeps an `aria-label` of the
+headword, since the kanji toggles' labels ("要, よう") would otherwise enter its name. Ruby elsewhere,
+as in example sentences, keeps its readings as text. Beside it is the pitch accent in a capsule that
+pronounces the word, or a standalone speaker for a word without pitch. Either speaks in the
+computer's best Japanese voice, else the browser's own, at the app's rate. Under a separator, the
+part-of-speech row names one word class and its modifiers, such as "Godan verb (intransitive)", and
+is left out when no class has a name. It comes from the first sense's parts of speech, falling back
+to the entry's. For a word with a conjugation table the row links to its Conjugations section.
 
 - Source: App docs, Dictionary and kanji details; the app's `WordHeadline.swift` and
   `PitchAccentBadge.swift`, which draw the core's `wordDetail`; `detail/part-of-speech.ts`;
-  #462; #576 (the headword is the `h1`, with its readings out of its text).
+  #462; #576 (the headword is the `h1`, with its readings out of its text); #1125 (the voice).
 - Check: WD `furigana`, `partOfSpeech`; `packages/dictionary-core/src/detail/word.test.ts`, "names
   one word class, then its modifiers" and "shows no part of speech when no class has a name";
   `src/components/dictionary/word-page.test.tsx`, "is the page heading, named for the headword
@@ -462,7 +462,7 @@ with a conjugation table the row links to the page's Conjugations section (see C
   `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning" (one `h1`, its
   name, its text, and its reading drawn by `::before`). Speaking:
   `src/components/dictionary/word-page.interaction.test.tsx`, "pronouncing the word" (the pitch
-  capsule and the standalone speaker each say the reading, in `ja-JP`).
+  capsule and the standalone speaker each say the reading in `ja-JP`, in the best voice, at 0.82).
 
 **Conjugations.** A verb or adjective the app conjugates (ichidan, godan, する, 来る, i- and
 na-adjectives, but not いい) has a [Conjugations section](#conjugations-section) after Frequency,

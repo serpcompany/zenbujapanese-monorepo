@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { announceStarted, askWorker, relayToWorker } from '../offscreen/relay'
 import { askDictionary, type DictionaryRequest } from '../shared/messages'
+import { installing } from '../test/fake-language-data'
 import { answer } from '../worker/answer'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
@@ -22,7 +23,7 @@ class FakeWorker extends EventTarget {
   terminate() {}
 
   postMessage(request: DictionaryRequest, [port]: Transferable[]) {
-    ;(port as MessagePort).postMessage(answer(request))
+    void answer(request, installing).then(answered => (port as MessagePort).postMessage(answered))
   }
 }
 
@@ -64,7 +65,8 @@ function fakeChrome() {
     routeToOffscreen({
       ensureOffscreenDocument: keeper.ensureOpen,
       offscreenDocumentStarted: keeper.documentStarted,
-      sendMessage: toOffscreen.sendMessage
+      sendMessage: toOffscreen.sendMessage,
+      reportFailure: vi.fn()
     }) as Listener
   )
   return {
@@ -76,11 +78,12 @@ function fakeChrome() {
   }
 }
 
-function serviceWorkerOver(offscreen: Listener) {
+function serviceWorkerOver(offscreen: Listener, reportFailure = vi.fn()) {
   return routeToOffscreen({
     ensureOffscreenDocument: async () => {},
     offscreenDocumentStarted: vi.fn(),
-    sendMessage: fakeRuntime([offscreen]).sendMessage
+    sendMessage: fakeRuntime([offscreen]).sendMessage,
+    reportFailure
   }) as Listener
 }
 
@@ -101,7 +104,8 @@ describe('a page asks the dictionary worker', () => {
     const serviceWorker = routeToOffscreen({
       ensureOffscreenDocument: () => Promise.reject(new Error('Only a single offscreen document')),
       offscreenDocumentStarted: vi.fn(),
-      sendMessage: vi.fn()
+      sendMessage: vi.fn(),
+      reportFailure: vi.fn()
     })
     await expect(
       askDictionary({ type: 'ping' }, fakeRuntime([serviceWorker as Listener]))
@@ -135,8 +139,8 @@ describe('a page asks the dictionary worker', () => {
     })
   })
 
-  it('answers a request the worker does not know with a failure', () => {
-    expect(answer({ type: 'lookup' } as unknown as DictionaryRequest)).toEqual({
+  it('answers a request the worker does not know with a failure', async () => {
+    expect(await answer({ type: 'lookup' } as unknown as DictionaryRequest, installing)).toEqual({
       type: 'failed',
       reason: 'The dictionary worker does not know this request.'
     })
@@ -152,5 +156,49 @@ describe('a page asks the dictionary worker', () => {
     expect(offscreen({ target: 'service-worker', request: ping }, {}, sendResponse)).toBe(false)
     expect(offscreen('ping', {}, sendResponse)).toBe(false)
     expect(sendResponse).not.toHaveBeenCalled()
+  })
+})
+
+describe('the service worker reports a failure it answers', () => {
+  const ask = (serviceWorker: Listener) =>
+    askDictionary({ type: 'ping' }, fakeRuntime([serviceWorker]))
+
+  it('once, by the step that failed, never by its message', async () => {
+    const reportFailure = vi.fn()
+    const relay = { offscreenDocumentStarted: vi.fn(), reportFailure }
+    await ask(
+      routeToOffscreen({
+        ...relay,
+        ensureOffscreenDocument: () => Promise.reject(new Error('No document for 食べる')),
+        sendMessage: vi.fn()
+      }) as Listener
+    )
+    await ask(
+      routeToOffscreen({
+        ...relay,
+        ensureOffscreenDocument: async () => {},
+        sendMessage: () => {
+          throw new Error('Extension context invalidated.')
+        }
+      }) as Listener
+    )
+    await ask(
+      serviceWorkerOver(
+        relayToWorker(askWorker(() => new CrashingWorker())) as Listener,
+        reportFailure
+      )
+    )
+    expect(reportFailure.mock.calls).toEqual([
+      ['offscreen-document'],
+      ['offscreen-message'],
+      ['dictionary-answer']
+    ])
+  })
+
+  it('and nothing when the dictionary answers', async () => {
+    const reportFailure = vi.fn()
+    const offscreen = relayToWorker(askWorker(() => new FakeWorker())) as Listener
+    await expect(ask(serviceWorkerOver(offscreen, reportFailure))).resolves.toEqual(pong)
+    expect(reportFailure).not.toHaveBeenCalled()
   })
 })

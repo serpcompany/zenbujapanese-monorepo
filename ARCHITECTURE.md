@@ -10,12 +10,12 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015), with a share-sheet extension on iPhone and iPad (ADR 0017). It reads the language data bundled with it, which the importers in `language-data/tools` build, answers every dictionary screen with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, notes, photos and the profile photo, settings, recent lookups, watch history, bookmarked translations, and the profile's name and username, with the subscription that unlocks syncing sold through StoreKit 2 (ADR 0019). Its Shortcuts actions open it with links in its own scheme. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
-| `apps/extension` | The Zenbu Japanese browser extension for Chrome, in Manifest V3, rebuilt here to read the shared language data (ADR 0006); offline and with no account in its first version: a side panel, a toolbar popup, and a Settings page in React on `@zenbu/ui`, a service worker, and an offscreen document whose dedicated worker is to hold the dictionary. Pages and content scripts reach that worker only by messages, and a content script draws on a page inside a shadow root. | [`docs/agents/extension.md`](docs/agents/extension.md) |
+| `apps/extension` | The Zenbu Japanese browser extension for Chrome, in Manifest V3, rebuilt here to read the shared language data (ADR 0006); offline, and signed in to a Zenbu account as its own app, whose calls only its service worker makes: a side panel, which the toolbar icon opens, and a Settings page in React on `@zenbu/ui`, a service worker, and an offscreen document whose dedicated worker downloads a language-data release from `data.zenbujapanese.com` and answers from it offline with the shared core, on sqlite-wasm. Pages and content scripts reach that worker only by messages, and a content script draws on a page inside a shadow root. On a YouTube or Netflix watch page its content script follows the video, and the service worker fetches the video's Japanese captions from YouTube, or Netflix's tracks from Netflix. Its service worker keeps a copy of the account's known words, lists, notes, and synced settings in IndexedDB, in step through `/v1/sync` (#979). | [`docs/agents/extension.md`](docs/agents/extension.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. It keeps the subscription a learner buys in the App Store or through Stripe, which can unlock sync (ADR 0019). | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
-| `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, examples, and caption rules. The service and the app both run all of it; the browser extension is to run it too (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
+| `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, examples, and caption rules. The service and the app both run all of it; the browser extension runs all but search (ADR 0008, ADR 0006's issue 956 amendment). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/ui` | The website's look as a package, `@zenbu/ui`: the shadcn primitives, the theme, and the word components (the word header, the word page's sections, kanji details, example lists, conjugations, frequency, and source credits). It draws what the core answers, with the text, links, and actions each client passes it, so the browser extension can show what the website shows (#954). | [`docs/agents/ui.md`](docs/agents/ui.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, the check of an account's access token, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
-| `packages/account-rules` | The one definition of each rule a learner's account input is held to (a name, a username, a sign-in code, a list's name, a note, a watch, a setting), with a case file of inputs and outcomes for each: the account service applies them, the website checks with them before sending, and the app runs their bundle in JavaScriptCore. It also holds how a client that keeps no copy reads and changes the account's synced data, which the website runs. | [`docs/agents/account-rules.md`](docs/agents/account-rules.md) |
+| `packages/account-rules` | The one definition of each rule a learner's account input is held to (a name, a username, a sign-in code, a list's name, a note, a watch, a setting), with a case file of inputs and outcomes for each: the account service applies them, the website checks with them before sending, the browser extension checks a sign-in code and its copy's changes with them, and the app runs their bundle in JavaScriptCore. It also holds how a client that keeps no copy reads and changes the account's synced data, which the website runs. | [`docs/agents/account-rules.md`](docs/agents/account-rules.md) |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots, and can tell a Slack channel what it deployed and what failed. Its tests are in `tools/checks/src/deployer/`. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md), [`docs/agents/deployer-alerts.md`](docs/agents/deployer-alerts.md) |
 | `language-data` | What every client's language data comes from: the pinned sources, the importers that build the app's bundled data from them, the conformance suites every client passes, and the release, with the pipeline that packages and publishes that data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
 | `tools/checks` | This repository's own checks and tools: the script that hands each checkout its local ports, the pull request checks, the code review's scripts, the weekly maintenance report, and the tests of what has no package of its own: the workflows, the hooks, the agent settings, and the server's deployer. `pnpm verify` runs SERP's shared checks from `@serpcompany/verify`, configured by `verify.json`. | [`docs/agents/code.md`](docs/agents/code.md), [`docs/agents/checks.md`](docs/agents/checks.md) |
@@ -28,6 +28,7 @@ flowchart LR
     Tools --> Data[("LanguageReferenceData.sqlite3 and packs, in apps/ios")]
     Data --> App["App for iPhone, iPad, and Mac"]
     Data --> Release["language-data release"]
+    Release -->|"downloaded once, then updates"| ExtensionWorker
     Data --> Image["Dictionary service image"]
     Core["packages/dictionary-core"] --> Image
     Core -->|"a bundle of it, checked in"| App
@@ -43,6 +44,7 @@ flowchart LR
     Cards --> Apps
     Accounts["Account service image"] --> Server
     App -->|"sign-in and sync, through Cloudflare"| Server
+    Extension -->|"sign-in and sync of its IndexedDB copy, through its service worker and Cloudflare"| Server
     Server --- Postgres[("Postgres, on the server")]
     Server --- Photos[("Learners' photo files, in R2")]
     Browser["Learner's browser, on the website's account pages"] -->|"session cookie, then access token"| Server
@@ -102,14 +104,18 @@ saying where the code belongs:
 - **The account rules** import no runtime, framework, or client either, since they run in Node,
   in a browser, and in JavaScriptCore; only their tests' `src/test/` reads files
   ([`packages/account-rules/biome.json`](packages/account-rules/biome.json)).
-- **The word components** (`packages/ui`) import no client, no Next.js, theme switcher, or
-  toast, and of the core only its `detail/` and `sources/` modules, and read, keep, and log
-  nothing: a client passes text, links, and actions as props. The website's `src/lib` takes
+- **The word components** (`packages/ui`) import no client, no Next.js, or theme switcher, and
+  of the core only its `detail/` and `sources/` modules, and read, keep, and log nothing: a
+  client passes text, links, and actions as props. Only `components/sonner.tsx` loads Sonner,
+  and a client mounts it. The website's `src/lib` takes
   only their types, and neither service imports them
   ([`docs/agents/ui.md`](docs/agents/ui.md), What the package may import).
 - **The browser extension**: only its dictionary worker (`src/worker/`) loads the core's lookup
   code and SQLite, and nothing imports the worker: the offscreen document starts it by its URL,
-  and pages, content scripts, and the service worker ask it with a message. Pages and content
+  and pages, content scripts, and the service worker ask it with a message. The one exception is
+  the core's `search/query`, its text checks, which loads no lookup code or SQLite: the
+  translation module takes a text's direction from its `writtenLanguage`, as the app does, rather
+  than ask the worker or move the function in the core. Pages and content
   scripts draw with `@zenbu/ui`, never the primitives under it, and the service worker, the
   offscreen document, and the worker draw nothing (`apps/extension` in `verify.json`'s
   dependency parts, [`docs/agents/extension.md`](docs/agents/extension.md), Layers).
@@ -144,8 +150,9 @@ saying where the code belongs:
   from a few labels it still writes, such as the kanji element page's Source rows; the app's
   bundle of the core is rebuilt with the core, which
   the core's tests check; the website and the service share their row shapes through the core;
-  the account service, the website, and the app hold a learner's account input to the account
-  rules, each replaying their case files, and the app runs them from their own bundle;
+  the account service, the website, the browser extension, and the app
+  hold a learner's account input to the account rules, each replaying their case files, and the
+  app runs them from their own bundle;
   no app imports another, and apps reach a shared package by its name.
 
 The website logs through its own `log()`, the Node services through `packages/node-service`'s, and

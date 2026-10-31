@@ -8,6 +8,10 @@ export interface SegmentedToken extends ExampleSentenceTokenRow {
   candidates?: string[]
 }
 
+export interface PageSegmentedToken extends SegmentedToken {
+  writtenAlike?: string[]
+}
+
 export interface SegmentationResponse {
   tokens: SegmentedToken[]
 }

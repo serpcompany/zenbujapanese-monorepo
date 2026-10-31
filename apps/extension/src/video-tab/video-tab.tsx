@@ -1,0 +1,247 @@
+import type { Caption } from '@zenbu/dictionary-core/captions/lines'
+import { Button } from '@zenbu/ui/components/button'
+import { CaptionsOff, History, MonitorPlay } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useAccount } from '../account/use-account'
+import { captionLabels } from '../captions/labels'
+import type { CaptionsAnswer } from '../captions/messages'
+import type { Settings } from '../shared/settings'
+import { ModelNotice } from '../shared/translation-model'
+import { useSettings } from '../shared/use-settings'
+import { EmptyState, emptyTab, SignUpButton } from '../side-panel/empty-tab'
+import { labels as panelLabels } from '../side-panel/labels'
+import type { PanelTabProps } from '../side-panel/route'
+import { translateLabels } from '../translate/labels'
+import { useActiveTab, type WatchedVideo, watchedIn } from './active-tab'
+import { KnownShareLine } from './known-share-line'
+import { videoTabLabels } from './labels'
+import { onDeviceVideoServices, type VideoTabServices } from './services'
+import { Transcript } from './transcript'
+import { useEnglish } from './use-english'
+import { useCaptions, usePlayback } from './use-video'
+import { type KnownWords, useKnownWords } from './word-marks'
+
+type Shared = { services: VideoTabServices; open: PanelTabProps['open'] }
+
+type Watched = Shared & { known: KnownWords; video: WatchedVideo; shown: boolean }
+
+function NoRecent({ select }: Pick<PanelTabProps, 'select'>) {
+  const account = useAccount()
+  if (account === null) return null
+  if (account.signedIn) return <EmptyState icon={History} text={panelLabels.empty.recentSignedIn} />
+  return (
+    <EmptyState icon={History} text={panelLabels.empty.recent}>
+      <SignUpButton select={select} />
+    </EmptyState>
+  )
+}
+
+function NoVideo({ select }: Pick<PanelTabProps, 'select'>) {
+  return (
+    <div className="flex flex-col">
+      <EmptyState icon={MonitorPlay} text={panelLabels.empty.video} />
+      <section data-recent className="border-t">
+        <h2 className="px-4 pt-4 font-heading text-base font-medium">{panelLabels.recent}</h2>
+        <NoRecent select={select} />
+      </section>
+    </div>
+  )
+}
+
+const NoJapaneseCaptions = emptyTab(CaptionsOff, { title: captionLabels.noJapaneseCaptions })
+
+const minute = 60_000
+
+const noteClass = 'text-sm text-muted-foreground'
+
+const sectionClass =
+  'relative flex h-full min-h-0 flex-col [--player-hover:color-mix(in_oklab,var(--muted),var(--foreground)_4%)]'
+
+const titleClass = 'shrink-0 truncate px-4 pt-3 pb-2 font-heading text-sm font-medium'
+
+const noEnglish: ReadonlyMap<string, string> = new Map()
+
+const noFailures: ReadonlySet<string> = new Set()
+
+const englishText = {
+  asks: videoTabLabels.englishNeedsDownload,
+  unavailable: translateLabels.notices.unavailable
+}
+
+function useNow(ticking: boolean): number {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!ticking) return
+    setNow(Date.now())
+    const timer = setInterval(() => setNow(Date.now()), minute / 4)
+    return () => clearInterval(timer)
+  }, [ticking])
+  return now
+}
+
+function Notice({ text, tryAgain }: { text: string; tryAgain?(): void }) {
+  return (
+    <div data-captions-notice className="flex flex-col items-start gap-3">
+      <p className={noteClass}>{text}</p>
+      {tryAgain && (
+        <Button variant="outline" size="sm" onClick={tryAgain}>
+          {captionLabels.tryAgain}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function RateLimited({ retryAt, tryAgain }: { retryAt: number; tryAgain(): void }) {
+  const now = useNow(true)
+  return <Notice text={captionLabels.rateLimited(retryAt, now)} tryAgain={tryAgain} />
+}
+
+function ReloadNotice({ reload }: { reload(): void }) {
+  return (
+    <div data-reload-notice className="flex items-center gap-3">
+      <p className={`${noteClass} flex-1`}>{videoTabLabels.reloadToFollow}</p>
+      <Button variant="outline" size="sm" onClick={reload}>
+        {videoTabLabels.reload}
+      </Button>
+    </div>
+  )
+}
+
+function Lines({
+  lines,
+  video,
+  shown,
+  settings,
+  known,
+  ...shared
+}: Watched & { lines: Caption[]; settings: Settings | null }) {
+  const translations = settings?.['readingAids.translations'] === true
+  const { translating, english, failed, translator, download, retry } = useEnglish(
+    lines,
+    translations,
+    shared.services
+  )
+  const { playback, unreachable } = usePlayback(shared.services, video, shown)
+  const notices = (
+    <div className="flex flex-col gap-3 px-4 py-2 empty:hidden">
+      {unreachable && <ReloadNotice reload={() => shared.services.reload(video.tabId)} />}
+      {translating && <ModelNotice model={translator} download={download} text={englishText} />}
+    </div>
+  )
+  return (
+    <Transcript
+      lines={lines}
+      english={translations ? english : noEnglish}
+      failed={translations ? failed : noFailures}
+      retry={retry}
+      playback={playback}
+      watched={video}
+      shown={shown}
+      settings={settings}
+      services={shared.services}
+      known={known}
+      notices={notices}
+    />
+  )
+}
+
+function CaptionsState({ answer, tryAgain }: { answer: CaptionsAnswer | null; tryAgain(): void }) {
+  if (answer === null || !('state' in answer))
+    return answer === null ? (
+      <p className={noteClass}>{videoTabLabels.loading}</p>
+    ) : (
+      <Notice text={videoTabLabels.noAnswer} tryAgain={tryAgain} />
+    )
+  switch (answer.state) {
+    case 'rate-limited':
+      return <RateLimited retryAt={answer.retryAt} tryAgain={tryAgain} />
+    case 'failed':
+      return <Notice text={answer.reason} tryAgain={tryAgain} />
+    default:
+      return <p className={noteClass}>{videoTabLabels.loading}</p>
+  }
+}
+
+function CaptionsView({
+  answer,
+  tryAgain,
+  ...lines
+}: Watched & {
+  answer: CaptionsAnswer | null
+  tryAgain(): void
+  settings: Settings | null
+}) {
+  if (answer && 'state' in answer && answer.state === 'lines')
+    return <Lines lines={answer.lines} {...lines} />
+  return (
+    <div className="flex flex-col gap-3 px-4 pt-1 pb-4">
+      <CaptionsState answer={answer} tryAgain={tryAgain} />
+    </div>
+  )
+}
+
+function VideoCaptions({
+  video,
+  shown,
+  select,
+  ...shared
+}: Shared & Pick<PanelTabProps, 'select'> & { video: WatchedVideo; shown: boolean }) {
+  const { answer, tryAgain } = useCaptions(shared.services, video)
+  const settings = useSettings()
+  const known = useKnownWords(shared.services)
+  const lines = answer && 'state' in answer && answer.state === 'lines' ? answer.lines : null
+  if (answer && 'state' in answer && answer.state === 'no-video') return <NoVideo select={select} />
+  if (answer && 'state' in answer && answer.state === 'no-japanese-captions')
+    return <NoJapaneseCaptions open={shared.open} />
+  return (
+    <section data-video-tab className={sectionClass}>
+      {video.title && (
+        <h2 data-video-title title={video.title} className={titleClass}>
+          {video.title}
+        </h2>
+      )}
+      {lines && <KnownShareLine lines={lines} services={shared.services} known={known} />}
+      <CaptionsView
+        answer={answer}
+        tryAgain={tryAgain}
+        video={video}
+        shown={shown}
+        settings={settings}
+        known={known}
+        {...shared}
+      />
+    </section>
+  )
+}
+
+export function VideoTab({
+  open,
+  select,
+  shown = true,
+  services = onDeviceVideoServices
+}: PanelTabProps & { services?: VideoTabServices }) {
+  const [looked, setLooked] = useState(shown)
+  const tab = useActiveTab(services, looked)
+  const video = tab === undefined ? undefined : watchedIn(tab)
+  const key = video ? `${video.tabId}:${video.videoId}` : null
+  const [opened, setOpened] = useState<string | null>(null)
+  useEffect(() => {
+    if (shown) setLooked(true)
+    if (shown && key) setOpened(key)
+    else setOpened(current => (current === key ? current : null))
+  }, [shown, key])
+  if (video === undefined) return null
+  if (video === null) return <NoVideo select={select} />
+  if (key !== opened) return null
+  return (
+    <VideoCaptions
+      key={key}
+      video={video}
+      shown={shown}
+      services={services}
+      open={open}
+      select={select}
+    />
+  )
+}

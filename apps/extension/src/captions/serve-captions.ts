@@ -1,0 +1,93 @@
+import { failure } from '../shared/messages'
+import { readSettings, watchSettings } from '../shared/settings'
+import { watchedVideo } from '../video/watch-page'
+import { type CaptionsService, captionsService } from './captions-service'
+import { captionLabels } from './labels'
+import { askTabTracks, type CaptionsAnswer, isCaptionsEnvelope } from './messages'
+import { youTubeiURL } from './youtube-requests'
+
+type Sender = { tab?: { id?: number } }
+
+type Rule = chrome.declarativeNetRequest.Rule
+
+const originRuleId = 1
+
+const ignore = () => undefined
+
+export function answerCaptions(service: Pick<CaptionsService, 'answer'>) {
+  return (
+    message: unknown,
+    sender: Sender,
+    sendResponse: (answer: CaptionsAnswer) => void
+  ): boolean => {
+    if (!isCaptionsEnvelope(message)) return false
+    service
+      .answer(message.captions, sender.tab?.id)
+      .then(sendResponse, (error: unknown) => sendResponse(failure(error)))
+    return true
+  }
+}
+
+export function originRule(extensionId: string, noTab: number): Rule {
+  return {
+    id: originRuleId,
+    priority: 1,
+    action: {
+      type: 'modifyHeaders' as Rule['action']['type'],
+      requestHeaders: [
+        { header: 'origin', operation: 'remove' as chrome.declarativeNetRequest.HeaderOperation }
+      ]
+    },
+    condition: {
+      urlFilter: `|${youTubeiURL}`,
+      initiatorDomains: [extensionId],
+      tabIds: [noTab],
+      requestMethods: ['post' as chrome.declarativeNetRequest.RequestMethod],
+      resourceTypes: ['xmlhttprequest' as chrome.declarativeNetRequest.ResourceType]
+    }
+  }
+}
+
+function originRemover(): () => Promise<void> {
+  let removed: Promise<void> | undefined
+  return () => {
+    removed ??= chrome.declarativeNetRequest
+      .updateSessionRules({
+        removeRuleIds: [originRuleId],
+        addRules: [originRule(chrome.runtime.id, chrome.tabs.TAB_ID_NONE)]
+      })
+      .catch(() => {
+        removed = undefined
+        throw new Error(captionLabels.failed.unprepared)
+      })
+    return removed
+  }
+}
+
+export function serveCaptions(): void {
+  const service = captionsService({
+    storage: chrome.storage.session,
+    fetch: (url, init) => fetch(url, init),
+    prepareRequests: originRemover(),
+    tabVideo: tabId =>
+      chrome.tabs.get(tabId).then(
+        tab => watchedVideo(tab.url),
+        () => null
+      ),
+    askTracks: (tabId, videoId, wanted) => askTabTracks(tabId, videoId, wanted),
+    captionsOn: () => readSettings().then(settings => settings['videos.zenbuCaptions']),
+    announce: change => {
+      chrome.runtime.sendMessage(change).catch(ignore)
+      chrome.tabs.sendMessage(change.tabId, change).catch(ignore)
+    },
+    now: Date.now,
+    random: Math.random
+  })
+  chrome.runtime.onMessage.addListener(answerCaptions(service))
+  chrome.tabs.onRemoved.addListener(tabId => {
+    service.tabClosed(tabId)
+  })
+  watchSettings(settings => {
+    if (settings['videos.zenbuCaptions']) service.openVideosAgain().catch(ignore)
+  })
+}

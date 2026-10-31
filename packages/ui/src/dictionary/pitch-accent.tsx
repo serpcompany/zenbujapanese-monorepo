@@ -3,7 +3,7 @@
 import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/detail/pitch'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import { Volume2Icon } from 'lucide-react'
-import { type OnUnsupported, speakJapanese } from './pronounce-button'
+import { type OnUnsupported, speakJapanese, useWithoutLocalVoice } from './pronounce-button'
 
 export interface PronounceText {
   unsupported: string
@@ -31,6 +31,7 @@ export function PitchAccent({
   text: PronounceText
   onUnsupported: OnUnsupported
 }) {
+  const withoutLocalVoice = useWithoutLocalVoice()
   const { graph } = pitch
   const viewHeight = (contourHeightEm / moraWidthEm) * svgUnitsPerMora
   const y = (high: boolean) => (high ? dotInsetFromEdge : viewHeight - dotInsetFromEdge)
@@ -51,7 +52,7 @@ export function PitchAccent({
   return (
     <button
       type="button"
-      onClick={() => speakJapanese(reading, text.unsupported, onUnsupported)}
+      onClick={() => speakJapanese(reading, text.unsupported, onUnsupported, withoutLocalVoice)}
       className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full bg-muted px-4 py-1.5 outline-none transition-colors hover:bg-muted/70 focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
     >
       <Volume2Icon aria-hidden className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />

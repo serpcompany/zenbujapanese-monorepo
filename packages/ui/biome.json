@@ -63,10 +63,9 @@
                       "@opennextjs/**",
                       "server-only",
                       "next-themes",
-                      "sonner",
                       "@/**"
                     ],
-                    "message": "@zenbu/ui runs in the website and in the browser extension, so it imports no Next.js, theme switcher, toast, or client code (docs/agents/ui.md, What the package may import). Take a link as a render prop, an action as a callback, and text as a prop, and let each client pass its own."
+                    "message": "@zenbu/ui runs in the website and in the browser extension, so it imports no Next.js, theme switcher, or client code (docs/agents/ui.md, What the package may import). Take a link as a render prop, an action as a callback, and text as a prop, and let each client pass its own."
                   },
                   {
                     "group": [

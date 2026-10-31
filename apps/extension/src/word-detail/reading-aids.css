@@ -1,0 +1,28 @@
+[data-reading-aids][data-furigana="off"] rt,
+[data-reading-aids]:not([data-furigana="off"]) [data-aid="reading"],
+[data-reading-aids]:not([data-romaji="on"]) [data-aid="romaji"],
+[data-reading-aids]:not([data-word-meanings="on"]) [data-aid="meaning"],
+[data-reading-aids][data-translations="off"] [data-aid="translation"] {
+  display: none;
+}
+
+[data-reading-aids][data-word-meanings="on"] :has(> [data-aid="meaning"]) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+[data-reading-aids] [data-word-group]:has(+ [data-word-group]) {
+  margin-inline-end: calc(var(--meaning-gap-rem) * 1rem);
+}
+
+@layer components {
+  [data-reading-aids] [data-aid="romaji"],
+  [data-reading-aids] [data-aid="reading"] {
+    @apply block text-muted-foreground;
+  }
+
+  [data-reading-aids] [data-aid="meaning"] {
+    @apply max-w-24 truncate text-xs leading-snug text-muted-foreground;
+  }
+}

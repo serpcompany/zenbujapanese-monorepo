@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { DictionaryRequest } from '../shared/messages'
+import { installing } from '../test/fake-language-data'
 import { answer } from '../worker/answer'
 import { askWorker, type DictionaryWorker } from './relay'
 
@@ -14,7 +15,7 @@ class FakeWorker extends EventTarget implements DictionaryWorker {
   }
 
   postMessage(request: DictionaryRequest, [port]: Transferable[]) {
-    ;(port as MessagePort).postMessage(answer(request))
+    void answer(request, installing).then(answered => (port as MessagePort).postMessage(answered))
   }
 }
 
@@ -48,6 +49,15 @@ describe('askWorker', () => {
   it('posts a request once the worker has started, so none is lost while it loads', async () => {
     const worker = new WorkerThatAnswersOnceStarted()
     const asked = askWorker(() => worker)(ping)
+    setTimeout(() => worker.start())
+    await expect(asked).resolves.toEqual(pong)
+  })
+
+  it("doesn't take the worker's error report for its start", async () => {
+    const worker = new WorkerThatAnswersOnceStarted()
+    const asked = askWorker(() => worker, 1_000)(ping)
+    const report = { target: 'service-worker', errorReport: [{}, []] }
+    worker.dispatchEvent(new MessageEvent('message', { data: report }))
     setTimeout(() => worker.start())
     await expect(asked).resolves.toEqual(pong)
   })

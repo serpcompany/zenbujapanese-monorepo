@@ -546,22 +546,31 @@
           "src",
           "build",
           "test-pages",
+          "e2e",
+          "agent-chrome",
+          "playwright.config.ts",
           "vite.config.ts",
           "vitest.config.ts"
         ],
-        "testCode": "(\\.test\\.tsx?$)",
+        "testCode": "(\\.test\\.tsx?$|^src/test/|^src/captions/fixtures/|^e2e/|^agent-chrome/)",
         "entries": [
-          "^src/pages/(side-panel|popup|settings)\\.tsx$",
+          "^src/pages/(side-panel|settings|welcome)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
+          "^src/content/(youtube|netflix|netflix-player|page-lookup)\\.ts$",
           "^test-pages/test-content-script\\.tsx$",
+          "^e2e/[\\w-]+\\.spec\\.ts$",
+          "^e2e/serve\\.ts$",
+          "^playwright\\.config\\.ts$",
+          "^agent-chrome/(ctl|daemon|test-daemon)\\.mjs$",
+          "^agent-chrome/(selftest-extension|site)/[\\w-]+\\.js$",
           "^(test-pages/)?vite\\.config\\.ts$",
           "^vitest\\.config\\.ts$"
         ],
         "runtime": {
           "path": "^src/",
-          "pathNot": "(\\.test\\.tsx?$)"
+          "pathNot": "(\\.test\\.tsx?$|^src/test/|^src/captions/fixtures/)"
         },
         "rules": [
           {
@@ -588,11 +597,12 @@
           {
             "name": "only-the-worker-opens-the-dictionary",
             "severity": "error",
-            "comment": "Only the dictionary worker loads the core's lookup code and SQLite; pages, content scripts, the offscreen document, and the service worker ask it with a message (docs/agents/extension.md, Layers).",
+            "comment": "Only the dictionary worker loads the core's lookup code and SQLite; pages, content scripts, the offscreen document, and the service worker ask it with a message. The one exception is search/query.ts, the core's text checks, which loads none of it (docs/agents/extension.md, Layers).",
             "from": {
               "path": "^(src|test-pages)/",
               "pathNot": [
                 "^src/worker/",
+                "^src/test/",
                 "(\\.test\\.tsx?$)"
               ]
             },
@@ -601,6 +611,7 @@
                 "^\\.\\./\\.\\./packages/dictionary-core/src/(artifact|search|embedded|examples)/",
                 "(^|/)node_modules/(@sqlite\\.org|sql\\.js|wa-sqlite)/"
               ],
+              "pathNot": "^\\.\\./\\.\\./packages/dictionary-core/src/search/query\\.ts$",
               "reachable": true
             }
           },
@@ -612,6 +623,7 @@
               "path": "^(src|test-pages)/",
               "pathNot": [
                 "^src/worker/",
+                "^src/test/",
                 "(\\.test\\.tsx?$)"
               ]
             },
@@ -636,7 +648,7 @@
             "comment": "The service worker, the offscreen document, and the dictionary worker draw nothing, so nothing they import, however indirectly, loads React or @zenbu/ui (docs/agents/extension.md, Layers).",
             "from": {
               "path": "^src/(service-worker|offscreen|worker)/",
-              "pathNot": "(\\.test\\.tsx?$)"
+              "pathNot": "(\\.test\\.tsx?$|^src/test/)"
             },
             "to": {
               "path": [
@@ -712,16 +724,29 @@
           {
             "name": "ui-needs-no-next",
             "severity": "error",
-            "comment": "@zenbu/ui runs in the browser extension too, so nothing it imports, however indirectly, may load Next.js, the theme switcher, or the toasts (docs/agents/ui.md, What the package may import). Take a link as renderWordLink and an action as a callback.",
+            "comment": "@zenbu/ui runs in the browser extension too, so nothing it imports, however indirectly, may load Next.js or the theme switcher (docs/agents/ui.md, What the package may import). Take a link as renderWordLink and an action as a callback.",
             "from": {
               "path": "^src/",
               "pathNot": "\\.test\\.tsx?$"
             },
             "to": {
               "path": [
-                "(^|/)node_modules/(next|next-themes|sonner|@opennextjs|server-only)/",
-                "^(next|next-themes|sonner|@opennextjs/[^/]+|server-only)(/|$)"
+                "(^|/)node_modules/(next|next-themes|@opennextjs|server-only)/",
+                "^(next|next-themes|@opennextjs/[^/]+|server-only)(/|$)"
               ],
+              "reachable": true
+            }
+          },
+          {
+            "name": "ui-toasts-only-in-toaster",
+            "severity": "error",
+            "comment": "Only @zenbu/ui's Toaster (src/components/sonner.tsx) loads Sonner, and only a client mounts it, since Sonner adds its styles to the page's head, which an extension's shadow root never sees (docs/agents/ui.md, What the package may import). Take a notice as a callback, such as onUnsupported, and let the client show the toast.",
+            "from": {
+              "path": "^src/",
+              "pathNot": ["\\.test\\.tsx?$", "^src/components/sonner\\.tsx$"]
+            },
+            "to": {
+              "path": ["(^|/)node_modules/sonner/", "^sonner(/|$)"],
               "reachable": true
             }
           },

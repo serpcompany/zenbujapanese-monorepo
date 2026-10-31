@@ -1,12 +1,40 @@
 export const labels = {
   name: 'Zenbu Japanese',
-  sidePanel: { title: 'Zenbu Japanese' },
-  popup: { title: 'Zenbu Japanese', body: 'Open the side panel to look up Japanese words.' },
-  settings: { title: 'Settings', body: 'Nothing to set yet.' },
-  dictionary: {
+  progress: {
     checking: 'Checking the dictionary…',
+    downloading:
+      'Zenbu looks words up on this computer, so it is downloading its dictionary. You can keep browsing.',
     ready: 'The dictionary is ready.',
-    failed: "The dictionary isn't answering.",
-    checkAgain: 'Check again'
-  }
+    checkingForUpdates: 'Checking for updates…',
+    updating: 'Downloading an update. The dictionary you have keeps working.',
+    failed: "The dictionary didn't download.",
+    updateFailed: "The last update didn't download:",
+    bar: 'Dictionary download'
+  },
+  welcome: {
+    title: 'Welcome to Zenbu',
+    tryAgain: 'Try again',
+    firstSteps: 'First steps',
+    steps: [
+      'Open a Japanese page, or a YouTube or Netflix video with Japanese captions.',
+      'Click an underlined word to see what it means.',
+      'Pin Zenbu to the toolbar to open it on any tab.'
+    ],
+    translationOffer:
+      "English translations use Chrome's own Japanese download, made once for every site.",
+    translationReady: 'English translations are ready.'
+  },
+  translation: {
+    download: 'Download',
+    downloading: (fraction: number) =>
+      `Downloading Chrome's Japanese translation… ${Math.round(fraction * 100)}%`,
+    downloadFailed: "The download didn't finish. Try again.",
+    chromeDownloading: 'Chrome is downloading its Japanese translation…'
+  },
+  everySite: {
+    off: 'Zenbu underlines Japanese only on the sites you allow.',
+    on: 'Zenbu can underline Japanese on every site.',
+    turnOn: 'Turn On for Every Site'
+  },
+  dictionary: { checkAgain: 'Check again' }
 }

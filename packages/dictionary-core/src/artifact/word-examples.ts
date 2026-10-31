@@ -1,4 +1,4 @@
-import type { SegmentedToken } from '../cards/segmentation'
+import type { PageSegmentedToken } from '../cards/segmentation'
 import { sentenceRomaji } from '../detail/romaji'
 import type {
   ExampleCountRow,
@@ -130,11 +130,28 @@ function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   })
 }
 
+export interface SegmentedText {
+  tokens: PageSegmentedToken[]
+  romaji: string | null
+}
+
+export interface SegmentOptions {
+  writtenAlike?: boolean
+}
+
+function writtenAlike(token: LinkedToken, lookup: FormLookup): { writtenAlike?: string[] } {
+  const { entry, lookupForm } = token
+  if (!entry || !lookupForm || !hasKanji(lookupForm)) return {}
+  const others = lookup(lookupForm).flatMap(found => (found.id === entry.id ? [] : [found.id]))
+  return others.length > 0 ? { writtenAlike: others } : {}
+}
+
 export function segmentText(
   db: ArtifactDatabase,
   text: string,
-  capabilities: { tokenize: Tokenize; lookup: FormLookup }
-): SegmentedToken[] {
+  capabilities: { tokenize: Tokenize; lookup: FormLookup },
+  options: SegmentOptions = {}
+): SegmentedText {
   const linked = linkedTokens(
     text,
     kuromojiCandidates(text, capabilities.tokenize(text)),
@@ -145,7 +162,7 @@ export function segmentText(
   const entries = linkedEntries(db, [
     ...new Set(linked.flatMap(token => (token.entry ? [token.entry.id] : [])))
   ])
-  return linked.map((token, position) => {
+  const tokens = linked.map((token, position) => {
     const target = token.entry ? entries.get(token.entry.id) : undefined
     const row = rows[position]
     return {
@@ -154,9 +171,11 @@ export function segmentText(
       ...(token.entry ? { languageReferenceID: token.entry.id } : {}),
       ...(!token.entry && token.candidates.length > 0
         ? { candidates: token.candidates.map(candidate => candidate.id) }
-        : {})
+        : {}),
+      ...(options.writtenAlike ? writtenAlike(token, capabilities.lookup) : {})
     }
   })
+  return { tokens, romaji: sentenceRomaji(linked) }
 }
 
 export function exampleCount(retrieved: EntryExamples): ExampleCountRow | null {

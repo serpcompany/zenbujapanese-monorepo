@@ -35,7 +35,24 @@
   },
   "overrides": [
     {
-      "includes": ["src/**", "test-pages/**", "!src/worker/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "includes": ["src/word-detail/full-entry.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noNoninteractiveTabindex": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "test-pages/**",
+        "!src/worker/**",
+        "!src/test/**",
+        "!**/*.test.ts",
+        "!**/*.test.tsx"
+      ],
       "linter": {
         "rules": {
           "style": {
@@ -47,6 +64,7 @@
                     "group": [
                       "@zenbu/dictionary-core/artifact/**",
                       "@zenbu/dictionary-core/search/**",
+                      "!@zenbu/dictionary-core/search/query",
                       "@zenbu/dictionary-core/embedded/**",
                       "@zenbu/dictionary-core/examples/**",
                       "**/worker/**"

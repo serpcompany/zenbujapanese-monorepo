@@ -12,6 +12,7 @@ pull request as the workflow.
 - [`ci-deploys.md`](ci-deploys.md): the workflows that deploy or publish.
 - [`ci-ios.md`](ci-ios.md): the `iOS` workflow. [`ci-pinned-actions.md`](ci-pinned-actions.md)
   has the commit every workflow runs each action at, and why.
+- [`ci-extension.md`](ci-extension.md): the `Extension` workflow.
 
 Every job runs on `ubuntu-latest` and reads the repository's contents only, unless its section
 says otherwise. The pnpm jobs set up pnpm from the root `package.json` and the Node that
@@ -30,7 +31,8 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site, its word components, or the core changed | This doc |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
-| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, or the core changed | This doc |
+| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, the core, `assets/brand`, or the account service changed | [`ci-extension.md`](ci-extension.md) |
+| `Extension packages` | `.github/workflows/extension-packages.yml` | Pushes to `main` and pull requests that change the browser extension, `packages/ui`, the core, `packages/account-rules`, or `assets/brand`; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed, the word components in `packages/ui` among them; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand | This doc |
@@ -68,8 +70,8 @@ a red check stops no merge. The workflows are built so the owners can require th
   `dictionary-api`, `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
-- **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
-  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
+- **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `browser`
+  needs `check` (`Extension`), `website` needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
   `contracts` (`iOS`), and `build` needs `pins` (`Language data build`), on a pull request and in
   the queue alike. A failed fast check then spends no runner time on the browser tests, the suites
   or the release on the real files, or a Mac: the heavy job is skipped, and the last job fails for
@@ -169,13 +171,6 @@ its rule that keeps runtimes and frameworks out, typecheck, and Vitest) on pull 
 the core, or `docs/data-sources.md`, which its source credits are held to. Those tests need no data:
 the app-recorded suites run through the core in
 `Dictionary API`, and `Web` builds the site with it. See [`dictionary-core.md`](dictionary-core.md).
-
-## Extension
-
-`.github/workflows/extension.yml` runs `pnpm check` in `apps/extension` (Biome with its layer
-rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
-extension, `packages/ui`, which draws it, or the core. Nothing loads the built extension in a
-browser yet. See [`extension.md`](extension.md).
 
 ## Dictionary API
 

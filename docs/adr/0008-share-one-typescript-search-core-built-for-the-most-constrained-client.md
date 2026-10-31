@@ -194,6 +194,11 @@ JavaScriptCore without its JIT, 400 lines of timed text (37 KB) take 5 ms, pairi
 380 translated lines 6 ms, and a player response under a millisecond, once per video and off
 the main thread.
 
+Amended 2026-10-28 (issue 984): the core's reader refuses a control character again, as
+`XMLParser` does, whether written raw or as a reference, and reads only the ones XML allows (a
+tab and line breaks; `captions/xml.ts`, `xml.test.ts`). So a control character makes timed text
+unreadable after all; the other two differences stand.
+
 What stays in Swift is what needs the platform or belongs to the learner: reading files,
 parsing a URL, drawing, the learner's stored data and its sync, YouTube's links and fetching the
 captions, and Apple's speech, recognition, translation, and Apple Intelligence
