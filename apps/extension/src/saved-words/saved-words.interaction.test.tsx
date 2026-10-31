@@ -316,12 +316,14 @@ describe("the Account tab's saved words", () => {
     })
     const before = asked
     await act(async () => find(tab, '[data-sync] button').click())
-    await settle()
-    expect(asked).toBeGreaterThan(before)
-    expect(find(tab, '[data-sync]').getAttribute('data-sync')).toBe(sync)
-    expect(find(tab, '[data-sync-note]').textContent).toBe(note)
-    expect(find(tab, '[data-waiting]').textContent).toBe(`${labels.sync.waiting}: 1`)
-    expect((find(tab, '[data-sync] button') as HTMLButtonElement).disabled).toBe(false)
+    await vi.waitFor(async () => {
+      await settle()
+      expect(asked).toBeGreaterThan(before)
+      expect((find(tab, '[data-sync] button') as HTMLButtonElement).disabled).toBe(false)
+      expect(find(tab, '[data-sync]').getAttribute('data-sync')).toBe(sync)
+      expect(find(tab, '[data-sync-note]').textContent).toBe(note)
+      expect(find(tab, '[data-waiting]').textContent).toBe(`${labels.sync.waiting}: 1`)
+    })
   })
 
   it('says Syncing… and holds Sync Now until the sync answers', async () => {
