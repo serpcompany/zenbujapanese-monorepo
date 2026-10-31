@@ -4,8 +4,12 @@ import { createServer, type Server } from 'node:https'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { testGoogleClientId } from '../build/hosts.ts'
-import { appleAuthorizeUrl, googleAuthorizeUrl } from '../src/service-worker/account/identity.ts'
+import { testApiHost, testGoogleClientId } from '../build/hosts.ts'
+import {
+  appleAuthorizeUrl,
+  appleReturnPath,
+  googleAuthorizeUrl
+} from '../src/service-worker/account/identity.ts'
 
 type Claims = Record<string, unknown>
 
@@ -30,8 +34,19 @@ function provider(issuer: string, kid: string) {
   return { jwks, signed }
 }
 
-const escaped = (text: string) =>
-  text.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')
+const htmlEntities: Record<string, string> = {
+  '&': '&amp;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '<': '&lt;',
+  '>': '&gt;'
+}
+
+const escaped = (text: string) => text.replace(/[&"'<>]/g, character => htmlEntities[character])
+
+const googleReturn = /^https:\/\/([a-p]{32})\.chromiumapp\.org\/google$/
+
+const appleReturn = `${testApiHost}${appleReturnPath}`
 
 function formPostTo(action: string, values: Record<string, string>) {
   const inputs = Object.entries(values)
@@ -52,7 +67,7 @@ export async function startSignInProviders() {
   const learner = { google: 'google-learner@example.com', apple: 'apple-learner@example.com' }
   const asked: string[] = []
 
-  const googleAnswer = (query: URLSearchParams) => {
+  const googleAnswer = (query: URLSearchParams, extensionId: string) => {
     const idToken = google.signed({
       aud: query.get('client_id'),
       sub: `google-${learner.google}`,
@@ -61,7 +76,7 @@ export async function startSignInProviders() {
       nonce: query.get('nonce')
     })
     const back = new URLSearchParams({ state: query.get('state') ?? '', id_token: idToken })
-    return `${query.get('redirect_uri')}#${back}`
+    return `https://${extensionId}.chromiumapp.org/google#${back}`
   }
 
   const appleAnswer = (query: URLSearchParams) => {
@@ -74,7 +89,7 @@ export async function startSignInProviders() {
       nonce: query.get('nonce'),
       nonce_supported: true
     })
-    return formPostTo(query.get('redirect_uri') ?? '', {
+    return formPostTo(appleReturn, {
       state: query.get('state') ?? '',
       code: `apple-code:${subject}`,
       id_token: idToken,
@@ -95,9 +110,17 @@ export async function startSignInProviders() {
       response.writeHead(404)
       return void response.end()
     }
-    asked.push(`${address} -> ${url.searchParams.get('redirect_uri')}`)
-    if (address === googleAuthorizeUrl) {
-      response.writeHead(302, { location: googleAnswer(url.searchParams) })
+    const returnTo = url.searchParams.get('redirect_uri') ?? ''
+    const googleExtensionId = googleReturn.exec(returnTo)?.[1]
+    const accepted =
+      address === googleAuthorizeUrl ? googleExtensionId !== undefined : returnTo === appleReturn
+    if (!accepted) {
+      response.writeHead(400)
+      return void response.end()
+    }
+    asked.push(`${address} -> ${returnTo}`)
+    if (googleExtensionId !== undefined) {
+      response.writeHead(302, { location: googleAnswer(url.searchParams, googleExtensionId) })
       return void response.end()
     }
     response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
