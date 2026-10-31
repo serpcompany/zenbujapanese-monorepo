@@ -100,7 +100,7 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   an email account, after which its session answers `401`; a session the service refuses showing
   signed out; Subscribe… opening zenbujapanese.com's `/account/` page, with the subscription
   answering `subscription_required`, since the real one can't offer it locally; the Account tab
-  at 360 pixels cutting none of its lines; and a content
+  at 360 pixels cutting none of its lines, the account's or Last Synced's; and a content
   script, in its isolated world over CDP, finding no token in local or session storage or the
   page's IndexedDB. The website's handover (`website-sign-in.spec.ts`): a code the service gives
   a `zenbu-web` session, sent from a page on the local server, signs the extension in; a second
@@ -117,6 +117,9 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   again; and the test content script's known states (`test-pages/
   known-states.tsx`) changing as a word is marked, with no `zenbu-account-copy` in the page's
   `indexedDB.databases()`.
+- **Saved words,** with the service and the YouTube stand-in (`account-words.spec.ts`): 要る
+  marked Known from a caption's popup showing in the Account tab's Known Words with no reload,
+  and Sync Now bringing in 要求, put on the account through the service.
 - **The account service** (`account-service.ts`) is `apps/account-api` from the checkout, started
   as a child process on PGlite over a socket, with the dev mailbox, on a free port, not
   `verify-service`'s 8789, so it runs beside one. `account-api.localhost` maps to it, and it takes

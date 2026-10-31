@@ -22,9 +22,9 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm build` | The release build, in `dist/`: the manifest, Zenbu's icons, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, Geist, and the YouTube and Netflix content scripts. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port, the website's, so the two can't run at once. |
-| `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
+| `pnpm check` | Biome, tsc, Vitest, and both builds; CI's `Extension` runs it ([`ci.md`](ci.md)). |
 | `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
-| `pnpm language-data` | The local language-data server, on a free port (or `PORT`); it prints its address. |
+| `pnpm language-data` | The local language-data server on a free port or `PORT`; it prints where. |
 | `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and removes them ([`extension-error-reports.md`](extension-error-reports.md)). `Extension packages` runs it on the store package's build, only on `main` ([`ci-deploys.md`](ci-deploys.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
@@ -89,8 +89,9 @@ can read a tab with no page script, which `activeTab` reaches after a click on t
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
 | `src/translate/` | The Translate tab: the box and its buttons, the result card, the Japanese source's words (`source-words.tsx`), Use Selection (`selection.ts`), which asks the page script first, Speak's voice, the best on this computer (`speech.ts`), Image Search (`image-search-page.tsx`), and its labels. |
 | `src/page-lookup/` | Page lookup, which the page script runs: finding text, segmenting it, the underlines, the reading aids, and the click ([`extension-page-lookup.md`](extension-page-lookup.md)). |
-| `src/word-popup/` | The word popup, its card and choice, its shadow-root host and settings (`popup-settings.ts`), and a panel word's card on the page (`page-popup.ts`). |
+| `src/word-popup/` | The word popup, its card and choice, its shadow-root host and settings (`popup-settings.ts`), and a panel word's card on the page (`page-popup.ts`, `panel-word.ts`) or in the panel (`inline-card.tsx`). |
 | `src/word-saving/` | A word's ••• menus and toast, and its part of the copy they save to. |
+| `src/saved-words/` | The Account tab's Known Words, Learning, Lists, Notes, and Sync Now, read from the copy again each time it changes (`use-copy.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker: it downloads the language data, opens it in sqlite-wasm, and answers from the core (`answer.ts`; [`extension-language-data.md`](extension-language-data.md)). |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`, `netflix*.ts`, and `page-lookup.ts`, the page script). |
 | `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), Netflix's (`netflix-*.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds the sites' answers and a stand-in `fetch` for the tests. |
@@ -156,7 +157,7 @@ root, and draws inside it:
 
 ### The side panel
 
-How the panel is built, opened, and checked is in [`extension-side-panel.md`](extension-side-panel.md).
+How the panel is built, opened, and checked: [`extension-side-panel.md`](extension-side-panel.md).
 
 ### Page lookup
 

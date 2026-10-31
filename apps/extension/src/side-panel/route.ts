@@ -2,7 +2,14 @@ export const panelTabs = ['player', 'translate', 'account'] as const
 
 export type PanelTab = (typeof panelTabs)[number]
 
-export type PanelPage = { page: 'image-search' } | { page: 'test'; text: string }
+export type PanelPage =
+  | { page: 'image-search' }
+  | { page: 'known-words' }
+  | { page: 'learning' }
+  | { page: 'lists' }
+  | { page: 'list'; list: string }
+  | { page: 'notes' }
+  | { page: 'test'; text: string }
 
 export type PanelRoute = { tab?: PanelTab; page?: PanelPage }
 
@@ -27,6 +34,11 @@ const isTestBuild = () => import.meta.env.MODE === 'test'
 
 const pageShapes: { [K in PanelPage['page']]: (page: Fields) => boolean } = {
   'image-search': () => true,
+  'known-words': () => true,
+  learning: () => true,
+  lists: () => true,
+  list: page => typeof page.list === 'string',
+  notes: () => true,
   test: page => isTestBuild() && typeof page.text === 'string'
 }
 

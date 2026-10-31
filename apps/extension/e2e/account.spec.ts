@@ -186,8 +186,11 @@ test('at the side panel’s narrowest, 360 pixels, the Account tab cuts none of 
   const tab = await openAccountTab(page, extension)
   await signInWithGoogle(tab, account(extension), newEmail('narrow'))
   await expect(signedInAs(tab)).toBeVisible()
+  await expect(
+    tab.locator('[data-account="signed-in"] [data-slot="item-description"]')
+  ).toHaveCount(3)
+  await expect(tab.locator('[data-sync] [data-last-synced]')).toBeVisible()
   const lines = tab.locator('[data-slot="item-description"]')
-  await expect(lines).toHaveCount(3)
   const cut = await lines.evaluateAll(all =>
     all.filter(line => line.scrollHeight > line.clientHeight).map(line => line.textContent)
   )

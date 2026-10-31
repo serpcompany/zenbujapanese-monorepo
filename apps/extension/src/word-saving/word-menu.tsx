@@ -143,6 +143,10 @@ export function WordMenu({
 
 export function StateTag({ word }: { word: SavingWord }) {
   const state = useWordSaving(word).view?.state
+  return state ? <StateTagView state={state} /> : null
+}
+
+export function StateTagView({ state }: { state: WordState }) {
   if (state !== 'learning' && state !== 'known') return null
   return (
     <span

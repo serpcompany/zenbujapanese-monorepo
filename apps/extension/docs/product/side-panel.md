@@ -24,8 +24,9 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
   Search: [`translate.md`](translate.md) (`panel.interaction.test.tsx`, "opens each tab on its own
   screen", "opens Image Search from the Image row on Translate").
 - **Account on the account,** the same one Settings' Account page shows: signed out, the ways to
-  sign in, and signed in, the email and the subscription ([`account.md`](account.md)). The
-  profile's Words are under it.
+  sign in, and signed in, the email and the subscription ([`account.md`](account.md)). Under it,
+  signed in, Known Words, Learning, Lists, and Notes, and Sync Now (`account.md`, Saved words on
+  the Account tab).
 
 What shows until the issue that fills it (`panel.interaction.test.tsx`, "opens each tab on its own
 screen"; `e2e/side-panel-tabs.spec.ts`):
@@ -36,7 +37,7 @@ screen"; `e2e/side-panel-tabs.spec.ts`):
 | Player's Recent, signed out | A "Recent" heading, then "No recent videos", that a Zenbu account keeps the videos watched on all devices, and "Sign up or sign in". |
 | Player's Recent, signed in | A "Recent" heading, then "No recent videos", that the videos watched show here, on all devices, with no sign-in offer. It follows the account's sign-in and sign-out with the panel open (`recent.interaction.test.tsx`, "offers Sign up or sign in signed out, and explains Recent signed in…"). |
 | Player's Recent, while the account loads | A "Recent" heading and nothing under it: neither "No recent videos" nor "Sign up or sign in", until the account is known (`recent.interaction.test.tsx`, "shows neither the signed-out text nor the sign-in offer while the account is still loading"). |
-| Account's Words | "No words yet", and that the words known and the lists kept show here. |
+| Account's Words, signed out | "No words yet", and that the words known and the lists kept show here. |
 | Image Search, over Translate | "Reading text in pictures is coming soon", with no button. |
 
 Player's "Sign up or sign in" opens the Account tab, where the extension signs in itself or from
@@ -53,9 +54,10 @@ in…").
   page revealed, or to the tab (`panel.interaction.test.tsx`).
 - **Each tab keeps its own pages:** choosing another tab and coming back finds the page where it
   was (`panel.interaction.test.tsx`).
-- **Image Search,** over Translate ([`translate.md`](translate.md)). A word's card and its full
+- **Image Search,** over Translate ([`translate.md`](translate.md)), and Known Words, Learning,
+  Lists, a list, and Notes over Account ([`account.md`](account.md)). A word's card and its full
   entry don't open as pages: a word clicked in Translate opens its card on the page, one opened
-  with Enter or Space shows its card under its line, a word in the Player tab opens its card in a
+  with Enter or Space shows its card under its line, and so does a saved word on Account under its row, a word in the Player tab opens its card in a
   sheet over the tab ([`video-tab.md`](video-tab.md)), and Open Full Entry expands the card in
   place ([`word-popup.md`](word-popup.md)).
 - **The test page,** in the test build only, shows its text and opens another page over itself.

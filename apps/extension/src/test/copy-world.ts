@@ -72,6 +72,7 @@ export function copyWorld(
     readSubscription: () => readSubscription(world.store, world.tokens),
     settings: settings.store,
     tell: changed => told.push(changed),
+    changed: () => undefined,
     reportFailure: (code, status) =>
       failures.push(status === undefined ? code : `${code} ${status}`),
     later: (run, wait) => waits.push({ run, wait }),
