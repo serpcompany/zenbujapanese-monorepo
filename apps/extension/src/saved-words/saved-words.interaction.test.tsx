@@ -310,6 +310,10 @@ describe("the Account tab's saved words", () => {
       return refusing(body)
     }
     await changed(known)
+    await vi.waitFor(async () => {
+      await settle()
+      expect(find(tab, '[data-sync]').getAttribute('data-sync')).toBe(sync)
+    })
     const before = asked
     await act(async () => find(tab, '[data-sync] button').click())
     await settle()
