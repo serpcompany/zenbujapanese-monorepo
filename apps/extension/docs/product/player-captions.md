@@ -90,8 +90,9 @@ word's popup is open; otherwise they fade out (Controls: "when the controls show
 Signed in with saving allowed, "You know 38%" shows at the player's top left, its percentage
 coloured as in the Player tab, and shows and hides with the controls. It is the Player tab's share
 of the video's words known, and changes as it does ([`video-tab.md`](video-tab.md), The share of
-words known) (Controls: "reads You know N% on the player…"; `e2e/known-share.spec.ts`). The pill
-hides while a Known lookup has failed, and returns with the share (Controls: "hides the pill while
+words known) (Controls: "reads You know N% on the player…"; `e2e/known-share.spec.ts`). Until the
+count is ready it reads "Counting known words…", as the Player tab does (Controls: "reads Counting
+known words… on the player…"). The pill hides while a Known lookup has failed, and returns with the share (Controls: "hides the pill while
 a Known lookup has failed…").
 
 ## Not built yet

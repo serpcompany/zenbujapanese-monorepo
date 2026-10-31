@@ -9,6 +9,7 @@ export function shareStandIn(counted: Record<string, string[]>, refusal: SavingR
   const known = new Set<string>()
   const knownHeard = new Set<(known: Known) => void>()
   const savingHeard = new Set<(refusal: SavingRefusal | null) => void>()
+  const copyHeard = new Set<() => void>()
   let refused = refusal
   const services = {
     knownWords: vi.fn<ShareServices['knownWords']>(async items =>
@@ -26,6 +27,10 @@ export function shareStandIn(counted: Record<string, string[]>, refusal: SavingR
     watchSaving: (heard: (refusal: SavingRefusal | null) => void) => {
       savingHeard.add(heard)
       return () => void savingHeard.delete(heard)
+    },
+    watchCopy: (heard: () => void) => {
+      copyHeard.add(heard)
+      return () => void copyHeard.delete(heard)
     }
   } satisfies Omit<ShareServices, 'wait'>
   return {
@@ -43,6 +48,16 @@ export function shareStandIn(counted: Record<string, string[]>, refusal: SavingR
       refused = next
       await act(async () => {
         for (const heard of [...savingHeard]) heard(next)
+      })
+    },
+    async signsIn() {
+      refused = null
+      await this.knows(null)
+    },
+    async signsOut() {
+      refused = 'signed-out'
+      await act(async () => {
+        for (const heard of [...copyHeard]) heard()
       })
     }
   }

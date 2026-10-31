@@ -431,8 +431,8 @@ The core answers as the Swift it replaced did, which the suites pin.
 ([`dictionary-api.md`](dictionary-api.md), Routes). Its responses are plain JSON, with maps as
 records keyed by JMdict entry number. `retired()` answers the release's `RetiredEntries.json`.
 
-- For the extension: `segmentation`, `resolve` (an entry number or null), and the word popup's
-  `popupCard` (`artifact/popup-card.ts`). Without `strokes` in `attached`, kanji have no strokes.
+- For the extension: `segmentation`, `resolve` (an entry number or null), `countedWords`, and
+  the popup's `popupCard` (`artifact/popup-card.ts`). Without `strokes` in `attached`, no strokes.
 - `attachments` names each bundled database opened with the artifact, its file in the app's
   Resources, and the `artifact_schema` (and `pack_id`) its `metadata` table must record. The packs
   map entries by Language Reference ID, so each is built for one `LanguageReferenceData.sqlite3`

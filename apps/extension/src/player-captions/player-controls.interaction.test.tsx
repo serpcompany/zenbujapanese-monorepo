@@ -191,6 +191,17 @@ describe('the share of the video’s words known', () => {
     expect(player.pill()).toBeNull()
   })
 
+  it('reads Counting known words… on the player until the count is ready, and shows and hides with the controls', async () => {
+    const player = await opened({ dictionaryReady: false })
+    await player.playFrom(1.2)
+    await send(player.player, pointerEvent('pointermove'))
+    expect(player.pill()?.textContent).toBe('Counting known words…')
+    expect(player.pill()?.hasAttribute('data-hidden')).toBe(false)
+    await player.wait(pointerIdle + 100)
+    expect(player.pill()?.hasAttribute('data-hidden')).toBe(true)
+    expect(player.pill()?.textContent).toBe('Counting known words…')
+  })
+
   it('hides the pill while a Known lookup has failed, and shows the share again once the Known words next change', async () => {
     const player = await opened()
     await player.playFrom(1.2)

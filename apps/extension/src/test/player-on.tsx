@@ -68,6 +68,7 @@ type Options = {
   settings?: Partial<Settings>
   translator?: TranslatorState
   duration?: number
+  dictionaryReady?: boolean
 }
 
 export const wordPopup = () => document.querySelector('[data-zenbu-word-popup]')
@@ -84,12 +85,23 @@ export function standInFonts() {
   })
 }
 
-async function playerOn({ settings = {}, translator, duration }: Options = {}) {
+async function playerOn({
+  settings = {},
+  translator,
+  duration,
+  dictionaryReady = true
+}: Options = {}) {
   standInFonts()
   const player = document.body.appendChild(document.createElement('div'))
   player.id = 'movie_player'
   const clock = clockFollower({ host: player, duration })
   const { services, state, share } = captionServices(translator)
+  if (!dictionaryReady) {
+    services.countWords.mockResolvedValue({
+      type: 'not-ready',
+      data: { state: 'downloading', done: 0, total: 1 }
+    })
+  }
   let current: Settings = { ...settingDefaults, ...settings }
   const show = playerCaptions({ services })
   let shown: ShownCaptions | undefined

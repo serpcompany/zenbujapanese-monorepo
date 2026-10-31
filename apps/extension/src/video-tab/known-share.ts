@@ -3,6 +3,7 @@ import { backoff, type Wait } from '../page-lookup/scan'
 import {
   askKnown,
   askSaving,
+  onCopyChanged,
   onKnownChanged,
   onSavingRefused,
   type SavingRefusal
@@ -14,6 +15,7 @@ export type ShareServices = KnownSource & {
   countWords(lines: string[]): Lookup<CountedWordsAnswer>
   savingRefusal(): Promise<SavingRefusal | null>
   watchSaving(heard: (refusal: SavingRefusal | null) => void): () => void
+  watchCopy(heard: () => void): () => void
   wait: Wait
 }
 
@@ -22,7 +24,8 @@ export const onDeviceShareServices: Omit<ShareServices, 'wait'> = {
   watchKnown: heard => onKnownChanged(heard),
   countWords: lines => countWords(lines),
   savingRefusal: () => askSaving(),
-  watchSaving: heard => onSavingRefused(told => heard(told.refusal))
+  watchSaving: heard => onSavingRefused(told => heard(told.refusal)),
+  watchCopy: heard => onCopyChanged(heard)
 }
 
 export type Share = 'hidden' | 'counting' | 'incomplete' | { known: number; total: number }
@@ -70,7 +73,7 @@ export function knownShare(
   let live = true
   let allowed = false
   let counting = false
-  let told = false
+  let asked = 0
   let ids: string[] | null | undefined
   let shown: Share = 'hidden'
 
@@ -108,13 +111,22 @@ export function knownShare(
     update()
   }
 
+  const askAgain = () => {
+    const asking = ++asked
+    void services.savingRefusal().then(refusal => {
+      if (live && asking === asked) allow(refusal)
+    })
+  }
+
   const unwatchSaving = services.watchSaving(refusal => {
-    told = true
+    asked += 1
     allow(refusal)
   })
-  void services.savingRefusal().then(refusal => {
-    if (live && !told) allow(refusal)
+  const unwatchReset = services.watchKnown(change => {
+    if (change === null) askAgain()
   })
+  const unwatchCopy = services.watchCopy(askAgain)
+  askAgain()
   const unwatchKnown = known.subscribe(update)
 
   return {
@@ -126,6 +138,8 @@ export function knownShare(
     stop() {
       live = false
       unwatchSaving()
+      unwatchReset()
+      unwatchCopy()
       unwatchKnown()
       listeners.clear()
     }

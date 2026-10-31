@@ -113,6 +113,23 @@ describe('the share of a video’s words known', () => {
     expect(video.stand.services.countWords).toHaveBeenCalledOnce()
   })
 
+  it('shows the share once the learner signs in mid-video', async () => {
+    const video = watched(captions, 'signed-out')
+    countingWithCore(video)
+    video.start()
+    await settle()
+    expect(video.share()).toBe('hidden')
+    await video.stand.signsIn()
+    await vi.waitFor(() => expect(video.share()).toEqual({ known: 0, total: 4 }))
+  })
+
+  it('hides the share once the learner signs out mid-video', async () => {
+    const video = await sharingOneKnown()
+    await video.stand.signsOut()
+    await vi.waitFor(() => expect(video.share()).toBe('hidden'))
+    expect(video.shares).toEqual(['counting', { known: 1, total: 4 }, 'hidden'])
+  })
+
   it('counts twenty lines at a time, and stops a count still running when the video is left', async () => {
     const lines = Array.from({ length: 45 }, (_, at) => `第${at}行`)
     const counted = Object.fromEntries(lines.map(line => [line, [line]]))
